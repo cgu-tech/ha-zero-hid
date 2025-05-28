@@ -7,6 +7,9 @@ Home Assistant integration for zero-hid project
 - A frontend card that acts as a trackpad and sends pointer deltas.
  
 # Installation
+Install zero-hid on your Raspberry Pi: 
+(zero-hid installation)[https://github.com/cgu-tech/zero-hid]
+
 Add this card to your Lovelace dashboard via **Manual Card**:
 ```yaml
 type: custom:trackpad-card
