@@ -1,0 +1,19 @@
+move:
+  description: Send a mouse move command
+  fields:
+    x:
+      description: X-axis movement
+      example: 100
+      required: true
+      selector:
+        number:
+          min: -1000
+          max: 1000
+    y:
+      description: Y-axis movement
+      example: -50
+      required: true
+      selector:
+        number:
+          min: -1000
+          max: 1000
