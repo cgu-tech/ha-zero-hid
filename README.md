@@ -8,7 +8,7 @@ Home Assistant integration for zero-hid project
  
 # Installation
 Install zero-hid on your Raspberry Pi: 
-(zero-hid installation)[https://github.com/cgu-tech/zero-hid]
+[zero-hid installation](https://github.com/cgu-tech/zero-hid)
 
 Add this card to your Lovelace dashboard via **Manual Card**:
 ```yaml
