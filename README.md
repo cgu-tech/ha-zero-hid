@@ -23,7 +23,7 @@ Install `trackpad_mouse` integration:
 
 Setup your zero-hid server IP into the integration (i.e. your RPI zero IP):
 ```bash
-read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/addons/trackpad_ws/run.py
+read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/custom_components/trackpad_mouse/__init__.py
 ```
 
 Ensure `trackpad_mouse` integration is loaded into your configuration:
