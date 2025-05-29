@@ -15,9 +15,14 @@ Using HA SSH addon, clone this repository:
 git clone https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
+Put `trackpad_mouse` directory in `/config/custom_components`:
+```bash
+mkdir -p /config/custom_components && cp ha-zero-hid/trackpad_mouse /config/custom_components
+```
+
 Put `trackpad-card.js` in `/config/www/`:
 ```bash
-mkdir -p /config/www/ && cp ha-zero-hid/trackpad-card.js /config/www/trackpad-card.js
+mkdir -p /config/www && cp ha-zero-hid/trackpad-card.js /config/www/trackpad-card.js
 ```
 
 Ensure the file is served by HA frontend:
