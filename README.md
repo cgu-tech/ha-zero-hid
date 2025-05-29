@@ -32,12 +32,17 @@ Add this to your `configuration.yaml`:
 nano /config/configuration.yaml
 ```
 ```yaml
-frontend:
-  extra_module_url:
-    - /local/trackpad-card.js
-
 trackpad_mouse:
 ```
+
+Add custom card into ressources via the UI:
+- Click your profile picture (bottom left)
+- Enable "Advanced Mode" if it's not already enabled
+- Then go to: `Settings` → `Dashboards` → (`⋮` on your dashboard) → `Resources`
+- Click "Add Resource"
+  - URL: /local/trackpad-card.js
+  - Type: JavaScript Module
+  - reload the dashboard (`CTRL` + `F5`)
 
 Reboot Home Assistant **(not reload)**
 

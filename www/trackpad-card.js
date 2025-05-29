@@ -1,47 +1,51 @@
-class TrackpadCard extends HTMLElement {
-  set hass(hass) {
-    if (!this.content) {
-      const card = document.createElement("ha-card");
-      card.header = "Mouse Trackpad";
+onsole.info("Loading Trackpad Card");
 
-      this.content = document.createElement("div");
-      this.content.style.height = "300px";
-      this.content.style.background = "#eee";
-      this.content.style.touchAction = "none";
-      this.content.style.cursor = "crosshair";
-      this.content.style.position = "relative";
+(() => {
+  class TrackpadCard extends HTMLElement {
+    set hass(hass) {
+      if (!this.content) {
+        const card = document.createElement("ha-card");
+        card.header = "Mouse Trackpad";
 
-      let lastX = null;
-      let lastY = null;
+        this.content = document.createElement("div");
+        this.content.style.height = "300px";
+        this.content.style.background = "#eee";
+        this.content.style.touchAction = "none";
+        this.content.style.cursor = "crosshair";
+        this.content.style.position = "relative";
 
-      this.content.addEventListener("pointerdown", e => {
-        lastX = e.clientX;
-        lastY = e.clientY;
-      });
+        let lastX = null;
+        let lastY = null;
 
-      this.content.addEventListener("pointermove", e => {
-        if (e.buttons === 1 && lastX !== null && lastY !== null) {
-          const dx = e.clientX - lastX;
-          const dy = e.clientY - lastY;
+        this.content.addEventListener("pointerdown", e => {
           lastX = e.clientX;
           lastY = e.clientY;
+        });
 
-          hass.callService("trackpad_mouse", "move", {
-            x: dx,
-            y: dy
-          });
-        }
-      });
+        this.content.addEventListener("pointermove", e => {
+          if (e.buttons === 1 && lastX !== null && lastY !== null) {
+            const dx = e.clientX - lastX;
+            const dy = e.clientY - lastY;
+            lastX = e.clientX;
+            lastY = e.clientY;
 
-      card.appendChild(this.content);
-      this.appendChild(card);
+            hass.callService("trackpad_mouse", "move", {
+              x: dx,
+              y: dy
+            });
+          }
+        });
+
+        card.appendChild(this.content);
+        this.appendChild(card);
+      }
+    }
+
+    setConfig(config) {}
+    getCardSize() {
+      return 3;
     }
   }
 
-  setConfig(config) {}
-  getCardSize() {
-    return 3;
-  }
-}
-
-customElements.define("trackpad-card", TrackpadCard);
+  customElements.define("trackpad-card", TrackpadCard);
+})();
