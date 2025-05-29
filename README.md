@@ -17,7 +17,7 @@ git clone https://github.com/cgu-tech/ha-zero-hid.git
 
 Put `trackpad_mouse` directory in `/config/custom_components`:
 ```bash
-mkdir -p /config/custom_components && cp ha-zero-hid/trackpad_mouse /config/custom_components
+mkdir -p /config/custom_components && cp -R ha-zero-hid/trackpad_mouse /config/custom_components
 ```
 
 Setup your RPI IP:
@@ -27,7 +27,7 @@ read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${webs
 
 Put `trackpad-card.js` in `/config/www/`:
 ```bash
-mkdir -p /config/www && cp ha-zero-hid/trackpad-card.js /config/www/trackpad-card.js
+mkdir -p /config/www && cp -R ha-zero-hid/www /config
 ```
 
 Ensure the file is served by HA frontend:
@@ -41,6 +41,7 @@ frontend:
     - /local/trackpad-card.js
 ```
 
+Reboot Home Assistant **(not reload)**
 
 Add this card to your Lovelace dashboard via **Manual Card**:
 ```yaml
