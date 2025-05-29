@@ -12,7 +12,7 @@ Install zero-hid on your Raspberry Pi:
 
 Using HA SSH addon, clone this repository:
 ```bash
-git clone https://github.com/cgu-tech/ha-zero-hid.git
+(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
 Install `trackpad_mouse` integration:
