@@ -1,60 +1,47 @@
 from __future__ import annotations
 
 import logging
-import voluptuous as vol
 
-from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers.typing import ConfigType
+from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv
-from homeassistant.components.hassio.handler import HassIO
-from homeassistant.components.hassio import async_start_addon, async_stop_addon
+from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, ADDON_SLUG
+from .websocket_handler import WebSocketClient
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-MOVE_SERVICE_SCHEMA = vol.Schema({
-    vol.Required("x"): vol.Coerce(int),
-    vol.Required("y"): vol.Coerce(int),
-})
+# Use empty_config_schema because the component does not have any config options
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the trackpad mouse integration."""
+    """Set up the websocket global client."""
+    ws_client = WebSocketClient("ws://<websocket_server_ip>:8765")
+    hass.data[DOMAIN] = ws_client  # store globally
 
-    @callback
-    async def handle_start(call):
-        await async_start_addon(hass, ADDON_SLUG)
-
-    @callback
-    async def handle_stop(call):
-        await async_stop_addon(hass, ADDON_SLUG)
-
+    """Set up the async handle_move service component."""
     @callback
     async def handle_move(call: ServiceCall) -> None:
-        x = call.data["x"]
-        y = call.data["y"]
-        command = f"move:{x},{y}\n"
+        x = call.data.get("x")
+        y = call.data.get("y")
 
-        # Call supervisor API to write to stdin
-        _LOGGER.debug("Sending to add-on via stdin: %s", command.strip())
-        response = await hass.components.hassio.send_command(
-            {
-                "type": "addons",
-                "slug": ADDON_SLUG,
-                "command": "stdin",
-                "data": command,
-            }
-        )
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
 
-        if not response.get("result") == "ok":
-            _LOGGER.error("Failed to send command to add-on: %s", response)
-        else:
-            _LOGGER.debug("Command sent successfully to add-on.")
+        # Connect if needed
+        if not ws_client.is_connected():
+            _LOGGER.info("Connecting to WebSocket server...")
+            try:
+                await ws_client.connect()
+                _LOGGER.info("WebSocket connection established.")
+            except Exception as e:
+                _LOGGER.error(f"Failed to connect to WebSocket server: {e}")
+                return
 
-    # Register our services with Home Assistant.
-    hass.services.async_register(DOMAIN, "start_addon", handle_start)
-    hass.services.async_register(DOMAIN, "stop_addon", handle_stop)
-    hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
+        await ws_client.send_move(x, y)
+
+    # Register our service with Home Assistant.
+    hass.services.async_register(DOMAIN, "move", handle_move)
 
     # Return boolean to indicate that initialization was successfully.
     return True

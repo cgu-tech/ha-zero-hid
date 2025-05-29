@@ -17,20 +17,13 @@ Using HA SSH addon, clone this repository:
 
 Install `trackpad_mouse` integration:
 ```bash
-(rm -rf /config/addons/trackpad_ws >/dev/null 2>&1 || true) && cp -R ha-zero-hid/addons /config
-```
-
-Setup your zero-hid server IP (i.e. your RPI zero IP):
-```bash
-read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/addons/trackpad_ws/run.py
-```
-
-Reboot Home Assistant **(not reload)**
-
-Install `trackpad_mouse` integration:
-```bash
 (rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true) && cp -R ha-zero-hid/custom_components /config
 (rm /config/www/trackpad-card.js >/dev/null 2>&1 || true) && cp -R ha-zero-hid/www /config
+```
+
+Setup your zero-hid server IP into the integration (i.e. your RPI zero IP):
+```bash
+read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/addons/trackpad_ws/run.py
 ```
 
 Ensure `trackpad_mouse` integration is loaded into your configuration:
