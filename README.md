@@ -15,22 +15,25 @@ Using HA SSH addon, clone this repository:
 git clone https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
-Put `trackpad_mouse` directory in `/config/custom_components`:
+Install `trackpad_mouse` integration:
 ```bash
-mkdir -p /config/custom_components && cp -R ha-zero-hid/trackpad_mouse /config/custom_components
+(rm -rf /config/addons/trackpad_ws >/dev/null 2>&1 || true) && cp -R ha-zero-hid/addons /config
 ```
 
-Setup your RPI IP:
+Setup your zero-hid server IP (i.e. your RPI zero IP):
 ```bash
-read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/custom_components/trackpad_mouse/__init__.py
+read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/addons/trackpad_ws/run.py
 ```
 
-Put `trackpad-card.js` in `/config/www/`:
+Reboot Home Assistant **(not reload)**
+
+Install `trackpad_mouse` integration:
 ```bash
-mkdir -p /config/www && cp -R ha-zero-hid/www /config
+(rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true) && cp -R ha-zero-hid/custom_components /config
+(rm /config/www/trackpad-card.js >/dev/null 2>&1 || true) && cp -R ha-zero-hid/www /config
 ```
 
-Ensure the file is served by HA frontend:
+Ensure `trackpad_mouse` integration is loaded into your configuration:
 Add this to your `configuration.yaml`:
 ```bash
 nano /config/configuration.yaml
@@ -39,16 +42,7 @@ nano /config/configuration.yaml
 frontend:
   extra_module_url:
     - /local/trackpad-card.js
-```
 
-Reboot Home Assistant **(not reload)**
-
-Add the **Trackpad Mouse** integration into HA configuration:
-Add this to your `configuration.yaml`:
-```bash
-nano /config/configuration.yaml
-```
-```yaml
 trackpad_mouse:
 ```
 
