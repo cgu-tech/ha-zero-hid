@@ -10,17 +10,29 @@ Home Assistant integration for zero-hid project
 Install zero-hid on your Raspberry Pi: 
 [zero-hid installation](https://github.com/cgu-tech/zero-hid)
 
-Add this card to your Lovelace dashboard via **Manual Card**:
-```yaml
-type: custom:trackpad-card
+Using HA SSH addon, clone this repository:
+```bash
+git clone https://github.com/cgu-tech/ha-zero-hid.git
+```
+
+Put `trackpad-card.js` in `/config/www/`:
+```bash
+mkdir -p /config/www/ && cp ha-zero-hid/trackpad-card.js /config/www/trackpad-card.js
 ```
 
 Ensure the file is served by HA frontend:
 Add this to your `configuration.yaml`:
+```bash
+nano /config/configuration.yaml
+```
 ```yaml
 frontend:
   extra_module_url:
     - /local/trackpad-card.js
 ```
 
-Put `trackpad-card.js` in `/config/www/`.
+
+Add this card to your Lovelace dashboard via **Manual Card**:
+```yaml
+type: custom:trackpad-card
+```
