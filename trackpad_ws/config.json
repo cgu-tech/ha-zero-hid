@@ -1,0 +1,12 @@
+{
+  "name": "Trackpad WebSocket Proxy",
+  "version": "1.0.0",
+  "slug": "trackpad_ws",
+  "description": "Sends trackpad moves to a LAN WebSocket server",
+  "startup": "application",
+  "boot": "auto",
+  "host_network": true,
+  "ingress": false,
+  "schema": {},
+  "stdin": true
+}
