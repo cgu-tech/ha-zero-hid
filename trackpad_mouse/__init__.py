@@ -21,12 +21,15 @@ MOVE_SERVICE_SCHEMA = vol.Schema({
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the trackpad mouse integration."""
 
+    @callback
     async def handle_start(call):
         await async_start_addon(hass, ADDON_SLUG)
 
+    @callback
     async def handle_stop(call):
         await async_stop_addon(hass, ADDON_SLUG)
 
+    @callback
     async def handle_move(call: ServiceCall) -> None:
         x = call.data["x"]
         y = call.data["y"]
@@ -48,8 +51,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         else:
             _LOGGER.debug("Command sent successfully to add-on.")
 
+    # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "start_addon", handle_start)
     hass.services.async_register(DOMAIN, "stop_addon", handle_stop)
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
 
+    # Return boolean to indicate that initialization was successfully.
     return True
