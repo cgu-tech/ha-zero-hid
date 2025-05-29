@@ -20,6 +20,11 @@ Put `trackpad_mouse` directory in `/config/custom_components`:
 mkdir -p /config/custom_components && cp ha-zero-hid/trackpad_mouse /config/custom_components
 ```
 
+Setup your RPI IP:
+```bash
+read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/custom_components/trackpad_mouse/__init__.py
+```
+
 Put `trackpad-card.js` in `/config/www/`:
 ```bash
 mkdir -p /config/www && cp ha-zero-hid/trackpad-card.js /config/www/trackpad-card.js
