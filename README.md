@@ -43,6 +43,17 @@ frontend:
 
 Reboot Home Assistant **(not reload)**
 
+Add the **Trackpad Mouse** integration into HA configuration:
+Add this to your `configuration.yaml`:
+```bash
+nano /config/configuration.yaml
+```
+```yaml
+trackpad_mouse:
+```
+
+Reboot Home Assistant **(not reload)**
+
 Add this card to your Lovelace dashboard via **Manual Card**:
 ```yaml
 type: custom:trackpad-card
