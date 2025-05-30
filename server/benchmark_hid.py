@@ -17,6 +17,6 @@ watch("After 5s")
 
 with Keyboard() as k:
     watch("After Keyboard init")
-    for i in range(1, 10):
+    for i in range(1, 1000):
         k.press([], KeyCodes.KEY_SPACE)
     watch("After Keyboard range")
