@@ -48,7 +48,7 @@ Adjust your network settings until both pings succeed.
 
 Follow zero-hid USB gadget module [install instructions](https://github.com/thewh1teagle/zero-hid/tree/main/usb_gadget#usb-gadget-module-configuration-for-zero-hid)
 
-### Install websockets server (automatically)
+### Install websockets server
 
 Retrieve latest version:
 ```bash
@@ -68,45 +68,7 @@ sudo /bin/bash install.sh
 - in case of an upgrade, uninstall first when prompted, then run the install script again.
 - system user `ha_zero_hid` will automatically be created by install script. It is a non-interractive user that serves to run the webserver.
 
-### Install websockets server (manually)
-
-#### Install Python
-```bash
-sudo apt-get install -y git python3-pip python3-venv
-```
-
-#### Create a Python venv for the server
-```bash
-python3 -m venv ~/venv_websocket
-```
-
-#### Activate Python venv
-```bash
-venv activation : source ~/venv_websocket/bin/activate
-```
-
-#### Clone zero-hid repository
-```bash
-(rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/zero-hid.git
-```
-
-#### Install server dependencies into venv
-```bash
-pip install --editable zero-hid
-pip install websockets
-```
-
-#### Run websockets server
-```bash
-python3 ha-zero-hid/server/websockets_server.py
-```
-
-`Project status`: as of now, server will not be restarted automatically when USB-gadget shutdown (RPI zero 2w). 
-You will have to redo those steps to restart the server:
-- **Activate Python venv**
-- **Run websockets server**
-
-## On your HA instance (use HA ssh add-on of your choice)
+## On your HA instance (use ssh HA add-on of your choice)
 
 #### Clone this repository
 ```bash
