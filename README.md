@@ -7,7 +7,7 @@ The mouse can be used for whatever end-device to be remote controlled (AndroidTV
 
 `Project status`: beta stage, fully working mouse with trackpad card. Manual installation. Trackpad card cannot be customized.
 
-# What do you need
+# What's needed
 - A running Home Assistant instance
 - A Raspberry Pi that will be used as USB gadget - should be distinct from Home Assistant host. The project is tested on RPI zero 2W, but might work on RPI 4 too.
 - An end-device to be remote controlled. The end-device should natively support mouse. 
@@ -40,9 +40,9 @@ Adjust your network settings until both pings succeed.
     - receives trackpad pointer deltas from HA instance
     - passes those deltas to zero-hid, thus effectively moving mouse on the end-device
 
-# Installation
+# How to install
 
-## On your USB gadget (RPI zero 2W)
+## On USB gadget device (RPI zero 2W)
 
 ### Install USB gadget module
 
@@ -68,9 +68,22 @@ sudo /bin/bash install.sh
 - in case of an upgrade, uninstall first when prompted, then run the install script again.
 - system user `ha_zero_hid` will automatically be created by install script. It is a non-interractive user that serves to run the webserver.
 
-## On your HA instance (use ssh HA add-on of your choice)
+## On your HA instance
 
-### Install HA client integration, including websockets client
+### Enable Advanced mode into HA
+- Click your profile picture (bottom left)
+- Enable "Advanced Mode" if it's not already enabled
+
+### Install Terminal & SSH
+- Click `Settings` → `Add-ons store` → search `Terminal & SSH`
+- Install `Terminal & SSH` add-on
+- In the add-on details page, find the toggle:
+  - `Start on boot` → Enable this
+  - `Show in sidebar` → Enable this
+  - Hit `Start`
+
+### Install HA websockets client integration, HA custom trackpad card
+Open SSH session from `Terminal & SSH` add-on
 
 Retrieve latest version of this repository:
 ```bash
@@ -90,13 +103,10 @@ Run the install script:
 - in case of an upgrade, uninstall first when prompted, then run the install script again.
 
 ### Add custom card into HA ressources
-- Click your profile picture (bottom left)
-- Enable "Advanced Mode" if it's not already enabled
-- Then go to: `Settings` → `Dashboards` → (`⋮` on your dashboard) → `Resources`
-- Click "Add Resource"
-  - URL: /local/trackpad-card.js
-  - Type: JavaScript Module
-  - reload the dashboard (`CTRL` + `F5`)
+- Go to: `Settings` → `Dashboards` → (`⋮` on your dashboard) → `Resources`
+- Click `Add Resource`
+  - URL: `/local/trackpad-card.js`
+  - Type: `JavaScript Module`
 
 Reboot Home Assistant **(not reload)**
 
