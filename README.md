@@ -36,6 +36,7 @@ Adjust your network until both pings succeed (if needed).
   - a lightweight websockets servers that :
     - receives trackpad pointer deltas from HA instance
     - passes those deltas to zero-hid USB-gadget, resulting in mouse pointer moves visible on the end-devices
+```
 
 # Installation
 
