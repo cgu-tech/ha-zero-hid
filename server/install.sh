@@ -16,8 +16,12 @@ install() {
     cp websockets_server.py /opt/ha_zero_hid/
     chmod +x /opt/ha_zero_hid/websockets_server_run.sh
     
-    # Create python venv for server
+    # Create python venv for server and install dependencies
+    apt-get update
+    apt-get install -y git python3-pip python3-venv git
     python3 -m venv /opt/ha_zero_hid/venv
+    pip install --editable ../.
+    pip install websockets
     
     # Configure systemd unit
     cp websockets_server.service /etc/systemd/system/
