@@ -47,7 +47,18 @@ Adjust your network settings until both pings succeed.
 ### Install zero-hid
 [zero-hid installation](https://github.com/cgu-tech/zero-hid)
 
-### Install websockets server
+### Install websockets server (automatically)
+
+Execute the following commands to install websockets server automatically:
+```bash
+(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
+cd ha-zero-hid/server/
+sudo /bin/bash install.sh
+```
+
+**Note:** system user `ha_zero_hid` will automatically be created to run the webserver.
+
+### Install websockets server (manually)
 
 #### Install Python
 ```bash
