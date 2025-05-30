@@ -1,0 +1,18 @@
+[Unit]
+Description=HA zero-hid websockets server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/ha_zero_hid/websockets_server_run.sh
+Restart=always
+RestartSec=5
+TimeoutSec=0
+WorkingDirectory=/opt/ha_zero_hid
+StandardOutput=journal
+StandardError=journal
+User=your_user_name_here
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
