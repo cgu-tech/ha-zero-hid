@@ -18,7 +18,6 @@ install() {
             sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/custom_components/trackpad_mouse/__init__.py
             echo "Websocket server IP v4 set to ${websocket_server_ip}"
             break
-            ;;
         else
             echo "Please answer a valid websocket server IP v4 (vvv.xxx.yyy.zzz)"
         fi

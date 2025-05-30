@@ -74,7 +74,7 @@ sudo /bin/bash install.sh
 
 Retrieve latest version of this repository:
 ```bash
-(sudo rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
+(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
 Go to install script directory:
@@ -84,7 +84,7 @@ cd ha-zero-hid/client/
 
 Run the install script:
 ```bash
-sudo /bin/bash install.sh
+/bin/bash install.sh
 ```
 **Note:**
 - in case of an upgrade, uninstall first when prompted, then run the install script again.
