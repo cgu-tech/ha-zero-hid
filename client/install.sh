@@ -3,28 +3,26 @@
 
 install() {
     # Create HA client integration
-    (rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true) && cp -R ha-zero-hid/client/custom_components /config
+    (rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true) && cp -R custom_components /config
     
     # Enable HA client integration
     grep -qxF "trackpad_mouse:" /config/configuration.yaml || echo "trackpad_mouse:" >> /config/configuration.yaml
     
     # Setup HA client integration: setup USB gadget server IP
-    read -p "USB gadget server IP (RPI zero 2w IP): " websocket_server_ip && 
-    
     regex='^((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\.){3}(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))$'
-    read -p "Specify USB gadget server IP (RPI zero 2w IP): " websocket_server_ip </dev/tty
+    read -p "Enter USB gadget server IP v4 LAN address (ex: 192.168.1.15): " websocket_server_ip </dev/tty
     while true; do
         if [[ $websocket_server_ip =~ $regex ]]; then
             sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/custom_components/trackpad_mouse/__init__.py
-            echo "Websocket server IP v4 set to ${websocket_server_ip}"
+            echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}"
             break
         else
-            echo "Please answer a valid websocket server IP v4 (vvv.xxx.yyy.zzz)"
+            echo "Please answer a valid IP v4 address (vvv.xxx.yyy.zzz)"
         fi
     done
     
     # Create HA client custom trackpad card
-    (rm /config/www/trackpad-card.js >/dev/null 2>&1 || true) && cp -R ha-zero-hid/client/www /config
+    (rm /config/www/trackpad-card.js >/dev/null 2>&1 || true) && cp -R www /config
 }
 
 uninstall () {

@@ -52,7 +52,7 @@ Follow zero-hid USB gadget module [install instructions](https://github.com/thew
 
 Retrieve latest version of this repository:
 ```bash
-(sudo rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
+(sudo rm -rf ha-zero-hid >/dev/null 2>&1 || true) && cd && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
 Go to install script directory:
@@ -74,7 +74,7 @@ sudo /bin/bash install.sh
 
 Retrieve latest version of this repository:
 ```bash
-(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
+(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && cd && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
 Go to install script directory:
