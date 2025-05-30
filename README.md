@@ -47,33 +47,33 @@ Adjust your network until both pings succeed (if needed).
 
 ### Install websockets server: 
 
-Install Python:
+#### Install Python:
 ```bash
 sudo apt-get install -y git python3-pip python3-venv
 ```
 
-### Create a Python venv for the server:
+#### Create a Python venv for the server:
 ```bash
 python3 -m venv ~/venv_websocket
 ```
 
-### Clone this repository:
+#### Clone this repository:
 ```bash
 (rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b test/integration https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
-### Activate Python venv:
+#### Activate Python venv:
 ```bash
 venv activation : source ~/venv_websocket/bin/activate
 ```
 
-### Install server dependencies into venv:
+#### Install server dependencies into venv:
 ```bash
 pip install --editable ~/zero-hid
 pip install websockets
 ```
 
-### Run websockets server:
+#### Run websockets server:
 ```bash
 python3 ha-zero-hid/server/websockets_server.py
 ```
