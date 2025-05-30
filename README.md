@@ -14,9 +14,10 @@ The mouse can be used for whatever end-device to be remote controlled (AndroidTV
 When in doubt and before going any further, test with a real mouse directly plugged in the end-device and check if cursor moves.
 
 **Important:** both Home Assistant host and Raspberry Pi should be connected to the same network and able to communicate between each-other:
-- ping Raspberri Pi from HA ssh addon
-- ping from Raspberry Pi ssh to HA instance
-Adjust your network until both pings succeed (if needed).
+- ping Raspberry Pi from HA using ssh addon
+- ping HA instance from Raspberry Pi using ssh client (ex: Putty). 
+
+Adjust your network settings until both pings succeed.
 
 # How it works
 ```
