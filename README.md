@@ -51,9 +51,10 @@ Adjust your network settings until both pings succeed.
 
 Execute the following commands to install websockets server automatically:
 ```bash
-sudo (rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
-cd ha-zero-hid/server/
-sudo /bin/bash install.sh
+(sudo rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
+```
+```bash
+cd ha-zero-hid/server/ && sudo /bin/bash install.sh
 ```
 
 **Note:** system user `ha_zero_hid` will automatically be created to run the webserver.
