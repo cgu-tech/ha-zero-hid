@@ -23,7 +23,7 @@ install() {
     source /opt/ha_zero_hid/venv/bin/activate
     (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/zero-hid.git
     mv zero-hid /opt/ha_zero_hid/
-    pip install --editable zero-hid
+    pip install --editable /opt/ha_zero_hid/zero-hid
     pip install websockets
     
     # Security: create user+group dedicated to service
