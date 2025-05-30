@@ -15,6 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 # Use empty_config_schema because the component does not have any config options
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
+# Prevents wrong values inputs and overflow (i.e. text, float, values lesser than min or greater than max)
 def clamp_to_range(value, min_val, max_val):
     try:
         value = int(float(value))  # Accept strings or floats, convert to int
@@ -37,15 +38,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_move(call: ServiceCall) -> None:
         x = call.data.get("x")
         y = call.data.get("y")
-        _LOGGER.info(f"handle_move.call.data.x: {x}")
-        _LOGGER.info(f"handle_move.call.data.y: {y}")
+        _LOGGER.debug(f"handle_move.call.data.x: {x}")
+        _LOGGER.debug(f"handle_move.call.data.y: {y}")
 
         # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.info("ws_client retrieved")
+        _LOGGER.debug("ws_client retrieved")
 
-        await ws_client.send_move(x, y)
-        _LOGGER.info(f"ws_client.send_move(x, y): {x},{y}")
+        # Send move command to RPI HID
+        try:
+            await ws_client.send_move(x, y)
+            _LOGGER.debug(f"ws_client.send_move(x, y): {x},{y}")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_move: {e}")
 
     # Register our service with Home Assistant.
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
