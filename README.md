@@ -59,19 +59,19 @@ sudo apt-get install -y git python3-pip python3-venv
 python3 -m venv ~/venv_websocket
 ```
 
-#### Clone this repository
-```bash
-(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b test/integration https://github.com/cgu-tech/ha-zero-hid.git
-```
-
 #### Activate Python venv
 ```bash
 venv activation : source ~/venv_websocket/bin/activate
 ```
 
+#### Clone this repository
+```bash
+(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
+```
+
 #### Install server dependencies into venv
 ```bash
-pip install --editable ~/zero-hid
+pip install --editable zero-hid
 pip install websockets
 ```
 
@@ -80,13 +80,16 @@ pip install websockets
 python3 ha-zero-hid/server/websockets_server.py
 ```
 
-`Current state`: as of now, server will not be restarted automatically when USB-gadget shutdown (RPI zero 2w)
+`Project status`: as of now, server will not be restarted automatically when USB-gadget shutdown (RPI zero 2w). 
+You will have to redo those steps to restart the server:
+- **Activate Python venv**
+- **Run websockets server**
 
 ## On your HA instance (use HA ssh add-on of your choice)
 
 #### Clone this repository
 ```bash
-(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b test/integration https://github.com/cgu-tech/ha-zero-hid.git
+(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
 #### Install `trackpad_mouse` integration
