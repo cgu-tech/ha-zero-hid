@@ -50,7 +50,7 @@ Follow zero-hid USB gadget module [install instructions](https://github.com/thew
 
 ### Install websockets server
 
-Retrieve latest version:
+Retrieve latest version of this repository:
 ```bash
 (sudo rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
@@ -70,32 +70,26 @@ sudo /bin/bash install.sh
 
 ## On your HA instance (use ssh HA add-on of your choice)
 
-#### Clone this repository
+### Install HA client integration, including websockets client
+
+Retrieve latest version of this repository:
 ```bash
-(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
+(sudo rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
-#### Install `trackpad_mouse` integration
+Go to install script directory:
 ```bash
-(rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true) && cp -R ha-zero-hid/custom_components /config
-(rm /config/www/trackpad-card.js >/dev/null 2>&1 || true) && cp -R ha-zero-hid/www /config
+cd ha-zero-hid/client/
 ```
 
-#### Setup your zero-hid server IP into the integration (i.e. your RPI zero IP)
+Run the install script:
 ```bash
-read -p "RPI IP: " websocket_server_ip && sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/custom_components/trackpad_mouse/__init__.py
+sudo /bin/bash install.sh
 ```
+**Note:**
+- in case of an upgrade, uninstall first when prompted, then run the install script again.
 
-#### Ensure `trackpad_mouse` integration is loaded into your configuration
-Add this to your `configuration.yaml`:
-```bash
-nano /config/configuration.yaml
-```
-```yaml
-trackpad_mouse:
-```
-
-#### Add custom card into HA ressources
+### Add custom card into HA ressources
 - Click your profile picture (bottom left)
 - Enable "Advanced Mode" if it's not already enabled
 - Then go to: `Settings` → `Dashboards` → (`⋮` on your dashboard) → `Resources`
@@ -106,7 +100,7 @@ trackpad_mouse:
 
 Reboot Home Assistant **(not reload)**
 
-#### Add custom card into Lovelace dashboard
+### Add custom card into Lovelace dashboard
 - Click add a card
 - Search for **Manual Card**
 - Into yaml editor, replace `type: ""` by the following code:
