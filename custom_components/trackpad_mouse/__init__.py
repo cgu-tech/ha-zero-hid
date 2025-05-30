@@ -30,7 +30,7 @@ MOVE_SERVICE_SCHEMA = vol.Schema({
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websocket global client."""
-    ws_client = WebSocketClient("ws://192.168.0.86:8765")
+    ws_client = WebSocketClient("ws://<websocket_server_ip>:8765")
     hass.data[DOMAIN] = ws_client  # store globally
 
     """Set up the async handle_move service component."""
