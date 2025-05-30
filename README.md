@@ -26,7 +26,7 @@ Adjust your network settings until both pings succeed.
 |    |_ ha-zero-hid                     |      |    |_ zero-hid                      | USB |                                     |
 |      |_ trackpad_mouse (integration)  | WIFI |       |_USB HID gadget          <------------>                                  |
 |          |_ websockets client    <--------------> |_ websockets server             |     |                                     |
-|      |_ trackpad_card (lovelace card) |      |    |_ trackpad_card (lovelace card) |     |                                     |
+|      |_ trackpad_card (lovelace card) |      |                                     |     |                                     |
 |_______________________________________|      |_____________________________________|     |_____________________________________|
 ```
 
