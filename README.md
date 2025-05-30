@@ -64,9 +64,9 @@ python3 -m venv ~/venv_websocket
 venv activation : source ~/venv_websocket/bin/activate
 ```
 
-#### Clone this repository
+#### Clone zero-hid repository
 ```bash
-(rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
+(rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/zero-hid.git
 ```
 
 #### Install server dependencies into venv

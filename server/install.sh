@@ -21,7 +21,8 @@ install() {
     apt-get install -y git python3-pip python3-venv git
     python3 -m venv /opt/ha_zero_hid/venv
     source /opt/ha_zero_hid/venv/bin/activate
-    pip install --editable ../.
+    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/zero-hid.git
+    pip install --editable zero-hid
     pip install websockets
     
     # Configure systemd unit
@@ -54,7 +55,7 @@ if [ -f "/opt/ha_zero_hid/websockets_server_run.sh" ]; then
         [Yy]* )
             uninstall
             echo "Done uninstalling HA zero-hid websockets server."
-            break;;
+            exit 0;;
         [Nn]* ) exit 0;;
         * ) echo "Please answer yes or no.";;
     esac
