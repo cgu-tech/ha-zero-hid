@@ -26,9 +26,9 @@ install() {
     pip install websockets
     
     # Security: create user+group dedicated to service
-    sudo useradd --system --no-create-home ha_zero_hid
-    sudo chown -R :ha_zero_hid
-    sudo chmod -R g+w /opt/ha_zero_hid
+    useradd --system --no-create-home ha_zero_hid
+    chown -R :ha_zero_hid /opt/ha_zero_hid
+    chmod -R g+w /opt/ha_zero_hid
     
     # Configure systemd unit
     cp websockets_server.service /etc/systemd/system/
