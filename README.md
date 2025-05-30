@@ -44,8 +44,9 @@ Adjust your network settings until both pings succeed.
 
 ## On your USB gadget (RPI zero 2W)
 
-### Install zero-hid
-[zero-hid installation](https://github.com/cgu-tech/zero-hid)
+### Install USB gadget module
+
+Follow zero-hid USB gadget module [install instructions](https://github.com/thewh1teagle/zero-hid/tree/main/usb_gadget#usb-gadget-module-configuration-for-zero-hid)
 
 ### Install websockets server (automatically)
 
