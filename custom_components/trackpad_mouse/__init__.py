@@ -3,57 +3,56 @@ from __future__ import annotations
 import logging
 import voluptuous as vol
 
-from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers.typing import ConfigType
+from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv
-from homeassistant.components.hassio.handler import HassIO
-from homeassistant.components.hassio import async_start_addon, async_stop_addon
+from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, ADDON_SLUG
+from .websocket_handler import WebSocketClient
+from .const import DOMAIN, MIN_RANGE, MAX_RANGE
 
 _LOGGER = logging.getLogger(__name__)
 
+# Use empty_config_schema because the component does not have any config options
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+
+# Prevents wrong values inputs and overflow (i.e. text, float, values lesser than min or greater than max)
+def clamp_to_range(value, min_val, max_val):
+    try:
+        value = int(float(value))  # Accept strings or floats, convert to int
+    except (ValueError, TypeError):
+        value = 0  # Or set to None, or raise, depending on what you want
+    return max(min_val, min(max_val, value))
+
 MOVE_SERVICE_SCHEMA = vol.Schema({
-    vol.Required("x"): vol.Coerce(int),
-    vol.Required("y"): vol.Coerce(int),
+    vol.Required("x"): lambda v: clamp_to_range(v, MIN_RANGE, MAX_RANGE),
+    vol.Required("y"): lambda v: clamp_to_range(v, MIN_RANGE, MAX_RANGE),
 })
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the trackpad mouse integration."""
+    """Set up the websocket global client."""
+    ws_client = WebSocketClient("ws://192.168.0.86:8765")
+    hass.data[DOMAIN] = ws_client  # store globally
 
-    @callback
-    async def handle_start(call):
-        await async_start_addon(hass, ADDON_SLUG)
-
-    @callback
-    async def handle_stop(call):
-        await async_stop_addon(hass, ADDON_SLUG)
-
+    """Set up the async handle_move service component."""
     @callback
     async def handle_move(call: ServiceCall) -> None:
-        x = call.data["x"]
-        y = call.data["y"]
-        command = f"move:{x},{y}\n"
+        x = call.data.get("x")
+        y = call.data.get("y")
+        _LOGGER.debug(f"handle_move.call.data.x: {x}")
+        _LOGGER.debug(f"handle_move.call.data.y: {y}")
 
-        # Call supervisor API to write to stdin
-        _LOGGER.debug("Sending to add-on via stdin: %s", command.strip())
-        response = await hass.components.hassio.send_command(
-            {
-                "type": "addons",
-                "slug": ADDON_SLUG,
-                "command": "stdin",
-                "data": command,
-            }
-        )
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
 
-        if not response.get("result") == "ok":
-            _LOGGER.error("Failed to send command to add-on: %s", response)
-        else:
-            _LOGGER.debug("Command sent successfully to add-on.")
+        # Send move command to RPI HID
+        try:
+            await ws_client.send_move(x, y)
+            _LOGGER.debug(f"ws_client.send_move(x, y): {x},{y}")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_move: {e}")
 
-    # Register our services with Home Assistant.
-    hass.services.async_register(DOMAIN, "start_addon", handle_start)
-    hass.services.async_register(DOMAIN, "stop_addon", handle_stop)
+    # Register our service with Home Assistant.
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
 
     # Return boolean to indicate that initialization was successfully.

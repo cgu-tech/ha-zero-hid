@@ -1,2 +1,3 @@
 DOMAIN = "trackpad_mouse"
-ADDON_SLUG = "trackpad_ws"
+MIN_RANGE = -127
+MAX_RANGE = 127

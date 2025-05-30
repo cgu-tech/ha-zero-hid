@@ -7,13 +7,13 @@ move:
       required: true
       selector:
         number:
-          min: -1000
-          max: 1000
+          min: -127
+          max: 127
     y:
       description: Y-axis movement
       example: -50
       required: true
       selector:
         number:
-          min: -1000
-          max: 1000
+          min: -127
+          max: 127
