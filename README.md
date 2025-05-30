@@ -22,7 +22,7 @@ Adjust your network settings until both pings succeed.
 # How it works
 ```
  _______________________________________        _____________________________________       _____________________________________ 
-|   HA instance (ex: RPI 4, RPI 5, VM)  |      |   USB gadget (ex: RPI zero 2W)      |     |   END-DEVICE (ex: AndroidTV, PC)    |
+|   HA instance (ex: RPI 4, RPI 5, VM)  |      |   USB gadget (ex: RPI zero 2W)      |     |   End-device (ex: AndroidTV, PC)    |
 |    |_ ha-zero-hid                     |      |    |_ zero-hid                      | USB |                                     |
 |      |_ trackpad_mouse (integration)  | WIFI |       |_USB HID gadget          <------------>                                  |
 |          |_ websockets client    <--------------> |_ websockets server             |     |                                     |
@@ -31,14 +31,17 @@ Adjust your network settings until both pings succeed.
 ```
 
 - HA instance :
-  - A frontend card that acts as a trackpad and sends pointer deltas.
+  - A frontend card that acts as a trackpad and sends pointer deltas
   - A Home Assistant custom integration to send trackpad pointers deltas to USB gadget through a lightweight websockets client
 
 - USB gadget :
   - A zero-hid install that enable USB-gadget on RPI zero 2W
-  - A lightweight websockets servers that :
+  - A lightweight websockets servers that:
     - receives trackpad pointer deltas from HA instance
     - passes those deltas to zero-hid, thus effectively moving mouse on the end-device
+
+- End-device :
+  - Any mouse controllable device, to be remote controlled
 
 # How to install
 
