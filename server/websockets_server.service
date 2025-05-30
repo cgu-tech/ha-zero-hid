@@ -11,7 +11,8 @@ TimeoutSec=0
 WorkingDirectory=/opt/ha_zero_hid
 StandardOutput=journal
 StandardError=journal
-User=your_user_name_here
+User=ha_zero_hid
+Group=ha_zero_hid
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
