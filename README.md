@@ -77,7 +77,7 @@ sudo /bin/bash install.sh
 - Click your profile picture (bottom left)
 - Enable "Advanced Mode" if it's not already enabled
 
-### Install Terminal & SSH
+### Install SSH add-on into HA
 - Click `Settings` → `Add-ons store` → search `Terminal & SSH`
 - Install `Terminal & SSH` add-on
 - In the add-on details page, find the toggle:
