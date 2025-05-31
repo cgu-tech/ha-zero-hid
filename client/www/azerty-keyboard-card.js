@@ -101,7 +101,8 @@ console.info("Loading AZERTY Keyboard Card");
           --key-height: 45px;
           --key-margin: 3px;
           user-select: none;
-          display: block;
+          display: inline-block;       /* changed from block */
+          min-width: max-content;      /* fit content width */
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
@@ -112,18 +113,19 @@ console.info("Loading AZERTY Keyboard Card");
           padding: 10px 5px 15px 5px;
           background: #1a1a1a;
           border-radius: 8px;
-          max-width: 900px;
           margin: auto;
           box-sizing: border-box;
           user-select: none;
+          width: max-content;          /* size container to content */
+          /* max-width removed */
         }
         
         .keyboard-row {
           display: flex;
           margin-bottom: 6px;
           width: 100%;
-          justify-content: space-between; /* Justify keys across row */
-          gap: 6px; /* Use gap instead of margin for spacing */
+          justify-content: space-between;
+          gap: 6px;
         }
         
         button.key {
@@ -134,8 +136,6 @@ console.info("Loading AZERTY Keyboard Card");
           font-size: 14px;
           cursor: pointer;
           height: var(--key-height);
-          /* Remove margin from buttons, replaced by gap */
-          /* margin: var(--key-margin); */
           min-width: var(--key-width-normal);
           display: flex;
           align-items: center;
@@ -146,18 +146,16 @@ console.info("Loading AZERTY Keyboard Card");
           user-select: none;
           padding: 0 6px;
           white-space: nowrap;
-          flex-shrink: 0; /* prevent shrinking */
+          flex-shrink: 0;
         }
         
-        /* Make wider keys grow to fill remaining space */
         button.key.wide,
         button.key.wider,
         button.key.space {
           flex-grow: 1;
-          min-width: 0; /* allow shrinking */
+          min-width: 0;
         }
         
-        /* Space key grows more for visual balance */
         button.key.space {
           flex-grow: 2;
         }
