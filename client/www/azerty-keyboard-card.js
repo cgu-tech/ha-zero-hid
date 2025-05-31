@@ -23,10 +23,10 @@ console.info("Loading AZERTY Keyboard Card");
         { code: "Digit0", label: { normal: "à", shift: "0", altGr: "@" } },
         { code: "Minus", label: { normal: ")", shift: "°", altGr: "]" } },
         { code: "Equal", label: { normal: "=", shift: "+", altGr: "}" } },
-        { code: "Backspace", label: { normal: "Backspace" }, special: true, width: "wider" },
+        { code: "Backspace", label: { normal: "\u232B" }, special: true, width: "wider" }, // ⌫
 
         // Row 2
-        { code: "Tab", label: { normal: "\uD87E\uDD7E" }, special: true, width: "wide" }, // ⭾
+        { code: "Tab", label: { normal: "\u21B9" }, special: true, width: "wide" }, // ↹
         { code: "KeyA", label: { normal: "a", shift: "A" } },
         { code: "KeyZ", label: { normal: "z", shift: "Z" } },
         { code: "KeyE", label: { normal: "e", shift: "E", altGr: "€" } },
