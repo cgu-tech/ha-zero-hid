@@ -33,6 +33,25 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     ws_client = WebSocketClient("ws://<websocket_server_ip>:8765")
     hass.data[DOMAIN] = ws_client  # store globally
 
+    """Set up the async handle_scroll service component."""
+    @callback
+    async def handle_scroll(call: ServiceCall) -> None:
+        x = call.data.get("x")
+        y = call.data.get("y")
+        _LOGGER.debug(f"handle_scroll.call.data.x: {x}")
+        _LOGGER.debug(f"handle_scroll.call.data.y: {y}")
+
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
+
+        # Send command to RPI HID
+        try:
+            await ws_client.send_scroll(x, y)
+            _LOGGER.debug(f"ws_client.send_scroll(x, y): {x},{y}")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_scroll: {e}")
+
     """Set up the async handle_move service component."""
     @callback
     async def handle_move(call: ServiceCall) -> None:

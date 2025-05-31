@@ -192,6 +192,7 @@ console.info("Loading Trackpad Card");
 
         let lastX = null;
         let lastY = null;
+        let trackpadMode = null;
 
         this.content.addEventListener("pointerdown", e => {
           lastX = e.clientX;
@@ -218,7 +219,12 @@ console.info("Loading Trackpad Card");
             lastX = e.clientX;
             lastY = e.clientY;
 
-            hass.callService("trackpad_mouse", "move", {
+            if (isToggledOn) {
+              trackpadMode = "scroll";
+            } else {
+              trackpadMode = "move";
+            }
+            hass.callService("trackpad_mouse", trackpadMode, {
               x: dx,
               y: dy,
             });

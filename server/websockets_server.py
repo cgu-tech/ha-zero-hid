@@ -26,6 +26,15 @@ async def handle_client(websocket):
             hex_string = ' '.join(f'{byte:02x}' for byte in b)
             print(f"Hex representation: {hex_string}")
 
+            if message.startswith("scroll:"):
+                dx, dy = map(int, message.replace("scroll:", "").split(","))
+                print("Mouse scroll in progress:", dx, dy)
+                if dx != 0:
+                  mouse.scroll_x(dx)
+                if dy != 0:
+                  mouse.scroll_y(dy)
+                print("Mouse scroll end:", dx, dy)
+
             if message.startswith("move:"):
                 dx, dy = map(int, message.replace("move:", "").split(","))
                 print("Mouse move in progress:", dx, dy)

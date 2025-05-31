@@ -36,6 +36,10 @@ class WebSocketClient:
                 finally:
                     self.websocket = None
 
+    async def send_scroll(self, x, y):
+        """Send a scroll command."""
+        await self.send(f"scroll:{x},{y}")
+
     async def send_move(self, x, y):
         """Send a move command."""
         await self.send(f"move:{x},{y}")
