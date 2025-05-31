@@ -136,6 +136,7 @@ Check your network router:
   - assign static IP address to each device through DHCP into your network router
     - hard + soft reboot your network router
     - hard + soft reboot each device one by one
+
 Retry `ping` from/to each device:
 ```bash
 ping <device_ip>
@@ -146,7 +147,7 @@ Such bugs can be corrupted ARP tables, routes and caches.
 
 Most of the time these bugs :
 - occurs only for the time between when you assign static IP through DHCP on your router and the time those network components refresh.
-- can be definitively fixed after multiple hard **and** sof reboot of all devices, starting with the router followed by eaech device one-by-one.
+- can be definitively fixed after multiple hard **and** soft reboot of all devices, starting with the router followed by eaech device one-by-one.
 
 ### I want to debug HA zero-hid server
 Check server is running:
