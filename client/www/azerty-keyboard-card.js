@@ -106,6 +106,7 @@ console.info("Loading AZERTY Keyboard Card");
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           box-sizing: border-box;
         }
+        
         .keyboard-container {
           display: flex;
           flex-direction: column;
@@ -117,17 +118,14 @@ console.info("Loading AZERTY Keyboard Card");
           box-sizing: border-box;
           width: 100%;
         }
+        
         .keyboard-row {
           display: flex;
           margin-bottom: 0.35rem;
           width: 100%;
           gap: 0.3rem;
         }
-        /* Reduce margin and gap on last row for fit */
-        .keyboard-row:last-child {
-          margin-bottom: 0.2rem;
-          gap: 0.15rem;
-        }
+        
         button.key {
           background: var(--key-bg);
           border: none;
@@ -148,31 +146,40 @@ console.info("Loading AZERTY Keyboard Card");
           padding: 0 0.5rem;
           white-space: nowrap;
         }
+        
         button.key.wide {
           flex-grow: 2;
         }
+        
         button.key.wider {
           flex-grow: 3;
         }
+        
         button.key.space {
           flex-grow: 6;
+          min-width: 0;
         }
+        
         button.key.special {
           background: var(--key-special-bg);
           color: var(--key-special-color);
           font-weight: 600;
           font-size: 0.9rem;
         }
+        
         button.key:hover {
           background: var(--key-hover-bg);
         }
+        
         button.key:active {
           background: var(--key-active-bg);
         }
+        
         button.key.active {
           background: #5a5a5a !important;
           color: #fff !important;
         }
+        
         .label-upper {
           position: absolute;
           top: 0.3rem;
@@ -181,6 +188,7 @@ console.info("Loading AZERTY Keyboard Card");
           opacity: 0.7;
           user-select: none;
         }
+        
         .label-lower {
           font-size: 1.15rem;
           font-weight: 500;
