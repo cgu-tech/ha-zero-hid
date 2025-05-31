@@ -28,6 +28,16 @@ MOVE_SERVICE_SCHEMA = vol.Schema({
     vol.Required("y"): lambda v: clamp_to_range(v, MIN_RANGE, MAX_RANGE),
 })
 
+def ensure_list_or_empty(val):
+    if val is None:
+        return []
+    return vol.ensure_list(val)
+
+KEYPRESS_SERVICE_SCHEMA = vol.Schema({
+    vol.Optional("sendModifiers", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
+    vol.Optional("sendKeys", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
+})
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websocket global client."""
     ws_client = WebSocketClient("ws://<websocket_server_ip>:8765")
@@ -127,6 +137,25 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_clickrelease: {e}")
 
+    """Set up the async handle_keypress service component."""
+    @callback
+    async def handle_keypress(call: ServiceCall) -> None:
+        modifiers = call.data.get("sendModifiers")
+        keys = call.data.get("sendKeys")
+        _LOGGER.debug(f"handle_keypress.call.data.sendModifiers: {modifiers}")
+        _LOGGER.debug(f"handle_keypress.call.data.sendKeys: {keys}")
+
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
+
+        # Send command to RPI HID
+        try:
+            await ws_client.send_keypress(modifiers, keys)
+            _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_keypress: {e}")
+
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
@@ -134,6 +163,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "clickmiddle", handle_clickmiddle)
     hass.services.async_register(DOMAIN, "clickright", handle_clickright)
     hass.services.async_register(DOMAIN, "clickrelease", handle_clickrelease)
+    hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
 
     # Return boolean to indicate that initialization was successfully.
     return True

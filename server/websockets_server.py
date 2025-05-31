@@ -1,6 +1,8 @@
 import asyncio
 import websockets
+import ast
 from zero_hid import Mouse
+from zero_hid import Keyboard, KeyCodes
 
 # Prerequisites
 # sudo apt-get install -y git python3-pip python3-venv
@@ -16,6 +18,14 @@ from zero_hid import Mouse
 # python3 ~/websocket_server.py
 
 mouse = Mouse()
+keyboard = Keyboard()
+
+def safe_eval(s):
+    try:
+        return ast.literal_eval(s)
+    except (ValueError, SyntaxError):
+        print(f"Ignored value {s}: error occurred while trying to convert it as list. ValueError: {ValueError}; ValueError: {SyntaxError};")
+        return []
 
 async def handle_client(websocket):
     print("Client connected")
@@ -26,7 +36,13 @@ async def handle_client(websocket):
             hex_string = ' '.join(f'{byte:02x}' for byte in b)
             print(f"Hex representation: {hex_string}")
 
-            if message.startswith("scroll:"):
+            if message.startswith("move:"):
+                dx, dy = map(int, message.replace("move:", "").split(","))
+                print("Mouse move in progress:", dx, dy)
+                mouse.move(dx, dy)
+                print("Mouse move end:", dx, dy)
+
+            elif message.startswith("scroll:"):
                 dx, dy = map(int, message.replace("scroll:", "").split(","))
                 print("Mouse scroll in progress:", dx, dy)
                 if dx != 0:
@@ -34,12 +50,6 @@ async def handle_client(websocket):
                 if dy != 0:
                   mouse.scroll_y(dy)
                 print("Mouse scroll end:", dx, dy)
-
-            if message.startswith("move:"):
-                dx, dy = map(int, message.replace("move:", "").split(","))
-                print("Mouse move in progress:", dx, dy)
-                mouse.move(dx, dy)
-                print("Mouse move end:", dx, dy)
 
             elif message == "click:left":
                 mouse.left_click(release=False)
@@ -52,6 +62,12 @@ async def handle_client(websocket):
 
             elif message == "click:release":
                 mouse.release()
+
+            elif message.startswith("keypress:"):
+                modifiers, keys = map(safe_eval, message.replace("keypress:", "").split(":"))
+                modifierCodes = [KeyCodes[modifier] for modifier in modifiers]
+                keyCodes = [KeyCodes[key] for key in keys]
+                keyboard.press(modifierCodes, keyCodes)
 
     except websockets.ConnectionClosed:
         print("Client disconnected")

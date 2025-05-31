@@ -46,19 +46,23 @@ class WebSocketClient:
 
     async def send_clickleft(self):
         """Send a mouse left click."""
-        await self.send(f"click:left")
+        await self.send("click:left")
 
     async def send_clickmiddle(self):
         """Send a mouse middle click."""
-        await self.send(f"click:middle")
+        await self.send("click:middle")
 
     async def send_clickright(self):
         """Send a mouse right click."""
-        await self.send(f"click:right")
+        await self.send("click:right")
 
     async def send_clickrelease(self):
         """Send a mouse release click."""
-        await self.send(f"click:release")
+        await self.send("click:release")
+
+    async def send_keypress(self, modifiers, keys):
+        """Send a mouse release click."""
+        await self.send(f"keypress:{modifiers}:{keys}")
 
     async def send(self, cmd):
         """Send a command with safe (re)connection."""
