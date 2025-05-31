@@ -33,10 +33,10 @@ async def handle_client(websocket):
                 print("Mouse move end:", dx, dy)
 
             elif message == "click:left":
-                mouse.click("left")
+                mouse.left_click()
 
             elif message == "click:right":
-                mouse.click("right")
+                mouse.right_click()
 
     except websockets.ConnectionClosed:
         print("Client disconnected")
