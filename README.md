@@ -154,7 +154,7 @@ Check server is running:
 ```bash
 sudo systemctl status websockets_server
 ```
-CHeck server logs in real-time:
+Check server logs in real-time:
 ```bash
 sudo journalctl -u websockets_server -f
 ```
