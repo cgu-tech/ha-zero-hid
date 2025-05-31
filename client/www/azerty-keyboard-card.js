@@ -71,15 +71,15 @@ console.info("Loading AZERTY Keyboard Card");
         { code: "Exclam", label: { normal: "!", shift: "§" } },
         { code: "ShiftRight", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
 
-        // Row 5 (spacebar row) - UPDATED WIDTHS
-        { code: "ControlLeft", label: { normal: "Ctrl" }, special: true, width: "wide" },
-        { code: "MetaLeft", label: { normal: "\u229E" }, special: true /* normal width */ }, // ⊞
-        { code: "AltLeft", label: { normal: "Alt" }, special: true, width: "wide" },
-        { code: "Space", label: { normal: " " }, special: true, width: "space" },
-        { code: "AltRight", label: { normal: "AltGr" }, special: true, width: "wide" },
-        { code: "MetaRight", label: { normal: "\u229E" }, special: true /* normal width */ }, // ⊞
-        { code: "ContextMenu", label: { normal: "\u2630" }, special: true /* normal width */ }, // ☰
-        { code: "ControlRight", label: { normal: "Ctrl" }, special: true, width: "wide" },
+        // Row 5 (spacebar row) - Updated for flexGrow
+        { code: "ControlLeft", label: { normal: "Ctrl" }, special: true, flexGrow: 1 },
+        { code: "MetaLeft", label: { normal: "\u229E" }, special: true, flexGrow: 1 }, // ⊞
+        { code: "AltLeft", label: { normal: "Alt" }, special: true, flexGrow: 1 },
+        { code: "Space", label: { normal: " " }, special: true, flexGrow: 6 },
+        { code: "AltRight", label: { normal: "AltGr" }, special: true, flexGrow: 1 },
+        { code: "MetaRight", label: { normal: "\u229E" }, special: true, flexGrow: 1 }, // ⊞
+        { code: "ContextMenu", label: { normal: "\u2630" }, special: true, flexGrow: 1 }, // ☰
+        { code: "ControlRight", label: { normal: "Ctrl" }, special: true, flexGrow: 1 },
       ];
     }
 
@@ -123,6 +123,11 @@ console.info("Loading AZERTY Keyboard Card");
           width: 100%;
           gap: 0.3rem;
         }
+        /* Reduce margin and gap on last row for fit */
+        .keyboard-row:last-child {
+          margin-bottom: 0.2rem;
+          gap: 0.15rem;
+        }
         button.key {
           background: var(--key-bg);
           border: none;
@@ -150,8 +155,7 @@ console.info("Loading AZERTY Keyboard Card");
           flex-grow: 3;
         }
         button.key.space {
-          flex-grow: 5;
-          min-width: 0;
+          flex-grow: 6;
         }
         button.key.special {
           background: var(--key-special-bg);
@@ -188,11 +192,11 @@ console.info("Loading AZERTY Keyboard Card");
       const container = document.createElement("div");
       container.className = "keyboard-container";
 
-      // Rows config for splitting keys array
+      // Rows config
       const rowsConfig = [14, 14, 13, 13, 8];
       let keyIndex = 0;
 
-      rowsConfig.forEach(rowCount => {
+      rowsConfig.forEach((rowCount, rowNum) => {
         const row = document.createElement("div");
         row.className = "keyboard-row";
 
@@ -204,6 +208,7 @@ console.info("Loading AZERTY Keyboard Card");
           btn.classList.add("key");
           if (keyData.special) btn.classList.add("special");
           if (keyData.width) btn.classList.add(keyData.width);
+          if (rowNum === 4 && keyData.flexGrow) btn.style.flexGrow = keyData.flexGrow;
 
           btn.dataset.code = keyData.code;
 
@@ -248,10 +253,8 @@ console.info("Loading AZERTY Keyboard Card");
     updateLabels() {
       for (const btn of this.content.querySelectorAll("button.key")) {
         const keyData = btn._keyData;
-
         if (!keyData) continue;
 
-        // Update active states for modifier keys
         if (keyData.code === "ShiftLeft" || keyData.code === "ShiftRight") {
           btn.classList.toggle("active", this.shift);
         }
@@ -262,20 +265,15 @@ console.info("Loading AZERTY Keyboard Card");
           btn.classList.toggle("active", this.altGr);
         }
 
-        if (keyData.special) continue; // special keys label unchanged
+        if (keyData.special) continue;
 
-        // Determine displayed character based on modifiers
         let displayLower = keyData.label.normal || "";
         let displayUpper = "";
 
         if (this.altGr && keyData.label.altGr && keyData.label.altGr !== "") {
-          // AltGr overrides Shift and CapsLock
           displayLower = keyData.label.altGr;
-          displayUpper = "";
         } else {
-          // CapsLock toggles case on letters only, combined with Shift
           let useShift = this.shift;
-
           if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
             useShift = !useShift;
           }
@@ -312,20 +310,17 @@ console.info("Loading AZERTY Keyboard Card");
       }
 
       const keyData = button._keyData;
-
       if (!keyData) return;
 
       let charToSend = null;
 
       if (keyData.special) {
-        // Special keys - send code as command or handle accordingly
         charToSend = null;
       } else {
         if (this.altGr && keyData.label.altGr && keyData.label.altGr !== "") {
           charToSend = keyData.label.altGr;
         } else {
           let useShift = this.shift;
-
           if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
             useShift = !useShift;
           }
@@ -344,7 +339,6 @@ console.info("Loading AZERTY Keyboard Card");
         if (charToSend !== null) {
           this.hass.callService("keyboard", "type", { character: charToSend });
         } else {
-          // For special keys send code, example:
           this.hass.callService("keyboard", "key_press", { code });
         }
       }
@@ -355,5 +349,6 @@ console.info("Loading AZERTY Keyboard Card");
       return 3;
     }
   }
+
   customElements.define("azerty-keyboard-card", AzertyKeyboardCard);
 })();
