@@ -368,7 +368,7 @@ class AzertyKeyboardCard extends HTMLElement {
     }
 
     // Send all pressed keys and modifiers
-    hass.callService("trackpad_keyboard", "keypress", {
+    hass.callService("trackpad_mouse", "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
@@ -390,7 +390,7 @@ class AzertyKeyboardCard extends HTMLElement {
     }
 
     // Send all pressed keys and modifiers
-    hass.callService("trackpad_keyboard", "keypress", {
+    hass.callService("trackpad_mouse", "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
