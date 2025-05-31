@@ -7,7 +7,6 @@ console.info("Loading Trackpad Card");
         const card = document.createElement("ha-card");
         card.header = "Mouse Trackpad";
 
-        // Inject shared styles
         const style = document.createElement("style");
         style.textContent = `
           .trackpad-btn {
@@ -41,22 +40,28 @@ console.info("Loading Trackpad Card");
           .trackpad-area:active {
             background: #2c2b2b !important;
           }
-          /* New styles for the overlay icon */
           .scroll-icon {
             position: absolute;
             top: 8px;
             right: 8px;
-            width: 42px;       /* increased from 32 */
-            height: 42px;      /* increased from 32 */
-            pointer-events: none; /* so it doesn't block pointer events */
+            width: 42px;
+            height: 42px;
+            pointer-events: auto;
             opacity: 0.7;
             fill: #eee;
             stroke: #eee;
+            cursor: pointer;
+            transition: stroke 0.3s ease, fill 0.3s ease;
+            filter: drop-shadow(1px 1px 2px black); /* <-- Soft shadow */
+          }
+          .scroll-icon.toggled-on {
+            stroke: #44739e !important;
+            fill: #44739e !important;
+            color: #44739e !important;
           }
         `;
         this.appendChild(style);
 
-        // Main container
         const container = document.createElement("div");
         container.style.display = "flex";
         container.style.flexDirection = "column";
@@ -64,7 +69,6 @@ console.info("Loading Trackpad Card");
         container.style.padding = "0";
         container.style.backgroundColor = "#00000000";
 
-        // Trackpad area
         this.content = document.createElement("div");
         this.content.className = "trackpad-area";
         this.content.style.height = "200px";
@@ -76,87 +80,108 @@ console.info("Loading Trackpad Card");
         this.content.style.borderBottom = "1px solid #0a0a0a";
         this.content.style.transition = "background 0.2s ease";
 
-        // Add the scrolling icon SVG overlay
+        // Create scroll icon SVG
         const svgNS = "http://www.w3.org/2000/svg";
         const scrollIcon = document.createElementNS(svgNS, "svg");
-        scrollIcon.setAttribute("viewBox", "0 0 84 84"); // scaled 64 * 1.3125 = 84
+        scrollIcon.setAttribute("viewBox", "0 0 84 84");
         scrollIcon.setAttribute("class", "scroll-icon");
 
-        const scale = 1.3125; // 42 / 32
+        let isToggledOn = false;
 
-        // Helper to scale points string
-        function scalePoints(points) {
-          return points
+        const scale = 1.3125;
+        const scalePoints = points =>
+          points
             .split(" ")
             .map(pair => {
               const [x, y] = pair.split(",").map(Number);
               return `${x * scale},${y * scale}`;
             })
             .join(" ");
-        }
 
-        // Mouse outline
-        const rect = document.createElementNS(svgNS, "rect");
-        rect.setAttribute("x", (16 * scale).toString());
-        rect.setAttribute("y", (12 * scale).toString());
-        rect.setAttribute("width", (32 * scale).toString());
-        rect.setAttribute("height", (40 * scale).toString());
-        rect.setAttribute("rx", (12 * scale).toString());
-        rect.setAttribute("ry", (12 * scale).toString());
-        rect.setAttribute("stroke", "currentColor");
-        rect.setAttribute("stroke-width", "2");
-        rect.setAttribute("fill", "none");
-        scrollIcon.appendChild(rect);
+        const createSvgElement = (name, attributes) => {
+          const el = document.createElementNS(svgNS, name);
+          for (const key in attributes) el.setAttribute(key, attributes[key]);
+          return el;
+        };
 
-        // Vertical arrow line
-        const vLine = document.createElementNS(svgNS, "line");
-        vLine.setAttribute("x1", (32 * scale).toString());
-        vLine.setAttribute("y1", (20 * scale).toString());
-        vLine.setAttribute("x2", (32 * scale).toString());
-        vLine.setAttribute("y2", (44 * scale).toString());
-        vLine.setAttribute("stroke", "currentColor");
-        vLine.setAttribute("stroke-width", "2");
-        scrollIcon.appendChild(vLine);
+        scrollIcon.appendChild(
+          createSvgElement("rect", {
+            x: 16 * scale,
+            y: 12 * scale,
+            width: 32 * scale,
+            height: 40 * scale,
+            rx: 12 * scale,
+            ry: 12 * scale,
+            stroke: "currentColor",
+            "stroke-width": "2",
+            fill: "none",
+          })
+        );
 
-        // Vertical arrowheads
-        const vUpArrow = document.createElementNS(svgNS, "polyline");
-        vUpArrow.setAttribute("points", scalePoints("28,24 32,20 36,24"));
-        vUpArrow.setAttribute("fill", "none");
-        vUpArrow.setAttribute("stroke", "currentColor");
-        vUpArrow.setAttribute("stroke-width", "2");
-        scrollIcon.appendChild(vUpArrow);
+        scrollIcon.appendChild(
+          createSvgElement("line", {
+            x1: 32 * scale,
+            y1: 20 * scale,
+            x2: 32 * scale,
+            y2: 44 * scale,
+            stroke: "currentColor",
+            "stroke-width": "2",
+          })
+        );
 
-        const vDownArrow = document.createElementNS(svgNS, "polyline");
-        vDownArrow.setAttribute("points", scalePoints("28,40 32,44 36,40"));
-        vDownArrow.setAttribute("fill", "none");
-        vDownArrow.setAttribute("stroke", "currentColor");
-        vDownArrow.setAttribute("stroke-width", "2");
-        scrollIcon.appendChild(vDownArrow);
+        scrollIcon.appendChild(
+          createSvgElement("polyline", {
+            points: scalePoints("28,24 32,20 36,24"),
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": "2",
+          })
+        );
 
-        // Horizontal arrow line
-        const hLine = document.createElementNS(svgNS, "line");
-        hLine.setAttribute("x1", (20 * scale).toString());
-        hLine.setAttribute("y1", (32 * scale).toString());
-        hLine.setAttribute("x2", (44 * scale).toString());
-        hLine.setAttribute("y2", (32 * scale).toString());
-        hLine.setAttribute("stroke", "currentColor");
-        hLine.setAttribute("stroke-width", "2");
-        scrollIcon.appendChild(hLine);
+        scrollIcon.appendChild(
+          createSvgElement("polyline", {
+            points: scalePoints("28,40 32,44 36,40"),
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": "2",
+          })
+        );
 
-        // Horizontal arrowheads
-        const hLeftArrow = document.createElementNS(svgNS, "polyline");
-        hLeftArrow.setAttribute("points", scalePoints("24,28 20,32 24,36"));
-        hLeftArrow.setAttribute("fill", "none");
-        hLeftArrow.setAttribute("stroke", "currentColor");
-        hLeftArrow.setAttribute("stroke-width", "2");
-        scrollIcon.appendChild(hLeftArrow);
+        scrollIcon.appendChild(
+          createSvgElement("line", {
+            x1: 20 * scale,
+            y1: 32 * scale,
+            x2: 44 * scale,
+            y2: 32 * scale,
+            stroke: "currentColor",
+            "stroke-width": "2",
+          })
+        );
 
-        const hRightArrow = document.createElementNS(svgNS, "polyline");
-        hRightArrow.setAttribute("points", scalePoints("40,28 44,32 40,36"));
-        hRightArrow.setAttribute("fill", "none");
-        hRightArrow.setAttribute("stroke", "currentColor");
-        hRightArrow.setAttribute("stroke-width", "2");
-        scrollIcon.appendChild(hRightArrow);
+        scrollIcon.appendChild(
+          createSvgElement("polyline", {
+            points: scalePoints("24,28 20,32 24,36"),
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": "2",
+          })
+        );
+
+        scrollIcon.appendChild(
+          createSvgElement("polyline", {
+            points: scalePoints("40,28 44,32 40,36"),
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": "2",
+          })
+        );
+
+        scrollIcon.addEventListener("click", e => {
+          e.stopPropagation();
+          isToggledOn = !isToggledOn;
+          scrollIcon.classList.toggle("toggled-on", isToggledOn);
+          console.log(`Scroll icon toggled ${isToggledOn ? "ON" : "OFF"}`);
+        });
 
         this.content.appendChild(scrollIcon);
 
@@ -182,12 +207,11 @@ console.info("Loading Trackpad Card");
 
             hass.callService("trackpad_mouse", "move", {
               x: dx,
-              y: dy
+              y: dy,
             });
           }
         });
 
-        // Button row
         const buttonRow = document.createElement("div");
         buttonRow.style.display = "flex";
         buttonRow.style.width = "100%";
@@ -196,23 +220,18 @@ console.info("Loading Trackpad Card");
         const createButton = (serviceCall, className) => {
           const btn = document.createElement("button");
           btn.className = `trackpad-btn ${className}`;
-
           btn.addEventListener("pointerdown", () => {
             hass.callService("trackpad_mouse", serviceCall, {});
           });
-
           btn.addEventListener("pointerup", () => {
             hass.callService("trackpad_mouse", "clickrelease", {});
           });
-
           btn.addEventListener("touchend", () => {
             hass.callService("trackpad_mouse", "clickrelease", {});
           });
-
           return btn;
         };
 
-        // Create buttons with classes
         const leftBtn = createButton("clickleft", "trackpad-left");
         const middleBtn = createButton("clickmiddle", "trackpad-middle");
         const rightBtn = createButton("clickright", "trackpad-right");
@@ -229,7 +248,6 @@ console.info("Loading Trackpad Card");
         buttonRow.appendChild(sep2);
         buttonRow.appendChild(rightBtn);
 
-        // Assemble card
         container.appendChild(this.content);
         container.appendChild(buttonRow);
         card.appendChild(container);
