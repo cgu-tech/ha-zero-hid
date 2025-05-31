@@ -10,77 +10,81 @@ console.info("Loading AZERTY Keyboard Card");
 
       this.keys = [
         // Row 1
-        { code: "Backquote", label: { normal: "²", shift: "", altGr: "" }, special: true },
-        { code: "Digit1", label: { normal: "&", shift: "1", altGr: "" } },
-        { code: "Digit2", label: { normal: "é", shift: "2", altGr: "~" } },
-        { code: "Digit3", label: { normal: "\"", shift: "3", altGr: "#" } },
-        { code: "Digit4", label: { normal: "'", shift: "4", altGr: "{" } },
-        { code: "Digit5", label: { normal: "(", shift: "5", altGr: "[" } },
-        { code: "Digit6", label: { normal: "-", shift: "6", altGr: "|" } },
-        { code: "Digit7", label: { normal: "è", shift: "7", altGr: "`" } },
-        { code: "Digit8", label: { normal: "_", shift: "8", altGr: "\\" } },
-        { code: "Digit9", label: { normal: "ç", shift: "9", altGr: "^" } },
-        { code: "Digit0", label: { normal: "à", shift: "0", altGr: "@" } },
-        { code: "Minus", label: { normal: ")", shift: "°", altGr: "]" } },
-        { code: "Equal", label: { normal: "=", shift: "+", altGr: "}" } },
-        { code: "Backspace", label: { normal: "\u232B" }, special: true, width: "wider" }, // ⌫
+        { code: "KEY_GRAVE", label: { normal: "²", shift: "", altGr: "" }, special: true },
+        { code: "KEY_1", label: { normal: "&", shift: "1", altGr: "" } },
+        { code: "KEY_2", label: { normal: "é", shift: "2", altGr: "~" } },
+        { code: "KEY_3", label: { normal: "\"", shift: "3", altGr: "#" } },
+        { code: "KEY_4", label: { normal: "'", shift: "4", altGr: "{" } },
+        { code: "KEY_5", label: { normal: "(", shift: "5", altGr: "[" } },
+        { code: "KEY_6", label: { normal: "-", shift: "6", altGr: "|" } },
+        { code: "KEY_7", label: { normal: "è", shift: "7", altGr: "`" } },
+        { code: "KEY_8", label: { normal: "_", shift: "8", altGr: "\\" } },
+        { code: "KEY_9", label: { normal: "ç", shift: "9", altGr: "^" } },
+        { code: "KEY_0", label: { normal: "à", shift: "0", altGr: "@" } },
+        { code: "KEY_MINUS", label: { normal: ")", shift: "°", altGr: "]" } },
+        { code: "KEY_EQUAL", label: { normal: "=", shift: "+", altGr: "}" } },
+        { code: "KEY_BACKSPACE", label: { normal: "\u232B" }, special: true, width: "wider" }, // ⌫
 
         // Row 2
-        { code: "Tab", label: { normal: "\u21B9" }, special: true, width: "wide" }, // ↹
-        { code: "KeyA", label: { normal: "a", shift: "A" } },
-        { code: "KeyZ", label: { normal: "z", shift: "Z" } },
-        { code: "KeyE", label: { normal: "e", shift: "E", altGr: "€" } },
-        { code: "KeyR", label: { normal: "r", shift: "R" } },
-        { code: "KeyT", label: { normal: "t", shift: "T" } },
-        { code: "KeyY", label: { normal: "y", shift: "Y" } },
-        { code: "KeyU", label: { normal: "u", shift: "U" } },
-        { code: "KeyI", label: { normal: "i", shift: "I" } },
-        { code: "KeyO", label: { normal: "o", shift: "O" } },
-        { code: "KeyP", label: { normal: "p", shift: "P" } },
-        { code: "BracketLeft", label: { normal: "^", shift: "¨" } },
-        { code: "BracketRight", label: { normal: "$", shift: "£" } },
-        { code: "Enter", label: { normal: "Enter" }, special: true, width: "wider" },
+        { code: "KEY_TAB", label: { normal: "\u21B9" }, special: true, width: "wide" }, // ↹
+        { code: "KEY_Q", label: { normal: "a", shift: "A" } },
+        { code: "KEY_W", label: { normal: "z", shift: "Z" } },
+        { code: "KEY_E", label: { normal: "e", shift: "E", altGr: "€" } },
+        { code: "KEY_R", label: { normal: "r", shift: "R" } },
+        { code: "KEY_T", label: { normal: "t", shift: "T" } },
+        { code: "KEY_Y", label: { normal: "y", shift: "Y" } },
+        { code: "KEY_U", label: { normal: "u", shift: "U" } },
+        { code: "KEY_I", label: { normal: "i", shift: "I" } },
+        { code: "KEY_O", label: { normal: "o", shift: "O" } },
+        { code: "KEY_P", label: { normal: "p", shift: "P" } },
+        { code: "KEY_LEFTBRACE", label: { normal: "^", shift: "¨" } },
+        { code: "KEY_RIGHTBRACE", label: { normal: "$", shift: "£" } },
+        { code: "KEY_ENTER", label: { normal: "Enter" }, special: true, width: "wider" },
 
         // Row 3
-        { code: "CapsLock", label: { normal: "\uD83D\uDD12" }, special: true, width: "wider" }, // 🔒
-        { code: "KeyQ", label: { normal: "q", shift: "Q" } },
-        { code: "KeyS", label: { normal: "s", shift: "S" } },
-        { code: "KeyD", label: { normal: "d", shift: "D" } },
-        { code: "KeyF", label: { normal: "f", shift: "F" } },
-        { code: "KeyG", label: { normal: "g", shift: "G" } },
-        { code: "KeyH", label: { normal: "h", shift: "H" } },
-        { code: "KeyJ", label: { normal: "j", shift: "J" } },
-        { code: "KeyK", label: { normal: "k", shift: "K" } },
-        { code: "KeyL", label: { normal: "l", shift: "L" } },
-        { code: "KeyM", label: { normal: "m", shift: "M" } },
-        { code: "Dead", label: { normal: "ù", shift: "%" } },
-        { code: "Backslash", label: { normal: "*", shift: "µ" } },
+        { code: "KEY_CAPSLOCK", label: { normal: "\uD83D\uDD12" }, special: true, width: "wider" }, // 🔒
+        { code: "KEY_A", label: { normal: "q", shift: "Q" } },
+        { code: "KEY_S", label: { normal: "s", shift: "S" } },
+        { code: "KEY_D", label: { normal: "d", shift: "D" } },
+        { code: "KEY_F", label: { normal: "f", shift: "F" } },
+        { code: "KEY_G", label: { normal: "g", shift: "G" } },
+        { code: "KEY_H", label: { normal: "h", shift: "H" } },
+        { code: "KEY_J", label: { normal: "j", shift: "J" } },
+        { code: "KEY_K", label: { normal: "k", shift: "K" } },
+        { code: "KEY_L", label: { normal: "l", shift: "L" } },
+        { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M" } },
+        { code: "KEY_APOSTROPHE", label: { normal: "ù", shift: "%" } },
+        { code: "KEY_HASHTILDE", label: { normal: "*", shift: "µ" } },
 
         // Row 4
-        { code: "ShiftLeft", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
-        { code: "IntlBackslash", label: { normal: "<", shift: ">" } },
-        { code: "KeyW", label: { normal: "w", shift: "W" } },
-        { code: "KeyX", label: { normal: "x", shift: "X" } },
-        { code: "KeyC", label: { normal: "c", shift: "C" } },
-        { code: "KeyV", label: { normal: "v", shift: "V" } },
-        { code: "KeyB", label: { normal: "b", shift: "B" } },
-        { code: "KeyN", label: { normal: "n", shift: "N" } },
-        { code: "Comma", label: { normal: ",", shift: "?" } },
-        { code: "Semicolon", label: { normal: ";", shift: "." } },
-        { code: "Colon", label: { normal: ":", shift: "/" } },
-        { code: "Exclam", label: { normal: "!", shift: "§" } },
-        { code: "ShiftRight", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
+        { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
+        { code: "KEY_BACKSLASH", label: { normal: "<", shift: ">" } },
+        { code: "KEY_Z", label: { normal: "w", shift: "W" } },
+        { code: "KEY_X", label: { normal: "x", shift: "X" } },
+        { code: "KEY_C", label: { normal: "c", shift: "C" } },
+        { code: "KEY_V", label: { normal: "v", shift: "V" } },
+        { code: "KEY_B", label: { normal: "b", shift: "B" } },
+        { code: "KEY_N", label: { normal: "n", shift: "N" } },
+        { code: "KEY_M", label: { normal: ",", shift: "?" } },
+        { code: "KEY_COMMA", label: { normal: ";", shift: "." } },
+        { code: "KEY_DOT", label: { normal: ":", shift: "/" } },
+        { code: "KEY_SLASH", label: { normal: "!", shift: "§" } },
+        { code: "MOD_RIGHT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
 
         // Row 5
-        { code: "ControlLeft", label: { normal: "Ctrl" }, special: true, width: "wide" },
-        { code: "MetaLeft", label: { normal: "\u229E" }, special: true, width: "wide" },
-        { code: "AltLeft", label: { normal: "Alt" }, special: true, width: "wide" },
-        { code: "Space", label: { normal: " " }, special: true, width: "wider" },
-        { code: "AltRight", label: { normal: "AltGr" }, special: true, width: "wide" },
-        { code: "MetaRight", label: { normal: "\u229E" }, special: true, width: "wide" },
-        { code: "ContextMenu", label: { normal: "\u2630" }, special: true, width: "wide" },
-        { code: "ControlRight", label: { normal: "Ctrl" }, special: true, width: "wide" },
+        { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
+        { code: "MOD_LEFT_GUI", label: { normal: "\u229E" }, special: true, width: "wide" },
+        { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true, width: "wide" },
+        { code: "KEY_SPACE", label: { normal: " " }, special: true, width: "wider" },
+        { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true, width: "wide" },
+        { code: "MOD_RIGHT_GUI", label: { normal: "\u229E" }, special: true, width: "wide" },
+        { code: "KEY_PROPS", label: { normal: "\u2630" }, special: true, width: "wide" },
+        { code: "MOD_RIGHT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
       ];
+
+      // To track pressed modifiers and keys
+      this.pressedModifiers = new Set();
+      this.pressedKeys = new Set();
     }
 
     set hass(hass) {
@@ -233,7 +237,16 @@ console.info("Loading AZERTY Keyboard Card");
           btn._upperLabel = upperLabel;
           btn._keyData = keyData;
 
-          btn.addEventListener("click", (e) => this.handleKeyClick(e, btn));
+          // Remove old click event:
+          // btn.addEventListener("click", (e) => this.handleKeyClick(e, btn));
+
+          // Add pointer and touch events:
+          btn.addEventListener("pointerdown", (e) => this.handlePointerDown(e, btn));
+          btn.addEventListener("pointerup", (e) => this.handlePointerUp(e, btn));
+          btn.addEventListener("pointercancel", (e) => this.handlePointerCancel(e, btn));
+          // For older touch devices fallback
+          btn.addEventListener("touchend", (e) => this.handlePointerUp(e, btn));
+          btn.addEventListener("touchcancel", (e) => this.handlePointerCancel(e, btn));
 
           row.appendChild(btn);
         }
@@ -289,7 +302,27 @@ console.info("Loading AZERTY Keyboard Card");
       }
     }
 
-    handleKeyClick(e, button) {
+    handlePointerDown(event, button) {
+      event.preventDefault(); // prevent unwanted focus or scrolling
+      // Mark button active visually
+      button.classList.add("active");
+      this.handleKeyPress(button);
+    }
+
+    handlePointerUp(event, button) {
+      event.preventDefault();
+      // Remove active visual
+      button.classList.remove("active");
+      this.handleKeyRelease(button);
+    }
+
+    handlePointerCancel(event, button) {
+      event.preventDefault();
+      button.classList.remove("active");
+      this.handleKeyRelease(button);
+    }
+
+    handleKeyPress(button) {
       const code = button.dataset.code;
 
       if (code === "ShiftLeft" || code === "ShiftRight") {
@@ -333,14 +366,43 @@ console.info("Loading AZERTY Keyboard Card");
       }
 
       console.log("Key pressed:", code, "Char:", charToSend);
-
-      if (this.hass && this.hass.callService) {
-        if (charToSend !== null) {
-          this.hass.callService("keyboard", "type", { character: charToSend });
+      if (code) {
+        if (code.startsWith("MOD_")) {
+          // Modifier key pressed
+          this.pressedModifiers.add(code);
         } else {
-          this.hass.callService("keyboard", "key_press", { code });
+          // Standard key pressed
+          this.pressedKeys.add(code);
         }
       }
+
+      // Send all pressed keys and modifiers
+      this.hass.callService("trackpad_keyboard", "keypress", {
+        sendModifiers: Array.from(this.pressedModifiers),
+        sendKeys: Array.from(this.pressedKeys),
+      });
+    }
+
+    handleKeyRelease(button) {
+      const code = button.dataset.code;
+
+      // Remove released key from pressed keys
+      console.log("Key released:", code);
+      if (code) {
+        if (code.startsWith("MOD_")) {
+          // Modifier key released
+          this.pressedModifiers.delete(code);
+        } else {
+          // Standard key released
+          this.pressedKeys.delete(code);
+        }
+      }
+
+      // Send all pressed keys and modifiers
+      this.hass.callService("trackpad_keyboard", "keypress", {
+        sendModifiers: Array.from(this.pressedModifiers),
+        sendKeys: Array.from(this.pressedKeys),
+      });
     }
 
     setConfig(config) {}
