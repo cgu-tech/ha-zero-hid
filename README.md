@@ -2,8 +2,8 @@
 Home Assistant (HA) integration for zero-hid project
 
 # What it does
-Transform your RPI zero as a mouse remote controlled through HA Lovelace UI. 
-The mouse can be used for whatever end-device to be remote controlled (AndroidTV, computer, ...).
+Transform your Raspberry Pi zero into a remote mouse controlled through Home Assistant dashboard (Lovelace UI). 
+The mouse can be used to control whatever end-device that accept standard USB mouse (AndroidTV, computer, ...).
 
 `Project status`: beta stage, fully working mouse with trackpad card. Manual installation. Trackpad card cannot be customized.
 
@@ -121,3 +121,39 @@ Reboot Home Assistant **(not reload)**
 type: custom:trackpad-card
 ```
 
+## F.A.Q
+
+### Home Assistant instance and USB "RPI zero 2w" gadget fails to communicate
+Check your network settings:
+- both devices should be connected to the same network, check each device IP:
+```bash
+ip a
+```
+Check your network router:
+  - ensure you have no AP isolation on the network → disable AP isolation
+  - ensure there is no explicit firewall rules on the network → disable blocking rules
+  - ensure ICMP protocol is not explicitely disabled on LAN → allow ICMP protocol
+  - assign static IP address to each device through DHCP into your network router
+    - hard + soft reboot your network router
+    - hard + soft reboot each device one by one
+Retry `ping` from/to each device:
+```bash
+ping <device_ip>
+```
+**Important:** even when network settings are correct, it happens that devices cannot ping each-other. 
+This is likely due to bugs in the network stack of one (router) or more (HA device, RPI device) devices. 
+Such bugs can be corrupted ARP tables, routes and caches. 
+
+Most of the time these bugs :
+- occurs only for the time between when you assign static IP through DHCP on your router and the time those network components refresh.
+- can be definitively fixed after multiple hard **and** sof reboot of all devices, starting with the router followed by eaech device one-by-one.
+
+### I want to debug HA zero-hid server
+Check server is running:
+```bash
+sudo systemctl status websockets_server
+```
+CHeck server logs in real-time:
+```bash
+sudo journalctl -u websockets_server -f
+```
