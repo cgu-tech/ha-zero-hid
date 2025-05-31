@@ -128,6 +128,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             _LOGGER.exception(f"Unhandled error in handle_clickrelease: {e}")
 
     # Register our services with Home Assistant.
+    hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "clickleft", handle_clickleft)
     hass.services.async_register(DOMAIN, "clickmiddle", handle_clickmiddle)
