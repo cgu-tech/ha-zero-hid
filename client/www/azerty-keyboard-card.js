@@ -71,15 +71,15 @@ console.info("Loading AZERTY Keyboard Card");
         { code: "Exclam", label: { normal: "!", shift: "§" } },
         { code: "ShiftRight", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
 
-        // Row 5 (spacebar row) - Updated for flexGrow
-        { code: "ControlLeft", label: { normal: "Ctrl" }, special: true, flexGrow: 1 },
-        { code: "MetaLeft", label: { normal: "\u229E" }, special: true, flexGrow: 1 }, // ⊞
-        { code: "AltLeft", label: { normal: "Alt" }, special: true, flexGrow: 1 },
-        { code: "Space", label: { normal: " " }, special: true, flexGrow: 6 },
-        { code: "AltRight", label: { normal: "AltGr" }, special: true, flexGrow: 1 },
-        { code: "MetaRight", label: { normal: "\u229E" }, special: true, flexGrow: 1 }, // ⊞
-        { code: "ContextMenu", label: { normal: "\u2630" }, special: true, flexGrow: 1 }, // ☰
-        { code: "ControlRight", label: { normal: "Ctrl" }, special: true, flexGrow: 1 },
+        // Row 5
+        { code: "ControlLeft", label: { normal: "Ctrl" }, special: true, width: "wide" },
+        { code: "MetaLeft", label: { normal: "\u229E" }, special: true, width: "wide" },
+        { code: "AltLeft", label: { normal: "Alt" }, special: true, width: "wide" },
+        { code: "Space", label: { normal: " " }, special: true, width: "wider" },
+        { code: "AltRight", label: { normal: "AltGr" }, special: true, width: "wide" },
+        { code: "MetaRight", label: { normal: "\u229E" }, special: true, width: "wide" },
+        { code: "ContextMenu", label: { normal: "\u2630" }, special: true, width: "wide" },
+        { code: "ControlRight", label: { normal: "Ctrl" }, special: true, width: "wide" },
       ];
     }
 
@@ -99,87 +99,79 @@ console.info("Loading AZERTY Keyboard Card");
           --key-special-color: #ccc;
           --key-height: 3.5rem;
           --key-margin: 0.15rem;
-          user-select: none;
           display: block;
           width: 100%;
-          max-width: 100%;
+          user-select: none;
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           box-sizing: border-box;
         }
-        
+
         .keyboard-container {
           display: flex;
           flex-direction: column;
-          align-items: stretch;
-          padding: 0.5rem 0.3rem 1rem 0.3rem;
+          gap: 0.35rem;
+          padding: 0.5rem 0.3rem 1rem;
           background: #1a1a1a;
           border-radius: 8px;
-          margin: 0 auto;
           box-sizing: border-box;
           width: 100%;
         }
-        
+
         .keyboard-row {
           display: flex;
-          margin-bottom: 0.35rem;
-          width: 100%;
           gap: 0.3rem;
+          width: 100%;
         }
-        
+
         button.key {
           background: var(--key-bg);
           border: none;
           border-radius: 5px;
           color: #eee;
-          font-size: 1rem;
+          font-size: 1.1rem; /* Uniform font size for all keys */
           cursor: pointer;
           height: var(--key-height);
           flex-grow: 1;
-          min-width: 0;
+          flex-basis: 0;
           display: flex;
           align-items: center;
           justify-content: center;
           position: relative;
           box-sizing: border-box;
           transition: background 0.15s ease;
-          user-select: none;
           padding: 0 0.5rem;
           white-space: nowrap;
+          overflow: hidden;
         }
-        
+
         button.key.wide {
           flex-grow: 2;
         }
-        
+
         button.key.wider {
           flex-grow: 3;
         }
-        
-        button.key.space {
-          flex-grow: 6;
-          min-width: 0;
-        }
-        
+
         button.key.special {
           background: var(--key-special-bg);
           color: var(--key-special-color);
           font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 0.95rem;
         }
-        
+
         button.key:hover {
           background: var(--key-hover-bg);
         }
-        
+
         button.key:active {
           background: var(--key-active-bg);
         }
-        
+
         button.key.active {
           background: #5a5a5a !important;
           color: #fff !important;
         }
-        
+
         .label-upper {
           position: absolute;
           top: 0.3rem;
@@ -188,9 +180,9 @@ console.info("Loading AZERTY Keyboard Card");
           opacity: 0.7;
           user-select: none;
         }
-        
+
         .label-lower {
-          font-size: 1.15rem;
+          font-size: inherit;
           font-weight: 500;
           user-select: none;
         }
@@ -200,11 +192,11 @@ console.info("Loading AZERTY Keyboard Card");
       const container = document.createElement("div");
       container.className = "keyboard-container";
 
-      // Rows config
+      // Define number of keys per row
       const rowsConfig = [14, 14, 13, 13, 8];
       let keyIndex = 0;
 
-      rowsConfig.forEach((rowCount, rowNum) => {
+      rowsConfig.forEach((rowCount) => {
         const row = document.createElement("div");
         row.className = "keyboard-row";
 
@@ -216,7 +208,6 @@ console.info("Loading AZERTY Keyboard Card");
           btn.classList.add("key");
           if (keyData.special) btn.classList.add("special");
           if (keyData.width) btn.classList.add(keyData.width);
-          if (rowNum === 4 && keyData.flexGrow) btn.style.flexGrow = keyData.flexGrow;
 
           btn.dataset.code = keyData.code;
 
