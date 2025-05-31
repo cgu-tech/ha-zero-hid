@@ -37,6 +37,9 @@ console.info("Loading Trackpad Card");
             width: 1px;
             background-color: #0a0a0a;
           }
+          .trackpad-area {
+            cursor: crosshair;
+          }
           .trackpad-area:active {
             background: #2c2b2b !important;
           }
@@ -52,7 +55,10 @@ console.info("Loading Trackpad Card");
             stroke: #eee;
             cursor: pointer;
             transition: stroke 0.3s ease, fill 0.3s ease;
-            filter: drop-shadow(1px 1px 2px black); /* <-- Soft shadow */
+            filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.6)); /* soft black shadow */
+          }
+          .trackpad-area.dragging .scroll-icon {
+            cursor: crosshair;
           }
           .scroll-icon.toggled-on {
             stroke: #44739e !important;
@@ -75,7 +81,6 @@ console.info("Loading Trackpad Card");
         this.content.style.width = "100%";
         this.content.style.background = "#3b3a3a";
         this.content.style.touchAction = "none";
-        this.content.style.cursor = "crosshair";
         this.content.style.position = "relative";
         this.content.style.borderBottom = "1px solid #0a0a0a";
         this.content.style.transition = "background 0.2s ease";
@@ -191,11 +196,19 @@ console.info("Loading Trackpad Card");
         this.content.addEventListener("pointerdown", e => {
           lastX = e.clientX;
           lastY = e.clientY;
+          this.content.classList.add("dragging");
         });
 
         this.content.addEventListener("pointerup", () => {
           lastX = null;
           lastY = null;
+          this.content.classList.remove("dragging");
+        });
+
+        this.content.addEventListener("pointerleave", () => {
+          lastX = null;
+          lastY = null;
+          this.content.classList.remove("dragging");
         });
 
         this.content.addEventListener("pointermove", e => {
