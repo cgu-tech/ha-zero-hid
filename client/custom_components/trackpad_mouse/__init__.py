@@ -45,15 +45,45 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         ws_client = hass.data[DOMAIN]
         _LOGGER.debug("ws_client retrieved")
 
-        # Send move command to RPI HID
+        # Send command to RPI HID
         try:
             await ws_client.send_move(x, y)
             _LOGGER.debug(f"ws_client.send_move(x, y): {x},{y}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_move: {e}")
 
-    # Register our service with Home Assistant.
+    """Set up the async handle_clickleft service component."""
+    @callback
+    async def handle_clickleft(call: ServiceCall) -> None:
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
+
+        # Send command to RPI HID
+        try:
+            await ws_client.send_clickleft()
+            _LOGGER.debug("ws_client.send_clickleft")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_clickleft: {e}")
+
+    """Set up the async handle_clickright service component."""
+    @callback
+    async def handle_clickright(call: ServiceCall) -> None:
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
+
+        # Send command to RPI HID
+        try:
+            await ws_client.send_clickright()
+            _LOGGER.debug("ws_client.send_clickright")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_clickright: {e}")
+
+    # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
+    hass.services.async_register(DOMAIN, "clickleft", handle_clickleft)
+    hass.services.async_register(DOMAIN, "clickright", handle_clickright)
 
     # Return boolean to indicate that initialization was successfully.
     return True

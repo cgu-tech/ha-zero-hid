@@ -37,13 +37,25 @@ class WebSocketClient:
                     self.websocket = None
 
     async def send_move(self, x, y):
-        """Send a move command with safe (re)connection."""
+        """Send a move command."""
+        await self.send(f"move:{x},{y}")
+
+    async def send_clickleft(self):
+        """Send a click:left."""
+        await self.send(f"click:left")
+
+    async def send_clickright(self):
+        """Send a click:right."""
+        await self.send(f"click:right")
+
+    async def send(self, cmd):
+        """Send a command with safe (re)connection."""
         try:
             if not self.websocket:
                 _LOGGER.warning("WebSocket not connected. Reconnecting...")
                 await self.connect()
 
-            await self.websocket.send(f"move:{x},{y}")
+            await self.websocket.send(cmd)
         except websockets.exceptions.ConnectionClosedOK as e:
             _LOGGER.warning(f"WebSocket closed cleanly: {e}. Reconnecting...")
             await self.recover_and_retry(x, y)
@@ -51,15 +63,15 @@ class WebSocketClient:
             _LOGGER.error(f"Unexpected WebSocket error: {e}")
             await self.disconnect()
 
-    async def recover_and_retry(self, x, y):
-        """Handle recovery logic and retry sending."""
+    async def recover_and_retry(self, cmd):
+        """Handle recovery logic and retry sending a command."""
         await self.disconnect()
         await asyncio.sleep(1)  # Optional backoff
         await self.connect()
         async with self._lock:
             if self.websocket and not self.websocket.closed:
                 try:
-                    await self.websocket.send(f"move:{x},{y}")
+                    await self.websocket.send(cmd)
                     _LOGGER.info("Retried move command successfully.")
                 except Exception as e:
                     _LOGGER.error(f"Retry failed: {e}")
