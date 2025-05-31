@@ -67,7 +67,8 @@ async def handle_client(websocket):
                 modifiers, keys = map(safe_eval, message.replace("keypress:", "").split(":"))
                 modifierCodes = [KeyCodes[modifier] for modifier in modifiers]
                 keyCodes = [KeyCodes[key] for key in keys]
-                keyboard.press(modifierCodes, keyCodes)
+                keyCode = keyCodes[0] if keyCodes else 0
+                keyboard.press(modifierCodes, keyCode, release=False)
 
     except websockets.ConnectionClosed:
         print("Client disconnected")
