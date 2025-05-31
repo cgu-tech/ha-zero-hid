@@ -1,98 +1,92 @@
 console.info("Loading AZERTY Keyboard Card");
 
-(() => {
-  class AzertyKeyboardCard extends HTMLElement {
-    constructor() {
-      super();
-      this.shift = false;
-      this.capsLock = false;
-      this.altGr = false;
+class AzertyKeyboardCard extends HTMLElement {
+  constructor() {
+    super();
+    this.shift = false;
+    this.capsLock = false;
+    this.altGr = false;
+    this.keys = [
+      // Row 1
+      { code: "KEY_GRAVE", label: { normal: "²", shift: "", altGr: "" }, special: true },
+      { code: "KEY_1", label: { normal: "&", shift: "1", altGr: "" } },
+      { code: "KEY_2", label: { normal: "é", shift: "2", altGr: "~" } },
+      { code: "KEY_3", label: { normal: "\"", shift: "3", altGr: "#" } },
+      { code: "KEY_4", label: { normal: "'", shift: "4", altGr: "{" } },
+      { code: "KEY_5", label: { normal: "(", shift: "5", altGr: "[" } },
+      { code: "KEY_6", label: { normal: "-", shift: "6", altGr: "|" } },
+      { code: "KEY_7", label: { normal: "è", shift: "7", altGr: "`" } },
+      { code: "KEY_8", label: { normal: "_", shift: "8", altGr: "\\" } },
+      { code: "KEY_9", label: { normal: "ç", shift: "9", altGr: "^" } },
+      { code: "KEY_0", label: { normal: "à", shift: "0", altGr: "@" } },
+      { code: "KEY_MINUS", label: { normal: ")", shift: "°", altGr: "]" } },
+      { code: "KEY_EQUAL", label: { normal: "=", shift: "+", altGr: "}" } },
+      { code: "KEY_BACKSPACE", label: { normal: "\u232B" }, special: true, width: "wider" }, // ⌫
+      // Row 2
+      { code: "KEY_TAB", label: { normal: "\u21B9" }, special: true, width: "wide" }, // ↹
+      { code: "KEY_Q", label: { normal: "a", shift: "A" } },
+      { code: "KEY_W", label: { normal: "z", shift: "Z" } },
+      { code: "KEY_E", label: { normal: "e", shift: "E", altGr: "€" } },
+      { code: "KEY_R", label: { normal: "r", shift: "R" } },
+      { code: "KEY_T", label: { normal: "t", shift: "T" } },
+      { code: "KEY_Y", label: { normal: "y", shift: "Y" } },
+      { code: "KEY_U", label: { normal: "u", shift: "U" } },
+      { code: "KEY_I", label: { normal: "i", shift: "I" } },
+      { code: "KEY_O", label: { normal: "o", shift: "O" } },
+      { code: "KEY_P", label: { normal: "p", shift: "P" } },
+      { code: "KEY_LEFTBRACE", label: { normal: "^", shift: "¨" } },
+      { code: "KEY_RIGHTBRACE", label: { normal: "$", shift: "£" } },
+      { code: "KEY_ENTER", label: { normal: "Enter" }, special: true, width: "wider" },
+      // Row 3
+      { code: "KEY_CAPSLOCK", label: { normal: "\uD83D\uDD12" }, special: true, width: "wider" }, // 🔒
+      { code: "KEY_A", label: { normal: "q", shift: "Q" } },
+      { code: "KEY_S", label: { normal: "s", shift: "S" } },
+      { code: "KEY_D", label: { normal: "d", shift: "D" } },
+      { code: "KEY_F", label: { normal: "f", shift: "F" } },
+      { code: "KEY_G", label: { normal: "g", shift: "G" } },
+      { code: "KEY_H", label: { normal: "h", shift: "H" } },
+      { code: "KEY_J", label: { normal: "j", shift: "J" } },
+      { code: "KEY_K", label: { normal: "k", shift: "K" } },
+      { code: "KEY_L", label: { normal: "l", shift: "L" } },
+      { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M" } },
+      { code: "KEY_APOSTROPHE", label: { normal: "ù", shift: "%" } },
+      { code: "KEY_HASHTILDE", label: { normal: "*", shift: "µ" } },
+      // Row 4
+      { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
+      { code: "KEY_BACKSLASH", label: { normal: "<", shift: ">" } },
+      { code: "KEY_Z", label: { normal: "w", shift: "W" } },
+      { code: "KEY_X", label: { normal: "x", shift: "X" } },
+      { code: "KEY_C", label: { normal: "c", shift: "C" } },
+      { code: "KEY_V", label: { normal: "v", shift: "V" } },
+      { code: "KEY_B", label: { normal: "b", shift: "B" } },
+      { code: "KEY_N", label: { normal: "n", shift: "N" } },
+      { code: "KEY_M", label: { normal: ",", shift: "?" } },
+      { code: "KEY_COMMA", label: { normal: ";", shift: "." } },
+      { code: "KEY_DOT", label: { normal: ":", shift: "/" } },
+      { code: "KEY_SLASH", label: { normal: "!", shift: "§" } },
+      { code: "MOD_RIGHT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
+      // Row 5
+      { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
+      { code: "MOD_LEFT_GUI", label: { normal: "\u229E" }, special: true, width: "wide" },
+      { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true, width: "wide" },
+      { code: "KEY_SPACE", label: { normal: " " }, special: true, width: "wider" },
+      { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true, width: "wide" },
+      { code: "MOD_RIGHT_GUI", label: { normal: "\u229E" }, special: true, width: "wide" },
+      { code: "KEY_PROPS", label: { normal: "\u2630" }, special: true, width: "wide" },
+      { code: "MOD_RIGHT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
+    ];
 
-      this.keys = [
-        // Row 1
-        { code: "KEY_GRAVE", label: { normal: "²", shift: "", altGr: "" }, special: true },
-        { code: "KEY_1", label: { normal: "&", shift: "1", altGr: "" } },
-        { code: "KEY_2", label: { normal: "é", shift: "2", altGr: "~" } },
-        { code: "KEY_3", label: { normal: "\"", shift: "3", altGr: "#" } },
-        { code: "KEY_4", label: { normal: "'", shift: "4", altGr: "{" } },
-        { code: "KEY_5", label: { normal: "(", shift: "5", altGr: "[" } },
-        { code: "KEY_6", label: { normal: "-", shift: "6", altGr: "|" } },
-        { code: "KEY_7", label: { normal: "è", shift: "7", altGr: "`" } },
-        { code: "KEY_8", label: { normal: "_", shift: "8", altGr: "\\" } },
-        { code: "KEY_9", label: { normal: "ç", shift: "9", altGr: "^" } },
-        { code: "KEY_0", label: { normal: "à", shift: "0", altGr: "@" } },
-        { code: "KEY_MINUS", label: { normal: ")", shift: "°", altGr: "]" } },
-        { code: "KEY_EQUAL", label: { normal: "=", shift: "+", altGr: "}" } },
-        { code: "KEY_BACKSPACE", label: { normal: "\u232B" }, special: true, width: "wider" }, // ⌫
+    // To track pressed modifiers and keys
+    this.pressedModifiers = new Set();
+    this.pressedKeys = new Set();
+  }
 
-        // Row 2
-        { code: "KEY_TAB", label: { normal: "\u21B9" }, special: true, width: "wide" }, // ↹
-        { code: "KEY_Q", label: { normal: "a", shift: "A" } },
-        { code: "KEY_W", label: { normal: "z", shift: "Z" } },
-        { code: "KEY_E", label: { normal: "e", shift: "E", altGr: "€" } },
-        { code: "KEY_R", label: { normal: "r", shift: "R" } },
-        { code: "KEY_T", label: { normal: "t", shift: "T" } },
-        { code: "KEY_Y", label: { normal: "y", shift: "Y" } },
-        { code: "KEY_U", label: { normal: "u", shift: "U" } },
-        { code: "KEY_I", label: { normal: "i", shift: "I" } },
-        { code: "KEY_O", label: { normal: "o", shift: "O" } },
-        { code: "KEY_P", label: { normal: "p", shift: "P" } },
-        { code: "KEY_LEFTBRACE", label: { normal: "^", shift: "¨" } },
-        { code: "KEY_RIGHTBRACE", label: { normal: "$", shift: "£" } },
-        { code: "KEY_ENTER", label: { normal: "Enter" }, special: true, width: "wider" },
-
-        // Row 3
-        { code: "KEY_CAPSLOCK", label: { normal: "\uD83D\uDD12" }, special: true, width: "wider" }, // 🔒
-        { code: "KEY_A", label: { normal: "q", shift: "Q" } },
-        { code: "KEY_S", label: { normal: "s", shift: "S" } },
-        { code: "KEY_D", label: { normal: "d", shift: "D" } },
-        { code: "KEY_F", label: { normal: "f", shift: "F" } },
-        { code: "KEY_G", label: { normal: "g", shift: "G" } },
-        { code: "KEY_H", label: { normal: "h", shift: "H" } },
-        { code: "KEY_J", label: { normal: "j", shift: "J" } },
-        { code: "KEY_K", label: { normal: "k", shift: "K" } },
-        { code: "KEY_L", label: { normal: "l", shift: "L" } },
-        { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M" } },
-        { code: "KEY_APOSTROPHE", label: { normal: "ù", shift: "%" } },
-        { code: "KEY_HASHTILDE", label: { normal: "*", shift: "µ" } },
-
-        // Row 4
-        { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
-        { code: "KEY_BACKSLASH", label: { normal: "<", shift: ">" } },
-        { code: "KEY_Z", label: { normal: "w", shift: "W" } },
-        { code: "KEY_X", label: { normal: "x", shift: "X" } },
-        { code: "KEY_C", label: { normal: "c", shift: "C" } },
-        { code: "KEY_V", label: { normal: "v", shift: "V" } },
-        { code: "KEY_B", label: { normal: "b", shift: "B" } },
-        { code: "KEY_N", label: { normal: "n", shift: "N" } },
-        { code: "KEY_M", label: { normal: ",", shift: "?" } },
-        { code: "KEY_COMMA", label: { normal: ";", shift: "." } },
-        { code: "KEY_DOT", label: { normal: ":", shift: "/" } },
-        { code: "KEY_SLASH", label: { normal: "!", shift: "§" } },
-        { code: "MOD_RIGHT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
-
-        // Row 5
-        { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
-        { code: "MOD_LEFT_GUI", label: { normal: "\u229E" }, special: true, width: "wide" },
-        { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true, width: "wide" },
-        { code: "KEY_SPACE", label: { normal: " " }, special: true, width: "wider" },
-        { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true, width: "wide" },
-        { code: "MOD_RIGHT_GUI", label: { normal: "\u229E" }, special: true, width: "wide" },
-        { code: "KEY_PROPS", label: { normal: "\u2630" }, special: true, width: "wide" },
-        { code: "MOD_RIGHT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
-      ];
-
-      // To track pressed modifiers and keys
-      this.pressedModifiers = new Set();
-      this.pressedKeys = new Set();
-    }
-
-    set hass(hass) {
-      if (this.content) return;
-
+  set hass(hass) {
+    console.log("AZERTY Keyboard hass received:", hass);
+    if (!this.content) {
       const card = document.createElement("ha-card");
       card.header = "AZERTY Keyboard";
-
+      
       const style = document.createElement("style");
       style.textContent = `
         :host {
@@ -109,7 +103,7 @@ console.info("Loading AZERTY Keyboard Card");
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           box-sizing: border-box;
         }
-
+      
         .keyboard-container {
           display: flex;
           flex-direction: column;
@@ -120,13 +114,13 @@ console.info("Loading AZERTY Keyboard Card");
           box-sizing: border-box;
           width: 100%;
         }
-
+      
         .keyboard-row {
           display: flex;
           gap: 0.3rem;
           width: 100%;
         }
-
+      
         button.key {
           background: var(--key-bg);
           border: none;
@@ -147,35 +141,35 @@ console.info("Loading AZERTY Keyboard Card");
           white-space: nowrap;
           overflow: hidden;
         }
-
+      
         button.key.wide {
           flex-grow: 2;
         }
-
+      
         button.key.wider {
           flex-grow: 3;
         }
-
+      
         button.key.special {
           background: var(--key-special-bg);
           color: var(--key-special-color);
           font-weight: 600;
           font-size: 0.95rem;
         }
-
+      
         button.key:hover {
           background: var(--key-hover-bg);
         }
-
+      
         button.key:active {
           background: var(--key-active-bg);
         }
-
+      
         button.key.active {
           background: #5a5a5a !important;
           color: #fff !important;
         }
-
+      
         .label-upper {
           position: absolute;
           top: 0.3rem;
@@ -184,7 +178,7 @@ console.info("Loading AZERTY Keyboard Card");
           opacity: 0.7;
           user-select: none;
         }
-
+      
         .label-lower {
           font-size: inherit;
           font-weight: 500;
@@ -192,10 +186,10 @@ console.info("Loading AZERTY Keyboard Card");
         }
       `;
       this.appendChild(style);
-
+      
       const container = document.createElement("div");
       container.className = "keyboard-container";
-
+      
       // Define number of keys per row
       const rowsConfig = [14, 14, 13, 13, 8];
       let keyIndex = 0;
@@ -237,179 +231,175 @@ console.info("Loading AZERTY Keyboard Card");
           btn._upperLabel = upperLabel;
           btn._keyData = keyData;
 
-          // Remove old click event:
-          // btn.addEventListener("click", (e) => this.handleKeyClick(e, btn));
-
           // Add pointer and touch events:
-          btn.addEventListener("pointerdown", (e) => this.handlePointerDown(e, btn));
-          btn.addEventListener("pointerup", (e) => this.handlePointerUp(e, btn));
-          btn.addEventListener("pointercancel", (e) => this.handlePointerCancel(e, btn));
+          btn.addEventListener("pointerdown", (e) => this.handlePointerDown(e, hass, btn));
+          btn.addEventListener("pointerup", (e) => this.handlePointerUp(e, hass, btn));
+          btn.addEventListener("pointercancel", (e) => this.handlePointerCancel(e, hass, btn));
           // For older touch devices fallback
-          btn.addEventListener("touchend", (e) => this.handlePointerUp(e, btn));
-          btn.addEventListener("touchcancel", (e) => this.handlePointerCancel(e, btn));
+          btn.addEventListener("touchend", (e) => this.handlePointerUp(e, hass, btn));
+          btn.addEventListener("touchcancel", (e) => this.handlePointerCancel(e, hass, btn));
 
           row.appendChild(btn);
         }
-
+      
         container.appendChild(row);
       });
-
+      
       card.appendChild(container);
       this.appendChild(card);
-
+      
       this.content = container;
       this.updateLabels();
-      this.hass = hass;
-    }
-
-    updateLabels() {
-      for (const btn of this.content.querySelectorAll("button.key")) {
-        const keyData = btn._keyData;
-        if (!keyData) continue;
-
-        if (keyData.code === "ShiftLeft" || keyData.code === "ShiftRight") {
-          btn.classList.toggle("active", this.shift);
-        }
-        if (keyData.code === "CapsLock") {
-          btn.classList.toggle("active", this.capsLock);
-        }
-        if (keyData.code === "AltRight") {
-          btn.classList.toggle("active", this.altGr);
-        }
-
-        if (keyData.special) continue;
-
-        let displayLower = keyData.label.normal || "";
-        let displayUpper = "";
-
-        if (this.altGr && keyData.label.altGr && keyData.label.altGr !== "") {
-          displayLower = keyData.label.altGr;
-        } else {
-          let useShift = this.shift;
-          if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
-            useShift = !useShift;
-          }
-
-          if (useShift && keyData.label.shift && keyData.label.shift !== "") {
-            displayLower = keyData.label.shift;
-          } else {
-            displayLower = keyData.label.normal;
-          }
-        }
-
-        btn._lowerLabel.textContent = displayLower;
-        btn._upperLabel.textContent = displayUpper;
-      }
-    }
-
-    handlePointerDown(event, button) {
-      event.preventDefault(); // prevent unwanted focus or scrolling
-      // Mark button active visually
-      button.classList.add("active");
-      this.handleKeyPress(button);
-    }
-
-    handlePointerUp(event, button) {
-      event.preventDefault();
-      // Remove active visual
-      button.classList.remove("active");
-      this.handleKeyRelease(button);
-    }
-
-    handlePointerCancel(event, button) {
-      event.preventDefault();
-      button.classList.remove("active");
-      this.handleKeyRelease(button);
-    }
-
-    handleKeyPress(button) {
-      const code = button.dataset.code;
-
-      if (code === "ShiftLeft" || code === "ShiftRight") {
-        this.shift = !this.shift;
-        this.updateLabels();
-        return;
-      }
-      if (code === "CapsLock") {
-        this.capsLock = !this.capsLock;
-        this.updateLabels();
-        return;
-      }
-      if (code === "AltRight") {
-        this.altGr = !this.altGr;
-        this.updateLabels();
-        return;
-      }
-
-      const keyData = button._keyData;
-      if (!keyData) return;
-
-      let charToSend = null;
-
-      if (keyData.special) {
-        charToSend = null;
-      } else {
-        if (this.altGr && keyData.label.altGr && keyData.label.altGr !== "") {
-          charToSend = keyData.label.altGr;
-        } else {
-          let useShift = this.shift;
-          if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
-            useShift = !useShift;
-          }
-
-          if (useShift && keyData.label.shift && keyData.label.shift !== "") {
-            charToSend = keyData.label.shift;
-          } else {
-            charToSend = keyData.label.normal;
-          }
-        }
-      }
-
-      console.log("Key pressed:", code, "Char:", charToSend);
-      if (code) {
-        if (code.startsWith("MOD_")) {
-          // Modifier key pressed
-          this.pressedModifiers.add(code);
-        } else {
-          // Standard key pressed
-          this.pressedKeys.add(code);
-        }
-      }
-
-      // Send all pressed keys and modifiers
-      this.hass.callService("trackpad_keyboard", "keypress", {
-        sendModifiers: Array.from(this.pressedModifiers),
-        sendKeys: Array.from(this.pressedKeys),
-      });
-    }
-
-    handleKeyRelease(button) {
-      const code = button.dataset.code;
-
-      // Remove released key from pressed keys
-      console.log("Key released:", code);
-      if (code) {
-        if (code.startsWith("MOD_")) {
-          // Modifier key released
-          this.pressedModifiers.delete(code);
-        } else {
-          // Standard key released
-          this.pressedKeys.delete(code);
-        }
-      }
-
-      // Send all pressed keys and modifiers
-      this.hass.callService("trackpad_keyboard", "keypress", {
-        sendModifiers: Array.from(this.pressedModifiers),
-        sendKeys: Array.from(this.pressedKeys),
-      });
-    }
-
-    setConfig(config) {}
-    getCardSize() {
-      return 3;
     }
   }
 
-  customElements.define("azerty-keyboard-card", AzertyKeyboardCard);
-})();
+  updateLabels() {
+    for (const btn of this.content.querySelectorAll("button.key")) {
+      const keyData = btn._keyData;
+      if (!keyData) continue;
+
+      if (keyData.code === "ShiftLeft" || keyData.code === "ShiftRight") {
+        btn.classList.toggle("active", this.shift);
+      }
+      if (keyData.code === "CapsLock") {
+        btn.classList.toggle("active", this.capsLock);
+      }
+      if (keyData.code === "AltRight") {
+        btn.classList.toggle("active", this.altGr);
+      }
+
+      if (keyData.special) continue;
+
+      let displayLower = keyData.label.normal || "";
+      let displayUpper = "";
+
+      if (this.altGr && keyData.label.altGr && keyData.label.altGr !== "") {
+        displayLower = keyData.label.altGr;
+      } else {
+        let useShift = this.shift;
+        if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
+          useShift = !useShift;
+        }
+
+        if (useShift && keyData.label.shift && keyData.label.shift !== "") {
+          displayLower = keyData.label.shift;
+        } else {
+          displayLower = keyData.label.normal;
+        }
+      }
+
+      btn._lowerLabel.textContent = displayLower;
+      btn._upperLabel.textContent = displayUpper;
+    }
+  }
+
+  handlePointerDown(event, hass, button) {
+    event.preventDefault(); // prevent unwanted focus or scrolling
+    // Mark button active visually
+    button.classList.add("active");
+    this.handleKeyPress(hass, button);
+  }
+
+  handlePointerUp(event, hass, button) {
+    event.preventDefault();
+    // Remove active visual
+    button.classList.remove("active");
+    this.handleKeyRelease(hass, button);
+  }
+
+  handlePointerCancel(event, hass, button) {
+    event.preventDefault();
+    button.classList.remove("active");
+    this.handleKeyRelease(hass, button);
+  }
+
+  handleKeyPress(hass, button) {
+    const code = button.dataset.code;
+
+    if (code === "ShiftLeft" || code === "ShiftRight") {
+      this.shift = !this.shift;
+      this.updateLabels();
+      return;
+    }
+    if (code === "CapsLock") {
+      this.capsLock = !this.capsLock;
+      this.updateLabels();
+      return;
+    }
+    if (code === "AltRight") {
+      this.altGr = !this.altGr;
+      this.updateLabels();
+      return;
+    }
+
+    const keyData = button._keyData;
+    if (!keyData) return;
+
+    let charToSend = null;
+
+    if (keyData.special) {
+      charToSend = null;
+    } else {
+      if (this.altGr && keyData.label.altGr && keyData.label.altGr !== "") {
+        charToSend = keyData.label.altGr;
+      } else {
+        let useShift = this.shift;
+        if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
+          useShift = !useShift;
+        }
+
+        if (useShift && keyData.label.shift && keyData.label.shift !== "") {
+          charToSend = keyData.label.shift;
+        } else {
+          charToSend = keyData.label.normal;
+        }
+      }
+    }
+
+    console.log("Key pressed:", code, "Char:", charToSend);
+    if (code) {
+      if (code.startsWith("MOD_")) {
+        // Modifier key pressed
+        this.pressedModifiers.add(code);
+      } else {
+        // Standard key pressed
+        this.pressedKeys.add(code);
+      }
+    }
+
+    // Send all pressed keys and modifiers
+    hass.callService("trackpad_keyboard", "keypress", {
+      sendModifiers: Array.from(this.pressedModifiers),
+      sendKeys: Array.from(this.pressedKeys),
+    });
+  }
+
+  handleKeyRelease(hass, button) {
+    const code = button.dataset.code;
+
+    // Remove released key from pressed keys
+    console.log("Key released:", code);
+    if (code) {
+      if (code.startsWith("MOD_")) {
+        // Modifier key released
+        this.pressedModifiers.delete(code);
+      } else {
+        // Standard key released
+        this.pressedKeys.delete(code);
+      }
+    }
+
+    // Send all pressed keys and modifiers
+    hass.callService("trackpad_keyboard", "keypress", {
+      sendModifiers: Array.from(this.pressedModifiers),
+      sendKeys: Array.from(this.pressedKeys),
+    });
+  }
+
+  setConfig(config) {}
+  getCardSize() {
+    return 3;
+  }
+}
+
+customElements.define("azerty-keyboard-card", AzertyKeyboardCard);

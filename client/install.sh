@@ -23,9 +23,15 @@ install() {
     
     # Create HA client custom trackpad card
     (rm /config/www/trackpad-card.js >/dev/null 2>&1 || true) && cp -R www /config
+    
+    # Create HA client custom keyboard cards
+    (rm /config/www/azerty-keyboard-card.js >/dev/null 2>&1 || true) && cp -R www /config
 }
 
 uninstall () {
+    # Remove HA client custom keyboard cards
+    rm /config/www/azerty-keyboard-card.js >/dev/null 2>&1 || true
+    
     # Remove HA client custom trackpad card
     rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
     
