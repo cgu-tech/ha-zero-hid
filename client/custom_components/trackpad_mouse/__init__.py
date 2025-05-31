@@ -66,6 +66,20 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_clickleft: {e}")
 
+    """Set up the async handle_clickmiddle service component."""
+    @callback
+    async def handle_clickmiddle(call: ServiceCall) -> None:
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
+
+        # Send command to RPI HID
+        try:
+            await ws_client.send_clickmiddle()
+            _LOGGER.debug("ws_client.send_clickmiddle")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_clickmiddle: {e}")
+
     """Set up the async handle_clickright service component."""
     @callback
     async def handle_clickright(call: ServiceCall) -> None:
@@ -80,10 +94,26 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_clickright: {e}")
 
+    """Set up the async handle_clickrelease service component."""
+    @callback
+    async def handle_clickrelease(call: ServiceCall) -> None:
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
+
+        # Send command to RPI HID
+        try:
+            await ws_client.send_clickrelease()
+            _LOGGER.debug("ws_client.send_clickrelease")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_clickrelease: {e}")
+
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "clickleft", handle_clickleft)
+    hass.services.async_register(DOMAIN, "clickmiddle", handle_clickmiddle)
     hass.services.async_register(DOMAIN, "clickright", handle_clickright)
+    hass.services.async_register(DOMAIN, "clickrelease", handle_clickrelease)
 
     # Return boolean to indicate that initialization was successfully.
     return True

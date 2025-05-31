@@ -100,9 +100,19 @@ console.info("Loading Trackpad Card");
         const createButton = (serviceCall, className) => {
           const btn = document.createElement("button");
           btn.className = `trackpad-btn ${className}`;
-          btn.addEventListener("click", () => {
+        
+          btn.addEventListener("pointerdown", () => {
             hass.callService("trackpad_mouse", serviceCall, {});
           });
+        
+          btn.addEventListener("pointerup", () => {
+            hass.callService("trackpad_mouse", "clickrelease", {});
+          });
+        
+          btn.addEventListener("touchend", () => {
+            hass.callService("trackpad_mouse", "clickrelease", {});
+          });
+        
           return btn;
         };
 
