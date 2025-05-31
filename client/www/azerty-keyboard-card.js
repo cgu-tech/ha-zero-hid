@@ -71,14 +71,14 @@ console.info("Loading AZERTY Keyboard Card");
         { code: "Exclam", label: { normal: "!", shift: "§" } },
         { code: "ShiftRight", label: { normal: "Shift" }, special: true, width: "wider" },
 
-        // Row 5
+        // Row 5 (spacebar row) - UPDATED WIDTHS
         { code: "ControlLeft", label: { normal: "Ctrl" }, special: true, width: "wide" },
-        { code: "MetaLeft", label: { normal: "Win" }, special: true, width: "wide" },
+        { code: "MetaLeft", label: { normal: "Win" }, special: true /* no width class for normal width */ },
         { code: "AltLeft", label: { normal: "Alt" }, special: true, width: "wide" },
         { code: "Space", label: { normal: " " }, special: true, width: "space" },
         { code: "AltRight", label: { normal: "AltGr" }, special: true, width: "wide" },
-        { code: "MetaRight", label: { normal: "Win" }, special: true, width: "wide" },
-        { code: "ContextMenu", label: { normal: "Menu" }, special: true, width: "wide" },
+        { code: "MetaRight", label: { normal: "Win" }, special: true /* no width class for normal width */ },
+        { code: "ContextMenu", label: { normal: "Menu" }, special: true /* no width class for normal width */ },
         { code: "ControlRight", label: { normal: "Ctrl" }, special: true, width: "wide" },
       ];
     }
@@ -101,11 +101,10 @@ console.info("Loading AZERTY Keyboard Card");
           --key-height: 45px;
           --key-margin: 3px;
           user-select: none;
-          display: inline-block;       /* changed from block */
-          min-width: max-content;      /* fit content width */
+          display: inline-block;
+          min-width: max-content;
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
         .keyboard-container {
           display: flex;
           flex-direction: column;
@@ -116,10 +115,8 @@ console.info("Loading AZERTY Keyboard Card");
           margin: auto;
           box-sizing: border-box;
           user-select: none;
-          width: max-content;          /* size container to content */
-          /* max-width removed */
+          width: max-content;
         }
-        
         .keyboard-row {
           display: flex;
           margin-bottom: 6px;
@@ -127,7 +124,6 @@ console.info("Loading AZERTY Keyboard Card");
           justify-content: space-between;
           gap: 6px;
         }
-        
         button.key {
           background: var(--key-bg);
           border: none;
@@ -147,39 +143,33 @@ console.info("Loading AZERTY Keyboard Card");
           padding: 0 6px;
           white-space: nowrap;
           flex-shrink: 0;
+          flex-grow: 0;
         }
-        
         button.key.wide,
-        button.key.wider,
-        button.key.space {
+        button.key.wider {
           flex-grow: 1;
           min-width: 0;
         }
-        
         button.key.space {
-          flex-grow: 2;
+          min-width: calc(var(--key-width-normal) * 6);
+          flex-grow: 1;
         }
-        
         button.key.special {
           background: var(--key-special-bg);
           color: var(--key-special-color);
           font-weight: 600;
           font-size: 13px;
         }
-        
         button.key:hover {
           background: var(--key-hover-bg);
         }
-        
         button.key:active {
           background: var(--key-active-bg);
         }
-        
         button.key.active {
           background: #5a5a5a !important;
           color: #fff !important;
         }
-        
         .label-upper {
           position: absolute;
           top: 4px;
@@ -188,7 +178,6 @@ console.info("Loading AZERTY Keyboard Card");
           opacity: 0.7;
           user-select: none;
         }
-        
         .label-lower {
           font-size: 18px;
           font-weight: 500;
