@@ -26,7 +26,7 @@ console.info("Loading AZERTY Keyboard Card");
         { code: "Backspace", label: { normal: "Backspace" }, special: true, width: "wider" },
 
         // Row 2
-        { code: "Tab", label: { normal: "Tab" }, special: true, width: "wide" },
+        { code: "Tab", label: { normal: "\uD87E\uDD7E" }, special: true, width: "wide" }, // ⭾
         { code: "KeyA", label: { normal: "a", shift: "A" } },
         { code: "KeyZ", label: { normal: "z", shift: "Z" } },
         { code: "KeyE", label: { normal: "e", shift: "E", altGr: "€" } },
@@ -42,7 +42,7 @@ console.info("Loading AZERTY Keyboard Card");
         { code: "Enter", label: { normal: "Enter" }, special: true, width: "wider" },
 
         // Row 3
-        { code: "CapsLock", label: { normal: "CapsLock" }, special: true, width: "wider" },
+        { code: "CapsLock", label: { normal: "\uD83D\uDD12" }, special: true, width: "wider" }, // 🔒
         { code: "KeyQ", label: { normal: "q", shift: "Q" } },
         { code: "KeyS", label: { normal: "s", shift: "S" } },
         { code: "KeyD", label: { normal: "d", shift: "D" } },
@@ -57,7 +57,7 @@ console.info("Loading AZERTY Keyboard Card");
         { code: "Backslash", label: { normal: "*", shift: "µ" } },
 
         // Row 4
-        { code: "ShiftLeft", label: { normal: "Shift" }, special: true, width: "wider" },
+        { code: "ShiftLeft", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
         { code: "IntlBackslash", label: { normal: "<", shift: ">" } },
         { code: "KeyW", label: { normal: "w", shift: "W" } },
         { code: "KeyX", label: { normal: "x", shift: "X" } },
@@ -69,16 +69,16 @@ console.info("Loading AZERTY Keyboard Card");
         { code: "Semicolon", label: { normal: ";", shift: "." } },
         { code: "Colon", label: { normal: ":", shift: "/" } },
         { code: "Exclam", label: { normal: "!", shift: "§" } },
-        { code: "ShiftRight", label: { normal: "Shift" }, special: true, width: "wider" },
+        { code: "ShiftRight", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
 
         // Row 5 (spacebar row) - UPDATED WIDTHS
         { code: "ControlLeft", label: { normal: "Ctrl" }, special: true, width: "wide" },
-        { code: "MetaLeft", label: { normal: "Win" }, special: true /* no width class for normal width */ },
+        { code: "MetaLeft", label: { normal: "\u229E" }, special: true /* normal width */ }, // ⊞
         { code: "AltLeft", label: { normal: "Alt" }, special: true, width: "wide" },
         { code: "Space", label: { normal: " " }, special: true, width: "space" },
         { code: "AltRight", label: { normal: "AltGr" }, special: true, width: "wide" },
-        { code: "MetaRight", label: { normal: "Win" }, special: true /* no width class for normal width */ },
-        { code: "ContextMenu", label: { normal: "Menu" }, special: true /* no width class for normal width */ },
+        { code: "MetaRight", label: { normal: "\u229E" }, special: true /* normal width */ }, // ⊞
+        { code: "ContextMenu", label: { normal: "\u2630" }, special: true /* normal width */ }, // ☰
         { code: "ControlRight", label: { normal: "Ctrl" }, special: true, width: "wide" },
       ];
     }
@@ -97,42 +97,42 @@ console.info("Loading AZERTY Keyboard Card");
           --key-active-bg: #2c2b2b;
           --key-special-bg: #222;
           --key-special-color: #ccc;
-          --key-width-normal: 40px;
-          --key-height: 45px;
-          --key-margin: 3px;
+          --key-height: 3.5rem;
+          --key-margin: 0.15rem;
           user-select: none;
-          display: inline-block;
-          min-width: max-content;
+          display: block;
+          width: 100%;
+          max-width: 100%;
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          box-sizing: border-box;
         }
         .keyboard-container {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          padding: 10px 5px 15px 5px;
+          align-items: stretch;
+          padding: 0.5rem 0.3rem 1rem 0.3rem;
           background: #1a1a1a;
           border-radius: 8px;
-          margin: auto;
+          margin: 0 auto;
           box-sizing: border-box;
-          user-select: none;
-          width: max-content;
+          width: 100%;
         }
         .keyboard-row {
           display: flex;
-          margin-bottom: 6px;
+          margin-bottom: 0.35rem;
           width: 100%;
-          justify-content: space-between;
-          gap: 6px;
+          gap: 0.3rem;
         }
         button.key {
           background: var(--key-bg);
           border: none;
           border-radius: 5px;
           color: #eee;
-          font-size: 14px;
+          font-size: 1rem;
           cursor: pointer;
           height: var(--key-height);
-          min-width: var(--key-width-normal);
+          flex-grow: 1;
+          min-width: 0;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -140,25 +140,24 @@ console.info("Loading AZERTY Keyboard Card");
           box-sizing: border-box;
           transition: background 0.15s ease;
           user-select: none;
-          padding: 0 6px;
+          padding: 0 0.5rem;
           white-space: nowrap;
-          flex-shrink: 0;
-          flex-grow: 0;
         }
-        button.key.wide,
+        button.key.wide {
+          flex-grow: 2;
+        }
         button.key.wider {
-          flex-grow: 1;
-          min-width: 0;
+          flex-grow: 3;
         }
         button.key.space {
-          min-width: calc(var(--key-width-normal) * 6);
-          flex-grow: 1;
+          flex-grow: 5;
+          min-width: 0;
         }
         button.key.special {
           background: var(--key-special-bg);
           color: var(--key-special-color);
           font-weight: 600;
-          font-size: 13px;
+          font-size: 0.9rem;
         }
         button.key:hover {
           background: var(--key-hover-bg);
@@ -172,14 +171,14 @@ console.info("Loading AZERTY Keyboard Card");
         }
         .label-upper {
           position: absolute;
-          top: 4px;
-          right: 6px;
-          font-size: 10px;
+          top: 0.3rem;
+          right: 0.5rem;
+          font-size: 0.6rem;
           opacity: 0.7;
           user-select: none;
         }
         .label-lower {
-          font-size: 18px;
+          font-size: 1.15rem;
           font-weight: 500;
           user-select: none;
         }
