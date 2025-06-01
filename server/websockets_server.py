@@ -13,7 +13,7 @@ keyboard_state = {
     "keys": [],
     "numlock": False,
     "capslock": False,
-    "scrolllock": False
+    "scrolllock": False,
 }
 
 def safe_eval(s):
@@ -93,27 +93,22 @@ async def handle_client(websocket):
 
 async def main():
     # Retrieve initial state
-    readLedsSuccess = False
-    try:
-        # Force keyboard wakeup to prevent infinite blocking while reading led status
-        keyboard.press([], KeyCodes["KEY_CAPSLOCK"], release=True)
-        keyboard.press([], KeyCodes["KEY_CAPSLOCK"], release=True)
-
-        leds = await asyncio.wait_for(
-            asyncio.to_thread(keyboard.blocking_read_led_status),
-            timeout=20
-        )
-        keyboard_state["numlock"] = leds.get("num_lock", False)
-        keyboard_state["capslock"] = leds.get("caps_lock", False)
-        keyboard_state["scrolllock"] = leds.get("scroll_lock", False)
-        readLedsSuccess = True
-    except asyncio.TimeoutError:
-        print("Timeout: LED status read took too long.")
-        return
-    except Exception as e:
-        print(f"Error reading LED status: {e}")
-        return
-
+    #try:
+    #    print("Forcing keyboard wakeup to prevent infinite blocking while reading led status.")
+    #    keyboard.press([], KeyCodes["KEY_CAPSLOCK"], release=True)
+    #    keyboard.press([], KeyCodes["KEY_CAPSLOCK"], release=True)
+    #
+    #    print("Reading initial LEDs status.")
+    #    leds = keyboard.blocking_read_led_status
+    #    keyboard_state["numlock"] = leds.get("num_lock", False)
+    #    keyboard_state["capslock"] = leds.get("caps_lock", False)
+    #    keyboard_state["scrolllock"] = leds.get("scroll_lock", False)
+    #except asyncio.TimeoutError:
+    #    print("Timeout: LED status read took too long.")
+    #    return
+    #except Exception as e:
+    #    print(f"Error reading LED status: {e}")
+    #    return
     # Start websockets server infinite loop
     async with websockets.serve(handle_client, "0.0.0.0", 8765):
         print("WebSocket server running at ws://0.0.0.0:8765")
