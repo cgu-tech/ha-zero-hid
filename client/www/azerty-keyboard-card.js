@@ -36,7 +36,7 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_P", label: { normal: "p", shift: "P" } },
       { code: "KEY_LEFTBRACE", label: { normal: "^", shift: "¨" } },
       { code: "KEY_RIGHTBRACE", label: { normal: "$", shift: "£" } },
-      { code: "KEY_ENTER", label: { normal: "Enter" }, special: true, width: "wider" },
+      { code: "KEY_ENTER", label: { normal: "Entrée" }, special: true, width: "wider" },
       // Row 3
       { code: "KEY_CAPSLOCK", label: { normal: "\uD83D\uDD12" }, special: true, width: "wider" }, // 🔒
       { code: "KEY_A", label: { normal: "q", shift: "Q" } },
@@ -103,7 +103,6 @@ class AzertyKeyboardCard extends HTMLElement {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           box-sizing: border-box;
         }
-      
         .keyboard-container {
           display: flex;
           flex-direction: column;
@@ -114,13 +113,11 @@ class AzertyKeyboardCard extends HTMLElement {
           box-sizing: border-box;
           width: 100%;
         }
-      
         .keyboard-row {
           display: flex;
           gap: 0.3rem;
           width: 100%;
         }
-      
         button.key {
           background: var(--key-bg);
           border: none;
@@ -141,35 +138,34 @@ class AzertyKeyboardCard extends HTMLElement {
           white-space: nowrap;
           overflow: hidden;
         }
-      
         button.key.wide {
           flex-grow: 2;
         }
-      
         button.key.wider {
           flex-grow: 3;
         }
-      
         button.key.special {
           background: var(--key-special-bg);
           color: var(--key-special-color);
           font-weight: 600;
           font-size: 0.95rem;
         }
-      
         button.key:hover {
           background: var(--key-hover-bg);
         }
-      
         button.key:active {
           background: var(--key-active-bg);
         }
-      
+        /* Ensure active state takes precedence */
         button.key.active {
-          background: #5a5a5a !important;
-          color: #fff !important;
+          background: #5a5a5a;
+          color: #fff;
         }
-      
+        button.key:hover.active,
+        button.key:active.active {
+          background: #5a5a5a;
+          color: #fff;
+        }
         .label-upper {
           position: absolute;
           top: 0.3rem;
@@ -178,7 +174,6 @@ class AzertyKeyboardCard extends HTMLElement {
           opacity: 0.7;
           user-select: none;
         }
-      
         .label-lower {
           font-size: inherit;
           font-weight: 500;
@@ -268,21 +263,31 @@ class AzertyKeyboardCard extends HTMLElement {
         btn.classList.toggle("active", this.altGr);
       }
 
-      if (keyData.special) continue;
-
       let displayLower = keyData.label.normal || "";
       let displayUpper = "";
 
-      if (this.altGr && keyData.label.altGr && keyData.label.altGr !== "") {
-        displayLower = keyData.label.altGr;
+      if (this.altGr) {
+        if (keyData.label.altGr && keyData.label.altGr !== "") {
+          displayLower = keyData.label.altGr;
+        } else if (keyData.special) {
+          displayLower = keyData.label.normal;
+        } else {
+          displayLower = "";
+        }
       } else {
         let useShift = this.shift;
         if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
           useShift = !useShift;
         }
 
-        if (useShift && keyData.label.shift && keyData.label.shift !== "") {
-          displayLower = keyData.label.shift;
+        if (useShift) {
+          if (keyData.label.shift && keyData.label.shift !== "") {
+            displayLower = keyData.label.shift;
+          } else if (keyData.special) {
+            displayLower = keyData.label.normal;
+          } else {
+            displayLower = "";
+          }
         } else {
           displayLower = keyData.label.normal;
         }
