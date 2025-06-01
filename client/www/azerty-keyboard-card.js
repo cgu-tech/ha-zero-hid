@@ -318,16 +318,19 @@ class AzertyKeyboardCard extends HTMLElement {
 
     if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
       this.shift = !this.shift;
+      appendCode(hass, code, charToSend);
       this.updateLabels();
       return;
     }
     if (code === "KEY_CAPSLOCK") {
       this.capsLock = !this.capsLock;
+      appendCode(hass, code, charToSend);
       this.updateLabels();
       return;
     }
     if (code === "MOD_RIGHT_CONTROL") {
       this.altGr = !this.altGr;
+      appendCode(hass, code, charToSend);
       this.updateLabels();
       return;
     }
@@ -355,23 +358,7 @@ class AzertyKeyboardCard extends HTMLElement {
         }
       }
     }
-
-    console.log("Key pressed:", code, "Char:", charToSend);
-    if (code) {
-      if (code.startsWith("MOD_")) {
-        // Modifier key pressed
-        this.pressedModifiers.add(code);
-      } else {
-        // Standard key pressed
-        this.pressedKeys.add(code);
-      }
-    }
-
-    // Send all pressed keys and modifiers
-    hass.callService("trackpad_mouse", "keypress", {
-      sendModifiers: Array.from(this.pressedModifiers),
-      sendKeys: Array.from(this.pressedKeys),
-    });
+    appendCode(hass, code, charToSend);
   }
 
   handleKeyRelease(hass, button) {
@@ -386,8 +373,25 @@ class AzertyKeyboardCard extends HTMLElement {
     if (code === "MOD_RIGHT_CONTROL") {
       if (this.altGr) return; // Do not release KEY_CAPSLOCK when explicitly active
     }
+    
+    removeCode(hass, code);
+  }
 
-    // Remove released key from pressed keys
+  appendCode(hass, code, charToSend) {
+    console.log("Key pressed:", code, "Char:", charToSend);
+    if (code) {
+      if (code.startsWith("MOD_")) {
+        // Modifier key pressed
+        this.pressedModifiers.add(code);
+      } else {
+        // Standard key pressed
+        this.pressedKeys.add(code);
+      }
+    }
+    updateWebsocketsKeyboard(hass);
+  }
+
+  removeCode(hass, code) {
     console.log("Key released:", code);
     if (code) {
       if (code.startsWith("MOD_")) {
@@ -398,8 +402,11 @@ class AzertyKeyboardCard extends HTMLElement {
         this.pressedKeys.delete(code);
       }
     }
+    updateWebsocketsKeyboard(hass);
+  }
 
-    // Send all pressed keys and modifiers
+  // Send all current pressed modifiers and keys to HID service
+  updateWebsocketsKeyboard(hass) {
     hass.callService("trackpad_mouse", "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
