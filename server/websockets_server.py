@@ -75,10 +75,10 @@ async def handle_client(websocket):
                 # Send sync state
                 response_data = {
                     "modifiers": keyboard_state["modifiers"],
-                    "keys": keyboard_state["keys"]
-                    "numlock": keyboard_state["numlock"]
-                    "capslock": keyboard_state["capslock"]
-                    "scrolllock": keyboard_state["scrolllock"]
+                    "keys": keyboard_state["keys"],
+                    "numlock": keyboard_state["numlock"],
+                    "capslock": keyboard_state["capslock"],
+                    "scrolllock": keyboard_state["scrolllock"],
                 }
                 response_str = json.dumps(response_data)
                 await websocket.send(response_str)
