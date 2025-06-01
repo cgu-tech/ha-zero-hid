@@ -262,6 +262,9 @@ class AzertyKeyboardCard extends HTMLElement {
       
       this.content = container;
       this.updateLabels();
+
+      // Initial synchronization to retrieve remote keyboard state
+      this.syncKeyboard(hass);
     }
   }
 
@@ -374,6 +377,12 @@ class AzertyKeyboardCard extends HTMLElement {
     // Pressed key code (keyboard layout independant, later send to remote keyboard)
     const code = keyData.code;
 
+    // Special buttons handling
+    if (code === "KEY_SYNC") {
+        syncKeyboard(hass);
+        return;
+    }
+
     // Change and retrieve modifiers + capslock states
     if (this.isModifierOrCapslock(code)) {
       if (code === "KEY_CAPSLOCK") {
@@ -401,7 +410,16 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   handleKeyRelease(hass, btn) {
-    const code = btn.dataset.code;
+    const keyData = btn._keyData;
+    if (!keyData) return;
+
+    const code = keyData.code;
+
+    // Special buttons handling
+    if (code === "KEY_SYNC") {
+        btn.classList.remove("active");
+        return;
+    }
 
     // Do not release modifiers when explicitly active
     if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
