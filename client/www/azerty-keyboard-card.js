@@ -510,11 +510,11 @@ class AzertyKeyboardCard extends HTMLElement {
         console.log("Synced Scrolllock:", syncScrolllock);
         // Update intenal states
         this.capsLock = syncCapslock;
-        this.shift = (syncModifiers && (syncModifiers.includes("MOD_LEFT_SHIFT") || syncModifiers.includes("MOD_RIGHT_SHIFT")));
-        this.ctrl = (syncModifiers && (syncModifiers.includes("MOD_LEFT_CONTROL") || syncModifiers.includes("MOD_RIGHT_CONTROL")));
-        this.gui = (syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI")));
-        this.alt = (syncModifiers && syncModifiers.includes("MOD_LEFT_ALT"));
-        this.altGr = (syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT"));
+        this.shift = syncModifiers && (syncModifiers.includes("MOD_LEFT_SHIFT") || syncModifiers.includes("MOD_RIGHT_SHIFT"));
+        this.ctrl = syncModifiers && (syncModifiers.includes("MOD_LEFT_CONTROL") || syncModifiers.includes("MOD_RIGHT_CONTROL"));
+        this.gui = syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI"));
+        this.alt = syncModifiers && syncModifiers.includes("MOD_LEFT_ALT");
+        this.altGr = syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT");
       })
       .catch((error) => {
         // Error handler
