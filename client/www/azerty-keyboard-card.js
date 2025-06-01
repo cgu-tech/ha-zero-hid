@@ -66,14 +66,14 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_SLASH", label: { normal: "!", shift: "§" } },
       { code: "MOD_RIGHT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
       // Row 5
-      { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
+      { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true },
       { code: "MOD_LEFT_GUI", label: { normal: "\u229E" }, special: true },
-      { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true, width: "wide" },
+      { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true },
       { code: "KEY_SPACE", label: { normal: " " }, special: true, width: "wider" },
-      { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true, width: "wide" },
+      { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true },
       { code: "MOD_RIGHT_GUI", label: { normal: "\u229E" }, special: true },
       { code: "KEY_PROPS", label: { normal: "\u2630" }, special: true },
-      { code: "MOD_RIGHT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
+      { code: "MOD_RIGHT_CONTROL", label: { normal: "Ctrl" }, special: true },
     ];
 
     // To track pressed modifiers and keys
@@ -273,23 +273,16 @@ class AzertyKeyboardCard extends HTMLElement {
         } else {
           displayLower = "";
         }
-      } else {
-        let useShift = this.shift;
-        if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
-          useShift = !useShift;
-        }
-
-        if (useShift) {
-          if (keyData.label.shift != null) {
-            displayLower = keyData.label.shift;
-          } else if (keyData.special) {
-            displayLower = keyData.label.normal;
-          } else {
-            displayLower = "";
-          }
-        } else {
+      } else if (this.shift !== this.capsLock) {
+        if (keyData.label.shift != null) {
+          displayLower = keyData.label.shift;
+        } else if (keyData.special) {
           displayLower = keyData.label.normal;
+        } else {
+          displayLower = "";
         }
+      } else {
+        displayLower = keyData.label.normal;
       }
 
       btn._lowerLabel.textContent = displayLower;
