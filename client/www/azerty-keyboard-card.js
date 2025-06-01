@@ -67,12 +67,12 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "MOD_RIGHT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
       // Row 5
       { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
-      { code: "MOD_LEFT_GUI", label: { normal: "\u229E" }, special: true, width: "wide" },
+      { code: "MOD_LEFT_GUI", label: { normal: "\u229E" }, special: true },
       { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true, width: "wide" },
       { code: "KEY_SPACE", label: { normal: " " }, special: true, width: "wider" },
       { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true, width: "wide" },
-      { code: "MOD_RIGHT_GUI", label: { normal: "\u229E" }, special: true, width: "wide" },
-      { code: "KEY_PROPS", label: { normal: "\u2630" }, special: true, width: "wide" },
+      { code: "MOD_RIGHT_GUI", label: { normal: "\u229E" }, special: true },
+      { code: "KEY_PROPS", label: { normal: "\u2630" }, special: true },
       { code: "MOD_RIGHT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
     ];
 
@@ -415,6 +415,21 @@ class AzertyKeyboardCard extends HTMLElement {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
+  }
+
+  // Synchronize with remote keyboard current state
+  syncKeyboardState(hass) {
+    hass.callService("trackpad_mouse", "synckeyboard")
+      .then((response) => {
+        // Success handler
+        const { syncModifiers, syncKeys } = response || {};
+        console.log("Synced Modifiers:", syncModifiers);
+        console.log("Synced Keys:", syncKeys);
+      })
+      .catch((error) => {
+        // Error handler
+        console.error("Failed to sync keyboard state:", error);
+      });
   }
 
   setConfig(config) {}
