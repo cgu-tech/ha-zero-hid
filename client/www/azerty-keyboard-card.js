@@ -517,6 +517,7 @@ class AzertyKeyboardCard extends HTMLElement {
       this.gui = syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI"));
       this.alt = syncModifiers && syncModifiers.includes("MOD_LEFT_ALT");
       this.altGr = syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT");
+      this.updateLabels();
     })
     .catch((err) => {
       console.error("Failed to sync keyboard state:", err);
