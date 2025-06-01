@@ -315,30 +315,29 @@ class AzertyKeyboardCard extends HTMLElement {
 
   handleKeyPress(hass, button) {
     const code = button.dataset.code;
-
+    let charToSend = null;
+    
     if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
       this.shift = !this.shift;
-      appendCode(hass, code, charToSend);
       this.updateLabels();
+      this.appendCode(hass, code, charToSend);
       return;
     }
     if (code === "KEY_CAPSLOCK") {
       this.capsLock = !this.capsLock;
-      appendCode(hass, code, charToSend);
       this.updateLabels();
+      this.appendCode(hass, code, charToSend);
       return;
     }
     if (code === "MOD_RIGHT_CONTROL") {
       this.altGr = !this.altGr;
-      appendCode(hass, code, charToSend);
       this.updateLabels();
+      this.appendCode(hass, code, charToSend);
       return;
     }
-
+    
     const keyData = button._keyData;
     if (!keyData) return;
-
-    let charToSend = null;
 
     if (keyData.special) {
       charToSend = null;
@@ -358,7 +357,7 @@ class AzertyKeyboardCard extends HTMLElement {
         }
       }
     }
-    appendCode(hass, code, charToSend);
+    this.appendCode(hass, code, charToSend);
   }
 
   handleKeyRelease(hass, button) {
@@ -374,7 +373,7 @@ class AzertyKeyboardCard extends HTMLElement {
       if (this.altGr) return; // Do not release KEY_CAPSLOCK when explicitly active
     }
     
-    removeCode(hass, code);
+    this.removeCode(hass, code);
   }
 
   appendCode(hass, code, charToSend) {
@@ -388,7 +387,7 @@ class AzertyKeyboardCard extends HTMLElement {
         this.pressedKeys.add(code);
       }
     }
-    updateWebsocketsKeyboard(hass);
+    this.sendKeyboardUpdate(hass);
   }
 
   removeCode(hass, code) {
@@ -402,11 +401,11 @@ class AzertyKeyboardCard extends HTMLElement {
         this.pressedKeys.delete(code);
       }
     }
-    updateWebsocketsKeyboard(hass);
+    this.sendKeyboardUpdate(hass);
   }
 
-  // Send all current pressed modifiers and keys to HID service
-  updateWebsocketsKeyboard(hass) {
+  // Send all current pressed modifiers and keys to HID keyboard
+  sendKeyboardUpdate(hass) {
     hass.callService("trackpad_mouse", "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
