@@ -93,10 +93,22 @@ async def handle_client(websocket):
 
 async def main():
     # Retrieve initial state
-    leds = keyboard.blocking_read_led_status()
-    keyboard_state["numlock"] = leds["num_lock"]
-    keyboard_state["capslock"] = leds["caps_lock"]
-    keyboard_state["scrolllock"] = leds["scroll_lock"]
+    readLedsSuccess = False
+    try:
+        leds = await asyncio.wait_for(
+            asyncio.to_thread(keyboard.blocking_read_led_status),
+            timeout=timeout
+        )
+        keyboard_state["numlock"] = leds.get("num_lock", False)
+        keyboard_state["capslock"] = leds.get("caps_lock", False)
+        keyboard_state["scrolllock"] = leds.get("scroll_lock", False)
+        readLedsSuccess = True
+    except asyncio.TimeoutError:
+        print("Timeout: LED status read took too long.")
+        raise
+    except Exception as e:
+        print(f"Error reading LED status: {e}")
+        raise
 
     # Start websockets server infinite loop
     async with websockets.serve(handle_client, "0.0.0.0", 8765):
