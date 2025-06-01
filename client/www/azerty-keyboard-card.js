@@ -212,7 +212,7 @@ class AzertyKeyboardCard extends HTMLElement {
           lowerLabel.textContent = keyData.label.normal || "";
           if (keyData.label.shift) {
             upperLabel.textContent = keyData.label.shift;
-          } else if (keyData.label.altGr && keyData.label.altGr !== "") {
+          } else if (keyData.label.altGr) {
             upperLabel.textContent = keyData.label.altGr;
           } else {
             upperLabel.textContent = "";
@@ -361,22 +361,26 @@ class AzertyKeyboardCard extends HTMLElement {
         }
       }
     }
+
+    // Press modifier or key through websockets
     this.appendCode(hass, code, charToSend);
   }
 
   handleKeyRelease(hass, button) {
     const code = button.dataset.code;
 
+    // Do not release modifiers when explicitly active
     if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-      if (this.shift) return; // Do not release shift when explicitly active
+      if (this.shift) return; 
     }
     if (code === "KEY_CAPSLOCK") {
-      if (this.capsLock) return; // Do not release KEY_CAPSLOCK when explicitly active
+      if (this.capsLock) return;
     }
     if (code === "MOD_RIGHT_ALT") {
-      if (this.altGr) return; // Do not release KEY_CAPSLOCK when explicitly active
+      if (this.altGr) return;
     }
-    
+
+    // Release modifier or key through websockets
     this.removeCode(hass, code);
   }
 
