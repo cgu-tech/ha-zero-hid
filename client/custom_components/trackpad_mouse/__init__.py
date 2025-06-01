@@ -6,7 +6,11 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.helpers.websocket_api import async_register_command
+from homeassistant.components.websocket_api import (
+    websocket_command,
+    async_response,
+    async_register_command,
+)
 
 from .websocket_handler import WebSocketClient
 from .const import DOMAIN, MIN_RANGE, MAX_RANGE
@@ -40,6 +44,27 @@ KEYPRESS_SERVICE_SCHEMA = vol.Schema({
     vol.Optional("sendModifiers", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
     vol.Optional("sendKeys", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
+
+@websocket_command({vol.Required("type"): "trackpad_mouse/sync_keyboard"})
+@async_response
+async def websocket_sync_keyboard(hass, connection, msg):
+    ws_client = hass.data[DOMAIN]
+    _LOGGER.debug("ws_client retrieved")
+
+    try:
+        sync_state = await ws_client.sync_keyboard()
+        _LOGGER.debug(f"sync_keyboard(): {sync_state}")
+
+        connection.send_result(msg["id"], {
+            "syncModifiers": sync_state.get("modifiers", []),
+            "syncKeys": sync_state.get("keys", []),
+            "syncNumlock": bool(sync_state.get("numlock", False)),
+            "syncCapslock": bool(sync_state.get("capslock", False)),
+            "syncScrolllock": bool(sync_state.get("scrolllock", False)),
+        })
+    except Exception as e:
+        _LOGGER.exception("Error in sync_keyboard")
+        connection.send_error(msg["id"], "sync_failed", str(e))
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websocket global client."""
@@ -158,38 +183,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_keypress: {e}")
-
-    """Handle syncing the keyboard state."""
-    @websocket_api.websocket_command({
-        vol.Required("type"): "trackpad_mouse/sync_keyboard"
-    })
-    @websocket_api.async_response
-    async def websocket_sync_keyboard(hass, connection, msg):
-        # Use shared client
-        ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        try:
-            sync_state = await ws_client.sync_keyboard()
-            _LOGGER.debug(f"ws_client.sync_keyboard()")
-
-            modifiers = sync_state.get("modifiers", [])
-            keys = sync_state.get("keys", [])
-            numlock = bool(sync_state.get("numlock", False))
-            capslock = bool(sync_state.get("capslock", False))
-            scrolllock = bool(sync_state.get("scrolllock", False))
-            _LOGGER.debug(f"ws_client.sync_keyboard(): modifiers={modifiers}, keys={keys}, numlock={numlock}, capslock={capslock}, scrolllock={scrolllock}")
-
-            connection.send_result(msg["id"], {
-                "syncModifiers": modifiers,
-                "syncKeys": keys,
-                "syncNumlock": numlock,
-                "syncCapslock": capslock,
-                "syncScrolllock": scrolllock,
-            })
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_synckeyboard: {e}")
-            connection.send_error(msg["id"], "sync_failed", str(e))
 
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
