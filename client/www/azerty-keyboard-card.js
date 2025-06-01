@@ -258,13 +258,13 @@ class AzertyKeyboardCard extends HTMLElement {
       const keyData = btn._keyData;
       if (!keyData) continue;
 
-      if (keyData.code === "ShiftLeft" || keyData.code === "ShiftRight") {
+      if (keyData.code === "MOD_LEFT_SHIFT" || keyData.code === "MOD_RIGHT_SHIFT") {
         btn.classList.toggle("active", this.shift);
       }
-      if (keyData.code === "CapsLock") {
+      if (keyData.code === "KEY_CAPSLOCK") {
         btn.classList.toggle("active", this.capsLock);
       }
-      if (keyData.code === "AltRight") {
+      if (keyData.code === "MOD_RIGHT_CONTROL") {
         btn.classList.toggle("active", this.altGr);
       }
 
@@ -316,17 +316,17 @@ class AzertyKeyboardCard extends HTMLElement {
   handleKeyPress(hass, button) {
     const code = button.dataset.code;
 
-    if (code === "ShiftLeft" || code === "ShiftRight") {
+    if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
       this.shift = !this.shift;
       this.updateLabels();
       return;
     }
-    if (code === "CapsLock") {
+    if (code === "KEY_CAPSLOCK") {
       this.capsLock = !this.capsLock;
       this.updateLabels();
       return;
     }
-    if (code === "AltRight") {
+    if (code === "MOD_RIGHT_CONTROL") {
       this.altGr = !this.altGr;
       this.updateLabels();
       return;
@@ -376,6 +376,16 @@ class AzertyKeyboardCard extends HTMLElement {
 
   handleKeyRelease(hass, button) {
     const code = button.dataset.code;
+
+    if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
+      if (this.shift) return; // Do not release shift when explicitly active
+    }
+    if (code === "KEY_CAPSLOCK") {
+      if (this.capsLock) return; // Do not release KEY_CAPSLOCK when explicitly active
+    }
+    if (code === "MOD_RIGHT_CONTROL") {
+      if (this.altGr) return; // Do not release KEY_CAPSLOCK when explicitly active
+    }
 
     // Remove released key from pressed keys
     console.log("Key released:", code);
