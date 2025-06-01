@@ -123,7 +123,7 @@ class AzertyKeyboardCard extends HTMLElement {
           border: none;
           border-radius: 5px;
           color: #eee;
-          font-size: 1.1rem; /* Uniform font size for all keys */
+          font-size: 1.1rem;
           cursor: pointer;
           height: var(--key-height);
           flex-grow: 1;
@@ -137,6 +137,8 @@ class AzertyKeyboardCard extends HTMLElement {
           padding: 0 0.5rem;
           white-space: nowrap;
           overflow: hidden;
+          -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
+          outline: none; /* Prevent focus ring override */
         }
         button.key.wide {
           flex-grow: 2;
@@ -156,15 +158,12 @@ class AzertyKeyboardCard extends HTMLElement {
         button.key:active {
           background: var(--key-active-bg);
         }
-        /* Ensure active state takes precedence */
-        button.key.active {
-          background: #5a5a5a;
-          color: #fff;
-        }
+        /* Fix: Ensure active state is visually dominant */
+        button.key.active,
         button.key:hover.active,
         button.key:active.active {
-          background: #5a5a5a;
-          color: #fff;
+          background: #5a5a5a !important;
+          color: #fff !important;
         }
         .label-upper {
           position: absolute;
@@ -211,7 +210,7 @@ class AzertyKeyboardCard extends HTMLElement {
           upperLabel.className = "label-upper";
 
           lowerLabel.textContent = keyData.label.normal || "";
-          if (keyData.label.shift && keyData.label.shift !== "") {
+          if (keyData.label.shift) {
             upperLabel.textContent = keyData.label.shift;
           } else if (keyData.label.altGr && keyData.label.altGr !== "") {
             upperLabel.textContent = keyData.label.altGr;
@@ -267,7 +266,7 @@ class AzertyKeyboardCard extends HTMLElement {
       let displayUpper = "";
 
       if (this.altGr) {
-        if (keyData.label.altGr && keyData.label.altGr !== "") {
+        if (keyData.label.altGr != null) {
           displayLower = keyData.label.altGr;
         } else if (keyData.special) {
           displayLower = keyData.label.normal;
@@ -281,7 +280,7 @@ class AzertyKeyboardCard extends HTMLElement {
         }
 
         if (useShift) {
-          if (keyData.label.shift && keyData.label.shift !== "") {
+          if (keyData.label.shift != null) {
             displayLower = keyData.label.shift;
           } else if (keyData.special) {
             displayLower = keyData.label.normal;
