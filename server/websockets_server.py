@@ -20,6 +20,9 @@ from zero_hid import Keyboard, KeyCodes
 mouse = Mouse()
 keyboard = Keyboard()
 
+pressed_modifiers = []
+pressed_keys = []
+
 def safe_eval(s):
     try:
         return ast.literal_eval(s)
@@ -69,6 +72,19 @@ async def handle_client(websocket):
                 keyCodes = [KeyCodes[key] for key in keys]
                 keyCode = keyCodes[0] if keyCodes else 0
                 keyboard.press(modifierCodes, keyCode, release=False)
+                # Update sync states
+                pressed_modifiers = modifiers
+                pressed_keys = [keys[0]] if keys else []
+
+            elif message == "sync:keyboard":
+                # Send sync state
+                response_data = {
+                    "modifiers": pressed_modifiers,
+                    "keys": pressed_keys
+                }
+                response_str = json.dumps(response_data)
+                await websocket.send(response_str)
+                print("Keyboard sync state responded")
 
     except websockets.ConnectionClosed:
         print("Client disconnected")

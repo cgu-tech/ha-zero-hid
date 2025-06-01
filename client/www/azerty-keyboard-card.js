@@ -480,7 +480,7 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   // Synchronize with remote keyboard current state
-  syncKeyboardState(hass) {
+  syncKeyboard(hass) {
     hass.callService("trackpad_mouse", "synckeyboard")
       .then((response) => {
         // Success handler
