@@ -31,7 +31,9 @@ MOVE_SERVICE_SCHEMA = vol.Schema({
 def ensure_list_or_empty(val):
     if val is None:
         return []
-    return vol.ensure_list(val)
+    if isinstance(val, list):
+        return val
+    return [val]
 
 KEYPRESS_SERVICE_SCHEMA = vol.Schema({
     vol.Optional("sendModifiers", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
