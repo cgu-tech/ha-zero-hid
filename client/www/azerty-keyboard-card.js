@@ -335,25 +335,24 @@ class AzertyKeyboardCard extends HTMLElement {
 
   handlePointerDown(evt, hass, btn) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    // Mark button active visually
-    btn.classList.add("active");
     this.handleKeyPress(hass, btn);
   }
 
   handlePointerUp(evt, hass, btn) {
     evt.preventDefault();
-    // Remove active visual
-    btn.classList.remove("active");
     this.handleKeyRelease(hass, btn);
   }
 
   handlePointerCancel(evt, hass, btn) {
     evt.preventDefault();
-    btn.classList.remove("active");
     this.handleKeyRelease(hass, btn);
   }
 
   handleKeyPress(hass, btn) {
+    // Mark button active visually
+    btn.classList.add("active");
+
+    // Retrieve key data
     const keyData = btn._keyData;
     if (!keyData) return;
 
@@ -401,6 +400,9 @@ class AzertyKeyboardCard extends HTMLElement {
     } else if (code === "MOD_RIGHT_ALT") {
       if (this.altGr) return;
     }
+
+    // Remove active visual
+    btn.classList.remove("active");
 
     // Release modifier or key through websockets
     this.removeCode(hass, code);
