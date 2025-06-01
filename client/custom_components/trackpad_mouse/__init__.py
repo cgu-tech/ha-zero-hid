@@ -200,5 +200,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "clickrelease", handle_clickrelease)
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
 
+    # Register WebSocket command
+    hass.components.websocket_api.async_register_command(websocket_sync_keyboard)
+
     # Return boolean to indicate that initialization was successfully.
     return True
