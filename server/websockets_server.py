@@ -74,7 +74,7 @@ async def handle_client(websocket):
                 }
                 response_str = json.dumps(response_data)
                 await websocket.send(response_str)
-                print("Keyboard sync state responded")
+                print(f"sync:keyboard: response_data={response_data}")
 
     except websockets.ConnectionClosed:
         print("Client disconnected")
