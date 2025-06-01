@@ -346,7 +346,7 @@ class AzertyKeyboardCard extends HTMLElement {
     if (keyData.special) {
       charToSend = null;
     } else {
-      if (this.altGr && keyData.label.altGr && keyData.label.altGr !== "") {
+      if (this.altGr && keyData.label.altGr) {
         charToSend = keyData.label.altGr;
       } else {
         let useShift = this.shift;
@@ -354,7 +354,7 @@ class AzertyKeyboardCard extends HTMLElement {
           useShift = !useShift;
         }
 
-        if (useShift && keyData.label.shift && keyData.label.shift !== "") {
+        if (useShift && keyData.label.shift) {
           charToSend = keyData.label.shift;
         } else {
           charToSend = keyData.label.normal;
@@ -372,9 +372,6 @@ class AzertyKeyboardCard extends HTMLElement {
     // Do not release modifiers when explicitly active
     if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
       if (this.shift) return; 
-    }
-    if (code === "KEY_CAPSLOCK") {
-      if (this.capsLock) return;
     }
     if (code === "MOD_RIGHT_ALT") {
       if (this.altGr) return;
