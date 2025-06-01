@@ -96,8 +96,8 @@ async def main():
     readLedsSuccess = False
     try:
         # Force keyboard wakeup to prevent infinite blocking while reading led status
-        keyboard.press([], KeyCodes["KEY_NUMLOCK"], release=True)
-        keyboard.press([], KeyCodes["KEY_NUMLOCK"], release=True)
+        keyboard.press([], KeyCodes["KEY_CAPSLOCK"], release=True)
+        keyboard.press([], KeyCodes["KEY_CAPSLOCK"], release=True)
 
         leds = await asyncio.wait_for(
             asyncio.to_thread(keyboard.blocking_read_led_status),
