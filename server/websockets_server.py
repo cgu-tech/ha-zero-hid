@@ -68,8 +68,12 @@ async def handle_client(websocket):
                 # Update sync states
                 keyboard_state["modifiers"] = modifiers
                 keyboard_state["keys"] = [keys[0]] if keys else []
-                if keyCode == KeyCodes["KEY_CAPSLOCK"]:
+                if keyCode == KeyCodes["KEY_NUMLOCK"]:
+                    keyboard_state["numlock"] = not keyboard_state["numlock"]
+                elif keyCode == KeyCodes["KEY_CAPSLOCK"]:
                     keyboard_state["capslock"] = not keyboard_state["capslock"]
+                elif keyCode == KeyCodes["KEY_SCROLLLOCK"]:
+                    keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
 
             elif message == "sync:keyboard":
                 # Send sync state

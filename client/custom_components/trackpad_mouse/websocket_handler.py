@@ -53,9 +53,10 @@ class WebSocketClient:
                 await self.websocket.send(cmd)
                 if waitResponse:
                     response = await self.websocket.recv()
+                    return response
         except websockets.exceptions.ConnectionClosedOK as e:
             _LOGGER.warning(f"WebSocket closed cleanly: {e}. Reconnecting...")
-            await self.recover_and_retry(x, y)
+            await self.recover_and_retry(cmd)
         except Exception as e:
             _LOGGER.error(f"Unexpected WebSocket error: {e}")
             await self.disconnect()

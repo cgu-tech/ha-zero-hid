@@ -502,7 +502,8 @@ class AzertyKeyboardCard extends HTMLElement {
     hass.callService("trackpad_mouse", "synckeyboard")
       .then((response) => {
         // Success handler
-        const { syncModifiers, syncKeys } = response || {};
+        console.log("Response:", response);
+        const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response || {};
         console.log("Synced Modifiers:", syncModifiers);
         console.log("Synced Keys:", syncKeys);
         console.log("Synced Numlock:", syncNumlock);
