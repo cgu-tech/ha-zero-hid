@@ -255,148 +255,150 @@ class AzertyKeyboardCard extends HTMLElement {
       const keyData = btn._keyData;
       if (!keyData) continue;
 
-      if (keyData.code === "KEY_CAPSLOCK") {
+      // Pressed key code (keyboard layout independant, later send to remote keyboard)
+      const code = keyData.code;
+
+      // Toggle visual state
+      if (code === "KEY_CAPSLOCK") {
         btn.classList.toggle("active", this.capsLock);
       }
-      if (keyData.code === "MOD_LEFT_SHIFT" || keyData.code === "MOD_RIGHT_SHIFT") {
+      if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
         btn.classList.toggle("active", this.shift);
       }
-      if (keyData.code === "MOD_LEFT_CONTROL" || keyData.code === "MOD_RIGHT_CONTROL") {
+      if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
         btn.classList.toggle("active", this.ctrl);
       }
-      if (keyData.code === "MOD_LEFT_GUI" || keyData.code === "MOD_RIGHT_GUI") {
+      if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
         btn.classList.toggle("active", this.gui);
       }
-      if (keyData.code === "MOD_LEFT_ALT") {
+      if (code === "MOD_LEFT_ALT") {
         btn.classList.toggle("active", this.alt);
       }
-      if (keyData.code === "MOD_RIGHT_ALT") {
+      if (code === "MOD_RIGHT_ALT") {
         btn.classList.toggle("active", this.altGr);
       }
 
-      let displayLower = keyData.label.normal || "";
+      // Determine displayed labels
+      let displayLower = "";
       let displayUpper = "";
 
       if (this.altGr) {
-        if (keyData.label.altGr != null) {
-          displayLower = keyData.label.altGr;
-        } else if (keyData.special) {
-          displayLower = keyData.label.normal;
-        } else {
-          displayLower = "";
-        }
+        displayLower = this.getLabelAlternativeAltGr(keyData);
       } else if (this.shift !== this.capsLock) {
-        if (keyData.label.shift != null) {
-          displayLower = keyData.label.shift;
-        } else if (keyData.special) {
-          displayLower = keyData.label.normal;
-        } else {
-          displayLower = "";
-        }
+        displayLower = this.getLabelAlternativeShift(keyData);
       } else {
-        displayLower = keyData.label.normal;
+        displayLower = this.getlLabelNormal(keyData) || "";
       }
 
+      // Set displayed labels
       btn._lowerLabel.textContent = displayLower;
       btn._upperLabel.textContent = displayUpper;
     }
   }
 
-  handlePointerDown(event, hass, button) {
-    event.preventDefault(); // prevent unwanted focus or scrolling
+  // Given:
+  // - keyData: a <button>.keyData object
+  // - alternativeLabel: an alternative label
+  // When:
+  // - alternativeLabel is defined, then alternativeLabel is returned
+  // - keyData.special is truthy, then normal label from keyData is returned
+  // - otherwise, empty label is returned
+  getLabelAlternative(keyData, alternativeLabel) {
+    let modifiedLabel = "";
+    if (alternativeLabel != null) {
+      modifiedLabel = alternativeLabel;
+    } else if (keyData.special) {
+      modifiedLabel = this.getlLabelNormal(keyData);
+    }
+    return modifiedLabel;
+  }
+
+  getLabelAlternativeAltGr(keyData) {
+    return this.getLabelAlternative(keyData, this.getlLabelAltGr(keyData));
+  }
+
+  getLabelAlternativeShift(keyData) {
+    return this.getLabelAlternative(keyData, this.getlLabelShift(keyData));
+  }
+
+  getlLabelNormal(keyData) {
+    return keyData.label.normal;
+  }
+
+  getlLabelAltGr(keyData) {
+    return keyData.label.altGr;
+  }
+
+  getlLabelShift(keyData) {
+    return keyData.label.shift;
+  }
+
+  handlePointerDown(evt, hass, btn) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
     // Mark button active visually
-    button.classList.add("active");
-    this.handleKeyPress(hass, button);
+    btn.classList.add("active");
+    this.handleKeyPress(hass, btn);
   }
 
-  handlePointerUp(event, hass, button) {
-    event.preventDefault();
+  handlePointerUp(evt, hass, btn) {
+    evt.preventDefault();
     // Remove active visual
-    button.classList.remove("active");
-    this.handleKeyRelease(hass, button);
+    btn.classList.remove("active");
+    this.handleKeyRelease(hass, btn);
   }
 
-  handlePointerCancel(event, hass, button) {
-    event.preventDefault();
-    button.classList.remove("active");
-    this.handleKeyRelease(hass, button);
+  handlePointerCancel(evt, hass, btn) {
+    evt.preventDefault();
+    btn.classList.remove("active");
+    this.handleKeyRelease(hass, btn);
   }
 
-  handleKeyPress(hass, button) {
-    const keyData = button._keyData;
+  handleKeyPress(hass, btn) {
+    const keyData = btn._keyData;
     if (!keyData) return;
 
+    // Pressed key code (keyboard layout independant, later send to remote keyboard)
     const code = keyData.code;
-    let charToSend = null;
 
-    if (code === "KEY_CAPSLOCK") {
-      this.capsLock = !this.capsLock;
-      this.updateLabels();
-      this.appendCode(hass, code, charToSend);
-      return;
-    }
-    if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-      this.shift = !this.shift;
-      this.updateLabels();
-      this.appendCode(hass, code, charToSend);
-      return;
-    }
-    if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
-      this.ctrl = !this.ctrl;
-      this.updateLabels();
-      this.appendCode(hass, code, charToSend);
-      return;
-    }
-    if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
-      this.gui = !this.gui;
-      this.updateLabels();
-      this.appendCode(hass, code, charToSend);
-      return;
-    }
-    if (code === "MOD_LEFT_ALT") {
-      this.alt = !this.alt;
-      this.updateLabels();
-      this.appendCode(hass, code, charToSend);
-      return;
-    }
-    if (code === "MOD_RIGHT_ALT") {
-      this.altGr = !this.altGr;
-      this.updateLabels();
-      this.appendCode(hass, code, charToSend);
-      return;
-    }
-
-    if (keyData.special) {
-      charToSend = null;
-    } else {
-      if (this.altGr && keyData.label.altGr) {
-        charToSend = keyData.label.altGr;
-      } else {
-        let useShift = this.shift;
-        if (this.capsLock && keyData.label.normal.match(/^[a-z]$/i)) {
-          useShift = !useShift;
-        }
-
-        if (useShift && keyData.label.shift) {
-          charToSend = keyData.label.shift;
-        } else {
-          charToSend = keyData.label.normal;
-        }
+    // Change and retrieve modifiers + capslock states
+    if (this.isModifierOrCapslock(code)) {
+      if (code === "KEY_CAPSLOCK") {
+        this.capsLock = !this.capsLock;
+      } else if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
+        this.shift = !this.shift;
+      } else if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
+        this.ctrl = !this.ctrl;
+      } else if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
+        this.gui = !this.gui;
+      } else if (code === "MOD_LEFT_ALT") {
+        this.alt = !this.alt;
+      } else if (code === "MOD_RIGHT_ALT") {
+        this.altGr = !this.altGr;
       }
+      // Update visual layout with modified modifiers + capslock states
+      this.updateLabels();
     }
 
-    // Press modifier or key through websockets
+    // Pressed key symbol (keyboard layout dependant, for information only)
+    const charToSend = btn._lowerLabel.textContent || "";
+
+    // Send keyboard changes
     this.appendCode(hass, code, charToSend);
   }
 
-  handleKeyRelease(hass, button) {
-    const code = button.dataset.code;
+  handleKeyRelease(hass, btn) {
+    const code = btn.dataset.code;
 
     // Do not release modifiers when explicitly active
     if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-      if (this.shift) return; 
-    }
-    if (code === "MOD_RIGHT_ALT") {
+      if (this.shift) return;
+    } else if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
+      if (this.ctrl) return;
+    } else if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
+      if (this.gui) return;
+    } else if (code === "MOD_LEFT_ALT") {
+      if (this.alt) return;
+    } else if (code === "MOD_RIGHT_ALT") {
       if (this.altGr) return;
     }
 
@@ -404,10 +406,25 @@ class AzertyKeyboardCard extends HTMLElement {
     this.removeCode(hass, code);
   }
 
+  // When key code is a modifier key, returns true. Returns false otherwise.
+  isModifier(code) {
+    return code.startsWith("MOD_");
+  }
+
+  // When key code is the capslock key, returns true. Returns false otherwise.
+  isCapslock(code) {
+    return code === "KEY_CAPSLOCK";
+  }
+
+  // When key code is a modifier key or the capslock key, returns true. Returns false otherwise.
+  isModifierOrCapslock(code) {
+    return this.isModifier(code) || this.isCapslock(code);
+  }
+
   appendCode(hass, code, charToSend) {
     console.log("Key pressed:", code, "Char:", charToSend);
     if (code) {
-      if (code.startsWith("MOD_")) {
+      if (this.isModifier(code)) {
         // Modifier key pressed
         this.pressedModifiers.add(code);
       } else {
@@ -421,7 +438,7 @@ class AzertyKeyboardCard extends HTMLElement {
   removeCode(hass, code) {
     console.log("Key released:", code);
     if (code) {
-      if (code.startsWith("MOD_")) {
+      if (this.isModifier(code)) {
         // Modifier key released
         this.pressedModifiers.delete(code);
       } else {
