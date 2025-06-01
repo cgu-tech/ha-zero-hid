@@ -10,7 +10,10 @@ mouse = Mouse()
 keyboard = Keyboard()
 keyboard_state = {
     "modifiers": [],
-    "keys": []
+    "keys": [],
+    "numlock": False,
+    "capslock": False,
+    "scrolllock": False
 }
 
 def safe_eval(s):
@@ -65,12 +68,17 @@ async def handle_client(websocket):
                 # Update sync states
                 keyboard_state["modifiers"] = modifiers
                 keyboard_state["keys"] = [keys[0]] if keys else []
+                if keyCode == KeyCodes["KEY_CAPSLOCK"]:
+                    keyboard_state["capslock"] = not keyboard_state["capslock"]
 
             elif message == "sync:keyboard":
                 # Send sync state
                 response_data = {
                     "modifiers": keyboard_state["modifiers"],
                     "keys": keyboard_state["keys"]
+                    "numlock": keyboard_state["numlock"]
+                    "capslock": keyboard_state["capslock"]
+                    "scrolllock": keyboard_state["scrolllock"]
                 }
                 response_str = json.dumps(response_data)
                 await websocket.send(response_str)
@@ -80,6 +88,13 @@ async def handle_client(websocket):
         print("Client disconnected")
 
 async def main():
+    # Retrieve initial state
+    leds = keyboard.blocking_read_led_status()
+    keyboard_state["numlock"] = leds["num_lock"]
+    keyboard_state["capslock"] = leds["caps_lock"]
+    keyboard_state["scrolllock"] = leds["scroll_lock"]
+
+    # Start websockets server infinite loop
     async with websockets.serve(handle_client, "0.0.0.0", 8765):
         print("WebSocket server running at ws://0.0.0.0:8765")
         await asyncio.Future()  # Run forever

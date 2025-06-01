@@ -3,8 +3,8 @@ console.info("Loading AZERTY Keyboard Card");
 class AzertyKeyboardCard extends HTMLElement {
   constructor() {
     super();
-    this.shift = false;
     this.capsLock = false;
+    this.shift = false;
     this.ctrl = false;
     this.gui = false;
     this.alt = false;
@@ -505,6 +505,16 @@ class AzertyKeyboardCard extends HTMLElement {
         const { syncModifiers, syncKeys } = response || {};
         console.log("Synced Modifiers:", syncModifiers);
         console.log("Synced Keys:", syncKeys);
+        console.log("Synced Numlock:", syncNumlock);
+        console.log("Synced Capslock:", syncCapslock);
+        console.log("Synced Scrolllock:", syncScrolllock);
+        // Update intenal states
+        this.capsLock = syncCapslock;
+        this.shift = (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT");
+        this.ctrl = (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL");
+        this.gui = (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI");
+        this.alt = (code === "MOD_LEFT_ALT");
+        this.altGr = (code === "MOD_RIGHT_ALT");
       })
       .catch((error) => {
         // Error handler

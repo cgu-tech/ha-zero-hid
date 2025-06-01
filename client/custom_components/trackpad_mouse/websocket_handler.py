@@ -37,6 +37,9 @@ class WebSocketClient:
         return {
             "modifiers": data.get("modifiers", []),
             "keys": data.get("keys", []),
+            "numlock": bool(data.get("numlock", False)),
+            "capslock": bool(data.get("capslock", False)),
+            "scrolllock": bool(data.get("scrolllock", False)),
         }
 
     async def send(self, cmd, waitResponse=False):

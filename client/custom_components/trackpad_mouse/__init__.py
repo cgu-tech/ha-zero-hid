@@ -171,17 +171,26 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
             modifiers = sync_state.get("modifiers", [])
             keys = sync_state.get("keys", [])
-            _LOGGER.debug(f"ws_client.sync_keyboard(): modifiers={modifiers}, keys={keys}")
+            numlock = bool(sync_state.get("numlock", False))
+            capslock = bool(sync_state.get("capslock", False))
+            scrolllock = bool(sync_state.get("scrolllock", False))
+            _LOGGER.debug(f"ws_client.sync_keyboard(): modifiers={modifiers}, keys={keys}, numlock={numlock}, capslock={capslock}, scrolllock={scrolllock}")
 
             return {
                 "syncModifiers": modifiers,
                 "syncKeys": keys,
+                "syncNumlock": numlock,
+                "syncCapslock": capslock,
+                "syncScrolllock": scrolllock,
             }
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_synckeyboard: {e}")
             return {
                 "syncModifiers": [],
                 "syncKeys": [],
+                "syncNumlock": False,
+                "syncCapslock": False,
+                "syncScrolllock": False,
             }
 
     # Register our services with Home Assistant.
