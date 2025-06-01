@@ -416,8 +416,13 @@ class AzertyKeyboardCard extends HTMLElement {
       if (this.altGr) return;
     }
 
-    // Remove active visual
-    btn.classList.remove("active");
+    // Do not disable capslock active when explicitly active
+    if (code === "KEY_CAPSLOCK") {
+      if (!this.capsLock) btn.classList.remove("active");
+    } else {
+      // Remove active visual for all other keys / states
+      btn.classList.remove("active");
+    }
 
     // Release modifier or key through websockets
     this.removeCode(hass, code);
