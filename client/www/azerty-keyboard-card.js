@@ -264,7 +264,7 @@ class AzertyKeyboardCard extends HTMLElement {
       if (keyData.code === "KEY_CAPSLOCK") {
         btn.classList.toggle("active", this.capsLock);
       }
-      if (keyData.code === "MOD_RIGHT_CONTROL") {
+      if (keyData.code === "MOD_RIGHT_ALT") {
         btn.classList.toggle("active", this.altGr);
       }
 
@@ -329,7 +329,7 @@ class AzertyKeyboardCard extends HTMLElement {
       this.appendCode(hass, code, charToSend);
       return;
     }
-    if (code === "MOD_RIGHT_CONTROL") {
+    if (code === "MOD_RIGHT_ALT") {
       this.altGr = !this.altGr;
       this.updateLabels();
       this.appendCode(hass, code, charToSend);
@@ -369,7 +369,7 @@ class AzertyKeyboardCard extends HTMLElement {
     if (code === "KEY_CAPSLOCK") {
       if (this.capsLock) return; // Do not release KEY_CAPSLOCK when explicitly active
     }
-    if (code === "MOD_RIGHT_CONTROL") {
+    if (code === "MOD_RIGHT_ALT") {
       if (this.altGr) return; // Do not release KEY_CAPSLOCK when explicitly active
     }
     
