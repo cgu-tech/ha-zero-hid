@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import voluptuous as vol
 
+from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
@@ -159,8 +160,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             _LOGGER.exception(f"Unhandled error in handle_keypress: {e}")
 
     """Handle syncing the keyboard state."""
-    @callback
-    async def handle_synckeyboard(call: ServiceCall) -> dict:
+    @websocket_api.websocket_command({
+        vol.Required("type"): "trackpad_mouse/sync_keyboard"
+    })
+    @websocket_api.async_response
+    async def websocket_sync_keyboard(hass, connection, msg):
         # Use shared client
         ws_client = hass.data[DOMAIN]
         _LOGGER.debug("ws_client retrieved")
@@ -176,22 +180,16 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             scrolllock = bool(sync_state.get("scrolllock", False))
             _LOGGER.debug(f"ws_client.sync_keyboard(): modifiers={modifiers}, keys={keys}, numlock={numlock}, capslock={capslock}, scrolllock={scrolllock}")
 
-            return {
+            connection.send_result(msg["id"], {
                 "syncModifiers": modifiers,
                 "syncKeys": keys,
                 "syncNumlock": numlock,
                 "syncCapslock": capslock,
                 "syncScrolllock": scrolllock,
-            }
+            })
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_synckeyboard: {e}")
-            return {
-                "syncModifiers": [],
-                "syncKeys": [],
-                "syncNumlock": False,
-                "syncCapslock": False,
-                "syncScrolllock": False,
-            }
+            connection.send_error(msg["id"], "sync_failed", str(e))
 
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
@@ -201,7 +199,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "clickright", handle_clickright)
     hass.services.async_register(DOMAIN, "clickrelease", handle_clickrelease)
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
-    hass.services.async_register(DOMAIN, "synckeyboard", handle_synckeyboard)
 
     # Return boolean to indicate that initialization was successfully.
     return True

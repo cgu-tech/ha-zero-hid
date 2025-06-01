@@ -497,29 +497,30 @@ class AzertyKeyboardCard extends HTMLElement {
     });
   }
 
-  // Synchronize with remote keyboard current state
+  // Synchronize with remote keyboard current state through HA websockets API
   syncKeyboard(hass) {
-    hass.callService("trackpad_mouse", "synckeyboard")
-      .then((response) => {
-        // Success handler
-        const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response || {};
-        console.log("Synced Modifiers:", syncModifiers);
-        console.log("Synced Keys:", syncKeys);
-        console.log("Synced Numlock:", syncNumlock);
-        console.log("Synced Capslock:", syncCapslock);
-        console.log("Synced Scrolllock:", syncScrolllock);
-        // Update intenal states
-        this.capsLock = syncCapslock;
-        this.shift = syncModifiers && (syncModifiers.includes("MOD_LEFT_SHIFT") || syncModifiers.includes("MOD_RIGHT_SHIFT"));
-        this.ctrl = syncModifiers && (syncModifiers.includes("MOD_LEFT_CONTROL") || syncModifiers.includes("MOD_RIGHT_CONTROL"));
-        this.gui = syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI"));
-        this.alt = syncModifiers && syncModifiers.includes("MOD_LEFT_ALT");
-        this.altGr = syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT");
-      })
-      .catch((error) => {
-        // Error handler
-        console.error("Failed to sync keyboard state:", error);
-      });
+    hass.connection.sendMessagePromise({
+      type: "trackpad_mouse/sync_keyboard"
+    })
+    .then((response) => {
+      // Success handler
+      const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
+      console.log("Synced Modifiers:", syncModifiers);
+      console.log("Synced Keys:", syncKeys);
+      console.log("Synced Numlock:", syncNumlock);
+      console.log("Synced Capslock:", syncCapslock);
+      console.log("Synced Scrolllock:", syncScrolllock);
+      // Update intenal states
+      this.capsLock = syncCapslock;
+      this.shift = syncModifiers && (syncModifiers.includes("MOD_LEFT_SHIFT") || syncModifiers.includes("MOD_RIGHT_SHIFT"));
+      this.ctrl = syncModifiers && (syncModifiers.includes("MOD_LEFT_CONTROL") || syncModifiers.includes("MOD_RIGHT_CONTROL"));
+      this.gui = syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI"));
+      this.alt = syncModifiers && syncModifiers.includes("MOD_LEFT_ALT");
+      this.altGr = syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT");
+    })
+    .catch((err) => {
+      console.error("Failed to sync keyboard state:", err);
+    });
   }
 
   setConfig(config) {}
