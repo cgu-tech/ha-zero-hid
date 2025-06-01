@@ -1,21 +1,10 @@
 import asyncio
 import websockets
 import ast
+import json
+
 from zero_hid import Mouse
 from zero_hid import Keyboard, KeyCodes
-
-# Prerequisites
-# sudo apt-get install -y git python3-pip python3-venv
-# cd ~ && git clone https://github.com/cgu-tech/zero-hid.git
-# venv creation : python3 -m venv ~/venv_websocket
-# venv activation : source ~/venv_websocket/bin/activate
-# packages installations :
-#  pip install --editable ~/zero-hid
-#  pip install websockets
-
-
-# Execution
-# python3 ~/websocket_server.py
 
 mouse = Mouse()
 keyboard = Keyboard()
