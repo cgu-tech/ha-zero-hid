@@ -97,7 +97,7 @@ async def main():
     try:
         leds = await asyncio.wait_for(
             asyncio.to_thread(keyboard.blocking_read_led_status),
-            timeout=2
+            timeout=20
         )
         keyboard_state["numlock"] = leds.get("num_lock", False)
         keyboard_state["capslock"] = leds.get("caps_lock", False)
@@ -105,10 +105,10 @@ async def main():
         readLedsSuccess = True
     except asyncio.TimeoutError:
         print("Timeout: LED status read took too long.")
-        raise
+        return
     except Exception as e:
         print(f"Error reading LED status: {e}")
-        raise
+        return
 
     # Start websockets server infinite loop
     async with websockets.serve(handle_client, "0.0.0.0", 8765):
