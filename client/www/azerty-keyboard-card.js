@@ -5,6 +5,9 @@ class AzertyKeyboardCard extends HTMLElement {
     super();
     this.shift = false;
     this.capsLock = false;
+    this.ctrl = false;
+    this.gui = false;
+    this.alt = false;
     this.altGr = false;
     this.keys = [
       // Row 1
@@ -252,11 +255,20 @@ class AzertyKeyboardCard extends HTMLElement {
       const keyData = btn._keyData;
       if (!keyData) continue;
 
+      if (keyData.code === "KEY_CAPSLOCK") {
+        btn.classList.toggle("active", this.capsLock);
+      }
       if (keyData.code === "MOD_LEFT_SHIFT" || keyData.code === "MOD_RIGHT_SHIFT") {
         btn.classList.toggle("active", this.shift);
       }
-      if (keyData.code === "KEY_CAPSLOCK") {
-        btn.classList.toggle("active", this.capsLock);
+      if (keyData.code === "MOD_LEFT_CONTROL" || keyData.code === "MOD_RIGHT_CONTROL") {
+        btn.classList.toggle("active", this.ctrl);
+      }
+      if (keyData.code === "MOD_LEFT_GUI" || keyData.code === "MOD_RIGHT_GUI") {
+        btn.classList.toggle("active", this.gui);
+      }
+      if (keyData.code === "MOD_LEFT_ALT") {
+        btn.classList.toggle("active", this.alt);
       }
       if (keyData.code === "MOD_RIGHT_ALT") {
         btn.classList.toggle("active", this.altGr);
@@ -311,17 +323,38 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   handleKeyPress(hass, button) {
-    const code = button.dataset.code;
+    const keyData = button._keyData;
+    if (!keyData) return;
+
+    const code = keyData.code;
     let charToSend = null;
-    
+
+    if (code === "KEY_CAPSLOCK") {
+      this.capsLock = !this.capsLock;
+      this.updateLabels();
+      this.appendCode(hass, code, charToSend);
+      return;
+    }
     if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
       this.shift = !this.shift;
       this.updateLabels();
       this.appendCode(hass, code, charToSend);
       return;
     }
-    if (code === "KEY_CAPSLOCK") {
-      this.capsLock = !this.capsLock;
+    if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
+      this.ctrl = !this.ctrl;
+      this.updateLabels();
+      this.appendCode(hass, code, charToSend);
+      return;
+    }
+    if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
+      this.gui = !this.gui;
+      this.updateLabels();
+      this.appendCode(hass, code, charToSend);
+      return;
+    }
+    if (code === "MOD_LEFT_ALT") {
+      this.alt = !this.alt;
       this.updateLabels();
       this.appendCode(hass, code, charToSend);
       return;
@@ -332,9 +365,6 @@ class AzertyKeyboardCard extends HTMLElement {
       this.appendCode(hass, code, charToSend);
       return;
     }
-    
-    const keyData = button._keyData;
-    if (!keyData) return;
 
     if (keyData.special) {
       charToSend = null;
