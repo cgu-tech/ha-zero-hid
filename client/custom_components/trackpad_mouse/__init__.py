@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 import voluptuous as vol
 
-from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers.websocket_api import async_register_command
 
 from .websocket_handler import WebSocketClient
 from .const import DOMAIN, MIN_RANGE, MAX_RANGE
@@ -201,7 +201,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
 
     # Register WebSocket command
-    hass.components.websocket_api.async_register_command(websocket_sync_keyboard)
+    async_register_command(hass, websocket_sync_keyboard)
 
     # Return boolean to indicate that initialization was successfully.
     return True
