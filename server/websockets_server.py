@@ -97,7 +97,7 @@ async def main():
     try:
         leds = await asyncio.wait_for(
             asyncio.to_thread(keyboard.blocking_read_led_status),
-            timeout=timeout
+            timeout=2
         )
         keyboard_state["numlock"] = leds.get("num_lock", False)
         keyboard_state["capslock"] = leds.get("caps_lock", False)
