@@ -10,6 +10,21 @@ class AzertyKeyboardCard extends HTMLElement {
     this.alt = false;
     this.altGr = false;
     this.keys = [
+      // Row 0
+      { code: "KEY_ESC", label: { normal: "Échap" }, special: true, width: "wide" },
+      { code: "KEY_F1", label: { normal: "F1" }, special: true },
+      { code: "KEY_F2", label: { normal: "F2" }, special: true },
+      { code: "KEY_F3", label: { normal: "F3" }, special: true },
+      { code: "KEY_F4", label: { normal: "F4" }, special: true },
+      { code: "KEY_F5", label: { normal: "F5" }, special: true },
+      { code: "KEY_F6", label: { normal: "F6" }, special: true },
+      { code: "KEY_F7", label: { normal: "F7" }, special: true },
+      { code: "KEY_F8", label: { normal: "F8" }, special: true },
+      { code: "KEY_F9", label: { normal: "F9" }, special: true },
+      { code: "KEY_F10", label: { normal: "F10" }, special: true },
+      { code: "KEY_F11", label: { normal: "F11" }, special: true },
+      { code: "KEY_F12", label: { normal: "F12" }, special: true },
+      { code: "KEY_SYNC", label: { normal: "\u21BB" }, special: true }, // ↻
       // Row 1
       { code: "KEY_GRAVE", label: { normal: "²", shift: "", altGr: "" }, special: true },
       { code: "KEY_1", label: { normal: "&", shift: "1", altGr: "" } },
@@ -56,7 +71,7 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_HASHTILDE", label: { normal: "*", shift: "µ" } },
       // Row 4
       { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
-      { code: "KEY_BACKSLASH", label: { normal: "<", shift: ">" } },
+      { code: "KEY_102ND", label: { normal: "<", shift: ">" } },
       { code: "KEY_Z", label: { normal: "w", shift: "W" } },
       { code: "KEY_X", label: { normal: "x", shift: "X" } },
       { code: "KEY_C", label: { normal: "c", shift: "C" } },
@@ -188,7 +203,7 @@ class AzertyKeyboardCard extends HTMLElement {
       container.className = "keyboard-container";
       
       // Define number of keys per row
-      const rowsConfig = [14, 14, 13, 13, 8];
+      const rowsConfig = [14, 14, 14, 13, 13, 8];
       let keyIndex = 0;
 
       rowsConfig.forEach((rowCount) => {
