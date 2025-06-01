@@ -379,7 +379,7 @@ class AzertyKeyboardCard extends HTMLElement {
 
     // Special buttons handling
     if (code === "KEY_SYNC") {
-        syncKeyboard(hass);
+        this.syncKeyboard(hass);
         return;
     }
 
