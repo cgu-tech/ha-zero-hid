@@ -502,7 +502,6 @@ class AzertyKeyboardCard extends HTMLElement {
     hass.callService("trackpad_mouse", "synckeyboard")
       .then((response) => {
         // Success handler
-        console.log("Response:", response);
         const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response || {};
         console.log("Synced Modifiers:", syncModifiers);
         console.log("Synced Keys:", syncKeys);
@@ -511,11 +510,11 @@ class AzertyKeyboardCard extends HTMLElement {
         console.log("Synced Scrolllock:", syncScrolllock);
         // Update intenal states
         this.capsLock = syncCapslock;
-        this.shift = (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT");
-        this.ctrl = (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL");
-        this.gui = (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI");
-        this.alt = (code === "MOD_LEFT_ALT");
-        this.altGr = (code === "MOD_RIGHT_ALT");
+        this.shift = (syncModifiers && (syncModifiers.includes("MOD_LEFT_SHIFT") || syncModifiers.includes("MOD_RIGHT_SHIFT")));
+        this.ctrl = (syncModifiers && (syncModifiers.includes("MOD_LEFT_CONTROL") || syncModifiers.includes("MOD_RIGHT_CONTROL")));
+        this.gui = (syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI")));
+        this.alt = (syncModifiers && syncModifiers.includes("MOD_LEFT_ALT"));
+        this.altGr = (syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT"));
       })
       .catch((error) => {
         // Error handler
