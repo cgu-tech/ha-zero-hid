@@ -17,8 +17,8 @@ class AzertyKeyboardCard extends HTMLElement {
 
     this.keys = [
       // Row 0
-      { code: "KEY_ESC", label: { normal: "Échap" }, special: true, width: "wide" },
-      { code: "KEY_AC_BACK", label: { normal: "Retour" }, special: true },
+      { code: "KEY_ESC", label: { normal: "Échap" }, special: true },
+      { code: "KEY_AC_BACK", label: { normal: "\u2B8C" }, special: true }, // ⮌
       { code: "KEY_AC_HOME", label: { normal: "Home" }, special: true },
       { code: "KEY_ALT_TAB", label: { normal: "Apps" }, special: true },
       { code: "KEY_COMPOSE", label: { normal: "Param" }, special: true },
@@ -61,7 +61,7 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_L", label: { normal: "l", shift: "L" } },
       { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M" } },
       // Row 4
-      { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA", shift: "1/2" }, special: true, width: "wider" }, // ⇪
+      { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA", shift: "1/2" }, special: true, width: "wide" }, // ⇪
       { code: "KEY_Z", label: { normal: "w", shift: "W" } },
       { code: "KEY_X", label: { normal: "x", shift: "X" } },
       { code: "KEY_C", label: { normal: "c", shift: "C" } },
@@ -69,9 +69,9 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_B", label: { normal: "b", shift: "B" } },
       { code: "KEY_N", label: { normal: "n", shift: "N" } },
       { code: "KEY_4", label: { normal: "'", shift: "4", altGr: "{" } },
-      { code: "KEY_BACKSPACE", label: { normal: "\u232B" }, special: true, width: "wider" }, // ⌫
+      { code: "KEY_BACKSPACE", label: { normal: "\u232B" }, special: true, width: "wide" }, // ⌫
       // Row 5
-      { code: "KEY_MODE", label: { normal: "!#1", shift: "ABC" }, special: true }, // ↻
+      { code: "KEY_MODE", label: { normal: "!#1", shift: "ABC" }, special: true },
       { code: "KEY_M", label: { normal: ",", shift: "?" } },
       { code: "KEY_SPACE", label: { normal: " " }, special: true, width: "wider" },
       { code: "KEY_COMMA", label: { normal: ";", shift: "." } },
@@ -192,7 +192,7 @@ class AzertyKeyboardCard extends HTMLElement {
       container.className = "keyboard-container";
       
       // Define number of keys per row
-      const rowsConfig = [14, 14, 14, 13, 13, 8];
+      const rowsConfig = [10, 10, 10, 10, 9, 5];
       let keyIndex = 0;
 
       rowsConfig.forEach((rowCount) => {
