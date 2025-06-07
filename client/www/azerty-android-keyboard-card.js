@@ -9,6 +9,12 @@ class AzertyKeyboardCard extends HTMLElement {
     this.gui = false;
     this.alt = false;
     this.altGr = false;
+
+    // 0 → State 1: No shift
+    // 1 → State 2: Shift-once
+    // 2 → State 3: Shift-locked
+    this.shiftState = 0;
+
     this.keys = [
       // Row 0
       { code: "KEY_ESC", label: { normal: "Échap" }, special: true, width: "wide" },
@@ -16,22 +22,22 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_AC_HOME", label: { normal: "Home" }, special: true },
       { code: "KEY_ALT_TAB", label: { normal: "Apps" }, special: true },
       { code: "KEY_COMPOSE", label: { normal: "Param" }, special: true },
-      { code: "KEY_F10", label: { normal: "Prev" }, special: true },
-      { code: "KEY_F11", label: { normal: "Play" }, special: true },
-      { code: "KEY_F12", label: { normal: "Next" }, special: true },
+      { code: "CON_SCAN_PREVIOUS_TRACK", label: { normal: "Prev" }, special: true },
+      { code: "CON_PLAY_PAUSE", label: { normal: "Play" }, special: true },
+      { code: "CON_SCAN_NEXT_TRACK", label: { normal: "Next" }, special: true },
       { code: "KEY_DELETE", label: { normal: "Suppr" }, special: true },
       { code: "KEY_SYNC", label: { normal: "\u21BB" }, special: true }, // ↻
       // Row 1
-      { code: "KEY_1", label: { normal: "&", shift: "1", altGr: "" } },
-      { code: "KEY_2", label: { normal: "é", shift: "2", altGr: "~" } },
-      { code: "KEY_3", label: { normal: "\"", shift: "3", altGr: "#" } },
-      { code: "KEY_4", label: { normal: "'", shift: "4", altGr: "{" } },
-      { code: "KEY_5", label: { normal: "(", shift: "5", altGr: "[" } },
-      { code: "KEY_6", label: { normal: "-", shift: "6", altGr: "|" } },
-      { code: "KEY_7", label: { normal: "è", shift: "7", altGr: "`" } },
-      { code: "KEY_8", label: { normal: "_", shift: "8", altGr: "\\" } },
-      { code: "KEY_9", label: { normal: "ç", shift: "9", altGr: "^" } },
-      { code: "KEY_0", label: { normal: "à", shift: "0", altGr: "@" } },
+      { code: "KEY_1", label: { normal: "1", shift: "&",  altGr: "" } },
+      { code: "KEY_2", label: { normal: "2", shift: "é",  altGr: "~" } },
+      { code: "KEY_3", label: { normal: "3", shift: "\"", altGr: "#" } },
+      { code: "KEY_4", label: { normal: "4", shift: "'",  altGr: "{" } },
+      { code: "KEY_5", label: { normal: "5", shift: "(",  altGr: "[" } },
+      { code: "KEY_6", label: { normal: "6", shift: "-",  altGr: "|" } },
+      { code: "KEY_7", label: { normal: "7", shift: "è",  altGr: "`" } },
+      { code: "KEY_8", label: { normal: "8", shift: "_",  altGr: "\\" } },
+      { code: "KEY_9", label: { normal: "9", shift: "ç",  altGr: "^" } },
+      { code: "KEY_0", label: { normal: "0", shift: "à",  altGr: "@" } },
       // Row 2
       { code: "KEY_Q", label: { normal: "a", shift: "A" } },
       { code: "KEY_W", label: { normal: "z", shift: "Z" } },
@@ -161,6 +167,11 @@ class AzertyKeyboardCard extends HTMLElement {
           background: #5a5a5a !important;
           color: #fff !important;
         }
+        button.key.locked {
+          background: #777 !important;
+          color: #fff !important;
+          font-weight: bold;
+        }
         .label-upper {
           position: absolute;
           top: 0.3rem;
@@ -259,7 +270,12 @@ class AzertyKeyboardCard extends HTMLElement {
         btn.classList.toggle("active", this.capsLock);
       }
       if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-        btn.classList.toggle("active", this.shift);
+        btn.classList.remove("active", "locked");
+        if (this.shiftState === 1) {
+          btn.classList.add("active");
+        } else if (this.shiftState === 2) {
+          btn.classList.add("locked");
+        }
       }
       if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
         btn.classList.toggle("active", this.ctrl);
@@ -280,7 +296,7 @@ class AzertyKeyboardCard extends HTMLElement {
 
       if (this.altGr) {
         displayLower = this.getLabelAlternativeAltGr(keyData);
-      } else if (this.shift !== this.capsLock) {
+      } else if (this.shiftState > 0 !== this.capsLock) {
         displayLower = this.getLabelAlternativeShift(keyData);
       } else {
         displayLower = this.getlLabelNormal(keyData) || "";
@@ -366,6 +382,7 @@ class AzertyKeyboardCard extends HTMLElement {
       if (code === "KEY_CAPSLOCK") {
         this.capsLock = !this.capsLock;
       } else if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
+        this.shiftState = (this.shiftState + 1) % 3;
         this.shift = !this.shift;
       } else if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
         this.ctrl = !this.ctrl;
@@ -418,6 +435,11 @@ class AzertyKeyboardCard extends HTMLElement {
     } else {
       // Remove active visual for all other keys / states
       btn.classList.remove("active");
+    }
+    
+    if (this.shiftState === 1 && !(code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT")) {
+      this.shiftState = 0;
+      this.updateLabels();
     }
 
     // Release modifier or key through websockets
@@ -495,6 +517,9 @@ class AzertyKeyboardCard extends HTMLElement {
       this.gui = syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI"));
       this.alt = syncModifiers && syncModifiers.includes("MOD_LEFT_ALT");
       this.altGr = syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT");
+
+      this.shiftState = this.shift ? 2 : 0;
+
       this.updateLabels();
     })
     .catch((err) => {
