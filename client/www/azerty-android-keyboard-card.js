@@ -48,16 +48,23 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_9", label: { normal: "9" } },
       { code: "KEY_0", label: { normal: "0" } },
       // Row 2
-      { code: "KEY_Q", label: { normal: "a", shift: "A", alt1: "+",      alt2: "`" } },
-      { code: "KEY_W", label: { normal: "z", shift: "Z", alt1: "x",      alt2: "~" } },
-      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "\u00F7", alt2: "\\" } }, // ÷
-      { code: "KEY_R", label: { normal: "r", shift: "R", alt1: "=",      alt2: "|" } },
-      { code: "KEY_T", label: { normal: "t", shift: "T", alt1: "/",      alt2: "{" } },
-      { code: "KEY_Y", label: { normal: "y", shift: "Y", alt1: "_",      alt2: "}" } },
-      { code: "KEY_U", label: { normal: "u", shift: "U", alt1: "<",      alt2: "$" } },
-      { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "£" } },
-      { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "¥" } },
-      { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "₩" } },
+      { code: "KEY_Q", label: { normal: "a", shift: "A", alt1: "+",      alt2: "`" }  },
+      { code: "KEY_W", label: { normal: "z", shift: "Z", alt1: "x",      alt2: "~" }  },
+      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "\u00F7", alt2: "\\" }, 
+        popinKeys: [
+          { code: "KEY_E_ACUTE", label: { normal: "é" } },
+          { code: "KEY_E_GRAVE", label: { normal: "è" } },
+          { code: "KEY_E_CIRC",  label: { normal: "ê" } },
+          { code: "KEY_E_UMLAUT",label: { normal: "ë" } }
+        ]
+      }, // ÷
+      { code: "KEY_R", label: { normal: "r", shift: "R", alt1: "=",      alt2: "|" }  },
+      { code: "KEY_T", label: { normal: "t", shift: "T", alt1: "/",      alt2: "{" }  },
+      { code: "KEY_Y", label: { normal: "y", shift: "Y", alt1: "_",      alt2: "}" }  },
+      { code: "KEY_U", label: { normal: "u", shift: "U", alt1: "<",      alt2: "$" }  },
+      { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "£" }  },
+      { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "¥" }  },
+      { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "₩" }  },
       // Row 3
       { code: "KEY_A",         label: { normal: "q", shift: "Q", alt1: "!", alt2: "°" } },
       { code: "KEY_S",         label: { normal: "s", shift: "S", alt1: "@", alt2: "•" } },
@@ -98,7 +105,7 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   handleGlobalPointerUp(evt) {
-    console.log("handleGlobalPointerUp:", this.content, this._lastHass);
+    //console.log("handleGlobalPointerUp:", this.content, this._lastHass);
     if (this.content && this._lastHass) {
       for (const btn of this.content.querySelectorAll("button.key.active")) {
         this.handleKeyRelease(this._lastHass, btn);
@@ -374,66 +381,68 @@ class AzertyKeyboardCard extends HTMLElement {
     }
   }
 
-  showPopin(evt, baseBtn) {
-    console.log("showPopin:", baseBtn);
+  showPopin(evt, btn) {
+    console.log("showPopin:", btn);
     if (this.popin) this.closePopin();
     
     if (this.card) {
-      const popupKeys = [
-        // Example: alt characters
-        [
-          { code: baseBtn._keyData.code + "_ALT1", label: { normal: "á" } },
-          { code: baseBtn._keyData.code + "_ALT2", label: { normal: "à" } },
-          { code: baseBtn._keyData.code + "_ALT3", label: { normal: "â" } }
-        ]
-      ];
-      
+
+      // Retrieve key data
+      const keyData = btn._keyData;
+      if (!keyData) return;
+
+      const popinKeys = keyData.popinKeys;
+      if (!popinKeys) return;
+
       const popin = document.createElement("div");
       popin.className = "key-popin";
-      
-      popupKeys.forEach(rowKeys => {
-        const row = document.createElement("div");
-        row.className = "key-popin-row";
-        rowKeys.forEach(key => {
-          const btn = document.createElement("button");
-          btn.classList.add("key");
-          btn.dataset.code = key.code;
-          btn.textContent = key.label.normal;
-          btn._keyData = key;
-      
-          btn.addEventListener("pointerenter", () => btn.classList.add("active"));
-          btn.addEventListener("pointerleave", () => btn.classList.remove("active"));
-          btn.addEventListener("pointerup", (e) => {
-            this.handleKeyPress(null, btn);
-            this.handleKeyRelease(null, btn);
-            this.closePopin();
-          });
-      
-          row.appendChild(btn);
-        });
-        popin.appendChild(row);
-      });
-      
-      this.popin = popin;
-      
-      // 1. Add to card and get its bounding box
-      this.card.appendChild(popin);
       popin.style.position = "absolute"; // relative to card
       this.card.style.position = "relative"; // ensure card is anchor
+
+      // Normalize popinKeys to always be an array of arrays
+      const popinRows = Array.isArray(popinKeys[0]) ? popinKeys : [popinKeys];
+
+      popinRows.forEach(rowKeys => {
+        const popinRow = document.createElement("div");
+        popinRow.className = "key-popin-row";
+        rowKeys.forEach(popinKey => {
+          const popinBtn = document.createElement("button");
+          popinBtn.classList.add("key");
+          popinBtn.dataset.code = popinKey.code;
+          popinBtn.textContent = popinKey.label.normal;
+          popinBtn._keyData = popinKey;
+
+          popinBtn.addEventListener("pointerenter", () => popinBtn.classList.add("active"));
+          popinBtn.addEventListener("pointerleave", () => popinBtn.classList.remove("active"));
+          popinBtn.addEventListener("pointerup", (e) => {
+            this.handleKeyPress(null, popinBtn);
+            this.handleKeyRelease(null, popinBtn);
+            this.closePopin();
+          });
+
+          popinRow.appendChild(popinBtn);
+        });
+        popin.appendChild(popinRow);
+      });
+
+      this.popin = popin;
+
+      // 1. Add to card and get its bounding box
+      this.card.appendChild(popin);
       const cardRect = this.card.getBoundingClientRect();
       const popinRect = popin.getBoundingClientRect();
-      
+
       // 2. Compute initial popin position relative to card
       let left = evt.clientX - cardRect.left - popinRect.width / 2;
       let top = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
-      
+
       // 3. Clamp horizontally (inside card)
       if (left < 0) {
         left = 0;
       } else if (left + popinRect.width > cardRect.width) {
         left = cardRect.width - popinRect.width;
       }
-      
+
       // 4. Clamp vertically (inside card)
       if (top < 0) {
         // If not enough space above, show below
@@ -443,16 +452,15 @@ class AzertyKeyboardCard extends HTMLElement {
           top = cardRect.height - popinRect.height;
         }
       }
-      
+
       // 5. Apply style
       popin.style.left = `${left}px`;
       popin.style.top = `${top}px`;
       popin.style.position = "absolute";
 
-        
       popin.style.left = `${left}px`;
       popin.style.top = `${top}px`;
-      
+
       // Close on pointerup anywhere
       const close = () => this.closePopin();
       document.addEventListener("pointerup", close, { once: true });

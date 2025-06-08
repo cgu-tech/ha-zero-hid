@@ -105,7 +105,7 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   handleGlobalPointerUp(evt) {
-    console.log("handleGlobalPointerUp:", this.content, this._lastHass);
+    //console.log("handleGlobalPointerUp", this.content, this._lastHass);
     if (this.content && this._lastHass) {
       for (const btn of this.content.querySelectorAll("button.key.active")) {
         this.handleKeyRelease(this._lastHass, btn);
