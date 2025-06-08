@@ -290,6 +290,23 @@ class AzertyKeyboardCard extends HTMLElement {
           opacity: 1;
           transform: scale(1);
         }
+        /* Initial state: hidden and scaled down */
+        .key-popin-row .key {
+          opacity: 0;
+          transform: scale(0.8);
+          transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        /* When entering: visible and full size */
+        .key-popin-row .key.enter-active {
+          opacity: 1;
+          transform: scale(1);
+        }
+        /* When leaving: fade out and scale down */
+        .key-popin-row .key.leave-active {
+          opacity: 0;
+          transform: scale(0.8);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+        }
         ha-card {
           position: relative;
         }
@@ -432,6 +449,11 @@ class AzertyKeyboardCard extends HTMLElement {
         });
 
         popinRow.appendChild(popinBtn);
+        
+        // trigger animation after the element is attached
+        requestAnimationFrame(() => {
+          popinBtn.classList.add("enter-active");
+        });
       });
       popin.appendChild(popinRow);
     });
