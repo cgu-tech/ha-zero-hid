@@ -3,13 +3,6 @@ console.info("Loading AZERTY Android Keyboard Card");
 class AzertyKeyboardCard extends HTMLElement {
   constructor() {
     super();
-    this.capsLock = false;
-    this.shift = false;
-    this.ctrl = false;
-    this.gui = false;
-    this.alt = false;
-    this.altGr = false;
-
     // 0: normal/shift mode
     // 1: alternative mode
     this.MODE_NORMAL = 0;
@@ -21,12 +14,12 @@ class AzertyKeyboardCard extends HTMLElement {
     this.SHIFT_STATE_NORMAL = 0;
     this.SHIFT_STATE_ONCE = 1;
     this.SHIFT_STATE_LOCKED = 2;
-    this.shiftState = 0;
+    this.shiftState = this.SHIFT_STATE_NORMAL;
     // 0 → State 1: Alternative symbols page 1
     // 1 → State 2: Alternative symbols page 2
-    this.ALT_STATE_PAGE1 = 0;
-    this.ALT_STATE_PAGE2 = 1;
-    this.altState = 0;
+    this.ALT_PAGE_ONE = 0;
+    this.ALT_PAGE_TWO = 1;
+    this.altState = this.ALT_PAGE_ONE;
 
     this.keys = [
       // Row 0
@@ -234,23 +227,11 @@ class AzertyKeyboardCard extends HTMLElement {
           const lowerLabel = document.createElement("span");
           lowerLabel.className = "label-lower";
 
-          const upperLabel = document.createElement("span");
-          upperLabel.className = "label-upper";
-
           lowerLabel.textContent = keyData.label.normal || "";
-          if (keyData.label.shift) {
-            upperLabel.textContent = keyData.label.shift;
-          } else if (keyData.label.altGr) {
-            upperLabel.textContent = keyData.label.altGr;
-          } else {
-            upperLabel.textContent = "";
-          }
-
+          
           btn.appendChild(lowerLabel);
-          btn.appendChild(upperLabel);
 
           btn._lowerLabel = lowerLabel;
-          btn._upperLabel = upperLabel;
           btn._keyData = keyData;
 
           // Add pointer and touch events:
@@ -283,47 +264,50 @@ class AzertyKeyboardCard extends HTMLElement {
       // Pressed key code (keyboard layout independant, later send to remote keyboard)
       const code = keyData.code;
 
-      // Toggle visual state
-      if (code === "KEY_CAPSLOCK") {
-        btn.classList.toggle("active", this.capsLock);
-      }
-      if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-        btn.classList.remove("active", "locked");
-        if (this.shiftState === 1) {
-          btn.classList.add("active");
-        } else if (this.shiftState === 2) {
-          btn.classList.add("locked");
-        }
-      }
-      if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
-        btn.classList.toggle("active", this.ctrl);
-      }
-      if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
-        btn.classList.toggle("active", this.gui);
-      }
-      if (code === "MOD_LEFT_ALT") {
-        btn.classList.toggle("active", this.alt);
-      }
-      if (code === "MOD_RIGHT_ALT") {
-        btn.classList.toggle("active", this.altGr);
-      }
+      // Special handling of virtual shift key
 
       // Determine displayed labels
       let displayLower = "";
-      let displayUpper = "";
 
-      if (this.altGr) {
-        displayLower = this.getLabelAlternativeAltGr(keyData);
-      } else if (this.shiftState > 0 !== this.capsLock) {
-        displayLower = this.getLabelAlternativeShift(keyData);
-      } else {
-        displayLower = this.getlLabelNormal(keyData) || "";
+      if (this.currentMode === this.MODE_NORMAL) {
+        if (this.shiftState === this.SHIFT_STATE_NORMAL) {
+          if (code === "MOD_LEFT_SHIFT") btn.classList.remove("active", "locked");
+          displayLower = this.getlLabelNormal(keyData) || "";
+        } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
+          if (code === "MOD_LEFT_SHIFT") btn.classList.add("active");
+          displayLower = this.getLabelAlternativeShift(keyData);
+        } else if (this.shiftState === this.SHIFT_STATE_LOCKED) {
+          if (code === "MOD_LEFT_SHIFT") btn.classList.add("locked");
+          displayLower = this.getLabelAlternativeShift(keyData);
+        }
+      } else if (this.currentMode === this.MODE_ALT) {
+        if (code === "MOD_LEFT_SHIFT") btn.classList.remove("active", "locked");
+        if (this.altState === this.ALT_PAGE_ONE) {
+          displayLower = this.getLabelAlternativeAlt1(keyData);
+        } else if (this.altState === this.ALT_PAGE_TWO) {
+          displayLower = this.getLabelAlternativeAlt2(keyData);
+        }
       }
 
       // Set displayed labels
       btn._lowerLabel.textContent = displayLower;
-      btn._upperLabel.textContent = displayUpper;
     }
+  }
+
+  getlLabelNormal(keyData) {
+    return keyData.label.normal;
+  }
+
+  getLabelAlternativeShift(keyData) {
+    return this.getLabelAlternative(keyData, keyData.label.shift);
+  }
+
+  getLabelAlternativeAlt1(keyData) {
+    return this.getLabelAlternative(keyData, keyData.label.alt1);
+  }
+
+  getLabelAlternativeAlt2(keyData) {
+    return this.getLabelAlternative(keyData, keyData.label.alt2);
   }
 
   // Given:
@@ -341,26 +325,6 @@ class AzertyKeyboardCard extends HTMLElement {
       modifiedLabel = this.getlLabelNormal(keyData);
     }
     return modifiedLabel;
-  }
-
-  getLabelAlternativeAltGr(keyData) {
-    return this.getLabelAlternative(keyData, this.getlLabelAltGr(keyData));
-  }
-
-  getLabelAlternativeShift(keyData) {
-    return this.getLabelAlternative(keyData, this.getlLabelShift(keyData));
-  }
-
-  getlLabelNormal(keyData) {
-    return keyData.label.normal;
-  }
-
-  getlLabelAltGr(keyData) {
-    return keyData.label.altGr;
-  }
-
-  getlLabelShift(keyData) {
-    return keyData.label.shift;
   }
 
   handlePointerDown(evt, hass, btn) {
@@ -389,31 +353,50 @@ class AzertyKeyboardCard extends HTMLElement {
     // Pressed key code (keyboard layout independant, later send to remote keyboard)
     const code = keyData.code;
 
-    // Change and retrieve modifiers + capslock states
-    if (this.isModifierOrCapslock(code)) {
-      if (code === "KEY_CAPSLOCK") {
-        this.capsLock = !this.capsLock;
-      } else if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-        this.shiftState = (this.shiftState + 1) % 3;
-        this.shift = !this.shift;
-      } else if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
-        this.ctrl = !this.ctrl;
-      } else if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
-        this.gui = !this.gui;
-      } else if (code === "MOD_LEFT_ALT") {
-        this.alt = !this.alt;
-      } else if (code === "MOD_RIGHT_ALT") {
-        this.altGr = !this.altGr;
+    // Change and retrieve virtual modifiers
+    if (this.isVirtualModifier(code)) {
+      if (code === "KEY_MODE") {
+        // Switch current mode
+        if (this.currentMode === this.MODE_NORMAL) {
+          this.currentMode = this.MODE_ALT;
+          this.altState = this.ALT_PAGE_ONE;
+        } else if (this.currentMode === this.MODE_ALT) {
+          this.currentMode = this.MODE_NORMAL;
+        }
       }
-      // Update visual layout with modified modifiers + capslock states
+      if (code === "MOD_LEFT_SHIFT") {
+        // Normal mode: switch shift state
+        if (this.currentMode === this.MODE_NORMAL) {
+          if (this.shiftState === this.SHIFT_STATE_NORMAL) {
+            this.shiftState = this.SHIFT_STATE_ONCE;
+          } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
+            this.shiftState = this.SHIFT_STATE_LOCKED;
+          } else if (this.shiftState === this.SHIFT_STATE_LOCKED) {
+            this.shiftState = this.SHIFT_STATE_NORMAL;
+          }
+        } else if (this.currentMode === this.MODE_ALT) {
+          // Alternative mode: switch alternative page
+          if (this.altState === this.ALT_PAGE_ONE) {
+            this.altState = this.ALT_PAGE_TWO;
+          } else if (this.shiftState === this.ALT_PAGE_TWO) {
+            this.altState = this.ALT_PAGE_ONE;
+          }
+        }
+      }
+      
+      // Update visual layout with modified virtual modifiers
       this.updateLabels();
+      
+      // Do not send any key
+      // resetCode();
+      return;
     }
 
     // Pressed key symbol (keyboard layout dependant, for information only)
     const charToSend = btn._lowerLabel.textContent || "";
 
     // Send keyboard changes
-    this.appendCode(hass, code, charToSend);
+    // this.appendCode(hass, code, charToSend);
   }
 
   handleKeyRelease(hass, btn) {
@@ -422,61 +405,38 @@ class AzertyKeyboardCard extends HTMLElement {
 
     const code = keyData.code;
 
-    // Special buttons handling
-    if (code === "KEY_SYNC") {
-        btn.classList.remove("active");
-        return;
-    }
+    // Do not release virtual modifiers
+    if (code === "MOD_LEFT_SHIFT") return;
 
-    // Do not release modifiers when explicitly active
-    if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-      if (this.shift) return;
-    } else if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
-      if (this.ctrl) return;
-    } else if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
-      if (this.gui) return;
-    } else if (code === "MOD_LEFT_ALT") {
-      if (this.alt) return;
-    } else if (code === "MOD_RIGHT_ALT") {
-      if (this.altGr) return;
-    }
-
-    // Do not disable capslock active when explicitly active
-    if (code === "KEY_CAPSLOCK") {
-      if (!this.capsLock) btn.classList.remove("active");
-    } else {
-      // Remove active visual for all other keys / states
-      btn.classList.remove("active");
-    }
+    // Remove active visual for all other keys / states
+    btn.classList.remove("active");
     
-    if (this.shiftState === 1 && !(code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT")) {
-      this.shiftState = 0;
+    // Switch back to normal when "shift-once" was set and a key different from SHIFT was pressed
+    if (this.shiftState === this.SHIFT_STATE_ONCE) {
+      this.shiftState = this.SHIFT_STATE_NORMAL;
       this.updateLabels();
     }
 
     // Release modifier or key through websockets
-    this.removeCode(hass, code);
+    // this.removeCode(hass, code);
   }
 
-  // When key code is a modifier key, returns true. Returns false otherwise.
-  isModifier(code) {
-    return code.startsWith("MOD_");
+  // When key code is a virtual modifier key, returns true. Returns false otherwise.
+  isVirtualModifier(code) {
+    return code === "KEY_MODE" || code === "MOD_LEFT_SHIFT";
   }
 
-  // When key code is the capslock key, returns true. Returns false otherwise.
-  isCapslock(code) {
-    return code === "KEY_CAPSLOCK";
-  }
-
-  // When key code is a modifier key or the capslock key, returns true. Returns false otherwise.
-  isModifierOrCapslock(code) {
-    return this.isModifier(code) || this.isCapslock(code);
+  resetCode(hass) {
+    console.log("Keyboard reset:");
+    this.pressedModifiers.clear();
+    this.pressedKeys.clear();
+    this.sendKeyboardUpdate(hass);
   }
 
   appendCode(hass, code, charToSend) {
     console.log("Key pressed:", code, "Char:", charToSend);
     if (code) {
-      if (this.isModifier(code)) {
+      if (this.isVirtualModifier(code)) {
         // Modifier key pressed
         this.pressedModifiers.add(code);
       } else {
@@ -490,7 +450,7 @@ class AzertyKeyboardCard extends HTMLElement {
   removeCode(hass, code) {
     console.log("Key released:", code);
     if (code) {
-      if (this.isModifier(code)) {
+      if (this.isVirtualModifier(code)) {
         // Modifier key released
         this.pressedModifiers.delete(code);
       } else {
