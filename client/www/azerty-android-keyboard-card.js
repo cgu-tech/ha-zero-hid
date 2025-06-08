@@ -21,6 +21,10 @@ class AzertyKeyboardCard extends HTMLElement {
     this.ALT_PAGE_TWO = 1;
     this.altState = this.ALT_PAGE_ONE;
 
+    this.popin = null;
+    this.popinTimeout = null;
+    this.card = null;
+
     this.keys = [
       // Row 0
       { code: "KEY_ESC",                 label: { normal: "Échap"        }, special: true },
@@ -200,6 +204,46 @@ class AzertyKeyboardCard extends HTMLElement {
           user-select: none;
         }
       `;
+      
+      style.textContent += `
+        .key-popin {
+          position: fixed; /* Use fixed instead of absolute for document.body */
+          background: var(--key-bg, #3b3a3a); /* Fallback if var is missing */
+          border-radius: 6px;
+          padding: 0.25rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          pointer-events: auto;
+          user-select: none;
+        }
+        .key-popin-row {
+          display: flex;
+        }
+        .key-popin button.key {
+          margin: var(--key-margin, 0.15rem);
+          height: var(--key-height, 3.5rem);
+          background: var(--key-bg, #3b3a3a);
+          color: #fff;
+          border: none;
+          border-radius: 5px;
+          font-size: 1rem;
+          padding: 0 0.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .key-popin button.key.active {
+          background: #add8e6 !important; /* Pastel blue */
+          color: #000 !important;
+        }
+        ha-card {
+          position: relative;
+        }
+      `;
+
+
       this.appendChild(style);
       
       const container = document.createElement("div");
@@ -235,12 +279,46 @@ class AzertyKeyboardCard extends HTMLElement {
           btn._keyData = keyData;
 
           // Add pointer and touch events:
-          btn.addEventListener("pointerdown", (e) => this.handlePointerDown(e, hass, btn));
-          btn.addEventListener("pointerup", (e) => this.handlePointerUp(e, hass, btn));
-          btn.addEventListener("pointercancel", (e) => this.handlePointerCancel(e, hass, btn));
+          // btn.addEventListener("pointerdown", (e) => this.handlePointerDown(e, hass, btn));
+          btn.addEventListener("pointerdown", (e) => {
+            this.handlePointerDown(e, hass, btn);
+          
+            // Long press timer (only for non-special keys)
+            if (!btn._keyData.special) {
+              console.log("pointerdown->!btn._keyData.special");
+              this.popinTimeout = setTimeout(() => {
+                this.showPopin(e, btn);
+              }, 500); // 500ms long-press duration
+            }
+          });
+
+          //btn.addEventListener("pointerup", (e) => this.handlePointerUp(e, hass, btn));
+          //btn.addEventListener("pointercancel", (e) => this.handlePointerCancel(e, hass, btn));
           // For older touch devices fallback
-          btn.addEventListener("touchend", (e) => this.handlePointerUp(e, hass, btn));
-          btn.addEventListener("touchcancel", (e) => this.handlePointerCancel(e, hass, btn));
+          //btn.addEventListener("touchend", (e) => this.handlePointerUp(e, hass, btn));
+          //btn.addEventListener("touchcancel", (e) => this.handlePointerCancel(e, hass, btn));
+
+          btn.addEventListener("pointerup", (e) => {
+            this.handlePointerUp(e, hass, btn);
+            clearTimeout(this.popinTimeout);
+            console.log("pointerup->clearTimeout");
+          });
+          btn.addEventListener("pointercancel", (e) => {
+            this.handlePointerCancel(e, hass, btn);
+            clearTimeout(this.popinTimeout);
+            console.log("pointercancel->clearTimeout");
+          });
+          // For older touch devices fallback
+          btn.addEventListener("touchend", (e) => {
+            this.handlePointerUp(e, hass, btn);
+            clearTimeout(this.popinTimeout);
+            console.log("touchend->clearTimeout");
+          });
+          btn.addEventListener("touchcancel", (e) => {
+            this.handlePointerCancel(e, hass, btn);
+            clearTimeout(this.popinTimeout);
+            console.log("touchcancel->clearTimeout");
+          });
 
           row.appendChild(btn);
         }
@@ -251,8 +329,75 @@ class AzertyKeyboardCard extends HTMLElement {
       card.appendChild(container);
       this.appendChild(card);
       
+      this.card = card;
       this.content = container;
       this.updateLabels();
+    }
+  }
+
+  showPopin(evt, baseBtn) {
+    console.log("showPopin:", baseBtn);
+    if (this.popin) this.closePopin();
+    
+    if (this.card) {
+      const popupKeys = [
+        // Example: alt characters
+        [
+          { code: baseBtn._keyData.code + "_ALT1", label: { normal: "á" } },
+          { code: baseBtn._keyData.code + "_ALT2", label: { normal: "à" } },
+          { code: baseBtn._keyData.code + "_ALT3", label: { normal: "â" } }
+        ]
+      ];
+      
+      const popin = document.createElement("div");
+      popin.className = "key-popin";
+      
+      popupKeys.forEach(rowKeys => {
+        const row = document.createElement("div");
+        row.className = "key-popin-row";
+        rowKeys.forEach(key => {
+          const btn = document.createElement("button");
+          btn.classList.add("key");
+          btn.dataset.code = key.code;
+          btn.textContent = key.label.normal;
+          btn._keyData = key;
+      
+          btn.addEventListener("pointerenter", () => btn.classList.add("active"));
+          btn.addEventListener("pointerleave", () => btn.classList.remove("active"));
+          btn.addEventListener("pointerup", (e) => {
+            this.handleKeyPress(null, btn);
+            this.handleKeyRelease(null, btn);
+            this.closePopin();
+          });
+      
+          row.appendChild(btn);
+        });
+        popin.appendChild(row);
+      });
+      
+      this.popin = popin;
+      // Position popin relative to screen pointer
+      this.card.appendChild(popin);
+      popin.style.position = "absolute"; // relative to card
+      this.card.style.position = "relative"; // ensure card is anchor
+      const cardRect = this.card.getBoundingClientRect();
+      const left = evt.clientX - cardRect.left;
+      const top = evt.clientY - cardRect.top;
+        
+      popin.style.left = `${left}px`;
+      popin.style.top = `${top}px`;
+      
+      // Close on pointerup anywhere
+      const close = () => this.closePopin();
+      document.addEventListener("pointerup", close, { once: true });
+    }
+  }
+
+  closePopin() {
+    console.log("closePopin");
+    if (this.popin && this.popin.parentElement) {
+      this.popin.remove();
+      this.popin = null;
     }
   }
 
