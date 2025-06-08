@@ -102,11 +102,6 @@ class AzertyKeyboardCard extends HTMLElement {
     this._lastHass = null;
     this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
     this._handleGlobalTouchEnd = this.handleGlobalPointerUp.bind(this); // reuse same logic
-
-    window.addEventListener("pointerup", this._handleGlobalPointerUp);
-    window.addEventListener("touchend", this._handleGlobalTouchEnd);
-    window.addEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.addEventListener("touchcancel", this._handleGlobalPointerUp);
   }
 
   handleGlobalPointerUp(evt) {
@@ -115,25 +110,34 @@ class AzertyKeyboardCard extends HTMLElement {
       for (const btn of this.content.querySelectorAll("button.key.active")) {
         this.handleKeyRelease(this._lastHass, btn);
       }
-
-      // Also close popin if it's open
-      if (this.popinElement) {
-        this.closePopin();
-      }
     }
   }
 
-  disconnectedCallback() {
+  addGlobalHandlers() {
+    window.addEventListener("pointerup", this._handleGlobalPointerUp);
+    window.addEventListener("touchend", this._handleGlobalTouchEnd);
+    window.addEventListener("mouseleave", this._handleGlobalPointerUp);
+    window.addEventListener("touchcancel", this._handleGlobalPointerUp);
+    console.log("handleGlobalPointerUp added");
+  }
+
+  removeGlobalHandlers() {
     window.removeEventListener("pointerup", this._handleGlobalPointerUp);
     window.removeEventListener("touchend", this._handleGlobalTouchEnd);
     window.removeEventListener("mouseleave", this._handleGlobalPointerUp);
     window.removeEventListener("touchcancel", this._handleGlobalPointerUp);
+    console.log("handleGlobalPointerUp removed");
   }
 
   set hass(hass) {
     console.log("AZERTY Keyboard hass received:", hass);
     if (!this.content) {
+
+      // Re-add global handlers to ensure proper out-of-bound handling
+      this.removeGlobalHandlers();
       this._lastHass = hass;
+      this.addGlobalHandlers();
+
       const card = document.createElement("ha-card");
       card.header = "AZERTY Keyboard";
       
