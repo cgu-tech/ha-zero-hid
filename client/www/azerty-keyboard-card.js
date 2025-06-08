@@ -97,11 +97,43 @@ class AzertyKeyboardCard extends HTMLElement {
     // To track pressed modifiers and keys
     this.pressedModifiers = new Set();
     this.pressedKeys = new Set();
+
+    // Handle out of bounds mouse releases
+    this._lastHass = null;
+    this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
+    this._handleGlobalTouchEnd = this.handleGlobalPointerUp.bind(this); // reuse same logic
+
+    window.addEventListener("pointerup", this._handleGlobalPointerUp);
+    window.addEventListener("touchend", this._handleGlobalTouchEnd);
+    window.addEventListener("mouseleave", this._handleGlobalPointerUp);
+    window.addEventListener("touchcancel", this._handleGlobalPointerUp);
+  }
+
+  handleGlobalPointerUp(evt) {
+    console.log("handleGlobalPointerUp:", this.content, this._lastHass);
+    if (this.content && this._lastHass) {
+      for (const btn of this.content.querySelectorAll("button.key.active")) {
+        this.handleKeyRelease(this._lastHass, btn);
+      }
+
+      // Also close popin if it's open
+      if (this.popinElement) {
+        this.closePopin();
+      }
+    }
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener("pointerup", this._handleGlobalPointerUp);
+    window.removeEventListener("touchend", this._handleGlobalTouchEnd);
+    window.removeEventListener("mouseleave", this._handleGlobalPointerUp);
+    window.removeEventListener("touchcancel", this._handleGlobalPointerUp);
   }
 
   set hass(hass) {
     console.log("AZERTY Keyboard hass received:", hass);
     if (!this.content) {
+      this._lastHass = hass;
       const card = document.createElement("ha-card");
       card.header = "AZERTY Keyboard";
       
