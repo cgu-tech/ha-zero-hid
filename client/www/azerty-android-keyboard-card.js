@@ -56,24 +56,24 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "₩" } },
       // Row 3
       { code: "KEY_A",         label: { normal: "q", shift: "Q", alt1: "!", alt2: "°" } },
-      { code: "KEY_S",         label: { normal: "s", shift: "S", alt1: "@", alt2: "" } },
-      { code: "KEY_D",         label: { normal: "d", shift: "D", alt1: "#", alt2: "" } },
-      { code: "KEY_F",         label: { normal: "f", shift: "F", alt1: "€", alt2: "" } },
-      { code: "KEY_G",         label: { normal: "g", shift: "G", alt1: "%", alt2: "" } },
-      { code: "KEY_H",         label: { normal: "h", shift: "H", alt1: "^", alt2: "" } },
-      { code: "KEY_J",         label: { normal: "j", shift: "J", alt1: "&", alt2: "" } },
-      { code: "KEY_K",         label: { normal: "k", shift: "K", alt1: "*", alt2: "" } },
-      { code: "KEY_L",         label: { normal: "l", shift: "L", alt1: "(", alt2: "" } },
-      { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M", alt1: ")", alt2: "" } },
+      { code: "KEY_S",         label: { normal: "s", shift: "S", alt1: "@", alt2: "•" } },
+      { code: "KEY_D",         label: { normal: "d", shift: "D", alt1: "#", alt2: "○" } },
+      { code: "KEY_F",         label: { normal: "f", shift: "F", alt1: "€", alt2: "●" } },
+      { code: "KEY_G",         label: { normal: "g", shift: "G", alt1: "%", alt2: "□" } },
+      { code: "KEY_H",         label: { normal: "h", shift: "H", alt1: "^", alt2: "■" } },
+      { code: "KEY_J",         label: { normal: "j", shift: "J", alt1: "&", alt2: "♤" } },
+      { code: "KEY_K",         label: { normal: "k", shift: "K", alt1: "*", alt2: "♡" } },
+      { code: "KEY_L",         label: { normal: "l", shift: "L", alt1: "(", alt2: "♢" } },
+      { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M", alt1: ")", alt2: "♧" } },
       // Row 4
       { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA", shift: "\u21EA", alt1: "1/2", alt2: "2/2" }, special: true, width: "altkey" }, // ⇪
-      { code: "KEY_Z",          label: { normal: "w",      shift: "W",      alt1: "-",  alt2: "" } },
-      { code: "KEY_X",          label: { normal: "x",      shift: "X",      alt1: "'",  alt2: "" } },
-      { code: "KEY_C",          label: { normal: "c",      shift: "C",      alt1: "\"", alt2: "" } },
-      { code: "KEY_V",          label: { normal: "v",      shift: "V",      alt1: ":",  alt2: "" } },
-      { code: "KEY_B",          label: { normal: "b",      shift: "B",      alt1: ";",  alt2: "" } },
-      { code: "KEY_N",          label: { normal: "n",      shift: "N",      alt1: ",",  alt2: "" } },
-      { code: "KEY_4",          label: { normal: "\u2018", shift: "\u2019", alt1: "?",  alt2: "" } }, // "\u2018" = left, "\u2019" = right
+      { code: "KEY_Z",          label: { normal: "w",      shift: "W",      alt1: "-",  alt2: "☆" } },
+      { code: "KEY_X",          label: { normal: "x",      shift: "X",      alt1: "'",  alt2: "▪" } },
+      { code: "KEY_C",          label: { normal: "c",      shift: "C",      alt1: "\"", alt2: "¤" } },
+      { code: "KEY_V",          label: { normal: "v",      shift: "V",      alt1: ":",  alt2: "⟪" } },
+      { code: "KEY_B",          label: { normal: "b",      shift: "B",      alt1: ";",  alt2: "⟫" } },
+      { code: "KEY_N",          label: { normal: "n",      shift: "N",      alt1: ",",  alt2: "¡" } },
+      { code: "KEY_4",          label: { normal: "\u2018", shift: "\u2019", alt1: "?",  alt2: "¿" } }, // "\u2018" = left, "\u2019" = right
       { code: "KEY_BACKSPACE",  label: { normal: "\u232B" }, special: true, width: "altkey" }, // ⌫
       // Row 5
       { code: "KEY_MODE",       label: { normal: "!#1", shift: "!#1", alt1: "ABC", alt2: "ABC" }, special: true, width: "altkey" },
