@@ -33,7 +33,7 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_ESC",                 label: { normal: "Échap"        }, special: true },
       { code: "KEY_AC_BACK",             label: { normal: "\u2B8C"       }, special: true }, // ⮌
       { code: "KEY_AC_HOME",             label: { normal: "\u2302"       }, special: true }, // ⌂
-      { code: "KEY_ALT_TAB",             label: { normal: "\uD83D\uDD57" }, special: true }, // 🗗 \u1F5D7
+      { code: "KEY_ALT_TAB",             label: { normal: "🗗"           }, special: true }, // 🗗 \u1F5D7
       { code: "KEY_COMPOSE",             label: { normal: "\u2699"       }, special: true }, // ⚙
       { code: "CON_SCAN_PREVIOUS_TRACK", label: { normal: "\u23EE"       }, special: true }, // ⏮
       { code: "CON_PLAY_PAUSE",          label: { normal: "\u23EF"       }, special: true }, // ⏯
