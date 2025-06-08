@@ -84,14 +84,14 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_SLASH", label: { normal: "!", shift: "§" } },
       { code: "MOD_RIGHT_SHIFT", label: { normal: "\u21EA" }, special: true, width: "wider" }, // ⇪
       // Row 5
-      { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true },
+      { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
       { code: "MOD_LEFT_GUI", label: { normal: "\u229E" }, special: true },
-      { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true },
-      { code: "KEY_SPACE", label: { normal: " " }, special: true, width: "wider" },
-      { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true },
+      { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true, width: "altkey" },
+      { code: "KEY_SPACE", label: { normal: "        " }, width: "spacebar" },
+      { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true, width: "altkey" },
       { code: "MOD_RIGHT_GUI", label: { normal: "\u229E" }, special: true },
       { code: "KEY_PROPS", label: { normal: "\u2630" }, special: true },
-      { code: "MOD_RIGHT_CONTROL", label: { normal: "Ctrl" }, special: true },
+      { code: "MOD_RIGHT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
     ];
 
     // To track pressed modifiers and keys
@@ -163,6 +163,12 @@ class AzertyKeyboardCard extends HTMLElement {
         }
         button.key.wider {
           flex-grow: 3;
+        }
+        button.key.altkey {
+          flex-grow: 1.5;
+        }
+        button.key.spacebar {
+          flex-grow: 11;
         }
         button.key.special {
           background: var(--key-special-bg);
