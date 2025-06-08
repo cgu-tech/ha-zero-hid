@@ -378,7 +378,7 @@ class AzertyKeyboardCard extends HTMLElement {
           // Alternative mode: switch alternative page
           if (this.altState === this.ALT_PAGE_ONE) {
             this.altState = this.ALT_PAGE_TWO;
-          } else if (this.shiftState === this.ALT_PAGE_TWO) {
+          } else if (this.altState === this.ALT_PAGE_TWO) {
             this.altState = this.ALT_PAGE_ONE;
           }
         }
