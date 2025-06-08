@@ -272,7 +272,6 @@ class AzertyKeyboardCard extends HTMLElement {
       if (this.currentMode === this.MODE_NORMAL) {
         if (this.shiftState === this.SHIFT_STATE_NORMAL) {
           if (code === "MOD_LEFT_SHIFT") btn.classList.remove("active", "locked");
-          displayLower = this.getlLabelNormal(keyData) || "";
         } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
           if (code === "MOD_LEFT_SHIFT") btn.classList.add("active");
           displayLower = this.getLabelAlternativeShift(keyData);
@@ -287,6 +286,10 @@ class AzertyKeyboardCard extends HTMLElement {
         } else if (this.altState === this.ALT_PAGE_TWO) {
           displayLower = this.getLabelAlternativeAlt2(keyData);
         }
+      }
+      
+      if (!displayLower) {
+        displayLower = this.getlLabelNormal(keyData) || "";
       }
 
       // Set displayed labels
