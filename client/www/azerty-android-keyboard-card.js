@@ -74,7 +74,7 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_L",         label: { normal: "l", shift: "L", alt1: "(", alt2: "" } },
       { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M", alt1: ")", alt2: "" } },
       // Row 4
-      { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA", shift: "\u21EA", alt1: "1/2", alt2: "2/2" }, special: true, width: "wide" }, // ⇪
+      { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA", shift: "\u21EA", alt1: "1/2", alt2: "2/2" }, special: true, width: "altkey" }, // ⇪
       { code: "KEY_Z",          label: { normal: "w",      shift: "W",      alt1: "-",  alt2: "" } },
       { code: "KEY_X",          label: { normal: "x",      shift: "X",      alt1: "'",  alt2: "" } },
       { code: "KEY_C",          label: { normal: "c",      shift: "C",      alt1: "\"", alt2: "" } },
@@ -82,13 +82,13 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_B",          label: { normal: "b",      shift: "B",      alt1: ";",  alt2: "" } },
       { code: "KEY_N",          label: { normal: "n",      shift: "N",      alt1: ",",  alt2: "" } },
       { code: "KEY_4",          label: { normal: "\u2018", shift: "\u2019", alt1: "?",  alt2: "" } }, // "\u2018" = left, "\u2019" = right
-      { code: "KEY_BACKSPACE",  label: { normal: "\u232B" }, special: true, width: "wide" }, // ⌫
+      { code: "KEY_BACKSPACE",  label: { normal: "\u232B" }, special: true, width: "altkey" }, // ⌫
       // Row 5
-      { code: "KEY_MODE",       label: { normal: "!#1", shift: "!#1", alt1: "ABC", alt2: "ABC" }, special: true },
+      { code: "KEY_MODE",       label: { normal: "!#1", shift: "!#1", alt1: "ABC", alt2: "ABC" }, special: true, width: "altkey" },
       { code: "KEY_M",          label: { normal: "," } },
-      { code: "KEY_SPACE",      label: { normal: "        " }, special: true, width: "wider" },
+      { code: "KEY_SPACE",      label: { normal: " " }, width: "spacebar" },
       { code: "KEY_COMMA",      label: { normal: "." } },
-      { code: "KEY_ENTER",      label: { normal: "Entrée" }, special: true },
+      { code: "KEY_ENTER",      label: { normal: "Entrée" }, special: true, width: "altkey" },
     ];
 
     // To track pressed modifiers and keys
@@ -160,6 +160,12 @@ class AzertyKeyboardCard extends HTMLElement {
         }
         button.key.wider {
           flex-grow: 3;
+        }
+        button.key.altkey {
+          flex-grow: 1.5;
+        }
+        button.key.spacebar {
+          flex-grow: 7.4;
         }
         button.key.special {
           background: var(--key-special-bg);

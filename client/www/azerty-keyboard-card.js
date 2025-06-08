@@ -87,7 +87,7 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "MOD_LEFT_CONTROL", label: { normal: "Ctrl" }, special: true, width: "wide" },
       { code: "MOD_LEFT_GUI", label: { normal: "\u229E" }, special: true },
       { code: "MOD_LEFT_ALT", label: { normal: "Alt" }, special: true, width: "altkey" },
-      { code: "KEY_SPACE", label: { normal: "        " }, width: "spacebar" },
+      { code: "KEY_SPACE", label: { normal: " " }, width: "spacebar" },
       { code: "MOD_RIGHT_ALT", label: { normal: "AltGr" }, special: true, width: "altkey" },
       { code: "MOD_RIGHT_GUI", label: { normal: "\u229E" }, special: true },
       { code: "KEY_PROPS", label: { normal: "\u2630" }, special: true },
