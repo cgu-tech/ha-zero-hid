@@ -283,7 +283,7 @@ class AzertyKeyboardCard extends HTMLElement {
           justify-content: center;
         }
         .key-popin button.key.active {
-          background: #add8e6 !important; /* Pastel blue */
+          background: #3399ff !important; /* blue */
           color: #000 !important;
         }
         .key-popin.visible {
@@ -418,6 +418,10 @@ class AzertyKeyboardCard extends HTMLElement {
 
         popinBtn._lowerLabel = lowerLabel;
         popinBtn._keyData = keyData;
+
+        // Here is the important part:
+        const baseBtnWidth = btn.getBoundingClientRect().width;
+        popinBtn.style.width = `${baseBtnWidth}px`;
 
         popinBtn.addEventListener("pointerenter", () => popinBtn.classList.add("active"));
         popinBtn.addEventListener("pointerleave", () => popinBtn.classList.remove("active"));
