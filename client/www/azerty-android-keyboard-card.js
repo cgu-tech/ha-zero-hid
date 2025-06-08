@@ -31,15 +31,14 @@ class AzertyKeyboardCard extends HTMLElement {
     this.keys = [
       // Row 0
       { code: "KEY_ESC",                 label: { normal: "Échap"        }, special: true },
-      { code: "KEY_AC_BACK",             label: { normal: "\u2B8C"       }, special: true }, // ⮌
-      { code: "KEY_AC_HOME",             label: { normal: "\u2302"       }, special: true }, // ⌂
-      { code: "KEY_ALT_TAB",             label: { normal: "🗗"           }, special: true }, // 🗗 \u1F5D7
+      { code: "KEY_AC_BACK",             label: { normal: "\u2B8C"       }, special: true, width: "android" }, // ⮌
+      { code: "KEY_AC_HOME",             label: { normal: "\u2302"       }, special: true, width: "android" }, // ⌂
+      { code: "KEY_ALT_TAB",             label: { normal: "🗗"           }, special: true, width: "android" }, // 🗗 \u1F5D7
       { code: "KEY_COMPOSE",             label: { normal: "\u2699"       }, special: true }, // ⚙
       { code: "CON_SCAN_PREVIOUS_TRACK", label: { normal: "\u23EE"       }, special: true }, // ⏮
       { code: "CON_PLAY_PAUSE",          label: { normal: "\u23EF"       }, special: true }, // ⏯
       { code: "CON_SCAN_NEXT_TRACK",     label: { normal: "\u23ED"       }, special: true }, // ⏭
       { code: "KEY_DELETE",              label: { normal: "Suppr"        }, special: true },
-      { code: "KEY_SYNC",                label: { normal: "\u21BB"       }, special: true }, // ↻
       // Row 1
       { code: "KEY_1", label: { normal: "1" } },
       { code: "KEY_2", label: { normal: "2" } },
@@ -52,18 +51,18 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_9", label: { normal: "9" } },
       { code: "KEY_0", label: { normal: "0" } },
       // Row 2
-      { code: "KEY_Q", label: { normal: "a", shift: "A", alt1: "+",      alt2: "" } },
-      { code: "KEY_W", label: { normal: "z", shift: "Z", alt1: "x",      alt2: "" } },
-      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "\u00F7", alt2: "" } }, // ÷
-      { code: "KEY_R", label: { normal: "r", shift: "R", alt1: "=",      alt2: "" } },
-      { code: "KEY_T", label: { normal: "t", shift: "T", alt1: "/",      alt2: "" } },
-      { code: "KEY_Y", label: { normal: "y", shift: "Y", alt1: "_",      alt2: "" } },
-      { code: "KEY_U", label: { normal: "u", shift: "U", alt1: "<",      alt2: "" } },
-      { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "" } },
-      { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "" } },
-      { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "" } },
+      { code: "KEY_Q", label: { normal: "a", shift: "A", alt1: "+",      alt2: "`" } },
+      { code: "KEY_W", label: { normal: "z", shift: "Z", alt1: "x",      alt2: "~" } },
+      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "\u00F7", alt2: "\\" } }, // ÷
+      { code: "KEY_R", label: { normal: "r", shift: "R", alt1: "=",      alt2: "|" } },
+      { code: "KEY_T", label: { normal: "t", shift: "T", alt1: "/",      alt2: "{" } },
+      { code: "KEY_Y", label: { normal: "y", shift: "Y", alt1: "_",      alt2: "}" } },
+      { code: "KEY_U", label: { normal: "u", shift: "U", alt1: "<",      alt2: "$" } },
+      { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "£" } },
+      { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "¥" } },
+      { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "₩" } },
       // Row 3
-      { code: "KEY_A",         label: { normal: "q", shift: "Q", alt1: "!", alt2: "" } },
+      { code: "KEY_A",         label: { normal: "q", shift: "Q", alt1: "!", alt2: "°" } },
       { code: "KEY_S",         label: { normal: "s", shift: "S", alt1: "@", alt2: "" } },
       { code: "KEY_D",         label: { normal: "d", shift: "D", alt1: "#", alt2: "" } },
       { code: "KEY_F",         label: { normal: "f", shift: "F", alt1: "€", alt2: "" } },
@@ -161,6 +160,9 @@ class AzertyKeyboardCard extends HTMLElement {
         button.key.wider {
           flex-grow: 3;
         }
+        button.key.android {
+          flex-grow: 1.55;
+        }
         button.key.altkey {
           flex-grow: 1.5;
         }
@@ -211,7 +213,7 @@ class AzertyKeyboardCard extends HTMLElement {
       container.className = "keyboard-container";
       
       // Define number of keys per row
-      const rowsConfig = [10, 10, 10, 10, 9, 5];
+      const rowsConfig = [9, 10, 10, 10, 9, 5];
       let keyIndex = 0;
 
       rowsConfig.forEach((rowCount) => {
@@ -270,9 +272,6 @@ class AzertyKeyboardCard extends HTMLElement {
       
       this.content = container;
       this.updateLabels();
-
-      // Initial synchronization to retrieve remote keyboard state
-      this.syncKeyboard(hass);
     }
   }
 
@@ -389,12 +388,6 @@ class AzertyKeyboardCard extends HTMLElement {
 
     // Pressed key code (keyboard layout independant, later send to remote keyboard)
     const code = keyData.code;
-
-    // Special buttons handling
-    if (code === "KEY_SYNC") {
-        this.syncKeyboard(hass);
-        return;
-    }
 
     // Change and retrieve modifiers + capslock states
     if (this.isModifierOrCapslock(code)) {
@@ -513,36 +506,6 @@ class AzertyKeyboardCard extends HTMLElement {
     hass.callService("trackpad_mouse", "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
-    });
-  }
-
-  // Synchronize with remote keyboard current state through HA websockets API
-  syncKeyboard(hass) {
-    hass.connection.sendMessagePromise({
-      type: "trackpad_mouse/sync_keyboard"
-    })
-    .then((response) => {
-      // Success handler
-      const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
-      console.log("Synced Modifiers:", syncModifiers);
-      console.log("Synced Keys:", syncKeys);
-      console.log("Synced Numlock:", syncNumlock);
-      console.log("Synced Capslock:", syncCapslock);
-      console.log("Synced Scrolllock:", syncScrolllock);
-      // Update intenal states
-      this.capsLock = syncCapslock;
-      this.shift = syncModifiers && (syncModifiers.includes("MOD_LEFT_SHIFT") || syncModifiers.includes("MOD_RIGHT_SHIFT"));
-      this.ctrl = syncModifiers && (syncModifiers.includes("MOD_LEFT_CONTROL") || syncModifiers.includes("MOD_RIGHT_CONTROL"));
-      this.gui = syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI"));
-      this.alt = syncModifiers && syncModifiers.includes("MOD_LEFT_ALT");
-      this.altGr = syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT");
-
-      this.shiftState = this.shift ? 2 : 0;
-
-      this.updateLabels();
-    })
-    .catch((err) => {
-      console.error("Failed to sync keyboard state:", err);
     });
   }
 
