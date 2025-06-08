@@ -322,7 +322,6 @@ class AzertyKeyboardCard extends HTMLElement {
 
           const lowerLabel = document.createElement("span");
           lowerLabel.className = "label-lower";
-
           lowerLabel.textContent = keyData.label.normal || "";
           
           btn.appendChild(lowerLabel);
@@ -339,7 +338,7 @@ class AzertyKeyboardCard extends HTMLElement {
             if (!btn._keyData.special) {
               console.log("pointerdown->!btn._keyData.special");
               this.popinTimeout = setTimeout(() => {
-                this.showPopin(e, btn);
+                this.showPopin(e, hass, card, btn);
               }, 500); // 500ms long-press duration
             }
           });
@@ -381,90 +380,97 @@ class AzertyKeyboardCard extends HTMLElement {
     }
   }
 
-  showPopin(evt, btn) {
+  showPopin(evt, hass, card, btn) {
     console.log("showPopin:", btn);
     if (this.popin) this.closePopin();
-    
-    if (this.card) {
 
-      // Retrieve key data
-      const keyData = btn._keyData;
-      if (!keyData) return;
+    // Retrieve key data
+    const keyData = btn._keyData;
+    if (!keyData) return;
 
-      const popinKeys = keyData.popinKeys;
-      if (!popinKeys) return;
+    const popinKeys = keyData.popinKeys;
+    if (!popinKeys) return;
 
-      const popin = document.createElement("div");
-      popin.className = "key-popin";
-      popin.style.position = "absolute"; // relative to card
-      this.card.style.position = "relative"; // ensure card is anchor
+    const popin = document.createElement("div");
+    popin.className = "key-popin";
+    popin.style.position = "absolute"; // relative to card
+    card.style.position = "relative"; // ensure card is anchor
 
-      // Normalize popinKeys to always be an array of arrays
-      const popinRows = Array.isArray(popinKeys[0]) ? popinKeys : [popinKeys];
+    // Normalize popinKeys to always be an array of arrays
+    const popinRows = Array.isArray(popinKeys[0]) ? popinKeys : [popinKeys];
 
-      popinRows.forEach(rowKeys => {
-        const popinRow = document.createElement("div");
-        popinRow.className = "key-popin-row";
-        rowKeys.forEach(popinKey => {
-          const popinBtn = document.createElement("button");
-          popinBtn.classList.add("key");
-          popinBtn.dataset.code = popinKey.code;
-          popinBtn.textContent = popinKey.label.normal;
-          popinBtn._keyData = popinKey;
+    popinRows.forEach(rowKeys => {
+      const popinRow = document.createElement("div");
+      popinRow.className = "key-popin-row";
+      rowKeys.forEach(popinKeyData => {
+        const popinBtn = document.createElement("button");
+        popinBtn.classList.add("key");
+        
+        if (popinKeyData.width) popinBtn.classList.add(popinKeyData.width);
 
-          popinBtn.addEventListener("pointerenter", () => popinBtn.classList.add("active"));
-          popinBtn.addEventListener("pointerleave", () => popinBtn.classList.remove("active"));
-          popinBtn.addEventListener("pointerup", (e) => {
-            this.handleKeyPress(null, popinBtn);
-            this.handleKeyRelease(null, popinBtn);
-            this.closePopin();
-          });
+        popinBtn.dataset.code = popinKeyData.code;
 
-          popinRow.appendChild(popinBtn);
+        const lowerLabel = document.createElement("span");
+        lowerLabel.className = "label-lower";
+        lowerLabel.textContent = popinKeyData.label.normal || "";
+
+        popinBtn.appendChild(lowerLabel);
+
+        popinBtn._lowerLabel = lowerLabel;
+        popinBtn._keyData = keyData;
+
+        popinBtn.addEventListener("pointerenter", () => popinBtn.classList.add("active"));
+        popinBtn.addEventListener("pointerleave", () => popinBtn.classList.remove("active"));
+        popinBtn.addEventListener("pointerup", (e) => {
+          this.handleKeyPress(hass, popinBtn);
+          this.handleKeyRelease(hass, popinBtn);
+          this.closePopin();
         });
-        popin.appendChild(popinRow);
+
+        popinRow.appendChild(popinBtn);
       });
+      popin.appendChild(popinRow);
+    });
 
-      this.popin = popin;
+    this.popin = popin;
 
-      // 1. Add to card and get its bounding box
-      this.card.appendChild(popin);
-      const cardRect = this.card.getBoundingClientRect();
-      const popinRect = popin.getBoundingClientRect();
+    // 1. Add to card and get its bounding box
+    card.appendChild(popin);
+    const cardRect = card.getBoundingClientRect();
+    const popinRect = popin.getBoundingClientRect();
 
-      // 2. Compute initial popin position relative to card
-      let left = evt.clientX - cardRect.left - popinRect.width / 2;
-      let top = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
+    // 2. Compute initial popin position relative to card
+    let left = evt.clientX - cardRect.left - popinRect.width / 2;
+    let top = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
 
-      // 3. Clamp horizontally (inside card)
-      if (left < 0) {
-        left = 0;
-      } else if (left + popinRect.width > cardRect.width) {
-        left = cardRect.width - popinRect.width;
-      }
-
-      // 4. Clamp vertically (inside card)
-      if (top < 0) {
-        // If not enough space above, show below
-        top = evt.clientY - cardRect.top + 8;
-        // If that too overflows bottom, clamp
-        if (top + popinRect.height > cardRect.height) {
-          top = cardRect.height - popinRect.height;
-        }
-      }
-
-      // 5. Apply style
-      popin.style.left = `${left}px`;
-      popin.style.top = `${top}px`;
-      popin.style.position = "absolute";
-
-      popin.style.left = `${left}px`;
-      popin.style.top = `${top}px`;
-
-      // Close on pointerup anywhere
-      const close = () => this.closePopin();
-      document.addEventListener("pointerup", close, { once: true });
+    // 3. Clamp horizontally (inside card)
+    if (left < 0) {
+      left = 0;
+    } else if (left + popinRect.width > cardRect.width) {
+      left = cardRect.width - popinRect.width;
     }
+
+    // 4. Clamp vertically (inside card)
+    if (top < 0) {
+      // If not enough space above, show below
+      top = evt.clientY - cardRect.top + 8;
+      // If that too overflows bottom, clamp
+      if (top + popinRect.height > cardRect.height) {
+        top = cardRect.height - popinRect.height;
+      }
+    }
+
+    // 5. Apply style
+    popin.style.left = `${left}px`;
+    popin.style.top = `${top}px`;
+    popin.style.position = "absolute";
+
+    popin.style.left = `${left}px`;
+    popin.style.top = `${top}px`;
+
+    // Close on pointerup anywhere
+    const close = () => this.closePopin();
+    document.addEventListener("pointerup", close, { once: true });
   }
 
   closePopin() {
