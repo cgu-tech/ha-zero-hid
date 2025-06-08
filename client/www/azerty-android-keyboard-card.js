@@ -48,14 +48,22 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_9", label: { normal: "9" } },
       { code: "KEY_0", label: { normal: "0" } },
       // Row 2
-      { code: "KEY_Q", label: { normal: "a", shift: "A", alt1: "+",      alt2: "`" }  },
-      { code: "KEY_W", label: { normal: "z", shift: "Z", alt1: "x",      alt2: "~" }  },
-      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "\u00F7", alt2: "\\" }, 
+      { code: "KEY_Q", label: { normal: "a", shift: "A", alt1: "+",      alt2: "`" }, 
         popinKeys: [
-          { code: "KEY_E_ACUTE", label: { normal: "é" } },
-          { code: "KEY_E_GRAVE", label: { normal: "è" } },
-          { code: "KEY_E_CIRC",  label: { normal: "ê" } },
-          { code: "KEY_E_UMLAUT",label: { normal: "ë" } }
+          { code: "KEY_Q_GRAVE", label: { normal: "à", shift: "À" } },
+          { code: "KEY_Q_CIRC",  label: { normal: "â", shift: "Â" } },
+          { code: "KEY_Q_ACUTE", label: { normal: "á", shift: "Á" } },
+          { code: "KEY_Q_TILDE", label: { normal: "ã", shift: "Ã" } },
+          { code: "KEY_Q_UMLAUT",label: { normal: "ä", shift: "Ä" } }
+        ]
+      },
+      { code: "KEY_W", label: { normal: "z", shift: "Z", alt1: "x",      alt2: "~" }  },
+      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "\u00F7", alt2: "\\"}, 
+        popinKeys: [
+          { code: "KEY_E_ACUTE", label: { normal: "é", shift: "É" } },
+          { code: "KEY_E_GRAVE", label: { normal: "è", shift: "È" } },
+          { code: "KEY_E_CIRC",  label: { normal: "ê", shift: "Ê" } },
+          { code: "KEY_E_UMLAUT",label: { normal: "ë", shift: "Ë" } }
         ]
       }, // ÷
       { code: "KEY_R", label: { normal: "r", shift: "R", alt1: "=",      alt2: "|" }  },
@@ -434,12 +442,38 @@ class AzertyKeyboardCard extends HTMLElement {
         popinBtn.appendChild(lowerLabel);
 
         popinBtn._lowerLabel = lowerLabel;
-        popinBtn._keyData = keyData;
+        popinBtn._keyData = popinKeyData;
 
-        // Here is the important part:
+        // Determine displayed labels
+        let displayLower = "";
+        
+        if (this.currentMode === this.MODE_NORMAL) {
+          if (this.shiftState === this.SHIFT_STATE_NORMAL) {
+          } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
+            displayLower = this.getLabelAlternativeShift(popinKeyData);
+          } else if (this.shiftState === this.SHIFT_STATE_LOCKED) {
+            displayLower = this.getLabelAlternativeShift(popinKeyData);
+          }
+        } else if (this.currentMode === this.MODE_ALT) {
+          if (this.altState === this.ALT_PAGE_ONE) {
+            displayLower = this.getLabelAlternativeAlt1(popinKeyData);
+          } else if (this.altState === this.ALT_PAGE_TWO) {
+            displayLower = this.getLabelAlternativeAlt2(popinKeyData);
+          }
+        }
+        
+        if (!displayLower) {
+          displayLower = this.getlLabelNormal(popinKeyData) || "";
+        }
+
+        // Set displayed labels
+        popinBtn._lowerLabel.textContent = displayLower;
+
+        // Make same width than base button
         const baseBtnWidth = btn.getBoundingClientRect().width;
         popinBtn.style.width = `${baseBtnWidth}px`;
 
+        // Handle events on button
         popinBtn.addEventListener("pointerenter", () => popinBtn.classList.add("active"));
         popinBtn.addEventListener("pointerleave", () => popinBtn.classList.remove("active"));
         popinBtn.addEventListener("pointerup", (e) => {
