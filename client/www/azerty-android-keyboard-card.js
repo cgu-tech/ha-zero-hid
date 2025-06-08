@@ -10,72 +10,85 @@ class AzertyKeyboardCard extends HTMLElement {
     this.alt = false;
     this.altGr = false;
 
-    // 0 → State 1: No shift
+    // 0: normal/shift mode
+    // 1: alternative mode
+    this.MODE_NORMAL = 0;
+    this.MODE_ALT = 1;
+    this.currentMode = this.MODE_NORMAL;
+    // 0 → State 1: Normal
     // 1 → State 2: Shift-once
     // 2 → State 3: Shift-locked
+    this.SHIFT_STATE_NORMAL = 0;
+    this.SHIFT_STATE_ONCE = 1;
+    this.SHIFT_STATE_LOCKED = 2;
     this.shiftState = 0;
+    // 0 → State 1: Alternative symbols page 1
+    // 1 → State 2: Alternative symbols page 2
+    this.ALT_STATE_PAGE1 = 0;
+    this.ALT_STATE_PAGE2 = 1;
+    this.altState = 0;
 
     this.keys = [
       // Row 0
-      { code: "KEY_ESC", label: { normal: "Échap" }, special: true },
-      { code: "KEY_AC_BACK", label: { normal: "\u2B8C" }, special: true }, // ⮌
-      { code: "KEY_AC_HOME", label: { normal: "Home" }, special: true },
-      { code: "KEY_ALT_TAB", label: { normal: "Apps" }, special: true },
-      { code: "KEY_COMPOSE", label: { normal: "Param" }, special: true },
-      { code: "CON_SCAN_PREVIOUS_TRACK", label: { normal: "Prev" }, special: true },
-      { code: "CON_PLAY_PAUSE", label: { normal: "Play" }, special: true },
-      { code: "CON_SCAN_NEXT_TRACK", label: { normal: "Next" }, special: true },
-      { code: "KEY_DELETE", label: { normal: "Suppr" }, special: true },
-      { code: "KEY_SYNC", label: { normal: "\u21BB" }, special: true }, // ↻
+      { code: "KEY_ESC",                 label: { normal: "Échap"        }, special: true },
+      { code: "KEY_AC_BACK",             label: { normal: "\u2B8C"       }, special: true }, // ⮌
+      { code: "KEY_AC_HOME",             label: { normal: "\u2302"       }, special: true }, // ⌂
+      { code: "KEY_ALT_TAB",             label: { normal: "\uD83D\uDD57" }, special: true }, // 🗗 \u1F5D7
+      { code: "KEY_COMPOSE",             label: { normal: "\u2699"       }, special: true }, // ⚙
+      { code: "CON_SCAN_PREVIOUS_TRACK", label: { normal: "\u23EE"       }, special: true }, // ⏮
+      { code: "CON_PLAY_PAUSE",          label: { normal: "\u23EF"       }, special: true }, // ⏯
+      { code: "CON_SCAN_NEXT_TRACK",     label: { normal: "\u23ED"       }, special: true }, // ⏭
+      { code: "KEY_DELETE",              label: { normal: "Suppr"        }, special: true },
+      { code: "KEY_SYNC",                label: { normal: "\u21BB"       }, special: true }, // ↻
       // Row 1
-      { code: "KEY_1", label: { normal: "1", shift: "&",  altGr: "" } },
-      { code: "KEY_2", label: { normal: "2", shift: "é",  altGr: "~" } },
-      { code: "KEY_3", label: { normal: "3", shift: "\"", altGr: "#" } },
-      { code: "KEY_4", label: { normal: "4", shift: "'",  altGr: "{" } },
-      { code: "KEY_5", label: { normal: "5", shift: "(",  altGr: "[" } },
-      { code: "KEY_6", label: { normal: "6", shift: "-",  altGr: "|" } },
-      { code: "KEY_7", label: { normal: "7", shift: "è",  altGr: "`" } },
-      { code: "KEY_8", label: { normal: "8", shift: "_",  altGr: "\\" } },
-      { code: "KEY_9", label: { normal: "9", shift: "ç",  altGr: "^" } },
-      { code: "KEY_0", label: { normal: "0", shift: "à",  altGr: "@" } },
+      { code: "KEY_1", label: { normal: "1" } },
+      { code: "KEY_2", label: { normal: "2" } },
+      { code: "KEY_3", label: { normal: "3" } },
+      { code: "KEY_4", label: { normal: "4" } },
+      { code: "KEY_5", label: { normal: "5" } },
+      { code: "KEY_6", label: { normal: "6" } },
+      { code: "KEY_7", label: { normal: "7" } },
+      { code: "KEY_8", label: { normal: "8" } },
+      { code: "KEY_9", label: { normal: "9" } },
+      { code: "KEY_0", label: { normal: "0" } },
       // Row 2
-      { code: "KEY_Q", label: { normal: "a", shift: "A" } },
-      { code: "KEY_W", label: { normal: "z", shift: "Z" } },
-      { code: "KEY_E", label: { normal: "e", shift: "E", altGr: "€" } },
-      { code: "KEY_R", label: { normal: "r", shift: "R" } },
-      { code: "KEY_T", label: { normal: "t", shift: "T" } },
-      { code: "KEY_Y", label: { normal: "y", shift: "Y" } },
-      { code: "KEY_U", label: { normal: "u", shift: "U" } },
-      { code: "KEY_I", label: { normal: "i", shift: "I" } },
-      { code: "KEY_O", label: { normal: "o", shift: "O" } },
-      { code: "KEY_P", label: { normal: "p", shift: "P" } },
+      { code: "KEY_Q", label: { normal: "a", shift: "A", alt1: "+",      alt2: "" } },
+      { code: "KEY_W", label: { normal: "z", shift: "Z", alt1: "x",      alt2: "" } },
+      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "\u00F7", alt2: "" } }, // ÷
+      { code: "KEY_R", label: { normal: "r", shift: "R", alt1: "=",      alt2: "" } },
+      { code: "KEY_T", label: { normal: "t", shift: "T", alt1: "/",      alt2: "" } },
+      { code: "KEY_Y", label: { normal: "y", shift: "Y", alt1: "_",      alt2: "" } },
+      { code: "KEY_U", label: { normal: "u", shift: "U", alt1: "<",      alt2: "" } },
+      { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "" } },
+      { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "" } },
+      { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "" } },
       // Row 3
-      { code: "KEY_A", label: { normal: "q", shift: "Q" } },
-      { code: "KEY_S", label: { normal: "s", shift: "S" } },
-      { code: "KEY_D", label: { normal: "d", shift: "D" } },
-      { code: "KEY_F", label: { normal: "f", shift: "F" } },
-      { code: "KEY_G", label: { normal: "g", shift: "G" } },
-      { code: "KEY_H", label: { normal: "h", shift: "H" } },
-      { code: "KEY_J", label: { normal: "j", shift: "J" } },
-      { code: "KEY_K", label: { normal: "k", shift: "K" } },
-      { code: "KEY_L", label: { normal: "l", shift: "L" } },
-      { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M" } },
+      { code: "KEY_A",         label: { normal: "q", shift: "Q", alt1: "!", alt2: "" } },
+      { code: "KEY_S",         label: { normal: "s", shift: "S", alt1: "@", alt2: "" } },
+      { code: "KEY_D",         label: { normal: "d", shift: "D", alt1: "#", alt2: "" } },
+      { code: "KEY_F",         label: { normal: "f", shift: "F", alt1: "€", alt2: "" } },
+      { code: "KEY_G",         label: { normal: "g", shift: "G", alt1: "%", alt2: "" } },
+      { code: "KEY_H",         label: { normal: "h", shift: "H", alt1: "^", alt2: "" } },
+      { code: "KEY_J",         label: { normal: "j", shift: "J", alt1: "&", alt2: "" } },
+      { code: "KEY_K",         label: { normal: "k", shift: "K", alt1: "*", alt2: "" } },
+      { code: "KEY_L",         label: { normal: "l", shift: "L", alt1: "(", alt2: "" } },
+      { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M", alt1: ")", alt2: "" } },
       // Row 4
-      { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA", shift: "1/2" }, special: true, width: "wide" }, // ⇪
-      { code: "KEY_Z", label: { normal: "w", shift: "W" } },
-      { code: "KEY_X", label: { normal: "x", shift: "X" } },
-      { code: "KEY_C", label: { normal: "c", shift: "C" } },
-      { code: "KEY_V", label: { normal: "v", shift: "V" } },
-      { code: "KEY_B", label: { normal: "b", shift: "B" } },
-      { code: "KEY_N", label: { normal: "n", shift: "N" } },
-      { code: "KEY_4", label: { normal: "'", shift: "4", altGr: "{" } },
-      { code: "KEY_BACKSPACE", label: { normal: "\u232B" }, special: true, width: "wide" }, // ⌫
+      { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA", shift: "\u21EA", alt1: "1/2", alt2: "2/2" }, special: true, width: "wide" }, // ⇪
+      { code: "KEY_Z",          label: { normal: "w",      shift: "W",      alt1: "-",  alt2: "" } },
+      { code: "KEY_X",          label: { normal: "x",      shift: "X",      alt1: "'",  alt2: "" } },
+      { code: "KEY_C",          label: { normal: "c",      shift: "C",      alt1: "\"", alt2: "" } },
+      { code: "KEY_V",          label: { normal: "v",      shift: "V",      alt1: ":",  alt2: "" } },
+      { code: "KEY_B",          label: { normal: "b",      shift: "B",      alt1: ";",  alt2: "" } },
+      { code: "KEY_N",          label: { normal: "n",      shift: "N",      alt1: ",",  alt2: "" } },
+      { code: "KEY_4",          label: { normal: "\u2018", shift: "\u2019", alt1: "?",  alt2: "" } }, // "\u2018" = left, "\u2019" = right
+      { code: "KEY_BACKSPACE",  label: { normal: "\u232B" }, special: true, width: "wide" }, // ⌫
       // Row 5
-      { code: "KEY_MODE", label: { normal: "!#1", shift: "ABC" }, special: true },
-      { code: "KEY_M", label: { normal: ",", shift: "?" } },
-      { code: "KEY_SPACE", label: { normal: " " }, special: true, width: "wider" },
-      { code: "KEY_COMMA", label: { normal: ";", shift: "." } },
-      { code: "KEY_ENTER", label: { normal: "Entrée" }, special: true },
+      { code: "KEY_MODE",       label: { normal: "!#1", shift: "!#1", alt1: "ABC", alt2: "ABC" }, special: true },
+      { code: "KEY_M",          label: { normal: "," } },
+      { code: "KEY_SPACE",      label: { normal: "        " }, special: true, width: "wider" },
+      { code: "KEY_COMMA",      label: { normal: "." } },
+      { code: "KEY_ENTER",      label: { normal: "Entrée" }, special: true },
     ];
 
     // To track pressed modifiers and keys
