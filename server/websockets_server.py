@@ -5,6 +5,7 @@ import json
 
 from zero_hid import Mouse
 from zero_hid import Keyboard, KeyCodes
+from zero_hid import Consumer, ConsumerCodes
 
 mouse = Mouse()
 keyboard = Keyboard()
@@ -15,6 +16,9 @@ keyboard_state = {
     "capslock": False,
     "scrolllock": False,
 }
+key_codes_map = KeyCodes.as_dict()
+consumer_codes_map = ConsumerCodes.as_dict()
+# consumerKeyboard = Consumer()
 
 def safe_eval(s):
     try:
@@ -61,18 +65,30 @@ async def handle_client(websocket):
 
             elif message.startswith("keypress:"):
                 modifiers, keys = map(safe_eval, message.replace("keypress:", "").split(":"))
-                
-                # Check modifiers
-                unknown_modifiers = [mod for mod in modifiers if not hasattr(KeyCodes, mod)]
-                if unknown_modifiers:
-                    print(f"Unable to find modifier keys: {unknown_modifiers}")
-                modifierCodes = [getattr(KeyCodes, mod) for mod in modifiers if hasattr(KeyCodes, mod)]
 
-                # Check keys
-                unknown_keys = [key for key in keys if not hasattr(KeyCodes, key)]
+                # Separate known modifiers and unknown codes
+                modifierCodes = []
+                unknown_modifiers = []
+                for mod in modifiers:
+                    code = key_codes_map.get(mod)
+                    if code is not None:
+                        modifierCodes.append(code)
+                    else:
+                        unknown_modifiers.append(mod)
+                if unknown_modifiers:
+                    print(f"Unable to find modifiers: {unknown_modifiers}")
+
+                # Separate known keycodes, consumer codes and unknown codes
+                keyCodes = []
+                unknown_keys = []
+                for key in keys:
+                    code = key_codes_map.get(key)
+                    if code is not None:
+                        keyCodes.append(code)
+                    else:
+                        unknown_keys.append(key)
                 if unknown_keys:
                     print(f"Unable to find keys: {unknown_keys}")
-                keyCodes = [getattr(KeyCodes, key) for key in keys if hasattr(KeyCodes, key)]
 
                 if not unknown_modifiers and not unknown_keys:
                     # All modifiers and keys are known
@@ -92,6 +108,27 @@ async def handle_client(websocket):
                         keyboard_state["capslock"] = not keyboard_state["capslock"]
                     elif keyCode == KeyCodes["KEY_SCROLLLOCK"]:
                         keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
+
+            elif message.startswith("conpress:"):
+                consumers = map(safe_eval, message.replace("conpress:", "").split(":"))
+
+                # Separate known keycodes, consumer codes and unknown codes
+                consumerCodes = []
+                unknown_consumers = []
+                for con in consumers:
+                    code = consumer_codes_map.get(con)
+                    if code is not None:
+                        consumerCodes.append(code)
+                    else:
+                        unknown_consumers.append(con)
+                if unknown_consumers:
+                    print(f"Unable to find keys or consumers: {unknown_consumers}")
+
+                if not unknown_consumers:
+                    # All consumers keys are known
+
+                    # Only one consumer can be pressed at any time
+                    consumerCode = consumerCodes[0] if consumerCodes else 0
 
             elif message == "sync:keyboard":
                 # Send sync state
