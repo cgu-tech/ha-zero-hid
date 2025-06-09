@@ -408,6 +408,9 @@ class AzertyKeyboardCard extends HTMLElement {
   showPopin(evt, hass, card, btn) {
     console.log("showPopin:", btn);
     if (this.popin) this.closePopin();
+    
+    this._currentPopinBaseKey = null; // reset the base key
+    this._suppressNextBaseKeyRelease = false;
 
     // Retrieve key data
     const keyData = btn._keyData;
@@ -442,6 +445,8 @@ class AzertyKeyboardCard extends HTMLElement {
     if (!hasKeyToDisplay) return; // abort popin when all popin keys are not displayable
 
     // Here we know for sure that popin needs to be displayed
+    this._currentPopinBaseKey = btn; // set the base key
+
     // Create popin
     const popin = document.createElement("div");
     popin.className = "key-popin";
@@ -463,17 +468,17 @@ class AzertyKeyboardCard extends HTMLElement {
         let displayLower = null;
         if (this.currentMode === this.MODE_NORMAL) {
           if (this.shiftState === this.SHIFT_STATE_NORMAL) {
-            displayLower = keyData.label.normal;
+            displayLower = popinKeyData.label.normal;
           } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
-            displayLower = keyData.label.shift;
+            displayLower = popinKeyData.label.shift;
           } else if (this.shiftState === this.SHIFT_STATE_LOCKED) {
-            displayLower = keyData.label.shift;
+            displayLower = popinKeyData.label.shift;
           }
         } else if (this.currentMode === this.MODE_ALT) {
           if (this.altState === this.ALT_PAGE_ONE) {
-            displayLower = keyData.label.alt1;
+            displayLower = popinKeyData.label.alt1;
           } else if (this.altState === this.ALT_PAGE_TWO) {
-            displayLower = keyData.label.alt2;
+            displayLower = popinKeyData.label.alt2;
           }
         }
         if (!displayLower) return; // When label is missing, skip the whole key
