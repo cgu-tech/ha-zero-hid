@@ -163,7 +163,7 @@ class AzertyKeyboardCard extends HTMLElement {
     window.addEventListener("touchend", this._handleGlobalTouchEnd);
     window.addEventListener("mouseleave", this._handleGlobalPointerUp);
     window.addEventListener("touchcancel", this._handleGlobalPointerUp);
-    console.log("handleGlobalPointerUp added");
+    //console.log("handleGlobalPointerUp added");
   }
 
   removeGlobalHandlers() {
@@ -171,7 +171,7 @@ class AzertyKeyboardCard extends HTMLElement {
     window.removeEventListener("touchend", this._handleGlobalTouchEnd);
     window.removeEventListener("mouseleave", this._handleGlobalPointerUp);
     window.removeEventListener("touchcancel", this._handleGlobalPointerUp);
-    console.log("handleGlobalPointerUp removed");
+    //console.log("handleGlobalPointerUp removed");
   }
 
   set hass(hass) {
@@ -395,7 +395,7 @@ class AzertyKeyboardCard extends HTMLElement {
           
             // Long press timer (only for non-special keys)
             if (!btn._keyData.special) {
-              console.log("pointerdown->!btn._keyData.special");
+              //console.log("pointerdown->!btn._keyData.special");
               this.popinTimeout = setTimeout(() => {
                 // Check for poppin race condition
                 if (btn._pointerDown) {
@@ -410,26 +410,26 @@ class AzertyKeyboardCard extends HTMLElement {
             btn._pointerDown = false;
             clearTimeout(this.popinTimeout);
             this.handlePointerUp(e, hass, btn);
-            console.log("pointerup->clearTimeout");
+            //console.log("pointerup->clearTimeout");
           });
           btn.addEventListener("pointercancel", (e) => {
             btn._pointerDown = false;
             clearTimeout(this.popinTimeout);
             this.handlePointerCancel(e, hass, btn);
-            console.log("pointercancel->clearTimeout");
+            //console.log("pointercancel->clearTimeout");
           });
           // For older touch devices fallback
           btn.addEventListener("touchend", (e) => {
             btn._pointerDown = false;
             clearTimeout(this.popinTimeout);
             this.handlePointerUp(e, hass, btn);
-            console.log("touchend->clearTimeout");
+            //console.log("touchend->clearTimeout");
           });
           btn.addEventListener("touchcancel", (e) => {
             btn._pointerDown = false;
             clearTimeout(this.popinTimeout);
             this.handlePointerCancel(e, hass, btn);
-            console.log("touchcancel->clearTimeout");
+            //console.log("touchcancel->clearTimeout");
           });
 
           row.appendChild(btn);
@@ -448,7 +448,7 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   showPopin(evt, hass, card, btn) {
-    console.log("showPopin:", btn);
+    //console.log("showPopin:", btn);
     if (this.popin) this.closePopin();
         
     // Retrieve key data
@@ -608,7 +608,7 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   closePopin() {
-    console.log("closePopin");
+    //console.log("closePopin");
     if (this.popin && this.popin.parentElement) {
       this.popin.remove();
       this.popin = null;
@@ -773,9 +773,9 @@ class AzertyKeyboardCard extends HTMLElement {
 
     // Special key pressed
     if (btn._keyData.special) {
-      console.log("handleKeyPress->special-key-pressed:", code);
+      //console.log("handleKeyPress->special-key-pressed:", code);
       // Release special key press through websockets
-      //this.appendCode(hass, code);
+      this.appendCode(hass, code);
     }
   }
 
@@ -793,7 +793,7 @@ class AzertyKeyboardCard extends HTMLElement {
 
     // When the mouse is released over another key than the first pressed key
     if (this._currentBaseKey && this._currentBaseKey._keyData.code !== keyData.code) {
-      console.log("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code);
+      //console.log("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code);
       return; // suppress the unwanted other key release
     }
 
@@ -802,9 +802,9 @@ class AzertyKeyboardCard extends HTMLElement {
 
     // Special but not virtual key released
     if (btn._keyData.special) {
-      console.log("handleKeyRelease->special-key-released:", code);
+      //console.log("handleKeyRelease->special-key-released:", code);
       // Release special key release through websockets
-      //this.removeCode(hass, code);
+      this.removeCode(hass, code);
     } else {
 
       // When post-poppin base key release event is handled
@@ -815,7 +815,8 @@ class AzertyKeyboardCard extends HTMLElement {
       
       // Non-special and not virtual key clicked
       const charToSend = btn._lowerLabel.textContent || "";
-      console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
+      //console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
+      this.clickChar(hass, code, charToSend);
     }
 
     // Switch back to normal when "shift-once" was set and a key different from SHIFT was pressed
@@ -828,6 +829,11 @@ class AzertyKeyboardCard extends HTMLElement {
   // When key code is a virtual modifier key, returns true. Returns false otherwise.
   isVirtualModifier(code) {
     return code === "KEY_MODE" || code === "MOD_LEFT_SHIFT";
+  }
+
+  clickChar(hass, code, charToSend) {
+    console.log("Key clicked:", code, "Char:", charToSend);
+    this.sendKeyboardClick(hass, charToSend);
   }
 
   appendCode(hass, code) {
@@ -863,6 +869,14 @@ class AzertyKeyboardCard extends HTMLElement {
     hass.callService("trackpad_mouse", "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
+    });
+  }
+
+  // Send clicked char symbols to HID keyboard 
+  // and let it handle the right key-press combination using current kb layout
+  sendKeyboardClick(hass, charToSend) {
+    hass.callService("trackpad_mouse", "keyclick", {
+      sendChar: charToSend,
     });
   }
 
