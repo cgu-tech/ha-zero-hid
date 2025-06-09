@@ -38,7 +38,11 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_DELETE",              label: { normal: "Suppr"        }, special: true },
       // Row 1
       { code: "KEY_1", label: { normal: "1" } },
-      { code: "KEY_2", label: { normal: "2" } },
+      { code: "KEY_2", label: { normal: "2" }, 
+        popinKeys: [
+          { code: "KEY_GRAVE", label: { normal: "²", shift: "²" } }
+        ]
+      },
       { code: "KEY_3", label: { normal: "3" } },
       { code: "KEY_4", label: { normal: "4" } },
       { code: "KEY_5", label: { normal: "5" } },
@@ -69,9 +73,33 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_R", label: { normal: "r", shift: "R", alt1: "=",      alt2: "|" }  },
       { code: "KEY_T", label: { normal: "t", shift: "T", alt1: "/",      alt2: "{" }  },
       { code: "KEY_Y", label: { normal: "y", shift: "Y", alt1: "_",      alt2: "}" }  },
-      { code: "KEY_U", label: { normal: "u", shift: "U", alt1: "<",      alt2: "$" }  },
-      { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "£" }  },
-      { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "¥" }  },
+      { code: "KEY_U", label: { normal: "u", shift: "U", alt1: "<",      alt2: "$" }, 
+        popinKeys: [
+          { code: "KEY_U_GRAVE", label: { normal: "ù", shift: "Ù" } },
+          { code: "KEY_U_CIRC",  label: { normal: "û", shift: "Û" } },
+          { code: "KEY_U_UMLAUT",label: { normal: "ü", shift: "Ü" } },
+          { code: "KEY_U_ACUTE", label: { normal: "ú", shift: "Ú" } },
+          { code: "KEY_U_TILDE", label: { normal: "ũ", shift: "Ũ" } }
+        ]
+      },
+      { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "£" }, 
+        popinKeys: [
+          { code: "KEY_I_CIRC",  label: { normal: "î", shift: "Î" } },
+          { code: "KEY_I_UMLAUT",label: { normal: "ï", shift: "Ï" } },
+          { code: "KEY_I_GRAVE", label: { normal: "ì", shift: "Ì" } },
+          { code: "KEY_I_ACUTE", label: { normal: "í", shift: "Í" } },
+          { code: "KEY_I_TILDE", label: { normal: "ĩ", shift: "Ĩ" } }
+        ]
+      },
+      { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "¥" }, 
+        popinKeys: [
+          { code: "KEY_O_CIRC",  label: { normal: "ô", shift: "Ô" } },
+          { code: "KEY_O_GRAVE", label: { normal: "ò", shift: "Ò" } },
+          { code: "KEY_O_ACUTE", label: { normal: "ó", shift: "Ó" } },
+          { code: "KEY_O_TILDE", label: { normal: "õ", shift: "Õ" } },
+          { code: "KEY_O_UMLAUT",label: { normal: "ö", shift: "Ö" } }
+        ]
+      },
       { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "₩" }  },
       // Row 3
       { code: "KEY_A",         label: { normal: "q", shift: "Q", alt1: "!", alt2: "°" } },
@@ -91,7 +119,11 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_C",          label: { normal: "c",      shift: "C",      alt1: "\"", alt2: "¤" } },
       { code: "KEY_V",          label: { normal: "v",      shift: "V",      alt1: ":",  alt2: "⟪" } },
       { code: "KEY_B",          label: { normal: "b",      shift: "B",      alt1: ";",  alt2: "⟫" } },
-      { code: "KEY_N",          label: { normal: "n",      shift: "N",      alt1: ",",  alt2: "¡" } },
+      { code: "KEY_N",          label: { normal: "n",      shift: "N",      alt1: ",",  alt2: "¡" }, 
+        popinKeys: [
+          { code: "KEY_N_TILDE", label: { normal: "ñ", shift: "Ñ" } }
+        ]
+      },
       { code: "KEY_QUOTE",      label: { normal: "\u2018", shift: "\u2019", alt1: "?",  alt2: "¿" } }, // "\u2018" = left, "\u2019" = right
       { code: "KEY_BACKSPACE",  label: { normal: "\u232B" }, special: true, width: "altkey" }, // ⌫
       // Row 5
