@@ -92,13 +92,13 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_V",          label: { normal: "v",      shift: "V",      alt1: ":",  alt2: "⟪" } },
       { code: "KEY_B",          label: { normal: "b",      shift: "B",      alt1: ";",  alt2: "⟫" } },
       { code: "KEY_N",          label: { normal: "n",      shift: "N",      alt1: ",",  alt2: "¡" } },
-      { code: "KEY_4",          label: { normal: "\u2018", shift: "\u2019", alt1: "?",  alt2: "¿" } }, // "\u2018" = left, "\u2019" = right
+      { code: "KEY_QUOTE",      label: { normal: "\u2018", shift: "\u2019", alt1: "?",  alt2: "¿" } }, // "\u2018" = left, "\u2019" = right
       { code: "KEY_BACKSPACE",  label: { normal: "\u232B" }, special: true, width: "altkey" }, // ⌫
       // Row 5
       { code: "KEY_MODE",       label: { normal: "!#1", shift: "!#1", alt1: "ABC", alt2: "ABC" }, special: true, width: "altkey" },
-      { code: "KEY_M",          label: { normal: "," } },
+      { code: "KEY_COMMA",      label: { normal: "," } },
       { code: "KEY_SPACE",      label: { normal: " " }, width: "spacebar" },
-      { code: "KEY_COMMA",      label: { normal: "." } },
+      { code: "KEY_DOT",        label: { normal: "." } },
       { code: "KEY_ENTER",      label: { normal: "Entrée" }, special: true, width: "altkey" },
     ];
 
