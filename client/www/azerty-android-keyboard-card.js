@@ -649,6 +649,11 @@ class AzertyKeyboardCard extends HTMLElement {
 
   handlePointerDown(evt, hass, btn) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
+
+    // reset the poppin base key unconditionally to ensure 
+    // it does not stay stuck forever in odd conditions
+    this._currentPopinBaseKey = null;
+
     this.handleKeyPress(hass, btn);
   }
 
@@ -663,10 +668,6 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   handleKeyPress(hass, btn) {
-    // reset the poppin base key unconditionally to ensure 
-    // it does not stay stuck forever in odd conditions
-    this._currentPopinBaseKey = null;
-
     // Mark button active visually
     btn.classList.add("active");
 
@@ -758,7 +759,7 @@ class AzertyKeyboardCard extends HTMLElement {
           this._currentPopinBaseKey = null;
           return; // suppress the unwanted base key release
       }
-
+      
       // Non-special and not virtual key clicked
       const charToSend = btn._lowerLabel.textContent || "";
       console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
