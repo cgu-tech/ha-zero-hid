@@ -423,17 +423,17 @@ class AzertyKeyboardCard extends HTMLElement {
         return rowKeys.some(popinKeyData => {
           if (this.currentMode === this.MODE_NORMAL) {
             if (this.shiftState === this.SHIFT_STATE_NORMAL) {
-              return popinKeyData.label.normal != null && popinKeyData.label.normal.length > 0;
+              return popinKeyData.label?.normal?.length > 0;
             } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
-              return popinKeyData.label.shift != null && popinKeyData.label.shift.length > 0;
+              return popinKeyData.label?.shift?.length > 0;
             } else if (this.shiftState === this.SHIFT_STATE_LOCKED) {
-              return popinKeyData.label.shift != null && popinKeyData.label.shift.length > 0;
+              return popinKeyData.label?.shift?.length > 0;
             }
           } else if (this.currentMode === this.MODE_ALT) {
             if (this.altState === this.ALT_PAGE_ONE) {
-              return popinKeyData.label.alt1 != null && popinKeyData.label.alt1.length > 0;
+              return popinKeyData.label?.alt1?.length > 0;
             } else if (this.altState === this.ALT_PAGE_TWO) {
-              return popinKeyData.label.alt2 != null && popinKeyData.label.alt2.length > 0;
+              return popinKeyData.label?.alt2?.length > 0;
             }
           }
           return false;
