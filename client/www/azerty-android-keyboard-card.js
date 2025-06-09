@@ -761,6 +761,7 @@ class AzertyKeyboardCard extends HTMLElement {
 
     // When the mouse is released over another key than the first pressed key
     if (this._currentBaseKey && this._currentBaseKey._keyData.code !== keyData.code) {
+      console.log("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code);
       return; // suppress the unwanted other key release
     }
 
