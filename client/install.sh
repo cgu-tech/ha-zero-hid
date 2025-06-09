@@ -44,15 +44,60 @@ uninstall () {
 
 if [ -d "/config/custom_components/trackpad_mouse" ]; then
     echo "Looks like HA zero-hid client integration is already installed"
-    read -p "Do you want to uninstall it? (Y/n) " yn </dev/tty
-    case $yn in
-        [Yy]* )
-            uninstall
-            echo "Done uninstalling HA zero-hid client integration."
-            exit 0;;
-        [Nn]* ) exit 0;;
-        * ) echo "Please answer yes or no.";;
+    echo "Please choose an option:"
+    echo "  1) Reinstall or update"
+    echo "  2) Uninstall"
+    echo "  3) Exit"
+    read -rp "Enter choice [1-3]: " choice </dev/tty
+
+    case "$choice" in
+        1)
+            read -rp "Are you sure you want to reinstall or update? (y/n) " confirm </dev/tty
+            case "$confirm" in
+                [Yy]* )
+                    uninstall
+                    install
+                    echo "Reinstalled/updated HA zero-hid client integration."
+                    exit 0
+                    ;;
+                [Nn]* )
+                    echo "Operation cancelled."
+                    exit 0
+                    ;;
+                * )
+                    echo "Please answer y or n."
+                    exit 1
+                    ;;
+            esac
+            ;;
+        2)
+            read -rp "Are you sure you want to uninstall? (y/n) " confirm </dev/tty
+            case "$confirm" in
+                [Yy]* )
+                    uninstall
+                    echo "Uninstalled HA zero-hid client integration."
+                    exit 0
+                    ;;
+                [Nn]* )
+                    echo "Operation cancelled."
+                    exit 0
+                    ;;
+                * )
+                    echo "Please answer y or n."
+                    exit 1
+                    ;;
+            esac
+            ;;
+        3)
+            echo "Exiting script."
+            exit 0
+            ;;
+        *)
+            echo "Invalid choice, exiting."
+            exit 1
+            ;;
     esac
+
 else
     install
     echo "Installed HA zero-hid client integration"

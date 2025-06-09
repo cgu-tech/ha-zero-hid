@@ -63,7 +63,6 @@ uninstall () {
 }
 
 check_root
-
 if [ -f "/opt/ha_zero_hid/websockets_server_run.sh" ]; then
     echo "HA zero-hid websockets server is already installed."
     echo "Please choose an option:"
