@@ -1,6 +1,9 @@
 #!/bin/bash
 # Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
 
+# Set ZERO_HID_BRANCH to first parameter or "main" if empty
+ZERO_HID_BRANCH="${1:-main}"
+
 check_root() {
     ROOTUID="0"
     if [ "$(id -u)" -ne "$ROOTUID" ] ; then
@@ -25,7 +28,7 @@ install() {
     # Install Python dependency "zero_hid" (custom)
     # TODO: install official dependency using "pip install zero_hid", 
     #       once PR is merged to official code-base: https://github.com/thewh1teagle/zero-hid/pull/39
-    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/zero-hid.git
+    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "$ZERO_HID_BRANCH" https://github.com/cgu-tech/zero-hid.git
     mv zero-hid /opt/ha_zero_hid/
     pip install --editable /opt/ha_zero_hid/zero-hid
     
@@ -60,17 +63,63 @@ uninstall () {
 }
 
 check_root
+
 if [ -f "/opt/ha_zero_hid/websockets_server_run.sh" ]; then
-    echo "Looks like HA zero-hid websockets server is already installed"
-    read -p "Do you want to uninstall it? (Y/n) " yn </dev/tty
-    case $yn in
-        [Yy]* )
-            uninstall
-            echo "Done uninstalling HA zero-hid websockets server."
-            exit 0;;
-        [Nn]* ) exit 0;;
-        * ) echo "Please answer yes or no.";;
+    echo "HA zero-hid websockets server is already installed."
+    echo "Please choose an option:"
+    echo "  1) Reinstall or update"
+    echo "  2) Uninstall"
+    echo "  3) Exit"
+    read -rp "Enter choice [1-3]: " choice </dev/tty
+
+    case "$choice" in
+        1)
+            read -rp "Are you sure you want to reinstall or update? (y/n) " confirm </dev/tty
+            case "$confirm" in
+                [Yy]* )
+                    uninstall
+                    install
+                    echo "Reinstalled/updated HA zero-hid websockets server."
+                    exit 0
+                    ;;
+                [Nn]* )
+                    echo "Operation cancelled."
+                    exit 0
+                    ;;
+                * )
+                    echo "Please answer y or n."
+                    exit 1
+                    ;;
+            esac
+            ;;
+        2)
+            read -rp "Are you sure you want to uninstall? (y/n) " confirm </dev/tty
+            case "$confirm" in
+                [Yy]* )
+                    uninstall
+                    echo "Uninstalled HA zero-hid websockets server."
+                    exit 0
+                    ;;
+                [Nn]* )
+                    echo "Operation cancelled."
+                    exit 0
+                    ;;
+                * )
+                    echo "Please answer y or n."
+                    exit 1
+                    ;;
+            esac
+            ;;
+        3)
+            echo "Exiting script."
+            exit 0
+            ;;
+        *)
+            echo "Invalid choice, exiting."
+            exit 1
+            ;;
     esac
+
 else
     install
     echo "Installed HA zero-hid websockets server"
