@@ -706,15 +706,17 @@ class AzertyKeyboardCard extends HTMLElement {
       this.updateLabels();
       
       // Do not send any key
-      // resetCode();
       return;
     }
 
     // Pressed key symbol (keyboard layout dependant, for information only)
-    const charToSend = btn._lowerLabel.textContent || "";
 
-    // Send keyboard changes
-    // this.appendCode(hass, code, charToSend);
+    // Special key pressed
+    if (btn._keyData.special) {
+      console.log("handleKeyPress->special-key-pressed:", code);
+      // Release special key press through websockets
+      //this.appendCode(hass, code);
+    }
   }
 
   handleKeyRelease(hass, btn) {
@@ -735,8 +737,19 @@ class AzertyKeyboardCard extends HTMLElement {
       this.updateLabels();
     }
 
-    // Release modifier or key through websockets
-    // this.removeCode(hass, code);
+    // Do not send virtual modifier keys
+    if (this.isVirtualModifier(code)) return;
+
+    // Special but not virtual key released
+    if (btn._keyData.special) {
+      console.log("handleKeyRelease->special-key-released:", code);
+      // Release special key release through websockets
+      //this.removeCode(hass, code);
+    } else {
+      // Non-special and not virtual key clicked
+      const charToSend = btn._lowerLabel.textContent || "";
+      console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
+    }
   }
 
   // When key code is a virtual modifier key, returns true. Returns false otherwise.
@@ -744,15 +757,8 @@ class AzertyKeyboardCard extends HTMLElement {
     return code === "KEY_MODE" || code === "MOD_LEFT_SHIFT";
   }
 
-  resetCode(hass) {
-    console.log("Keyboard reset:");
-    this.pressedModifiers.clear();
-    this.pressedKeys.clear();
-    this.sendKeyboardUpdate(hass);
-  }
-
-  appendCode(hass, code, charToSend) {
-    console.log("Key pressed:", code, "Char:", charToSend);
+  appendCode(hass, code) {
+    console.log("Key pressed:", code);
     if (code) {
       if (this.isVirtualModifier(code)) {
         // Modifier key pressed
