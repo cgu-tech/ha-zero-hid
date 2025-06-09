@@ -118,8 +118,8 @@ class AzertyKeyboardCard extends HTMLElement {
       for (const btn of this.content.querySelectorAll("button.key.active")) {
         this.handleKeyRelease(this._lastHass, btn);
       }
-
-      // Also close popin if it's open
+      
+      // close popin if it's open
       if (this.popinElement) {
         this.closePopin();
       }
@@ -408,10 +408,7 @@ class AzertyKeyboardCard extends HTMLElement {
   showPopin(evt, hass, card, btn) {
     console.log("showPopin:", btn);
     if (this.popin) this.closePopin();
-    
-    this._currentPopinBaseKey = null; // reset the base key
-    this._suppressNextBaseKeyRelease = false;
-
+        
     // Retrieve key data
     const keyData = btn._keyData;
     if (!keyData) return; // abort popin when no KeyData
@@ -445,7 +442,7 @@ class AzertyKeyboardCard extends HTMLElement {
     if (!hasKeyToDisplay) return; // abort popin when all popin keys are not displayable
 
     // Here we know for sure that popin needs to be displayed
-    this._currentPopinBaseKey = btn; // set the base key
+    this._currentPopinBaseKey = btn; // set the base key when we are sure poppin will be displayed
 
     // Create popin
     const popin = document.createElement("div");
@@ -666,6 +663,10 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   handleKeyPress(hass, btn) {
+    // reset the poppin base key unconditionally to ensure 
+    // it does not stay stuck forever in odd conditions
+    this._currentPopinBaseKey = null;
+
     // Mark button active visually
     btn.classList.add("active");
 
@@ -751,6 +752,13 @@ class AzertyKeyboardCard extends HTMLElement {
       // Release special key release through websockets
       //this.removeCode(hass, code);
     } else {
+
+      // When post-poppin base key release event is handled
+      if (this._currentPopinBaseKey && this._currentPopinBaseKey._keyData.code === keyData.code) {
+          this._currentPopinBaseKey = null;
+          return; // suppress the unwanted base key release
+      }
+
       // Non-special and not virtual key clicked
       const charToSend = btn._lowerLabel.textContent || "";
       console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
