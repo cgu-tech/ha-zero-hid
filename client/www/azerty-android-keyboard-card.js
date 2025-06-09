@@ -411,23 +411,75 @@ class AzertyKeyboardCard extends HTMLElement {
 
     // Retrieve key data
     const keyData = btn._keyData;
-    if (!keyData) return;
+    if (!keyData) return; // abort popin when no KeyData
 
     const popinKeys = keyData.popinKeys;
-    if (!popinKeys) return;
+    if (!popinKeys) return; // abort popin when no popin keys at all
 
+    // Normalize popinKeys to always be an array of arrays
+    const popinRows = Array.isArray(popinKeys[0]) ? popinKeys : [popinKeys];
+
+    const hasKeyToDisplay = popinRows.some(rowKeys => {
+        return rowKeys.some(popinKeyData => {
+          if (this.currentMode === this.MODE_NORMAL) {
+            if (this.shiftState === this.SHIFT_STATE_NORMAL) {
+              return popinKeyData.label.normal != null && popinKeyData.label.normal.length > 0;
+            } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
+              return popinKeyData.label.shift != null && popinKeyData.label.shift.length > 0;
+            } else if (this.shiftState === this.SHIFT_STATE_LOCKED) {
+              return popinKeyData.label.shift != null && popinKeyData.label.shift.length > 0;
+            }
+          } else if (this.currentMode === this.MODE_ALT) {
+            if (this.altState === this.ALT_PAGE_ONE) {
+              return popinKeyData.label.alt1 != null && popinKeyData.label.alt1.length > 0;
+            } else if (this.altState === this.ALT_PAGE_TWO) {
+              return popinKeyData.label.alt2 != null && popinKeyData.label.alt2.length > 0;
+            }
+          }
+          return false;
+        });
+    });
+    if (!hasKeyToDisplay) return; // abort popin when all popin keys are not displayable
+
+    // Here we know for sure that popin needs to be displayed
+    // Create popin
     const popin = document.createElement("div");
     popin.className = "key-popin";
     popin.style.position = "absolute"; // relative to card
     card.style.position = "relative"; // ensure card is anchor
 
-    // Normalize popinKeys to always be an array of arrays
-    const popinRows = Array.isArray(popinKeys[0]) ? popinKeys : [popinKeys];
-
+    // Fill popin content, row by row
     popinRows.forEach(rowKeys => {
       const popinRow = document.createElement("div");
       popinRow.className = "key-popin-row";
+      
+      // Fill row content, key by key
       rowKeys.forEach(popinKeyData => {
+
+        // Determine displayed label on key
+        // Note: contrary to keyboard keys, when popin keys don't have a label 
+        // for the current combination of currentMode / shiftState / altState,
+        // then they do not fallback to normal label: they are simply skipped
+        let displayLower = null;
+        if (this.currentMode === this.MODE_NORMAL) {
+          if (this.shiftState === this.SHIFT_STATE_NORMAL) {
+            displayLower = keyData.label.normal;
+          } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
+            displayLower = keyData.label.shift;
+          } else if (this.shiftState === this.SHIFT_STATE_LOCKED) {
+            displayLower = keyData.label.shift;
+          }
+        } else if (this.currentMode === this.MODE_ALT) {
+          if (this.altState === this.ALT_PAGE_ONE) {
+            displayLower = keyData.label.alt1;
+          } else if (this.altState === this.ALT_PAGE_TWO) {
+            displayLower = keyData.label.alt2;
+          }
+        }
+        if (!displayLower) return; // When label is missing, skip the whole key
+        
+        // When label exists: 
+        // create and add the popin key (ie popinBtn) into the popin content 
         const popinBtn = document.createElement("button");
         popinBtn.classList.add("key");
         
@@ -443,28 +495,6 @@ class AzertyKeyboardCard extends HTMLElement {
 
         popinBtn._lowerLabel = lowerLabel;
         popinBtn._keyData = popinKeyData;
-
-        // Determine displayed labels
-        let displayLower = "";
-        
-        if (this.currentMode === this.MODE_NORMAL) {
-          if (this.shiftState === this.SHIFT_STATE_NORMAL) {
-          } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
-            displayLower = this.getLabelAlternativeShift(popinKeyData);
-          } else if (this.shiftState === this.SHIFT_STATE_LOCKED) {
-            displayLower = this.getLabelAlternativeShift(popinKeyData);
-          }
-        } else if (this.currentMode === this.MODE_ALT) {
-          if (this.altState === this.ALT_PAGE_ONE) {
-            displayLower = this.getLabelAlternativeAlt1(popinKeyData);
-          } else if (this.altState === this.ALT_PAGE_TWO) {
-            displayLower = this.getLabelAlternativeAlt2(popinKeyData);
-          }
-        }
-        
-        if (!displayLower) {
-          displayLower = this.getlLabelNormal(popinKeyData) || "";
-        }
 
         // Set displayed labels
         popinBtn._lowerLabel.textContent = displayLower;
