@@ -1,8 +1,8 @@
 #!/bin/bash
 # Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
 
-# Set ZERO_HID_BRANCH to first parameter or "main" if empty
 ZERO_HID_BRANCH="${1:-main}"
+SKIP_UPDATE="${2:-}"
 
 check_root() {
     ROOTUID="0"
@@ -20,15 +20,22 @@ install() {
     chmod +x /opt/ha_zero_hid/websockets_server_run.sh
     
     # Create python venv for server and install dependencies
-    apt-get update
-    apt-get install -y git python3-pip python3-venv git
+    if [ -z "$SKIP_UPDATE" ]; then
+        echo "Updating apt and installing required packages..."
+        apt-get update
+        apt-get install -y git python3-pip python3-venv git
+    else
+        echo "Skipping apt-get update and install as requested (SKIP_UPDATE is set)."
+    fi
+    echo "Creating python venv..."
     python3 -m venv /opt/ha_zero_hid/venv
     source /opt/ha_zero_hid/venv/bin/activate
     
     # Install Python dependency "zero_hid" (custom)
     # TODO: install official dependency using "pip install zero_hid", 
     #       once PR is merged to official code-base: https://github.com/thewh1teagle/zero-hid/pull/39
-    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "$ZERO_HID_BRANCH" https://github.com/cgu-tech/zero-hid.git
+    echo "Cloning zero-hid dependency using branch ${ZERO_HID_BRANCH}..."
+    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "${ZERO_HID_BRANCH}" https://github.com/cgu-tech/zero-hid.git
     mv zero-hid /opt/ha_zero_hid/
     pip install --editable /opt/ha_zero_hid/zero-hid
     
