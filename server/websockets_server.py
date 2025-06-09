@@ -61,19 +61,37 @@ async def handle_client(websocket):
 
             elif message.startswith("keypress:"):
                 modifiers, keys = map(safe_eval, message.replace("keypress:", "").split(":"))
-                modifierCodes = [KeyCodes[modifier] for modifier in modifiers]
-                keyCodes = [KeyCodes[key] for key in keys]
-                keyCode = keyCodes[0] if keyCodes else 0
-                keyboard.press(modifierCodes, keyCode, release=False)
-                # Update sync states
-                keyboard_state["modifiers"] = modifiers
-                keyboard_state["keys"] = [keys[0]] if keys else []
-                if keyCode == KeyCodes["KEY_NUMLOCK"]:
-                    keyboard_state["numlock"] = not keyboard_state["numlock"]
-                elif keyCode == KeyCodes["KEY_CAPSLOCK"]:
-                    keyboard_state["capslock"] = not keyboard_state["capslock"]
-                elif keyCode == KeyCodes["KEY_SCROLLLOCK"]:
-                    keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
+                
+                # Check modifiers
+                unknown_modifiers = [mod for mod in modifiers if not hasattr(KeyCodes, mod)]
+                if unknown_modifiers:
+                    print(f"Unable to find modifier keys: {unknown_modifiers}")
+                modifierCodes = [getattr(KeyCodes, mod) for mod in modifiers if hasattr(KeyCodes, mod)]
+
+                # Check keys
+                unknown_keys = [key for key in keys if not hasattr(KeyCodes, key)]
+                if unknown_keys:
+                    print(f"Unable to find keys: {unknown_keys}")
+                keyCodes = [getattr(KeyCodes, key) for key in keys if hasattr(KeyCodes, key)]
+
+                if not unknown_modifiers and not unknown_keys:
+                    # All modifiers and keys are known
+
+                    # Only one key can be pressed at any time
+                    keyCode = keyCodes[0] if keyCodes else 0
+
+                    # Press the keyboard 0..N modifiers and/or 0..1 key (0 means no key)
+                    keyboard.press(modifierCodes, keyCode, release=False)
+
+                    # Update keyboard states for later synchronization calls
+                    keyboard_state["modifiers"] = modifiers
+                    keyboard_state["keys"] = [keys[0]] if keys else []
+                    if keyCode == KeyCodes["KEY_NUMLOCK"]:
+                        keyboard_state["numlock"] = not keyboard_state["numlock"]
+                    elif keyCode == KeyCodes["KEY_CAPSLOCK"]:
+                        keyboard_state["capslock"] = not keyboard_state["capslock"]
+                    elif keyCode == KeyCodes["KEY_SCROLLLOCK"]:
+                        keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
 
             elif message == "sync:keyboard":
                 # Send sync state
@@ -92,23 +110,6 @@ async def handle_client(websocket):
         print("Client disconnected")
 
 async def main():
-    # Retrieve initial state
-    #try:
-    #    print("Forcing keyboard wakeup to prevent infinite blocking while reading led status.")
-    #    keyboard.press([], KeyCodes["KEY_CAPSLOCK"], release=True)
-    #    keyboard.press([], KeyCodes["KEY_CAPSLOCK"], release=True)
-    #
-    #    print("Reading initial LEDs status.")
-    #    leds = keyboard.blocking_read_led_status
-    #    keyboard_state["numlock"] = leds.get("num_lock", False)
-    #    keyboard_state["capslock"] = leds.get("caps_lock", False)
-    #    keyboard_state["scrolllock"] = leds.get("scroll_lock", False)
-    #except asyncio.TimeoutError:
-    #    print("Timeout: LED status read took too long.")
-    #    return
-    #except Exception as e:
-    #    print(f"Error reading LED status: {e}")
-    #    return
     # Start websockets server infinite loop
     async with websockets.serve(handle_client, "0.0.0.0", 8765):
         print("WebSocket server running at ws://0.0.0.0:8765")
