@@ -353,40 +353,50 @@ class AzertyKeyboardCard extends HTMLElement {
 
           btn._lowerLabel = lowerLabel;
           btn._keyData = keyData;
+          btn._pointerDown = false;
+          btn._usedPopin = false;
 
           // Add pointer and touch events:
-          // btn.addEventListener("pointerdown", (e) => this.handlePointerDown(e, hass, btn));
           btn.addEventListener("pointerdown", (e) => {
             this.handlePointerDown(e, hass, btn);
+            btn._pointerDown = true;
           
             // Long press timer (only for non-special keys)
             if (!btn._keyData.special) {
               console.log("pointerdown->!btn._keyData.special");
               this.popinTimeout = setTimeout(() => {
-                this.showPopin(e, hass, card, btn);
+                // Check for poppin race condition
+                if (btn._pointerDown) {
+                  btn._usedPopin = true;
+                  this.showPopin(e, hass, card, btn);
+                }
               }, 500); // 500ms long-press duration
             }
           });
 
           btn.addEventListener("pointerup", (e) => {
-            this.handlePointerUp(e, hass, btn);
+            btn._pointerDown = false;
             clearTimeout(this.popinTimeout);
+            this.handlePointerUp(e, hass, btn);
             console.log("pointerup->clearTimeout");
           });
           btn.addEventListener("pointercancel", (e) => {
-            this.handlePointerCancel(e, hass, btn);
+            btn._pointerDown = false;
             clearTimeout(this.popinTimeout);
+            this.handlePointerCancel(e, hass, btn);
             console.log("pointercancel->clearTimeout");
           });
           // For older touch devices fallback
           btn.addEventListener("touchend", (e) => {
-            this.handlePointerUp(e, hass, btn);
+            btn._pointerDown = false;
             clearTimeout(this.popinTimeout);
+            this.handlePointerUp(e, hass, btn);
             console.log("touchend->clearTimeout");
           });
           btn.addEventListener("touchcancel", (e) => {
-            this.handlePointerCancel(e, hass, btn);
+            btn._pointerDown = false;
             clearTimeout(this.popinTimeout);
+            this.handlePointerCancel(e, hass, btn);
             console.log("touchcancel->clearTimeout");
           });
 
@@ -659,11 +669,19 @@ class AzertyKeyboardCard extends HTMLElement {
 
   handlePointerUp(evt, hass, btn) {
     evt.preventDefault();
+    if (btn._usedPopin) {
+      btn._usedPopin = false;
+      return; // Skip base key release
+    }
     this.handleKeyRelease(hass, btn);
   }
 
   handlePointerCancel(evt, hass, btn) {
     evt.preventDefault();
+    if (btn._usedPopin) {
+      btn._usedPopin = false;
+      return; // Skip base key release
+    }
     this.handleKeyRelease(hass, btn);
   }
 
@@ -674,6 +692,9 @@ class AzertyKeyboardCard extends HTMLElement {
     // Retrieve key data
     const keyData = btn._keyData;
     if (!keyData) return;
+
+    // track the key press to avoid unwanted other key release
+    this._currentBaseKey = btn;
 
     // Pressed key code (keyboard layout independant, later send to remote keyboard)
     const code = keyData.code;
@@ -737,11 +758,10 @@ class AzertyKeyboardCard extends HTMLElement {
 
     // Remove active visual for all other keys / states
     btn.classList.remove("active");
-    
-    // Switch back to normal when "shift-once" was set and a key different from SHIFT was pressed
-    if (this.shiftState === this.SHIFT_STATE_ONCE) {
-      this.shiftState = this.SHIFT_STATE_NORMAL;
-      this.updateLabels();
+
+    // When the mouse is released over another key than the first pressed key
+    if (this._currentBaseKey && this._currentBaseKey._keyData.code !== keyData.code) {
+      return; // suppress the unwanted other key release
     }
 
     // Do not send virtual modifier keys
@@ -756,13 +776,19 @@ class AzertyKeyboardCard extends HTMLElement {
 
       // When post-poppin base key release event is handled
       if (this._currentPopinBaseKey && this._currentPopinBaseKey._keyData.code === keyData.code) {
-          this._currentPopinBaseKey = null;
-          return; // suppress the unwanted base key release
+        this._currentPopinBaseKey = null;
+        return; // suppress the unwanted base key release
       }
       
       // Non-special and not virtual key clicked
       const charToSend = btn._lowerLabel.textContent || "";
       console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
+    }
+
+    // Switch back to normal when "shift-once" was set and a key different from SHIFT was pressed
+    if (this.shiftState === this.SHIFT_STATE_ONCE) {
+      this.shiftState = this.SHIFT_STATE_NORMAL;
+      this.updateLabels();
     }
   }
 
