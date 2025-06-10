@@ -49,7 +49,17 @@ Adjust your network settings until both pings succeed.
 
 ### Install USB gadget module
 
-Follow zero-hid USB gadget module [install instructions](https://github.com/thewh1teagle/zero-hid/tree/main/usb_gadget#usb-gadget-module-configuration-for-zero-hid)
+Retrieve latest version of zero-hid repository:
+```bash
+cd ~ && (sudo rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/zero-hid.git
+```
+
+Execute gadget `installer`
+```bash
+cd zero-hid/usb_gadget && sudo ./installer
+```
+
+Reboot one before continue
 
 ### Install websockets server
 
