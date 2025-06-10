@@ -54,12 +54,10 @@ Retrieve latest version of zero-hid repository:
 cd ~ && (sudo rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/zero-hid.git
 ```
 
-Execute gadget `installer`
+Execute gadget install script (reboot at the end):
 ```bash
 cd zero-hid/usb_gadget && sudo ./installer
 ```
-
-Reboot one before continue
 
 ### Install websockets server
 
@@ -68,18 +66,17 @@ Retrieve latest version of this repository:
 cd ~ && (sudo rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
-Go to install script directory:
+Execute server install script:
 ```bash
-cd ha-zero-hid/server/
+cd ha-zero-hid/server/ && sudo /bin/bash install.sh
 ```
+**Parameters:**
+- **optional** \[branch\]: the target zero-hid branch (default: "main", example: "feat/add-acback")
+- **optional** \[skip_package\]: when set to non-empty string, skips system package manager updates and installations to speedup installation (default: "", example: "skip_package")
 
-Run the install script:
-```bash
-sudo /bin/bash install.sh
-```
 **Note:**
-- in case of an upgrade, uninstall first when prompted, then run the install script again.
-- system user `ha_zero_hid` will automatically be created by install script. It is a non-interractive user that serves to run the webserver.
+- in case of an upgrade, choose "reinstall or update".
+- a system user `ha_zero_hid` will be automatically created during installation. It is required to run the webserver.
 
 ## On your HA instance
 
@@ -103,15 +100,11 @@ Retrieve latest version of this repository:
 cd ~ && (rm -rf ha-zero-hid >/dev/null 2>&1 || true) && cd && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
-Go to install script directory:
+Execute client install script:
 ```bash
-cd ha-zero-hid/client/
+cd ha-zero-hid/client/ && sudo /bin/bash install.sh
 ```
 
-Run the install script:
-```bash
-/bin/bash install.sh
-```
 **Note:**
 - in case of an upgrade, uninstall first when prompted, then run the install script again.
 
