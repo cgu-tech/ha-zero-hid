@@ -29,8 +29,14 @@ class WebSocketClient:
     async def send_clickrelease(self):
         await self.send("click:release")
 
+    async def send_chartap(self, chars):
+        await self.send(f"chartap:{chars}")
+
     async def send_keypress(self, modifiers, keys):
         await self.send(f"keypress:{modifiers}:{keys}")
+
+    async def send_conpress(self, cons):
+        await self.send(f"conpress:{cons}")
 
     async def sync_keyboard(self) -> dict:
         response = await self.send(f"sync:keyboard", waitResponse=True)

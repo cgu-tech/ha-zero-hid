@@ -33,6 +33,17 @@ MOVE_SERVICE_SCHEMA = vol.Schema({
     vol.Required("y"): lambda v: clamp_to_range(v, MIN_RANGE, MAX_RANGE),
 })
 
+def ensure_string_or_empty(val):
+    if val is None:
+        return ""
+    if isinstance(val, str):
+        return val
+    return str(val)
+
+CHARTAP_SERVICE_SCHEMA = vol.Schema({
+    vol.Optional("sendChars", default=""): vol.All(lambda v: v or "", ensure_string_or_empty),
+})
+
 def ensure_list_or_empty(val):
     if val is None:
         return []
@@ -43,6 +54,10 @@ def ensure_list_or_empty(val):
 KEYPRESS_SERVICE_SCHEMA = vol.Schema({
     vol.Optional("sendModifiers", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
     vol.Optional("sendKeys", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
+})
+
+CONPRESS_SERVICE_SCHEMA = vol.Schema({
+    vol.Optional("sendCons", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
 @websocket_command({vol.Required("type"): "trackpad_mouse/sync_keyboard"})
@@ -165,6 +180,23 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_clickrelease: {e}")
 
+    """Handle taping keyboard chars."""
+    @callback
+    async def handle_chartap(call: ServiceCall) -> None:
+        chars = call.data.get("sendChars")
+        _LOGGER.debug(f"handle_chartap.call.data.sendChars: {chars}")
+
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
+
+        # Send command to RPI HID
+        try:
+            await ws_client.send_chartap(chars)
+            _LOGGER.debug(f"ws_client.send_chartap(chars): {chars}")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_chartap: {e}")
+
     """Handle pressing/releasing keyboard keys."""
     @callback
     async def handle_keypress(call: ServiceCall) -> None:
@@ -184,6 +216,23 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_keypress: {e}")
 
+    """Handle pressing/releasing consumer keyboard keys."""
+    @callback
+    async def handle_conpress(call: ServiceCall) -> None:
+        cons = call.data.get("sendCons")
+        _LOGGER.debug(f"handle_conpress.call.data.sendCons: {cons}")
+
+        # Use shared client
+        ws_client = hass.data[DOMAIN]
+        _LOGGER.debug("ws_client retrieved")
+
+        # Send command to RPI HID
+        try:
+            await ws_client.send_conpress(cons)
+            _LOGGER.debug(f"ws_client.send_conpress(cons): {cons}")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_conpress: {e}")
+
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
@@ -191,7 +240,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "clickmiddle", handle_clickmiddle)
     hass.services.async_register(DOMAIN, "clickright", handle_clickright)
     hass.services.async_register(DOMAIN, "clickrelease", handle_clickrelease)
+    hass.services.async_register(DOMAIN, "chartap", handle_chartap, schema=CHARTAP_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
+    hass.services.async_register(DOMAIN, "conpress", handle_conpress, schema=CONPRESS_SERVICE_SCHEMA)
 
     # Register WebSocket command
     async_register_command(hass, websocket_sync_keyboard)

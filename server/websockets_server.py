@@ -18,8 +18,8 @@ keyboard_state = {
     "scrolllock": False,
 }
 key_codes_map = KeyCodes.as_dict()
+consumerKeyboard = Consumer()
 consumer_codes_map = ConsumerCodes.as_dict()
-# consumerKeyboard = Consumer()
 
 def safe_eval(s):
     try:
@@ -117,7 +117,7 @@ async def handle_client(websocket):
                 keyboard.type(chars)
 
             elif message.startswith("conpress:"):
-                consumers = map(safe_eval, message.replace("conpress:", "").split(":"))
+                consumers = safe_eval(message.replace("conpress:", ""))
 
                 # Separate known keycodes, consumer codes and unknown codes
                 consumerCodes = []
@@ -136,6 +136,7 @@ async def handle_client(websocket):
 
                     # Only one consumer can be pressed at any time
                     consumerCode = consumerCodes[0] if consumerCodes else 0
+                    consumerKeyboard.press(consumerCode, release=False)
 
             elif message == "sync:keyboard":
                 # Send sync state
