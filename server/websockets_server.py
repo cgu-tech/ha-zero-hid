@@ -9,6 +9,7 @@ from zero_hid import Consumer, ConsumerCodes
 
 mouse = Mouse()
 keyboard = Keyboard()
+keyboard.set_layout("FR")
 keyboard_state = {
     "modifiers": [],
     "keys": [],
@@ -108,6 +109,12 @@ async def handle_client(websocket):
                         keyboard_state["capslock"] = not keyboard_state["capslock"]
                     elif keyCode == KeyCodes["KEY_SCROLLLOCK"]:
                         keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
+
+            elif message.startswith("chartap:"):
+                chars = message.replace("chartap:", "")
+
+                # Press the keyboard 0..N modifiers and/or 0..1 key (0 means no key)
+                keyboard.type(chars)
 
             elif message.startswith("conpress:"):
                 consumers = map(safe_eval, message.replace("conpress:", "").split(":"))

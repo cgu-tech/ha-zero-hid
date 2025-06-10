@@ -62,7 +62,7 @@ class AzertyKeyboardCard extends HTMLElement {
         ]
       },
       { code: "KEY_W", label: { normal: "z", shift: "Z", alt1: "x",      alt2: "~" }  },
-      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "\u00F7", alt2: "\\"}, 
+      { code: "KEY_E", label: { normal: "e", shift: "E", alt1: "÷", alt2: "\\"}, 
         popinKeys: [
           { code: "KEY_E_ACUTE", label: { normal: "é", shift: "É" } },
           { code: "KEY_E_GRAVE", label: { normal: "è", shift: "È" } },
@@ -78,8 +78,8 @@ class AzertyKeyboardCard extends HTMLElement {
           { code: "KEY_U_GRAVE", label: { normal: "ù", shift: "Ù" } },
           { code: "KEY_U_CIRC",  label: { normal: "û", shift: "Û" } },
           { code: "KEY_U_UMLAUT",label: { normal: "ü", shift: "Ü" } },
-          { code: "KEY_U_ACUTE", label: { normal: "ú", shift: "Ú" } },
-          { code: "KEY_U_TILDE", label: { normal: "ũ", shift: "Ũ" } }
+          { code: "KEY_U_ACUTE", label: { normal: "ú", shift: "Ú" } }
+          /* { code: "KEY_U_TILDE", label: { normal: "ũ", shift: "Ũ" } } */
         ]
       },
       { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "£" }, 
@@ -87,8 +87,8 @@ class AzertyKeyboardCard extends HTMLElement {
           { code: "KEY_I_CIRC",  label: { normal: "î", shift: "Î" } },
           { code: "KEY_I_UMLAUT",label: { normal: "ï", shift: "Ï" } },
           { code: "KEY_I_GRAVE", label: { normal: "ì", shift: "Ì" } },
-          { code: "KEY_I_ACUTE", label: { normal: "í", shift: "Í" } },
-          { code: "KEY_I_TILDE", label: { normal: "ĩ", shift: "Ĩ" } }
+          { code: "KEY_I_ACUTE", label: { normal: "í", shift: "Í" } }
+          /* { code: "KEY_I_TILDE", label: { normal: "ĩ", shift: "Ĩ" } } */
         ]
       },
       { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "¥" }, 
@@ -100,25 +100,25 @@ class AzertyKeyboardCard extends HTMLElement {
           { code: "KEY_O_UMLAUT",label: { normal: "ö", shift: "Ö" } }
         ]
       },
-      { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "₩" }  },
+      { code: "KEY_P", label: { normal: "p", shift: "P", alt1: "]",      alt2: "π" }  },
       // Row 3
       { code: "KEY_A",         label: { normal: "q", shift: "Q", alt1: "!", alt2: "°" } },
-      { code: "KEY_S",         label: { normal: "s", shift: "S", alt1: "@", alt2: "•" } },
+      { code: "KEY_S",         label: { normal: "s", shift: "S", alt1: "@", alt2: "∙" } },
       { code: "KEY_D",         label: { normal: "d", shift: "D", alt1: "#", alt2: "○" } },
-      { code: "KEY_F",         label: { normal: "f", shift: "F", alt1: "€", alt2: "●" } },
-      { code: "KEY_G",         label: { normal: "g", shift: "G", alt1: "%", alt2: "□" } },
+      { code: "KEY_F",         label: { normal: "f", shift: "F", alt1: "€", alt2: "•" } },
+      { code: "KEY_G",         label: { normal: "g", shift: "G", alt1: "%", alt2: "♫" } },
       { code: "KEY_H",         label: { normal: "h", shift: "H", alt1: "^", alt2: "■" } },
-      { code: "KEY_J",         label: { normal: "j", shift: "J", alt1: "&", alt2: "♤" } },
-      { code: "KEY_K",         label: { normal: "k", shift: "K", alt1: "*", alt2: "♡" } },
-      { code: "KEY_L",         label: { normal: "l", shift: "L", alt1: "(", alt2: "♢" } },
-      { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M", alt1: ")", alt2: "♧" } },
+      { code: "KEY_J",         label: { normal: "j", shift: "J", alt1: "&", alt2: "♠" } },
+      { code: "KEY_K",         label: { normal: "k", shift: "K", alt1: "*", alt2: "♥" } },
+      { code: "KEY_L",         label: { normal: "l", shift: "L", alt1: "(", alt2: "♦" } },
+      { code: "KEY_SEMICOLON", label: { normal: "m", shift: "M", alt1: ")", alt2: "♣" } },
       // Row 4
       { code: "MOD_LEFT_SHIFT", label: { normal: "\u21EA", shift: "\u21EA", alt1: "1/2", alt2: "2/2" }, special: true, width: "altkey" }, // ⇪
-      { code: "KEY_Z",          label: { normal: "w",      shift: "W",      alt1: "-",  alt2: "☆" } },
-      { code: "KEY_X",          label: { normal: "x",      shift: "X",      alt1: "'",  alt2: "▪" } },
+      { code: "KEY_Z",          label: { normal: "w",      shift: "W",      alt1: "-",  alt2: "√" } },
+      { code: "KEY_X",          label: { normal: "x",      shift: "X",      alt1: "'",  alt2: "≈" } },
       { code: "KEY_C",          label: { normal: "c",      shift: "C",      alt1: "\"", alt2: "¤" } },
-      { code: "KEY_V",          label: { normal: "v",      shift: "V",      alt1: ":",  alt2: "⟪" } },
-      { code: "KEY_B",          label: { normal: "b",      shift: "B",      alt1: ";",  alt2: "⟫" } },
+      { code: "KEY_V",          label: { normal: "v",      shift: "V",      alt1: ":",  alt2: "≤" } },
+      { code: "KEY_B",          label: { normal: "b",      shift: "B",      alt1: ";",  alt2: "≥" } },
       { code: "KEY_N",          label: { normal: "n",      shift: "N",      alt1: ",",  alt2: "¡" }, 
         popinKeys: [
           { code: "KEY_N_TILDE", label: { normal: "ñ", shift: "Ñ" } }
@@ -875,7 +875,7 @@ class AzertyKeyboardCard extends HTMLElement {
   // Send clicked char symbols to HID keyboard 
   // and let it handle the right key-press combination using current kb layout
   sendKeyboardClick(hass, charToSend) {
-    hass.callService("trackpad_mouse", "keyclick", {
+    hass.callService("trackpad_mouse", "chartap", {
       sendChar: charToSend,
     });
   }
