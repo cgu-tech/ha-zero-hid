@@ -56,7 +56,7 @@ cd ~ && (sudo rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b main http
 
 Execute gadget install script (reboot at the end):
 ```bash
-cd zero-hid/usb_gadget && sudo ./installer
+cd ~/zero-hid/usb_gadget && sudo ./installer
 ```
 
 ### Install websockets server
@@ -68,7 +68,7 @@ cd ~ && (sudo rm -rf ha-zero-hid >/dev/null 2>&1 || true) && git clone -b main h
 
 Execute server install script:
 ```bash
-cd ha-zero-hid/server/ && sudo /bin/bash install.sh
+cd ~/ha-zero-hid/server/ && sudo /bin/bash install.sh
 ```
 **Parameters:**
 - **optional** \[branch\]: the target zero-hid branch (default: "main", example: "feat/add-acback")
@@ -102,7 +102,7 @@ cd ~ && (rm -rf ha-zero-hid >/dev/null 2>&1 || true) && cd && git clone -b main 
 
 Execute client install script:
 ```bash
-cd ha-zero-hid/client/ && sudo /bin/bash install.sh
+cd ~/ha-zero-hid/client/ && sudo /bin/bash install.sh
 ```
 
 **Note:**
