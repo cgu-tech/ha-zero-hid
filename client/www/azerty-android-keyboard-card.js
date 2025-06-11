@@ -79,7 +79,6 @@ class AzertyKeyboardCard extends HTMLElement {
           { code: "KEY_U_CIRC",  label: { normal: "û", shift: "Û" } },
           { code: "KEY_U_UMLAUT",label: { normal: "ü", shift: "Ü" } },
           { code: "KEY_U_ACUTE", label: { normal: "ú", shift: "Ú" } }
-          /* { code: "KEY_U_TILDE", label: { normal: "ũ", shift: "Ũ" } } */
         ]
       },
       { code: "KEY_I", label: { normal: "i", shift: "I", alt1: ">",      alt2: "£" }, 
@@ -88,7 +87,6 @@ class AzertyKeyboardCard extends HTMLElement {
           { code: "KEY_I_UMLAUT",label: { normal: "ï", shift: "Ï" } },
           { code: "KEY_I_GRAVE", label: { normal: "ì", shift: "Ì" } },
           { code: "KEY_I_ACUTE", label: { normal: "í", shift: "Í" } }
-          /* { code: "KEY_I_TILDE", label: { normal: "ĩ", shift: "Ĩ" } } */
         ]
       },
       { code: "KEY_O", label: { normal: "o", shift: "O", alt1: "[",      alt2: "¥" }, 
