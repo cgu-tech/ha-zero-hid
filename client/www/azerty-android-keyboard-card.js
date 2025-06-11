@@ -876,7 +876,7 @@ class AzertyKeyboardCard extends HTMLElement {
   // and let it handle the right key-press combination using current kb layout
   sendKeyboardClick(hass, charToSend) {
     hass.callService("trackpad_mouse", "chartap", {
-      sendChar: charToSend,
+      sendChars: charToSend,
     });
   }
 
