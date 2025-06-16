@@ -5,11 +5,13 @@ import json
 import logging
 import logging.config
 
+logging.config.fileConfig('logging.conf')
+
+logger = logging.getLogger(__name__)
+
 from zero_hid import Mouse
 from zero_hid import Keyboard, KeyCodes
 from zero_hid import Consumer, ConsumerCodes
-
-logging.config.fileConfig('logging.conf')
 
 mouse = Mouse()
 keyboard = Keyboard()
@@ -29,32 +31,36 @@ def safe_eval(s):
     try:
         return ast.literal_eval(s)
     except (ValueError, SyntaxError):
-        print(f"Ignored value {s}: error occurred while trying to convert it as list. ValueError: {ValueError}; ValueError: {SyntaxError};")
+        logger.warning(
+            "Ignored value %s: error occurred while trying to convert it as list. ValueError: '%s'; SyntaxError: '%s';", 
+            s, ValueError, SyntaxError)
         return []
 
 async def handle_client(websocket):
-    print("Client connected")
+    logger.info("Client connected")
     try:
         async for message in websocket:
-            print("Received:", message)
-            b = message.encode('utf-8')
-            hex_string = ' '.join(f'{byte:02x}' for byte in b)
-            print(f"Hex representation: {hex_string}")
+            logger.debug("Received: '%s'", message)
+
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                bytes = message.encode('utf-8')
+                bytesStr = " ".join(["0x%02x" % byte for byte in bytes])
+                logger.debug("Hex representation: '%s'", bytesStr)
 
             if message.startswith("move:"):
                 dx, dy = map(int, message.replace("move:", "").split(","))
-                print("Mouse move in progress:", dx, dy)
+                logger.debug("Mouse move in progress: %s %s", dx, dy)
                 mouse.move(dx, dy)
-                print("Mouse move end:", dx, dy)
+                logger.debug("Mouse move end: %s %s", dx, dy)
 
             elif message.startswith("scroll:"):
                 dx, dy = map(int, message.replace("scroll:", "").split(","))
-                print("Mouse scroll in progress:", dx, dy)
+                logger.debug("Mouse scroll in progress: %s %s", dx, dy)
                 if dx != 0:
                   mouse.scroll_x(dx)
                 if dy != 0:
                   mouse.scroll_y(dy)
-                print("Mouse scroll end:", dx, dy)
+                logger.debug("Mouse scroll end: %s %s", dx, dy)
 
             elif message == "click:left":
                 mouse.left_click(release=False)
@@ -81,7 +87,7 @@ async def handle_client(websocket):
                     else:
                         unknown_modifiers.append(mod)
                 if unknown_modifiers:
-                    print(f"Unable to find modifiers: {unknown_modifiers}")
+                    logger.warning("Unable to find modifiers: '%s'", unknown_modifiers)
 
                 # Separate known keycodes, consumer codes and unknown codes
                 keyCodes = []
@@ -93,7 +99,7 @@ async def handle_client(websocket):
                     else:
                         unknown_keys.append(key)
                 if unknown_keys:
-                    print(f"Unable to find keys: {unknown_keys}")
+                    logger.warning("Unable to find keys: '%s'", unknown_keys)
 
                 if not unknown_modifiers and not unknown_keys:
                     # All modifiers and keys are known
@@ -133,7 +139,7 @@ async def handle_client(websocket):
                     else:
                         unknown_consumers.append(con)
                 if unknown_consumers:
-                    print(f"Unable to find keys or consumers: {unknown_consumers}")
+                    logger.warning("Unable to find consumers: '%s'", unknown_consumers)
 
                 if not unknown_consumers:
                     # All consumers keys are known
@@ -153,15 +159,15 @@ async def handle_client(websocket):
                 }
                 response_str = json.dumps(response_data)
                 await websocket.send(response_str)
-                print(f"sync:keyboard: response_data={response_data}")
+                logger.debug("sync:keyboard: response_data='%s'", response_data)
 
     except websockets.ConnectionClosed:
-        print("Client disconnected")
+        logger.info("Client disconnected")
 
 async def main():
     # Start websockets server infinite loop
     async with websockets.serve(handle_client, "0.0.0.0", 8765):
-        print("WebSocket server running at ws://0.0.0.0:8765")
+        logger.info("WebSocket server running at ws://0.0.0.0:8765")
         await asyncio.Future()  # Run forever
 
 asyncio.run(main())
