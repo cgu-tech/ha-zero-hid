@@ -15,6 +15,7 @@ check_root() {
 install() {
     # Create server
     mkdir -p /opt/ha_zero_hid
+    cp logging.config /opt/ha_zero_hid/
     cp websockets_server_run.sh /opt/ha_zero_hid/
     cp websockets_server.py /opt/ha_zero_hid/
     chmod +x /opt/ha_zero_hid/websockets_server_run.sh

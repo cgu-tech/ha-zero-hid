@@ -2,10 +2,14 @@ import asyncio
 import websockets
 import ast
 import json
+import logging
+import logging.config
 
 from zero_hid import Mouse
 from zero_hid import Keyboard, KeyCodes
 from zero_hid import Consumer, ConsumerCodes
+
+logging.config.fileConfig('logging.conf')
 
 mouse = Mouse()
 keyboard = Keyboard()
