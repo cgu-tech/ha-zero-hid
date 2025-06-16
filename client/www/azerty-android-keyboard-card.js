@@ -28,8 +28,8 @@ class AzertyKeyboardCard extends HTMLElement {
     this.keys = [
       // Row 0
       { code: "KEY_ESC",                 label: { normal: "Échap"        }, special: true },
-      { code: "KEY_AC_BACK",             label: { normal: "\u2B8C"       }, special: true, width: "android" }, // ⮌
-      { code: "KEY_AC_HOME",             label: { normal: "\u2302"       }, special: true, width: "android" }, // ⌂
+      { code: "CON_AC_BACK",             label: { normal: "\u2B8C"       }, special: true, width: "android" }, // ⮌
+      { code: "CON_AC_HOME",             label: { normal: "\u2302"       }, special: true, width: "android" }, // ⌂
       { code: "KEY_ALT_TAB",             label: { normal: "🗗"           }, special: true, width: "android" }, // 🗗 \u1F5D7
       { code: "KEY_COMPOSE",             label: { normal: "\u2699"       }, special: true }, // ⚙
       { code: "CON_SCAN_PREVIOUS_TRACK", label: { normal: "\u23EE"       }, special: true }, // ⏮
@@ -136,6 +136,7 @@ class AzertyKeyboardCard extends HTMLElement {
     // To track pressed modifiers and keys
     this.pressedModifiers = new Set();
     this.pressedKeys = new Set();
+    this.pressedConsumers = new Set();
 
     // Handle out of bounds mouse releases
     this._lastHass = null;
@@ -839,6 +840,18 @@ class AzertyKeyboardCard extends HTMLElement {
   }
 
   appendCode(hass, code) {
+    if (code) {
+      if (code.startsWith("KEY_") || code.startsWith("MOD_")) {
+        this.appendKeyCode(hass, code);
+      } else if (code.startsWith("CON_")) {
+        this.appendConsumerCode(hass, code);
+      } else {
+        console.log("appendCode->Unknown code type:", code);
+      }
+    }
+  }
+
+  appendKeyCode(hass, code) {
     console.log("Key pressed:", code);
     if (code) {
       if (this.isVirtualModifier(code)) {
@@ -852,7 +865,27 @@ class AzertyKeyboardCard extends HTMLElement {
     this.sendKeyboardUpdate(hass);
   }
 
+  appendConsumerCode(hass, code) {
+    console.log("Consumer pressed:", code);
+    if (code) {
+      this.pressedConsumers.add(code);
+    }
+    this.sendConsumerUpdate(hass);
+  }
+
   removeCode(hass, code) {
+    if (code) {
+      if (code.startsWith("KEY_") || code.startsWith("MOD_")) {
+        this.removeKeyCode(hass, code);
+      } else if (code.startsWith("CON_")) {
+        this.removeConsumerCode(hass, code);
+      } else {
+        console.log("removeCode->Unknown code type:", code);
+      }
+    }
+  }
+
+  removeKeyCode(hass, code) {
     console.log("Key released:", code);
     if (code) {
       if (this.isVirtualModifier(code)) {
@@ -866,11 +899,26 @@ class AzertyKeyboardCard extends HTMLElement {
     this.sendKeyboardUpdate(hass);
   }
 
+  removeConsumerCode(hass, code) {
+    console.log("Consumer released:", code);
+    if (code) {
+      this.pressedConsumers.delete(code);
+    }
+    this.sendConsumerUpdate(hass);
+  }
+
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
     hass.callService("trackpad_mouse", "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
+    });
+  }
+  
+  // Send all current pressed modifiers and keys to HID keyboard
+  sendConsumerUpdate(hass) {
+    hass.callService("trackpad_mouse", "conpress", {
+      sendCons: Array.from(this.pressedConsumers),
     });
   }
 
