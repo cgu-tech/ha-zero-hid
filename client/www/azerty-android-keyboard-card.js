@@ -37,20 +37,20 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "CON_SCAN_NEXT_TRACK",     label: { normal: "\u23ED"       }, special: true }, // ⏭
       { code: "KEY_DELETE",              label: { normal: "Suppr"        }, special: true },
       // Row 1
-      { code: "KEY_1", label: { normal: "1" } },
-      { code: "KEY_2", label: { normal: "2" }, 
+      { code: "KEY_1", label: { normal: "1" }, fallback: "normal" },
+      { code: "KEY_2", label: { normal: "2" }, fallback: "normal", 
         popinKeys: [
           { code: "KEY_GRAVE", label: { normal: "²", shift: "²" } }
         ]
       },
-      { code: "KEY_3", label: { normal: "3" } },
-      { code: "KEY_4", label: { normal: "4" } },
-      { code: "KEY_5", label: { normal: "5" } },
-      { code: "KEY_6", label: { normal: "6" } },
-      { code: "KEY_7", label: { normal: "7" } },
-      { code: "KEY_8", label: { normal: "8" } },
-      { code: "KEY_9", label: { normal: "9" } },
-      { code: "KEY_0", label: { normal: "0" } },
+      { code: "KEY_3", label: { normal: "3" }, fallback: "normal" },
+      { code: "KEY_4", label: { normal: "4" }, fallback: "normal" },
+      { code: "KEY_5", label: { normal: "5" }, fallback: "normal" },
+      { code: "KEY_6", label: { normal: "6" }, fallback: "normal" },
+      { code: "KEY_7", label: { normal: "7" }, fallback: "normal" },
+      { code: "KEY_8", label: { normal: "8" }, fallback: "normal" },
+      { code: "KEY_9", label: { normal: "9" }, fallback: "normal" },
+      { code: "KEY_0", label: { normal: "0" }, fallback: "normal" },
       // Row 2
       { code: "KEY_Q", label: { normal: "a", shift: "A", alt1: "+",      alt2: "`" }, 
         popinKeys: [
@@ -127,9 +127,9 @@ class AzertyKeyboardCard extends HTMLElement {
       { code: "KEY_BACKSPACE",  label: { normal: "\u232B" }, special: true, width: "altkey" }, // ⌫
       // Row 5
       { code: "KEY_MODE",       label: { normal: "!#1", shift: "!#1", alt1: "ABC", alt2: "ABC" }, special: true, width: "altkey" },
-      { code: "KEY_COMMA",      label: { normal: "," } },
-      { code: "KEY_SPACE",      label: { normal: " " }, width: "spacebar" },
-      { code: "KEY_DOT",        label: { normal: "." } },
+      { code: "KEY_COMMA",      label: { normal: "," }, fallback: "normal" },
+      { code: "KEY_SPACE",      label: { normal: " " }, fallback: "normal", width: "spacebar" },
+      { code: "KEY_DOT",        label: { normal: "." }, fallback: "normal" },
       { code: "KEY_ENTER",      label: { normal: "Entrée" }, special: true, width: "altkey" },
     ];
 
@@ -630,6 +630,7 @@ class AzertyKeyboardCard extends HTMLElement {
       if (this.currentMode === this.MODE_NORMAL) {
         if (this.shiftState === this.SHIFT_STATE_NORMAL) {
           if (code === "MOD_LEFT_SHIFT") btn.classList.remove("active", "locked");
+          displayLower = this.getlLabelNormal(keyData);
         } else if (this.shiftState === this.SHIFT_STATE_ONCE) {
           if (code === "MOD_LEFT_SHIFT") btn.classList.add("active");
           displayLower = this.getLabelAlternativeShift(keyData);
@@ -645,9 +646,9 @@ class AzertyKeyboardCard extends HTMLElement {
           displayLower = this.getLabelAlternativeAlt2(keyData);
         }
       }
-      
-      if (!displayLower) {
-        displayLower = this.getlLabelNormal(keyData) || "";
+
+      if (!displayLower && keyData.fallback) {
+        displayLower = keyData.label[keyData.fallback] || "";
       }
 
       // Set displayed labels
@@ -814,8 +815,10 @@ class AzertyKeyboardCard extends HTMLElement {
       
       // Non-special and not virtual key clicked
       const charToSend = btn._lowerLabel.textContent || "";
-      //console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
-      this.clickChar(hass, code, charToSend);
+      if (charToSend) {
+        //console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
+        this.clickChar(hass, code, charToSend);
+      }
     }
 
     // Switch back to normal when "shift-once" was set and a key different from SHIFT was pressed
