@@ -4,18 +4,17 @@ import ast
 import json
 import logging
 import logging.config
-
 logging.config.fileConfig('logging.conf')
-
 logger = logging.getLogger(__name__)
 
+from zero_hid import Device
 from zero_hid import Mouse
 from zero_hid import Keyboard, KeyCodes
 from zero_hid import Consumer, ConsumerCodes
 
-device = open("/dev/hidg0", "r+b")
-mouse = Mouse(device)
-keyboard = Keyboard(device)
+hid = Device()
+mouse = Mouse(hid)
+keyboard = Keyboard(hid)
 keyboard.set_layout("FR")
 keyboard_state = {
     "modifiers": [],
@@ -25,7 +24,7 @@ keyboard_state = {
     "scrolllock": False,
 }
 key_codes_map = KeyCodes.as_dict()
-consumer = Consumer(device)
+consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
 
 def safe_eval(s):
