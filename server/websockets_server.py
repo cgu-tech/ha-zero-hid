@@ -13,8 +13,9 @@ from zero_hid import Mouse
 from zero_hid import Keyboard, KeyCodes
 from zero_hid import Consumer, ConsumerCodes
 
-mouse = Mouse()
-keyboard = Keyboard()
+device = open("/dev/hidg0", "r+b")
+mouse = Mouse(device)
+keyboard = Keyboard(device)
 keyboard.set_layout("FR")
 keyboard_state = {
     "modifiers": [],
@@ -24,7 +25,7 @@ keyboard_state = {
     "scrolllock": False,
 }
 key_codes_map = KeyCodes.as_dict()
-consumer = Consumer()
+consumer = Consumer(device)
 consumer_codes_map = ConsumerCodes.as_dict()
 
 def safe_eval(s):
@@ -104,21 +105,19 @@ async def handle_client(websocket):
                 if not unknown_modifiers and not unknown_keys:
                     # All modifiers and keys are known
 
-                    # Only one key can be pressed at any time
-                    keyCode = keyCodes[0] if keyCodes else 0
-
                     # Press the keyboard 0..N modifiers and/or 0..1 key (0 means no key)
-                    keyboard.press(modifierCodes, keyCode, release=False)
+                    keyboard.press(modifierCodes, keyCodes, release=False)
 
                     # Update keyboard states for later synchronization calls
                     keyboard_state["modifiers"] = modifiers
                     keyboard_state["keys"] = [keys[0]] if keys else []
-                    if keyCode == KeyCodes["KEY_NUMLOCK"]:
-                        keyboard_state["numlock"] = not keyboard_state["numlock"]
-                    elif keyCode == KeyCodes["KEY_CAPSLOCK"]:
-                        keyboard_state["capslock"] = not keyboard_state["capslock"]
-                    elif keyCode == KeyCodes["KEY_SCROLLLOCK"]:
-                        keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
+                    for keyCode in keyCodes:
+                        if keyCode == KeyCodes["KEY_NUMLOCK"]:
+                            keyboard_state["numlock"] = not keyboard_state["numlock"]
+                        elif keyCode == KeyCodes["KEY_CAPSLOCK"]:
+                            keyboard_state["capslock"] = not keyboard_state["capslock"]
+                        elif keyCode == KeyCodes["KEY_SCROLLLOCK"]:
+                            keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
 
             elif message.startswith("chartap:"):
                 chars = message.replace("chartap:", "")
@@ -143,10 +142,7 @@ async def handle_client(websocket):
 
                 if not unknown_consumers:
                     # All consumers keys are known
-
-                    # Only one consumer can be pressed at any time
-                    consumerCode = consumerCodes[0] if consumerCodes else 0
-                    consumer.press(consumerCode, release=False)
+                    consumer.press(consumerCodes, release=False)
 
             elif message == "sync:keyboard":
                 # Send sync state
