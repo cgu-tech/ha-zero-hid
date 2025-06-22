@@ -21,19 +21,28 @@ install() {
         fi
     done
     
-    # Create HA client custom trackpad card
-    (rm /config/www/trackpad-card.js >/dev/null 2>&1 || true) && cp -R www /config
+    # Cleanup existing client elements when needed
+    rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
     
-    # Create HA client custom keyboard cards
-    (rm /config/www/azerty-keyboard-card.js >/dev/null 2>&1 || true) && cp -R www /config
+    rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
+    
+    rm /config/www/azerty-android-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
+    
+    # Install all client elements
+    cp -R www /config
 }
 
 uninstall () {
-    # Remove HA client custom keyboard cards
-    rm /config/www/azerty-keyboard-card.js >/dev/null 2>&1 || true
-    
-    # Remove HA client custom trackpad card
+    # Cleanup existing client elements when needed
     rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
+    
+    rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
+    
+    rm /config/www/azerty-android-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
     
     # Disable HA client integration
     sed -i '/^trackpad_mouse:$/d' /config/configuration.yaml
