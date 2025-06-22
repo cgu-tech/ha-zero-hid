@@ -145,7 +145,10 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Inject previously defined components
     const keyboardCard = document.createElement("android-keyboard-card");
-    keyboardCard.setAttribute("language", "fr"); // or dynamically detect it
+    keyboardCard.setConfig({
+      language: this.language || "FR",
+      layoutUrl: `/local/layouts/android/${this.language || "FR"}.json`
+    });
     keyboardCard.hass = hass;
     keyboardPanel.appendChild(keyboardCard);
 
