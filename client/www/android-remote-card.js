@@ -29,13 +29,13 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #2e2e2e;
+        background: #0000;
         border-bottom: 1px solid #111;
       }
 
       svg.dpad {
-        width: 100%;
-        height: 100%;
+        width: 85%;
+        height: auto;
       }
 
       .dpad-button {
