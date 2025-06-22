@@ -27,7 +27,7 @@ install() {
     rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
     
-    rm /config/www/azerty-android-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/android-keyboard-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
     rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
     
@@ -42,7 +42,7 @@ uninstall () {
     rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
     
-    rm /config/www/azerty-android-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/android-keyboard-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
     rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
     
