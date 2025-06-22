@@ -117,6 +117,7 @@ cd ~/ha-zero-hid/client/ && /bin/bash install.sh
 ### Add custom cards into HA ressources
 - Go to: `Settings` → `Dashboards` → (`⋮` on your dashboard) → `Resources`
 - Click `Add Resource`
+
 | URL                               | Resource type       |
 | --------------------------------- | ------------------- |
 | `/local/trackpad-card.js`         | `JavaScript Module` |
