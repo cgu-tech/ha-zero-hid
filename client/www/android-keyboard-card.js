@@ -11,7 +11,7 @@ class AndroidKeyboardCard extends HTMLElement {
     // when not user configured, fallback to default 
     // international language and keyboard layout
     this.language = "FR";
-    this.layoutUrl = '/local/layouts/android/${language}.json';
+    this.layoutUrl = `/local/layouts/android/${this.language}.json`;
     
     // 0: normal/shift mode
     // 1: alternative mode

@@ -144,24 +144,15 @@ class AndroidRemoteCard extends HTMLElement {
     keyboardPanel.className = "panel";
 
     // Inject previously defined components
+    const keyboardCard = document.createElement("android-keyboard-card");
+    keyboardCard.setAttribute("language", "fr"); // or dynamically detect it
+    keyboardCard.hass = hass;
+    keyboardPanel.appendChild(keyboardCard);
+
+    // Inject previously defined components
     const trackpadCard = document.createElement("trackpad-card");
     trackpadCard.hass = hass;
     trackpadPanel.appendChild(trackpadCard);
-
-    const keyboardInput = document.createElement("input");
-    keyboardInput.type = "text";
-    keyboardInput.style.width = "100%";
-    keyboardInput.style.padding = "10px";
-    keyboardInput.style.fontSize = "16px";
-    keyboardInput.style.border = "none";
-    keyboardInput.style.boxSizing = "border-box";
-    keyboardInput.addEventListener("change", () => {
-      hass.callService("trackpad_mouse", "keyboard_input", {
-        text: keyboardInput.value
-      });
-      keyboardInput.value = "";
-    });
-    keyboardPanel.appendChild(keyboardInput);
 
     container.appendChild(trackpadPanel);
     container.appendChild(keyboardPanel);
