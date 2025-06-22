@@ -136,6 +136,14 @@ class ArrowPadCard extends HTMLElement {
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
         outline: none; /* Prevent focus ring override */
       }
+      button.key.spacer {
+        pointer-events: none;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        opacity: 0;
+        cursor: default;
+      }
       button.key.wide {
         flex-grow: 2;
       }
@@ -199,6 +207,11 @@ class ArrowPadCard extends HTMLElement {
         btn.classList.add("key");
         if (keyData.special) btn.classList.add("special");
         if (keyData.width) btn.classList.add(keyData.width);
+
+        // Disable actions on spacers
+        if (keyData.code.startsWith("SPACER_")) {
+          btn.classList.add("spacer");
+        }
 
         btn.dataset.code = keyData.code;
 
