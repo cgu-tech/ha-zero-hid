@@ -4,7 +4,7 @@ class TrackpadCard extends HTMLElement {
   set hass(hass) {
     if (!this.content) {
       const card = document.createElement("ha-card");
-      card.header = "Mouse Trackpad";
+      // card.header = "Mouse Trackpad";
 
       const style = document.createElement("style");
       style.textContent = `
