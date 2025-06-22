@@ -100,9 +100,9 @@ Retrieve latest version of this repository:
 cd ~ && (rm -rf ha-zero-hid >/dev/null 2>&1 || true) && cd && git clone -b main https://github.com/cgu-tech/ha-zero-hid.git
 ```
 
-Execute client install script:
+Execute client install script as root (default shell on `Terminal & SSH` add-on):
 ```bash
-cd ~/ha-zero-hid/client/ && sudo /bin/bash install.sh
+cd ~/ha-zero-hid/client/ && /bin/bash install.sh
 ```
 
 **Note:**

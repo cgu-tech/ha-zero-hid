@@ -85,6 +85,6 @@
       { "code": "MOD_RIGHT_ALT", "label": { "normal": "AltGr" }, "special": true, "width": "altkey" },
       { "code": "MOD_RIGHT_GUI", "label": { "normal": "\u229E" }, "special": true },
       { "code": "KEY_PROPS", "label": { "normal": "\u2630" }, "special": true },
-      { "code": "MOD_RIGHT_CONTROL", "label": { "normal": "Ctrl" }, "special": true, "width": "wide" },
+      { "code": "MOD_RIGHT_CONTROL", "label": { "normal": "Ctrl" }, "special": true, "width": "wide" }
     ]
 }
