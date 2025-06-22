@@ -123,7 +123,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.addGlobalHandlers();
     
     const card = document.createElement("ha-card");
-    card.header = "Android Keyboard";
+    // card.header = "Android Keyboard";
     
     const style = document.createElement("style");
     style.textContent = `

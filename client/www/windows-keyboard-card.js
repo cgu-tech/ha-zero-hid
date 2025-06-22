@@ -88,7 +88,7 @@ class WindowsKeyboardCard extends HTMLElement {
     this.addGlobalHandlers();
 
     const card = document.createElement("ha-card");
-    card.header = "Windows Keyboard";
+    // card.header = "Windows Keyboard";
 
     const style = document.createElement("style");
     style.textContent = `

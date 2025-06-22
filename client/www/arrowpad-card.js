@@ -28,7 +28,7 @@ class ArrowPadCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 1;
+    return 3;
   }
 
   async connectedCallback() {
@@ -81,18 +81,18 @@ class ArrowPadCard extends HTMLElement {
     this.addGlobalHandlers();
 
     const card = document.createElement("ha-card");
-    card.header = "Arrow Pad";
+    // card.header = "Arrow Pad";
 
     const style = document.createElement("style");
     style.textContent = `
       :host {
-        --key-bg: #3b3a3a;
-        --key-hover-bg: #4a4a4a;
-        --key-active-bg: #2c2b2b;
-        --key-special-bg: #222;
-        --key-special-color: #ccc;
-        --key-height: 3.5rem;
-        --key-margin: 0.15rem;
+        --squarekey-bg: #3b3a3a;
+        --squarekey-hover-bg: #4a4a4a;
+        --squarekey-active-bg: #2c2b2b;
+        --squarekey-special-bg: #222;
+        --squarekey-special-color: #ccc;
+        --squarekey-height: 3.5rem;
+        --squarekey-margin: 0.15rem;
         display: block;
         width: 100%;
         user-select: none;
@@ -114,16 +114,15 @@ class ArrowPadCard extends HTMLElement {
         gap: 0.3rem;
         width: 100%;
       }
-      button.key {
-        background: var(--key-bg);
+      button.squarekey {
+        background: var(--squarekey-bg);
         border: none;
         border-radius: 5px;
         color: #eee;
         font-size: 1.1rem;
         cursor: pointer;
-        height: var(--key-height);
-        flex-grow: 1;
-        flex-basis: 0;
+        height: var(--squarekey-height);
+        width: var(--squarekey-height); /* Ensure square shape */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -135,8 +134,9 @@ class ArrowPadCard extends HTMLElement {
         overflow: hidden;
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
         outline: none; /* Prevent focus ring override */
+        flex: 0 0 auto; /* Prevent stretching */
       }
-      button.key.spacer {
+      button.squarekey.spacer {
         pointer-events: none;
         background: transparent;
         border: none;
@@ -144,34 +144,34 @@ class ArrowPadCard extends HTMLElement {
         opacity: 0;
         cursor: default;
       }
-      button.key.wide {
-        flex-grow: 2;
+      button.squarekey.wide {
+        width: calc(var(--squarekey-height) * 2);
       }
-      button.key.wider {
-        flex-grow: 3;
+      button.squarekey.wider {
+        width: calc(var(--squarekey-height) * 3);
       }
-      button.key.altkey {
-        flex-grow: 1.5;
+      button.squarekey.altkey {
+        width: calc(var(--squarekey-height) * 1.5);
       }
-      button.key.spacebar {
-        flex-grow: 11;
+      button.squarekey.spacebar {
+        width: calc(var(--squarekey-height) * 11);
       }
-      button.key.special {
-        background: var(--key-special-bg);
-        color: var(--key-special-color);
+      button.squarekey.special {
+        background: var(--squarekey-special-bg);
+        color: var(--squarekey-special-color);
         font-weight: 600;
         font-size: 0.95rem;
       }
-      button.key:hover {
-        background: var(--key-hover-bg);
+      button.squarekey:hover {
+        background: var(--squarekey-hover-bg);
       }
-      button.key:active {
-        background: var(--key-active-bg);
+      button.squarekey:active {
+        background: var(--squarekey-active-bg);
       }
       /* Fix: Ensure active state is visually dominant */
-      button.key.active,
-      button.key:hover.active,
-      button.key:active.active {
+      button.squarekey.active,
+      button.squarekey:hover.active,
+      button.squarekey:active.active {
         background: #5a5a5a !important;
         color: #fff !important;
       }
@@ -204,7 +204,7 @@ class ArrowPadCard extends HTMLElement {
         if (!keyData) continue;
 
         const btn = document.createElement("button");
-        btn.classList.add("key");
+        btn.classList.add("squarekey");
         if (keyData.special) btn.classList.add("special");
         if (keyData.width) btn.classList.add(keyData.width);
 
@@ -245,7 +245,7 @@ class ArrowPadCard extends HTMLElement {
   }
 
   updateLabels() {
-    for (const btn of this.content.querySelectorAll("button.key")) {
+    for (const btn of this.content.querySelectorAll("button.squarekey")) {
       const keyData = btn._keyData;
       if (!keyData) continue;
 
@@ -273,7 +273,7 @@ class ArrowPadCard extends HTMLElement {
   handleGlobalPointerUp(evt) {
     //console.log("handleGlobalPointerUp", this.content, this._hass);
     if (this.content && this._hass) {
-      for (const btn of this.content.querySelectorAll("button.key.active")) {
+      for (const btn of this.content.querySelectorAll("button.squarekey.active")) {
         this.handleKeyRelease(this._hass, btn);
       }
     }
