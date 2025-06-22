@@ -108,7 +108,7 @@ cd ~/ha-zero-hid/client/ && /bin/bash install.sh
 **Note:**
 - in case of an upgrade, uninstall first when prompted, then run the install script again.
 
-### Add custom card into HA ressources
+### Add custom cards into HA ressources
 - Go to: `Settings` → `Dashboards` → (`⋮` on your dashboard) → `Resources`
 - Click `Add Resource`
   - URL: `/local/trackpad-card.js`
@@ -116,12 +116,27 @@ cd ~/ha-zero-hid/client/ && /bin/bash install.sh
 
 Reboot Home Assistant **(not reload)**
 
-### Add custom card into Lovelace dashboard
-- Click add a card
+### Add custom cards into your Lovelace dashboard(s)
+- Go to your dashboard > Edit dashboard
+- Click `add a card`
 - Search for **Manual Card**
-- Into yaml editor, replace `type: ""` by the following code:
+- Into yaml editor, replace `type: ""` by the following code according to your needs:
+
+#### Trackpad card
 ```yaml
 type: custom:trackpad-card
+```
+
+#### Windows keyboard card
+```yaml
+type: custom:windows-keyboard-card
+layoutUrl: /local/layouts/windows/US.json
+```
+
+#### Android keyboard card
+```yaml
+type: custom:android-keyboard-card
+layoutUrl: /local/layouts/android/US.json
 ```
 
 ## F.A.Q
