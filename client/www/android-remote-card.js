@@ -84,7 +84,7 @@ class AndroidRemoteCard extends HTMLElement {
 
       .foldable-button.active {
         background: #555;
-        color: #00eaff;
+        color: #3399ff;
       }
 
       .panel {
