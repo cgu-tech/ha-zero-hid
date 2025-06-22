@@ -14,8 +14,7 @@ from zero_hid import Consumer, ConsumerCodes
 
 hid = Device()
 mouse = Mouse(hid)
-keyboard = Keyboard(hid)
-keyboard.set_layout("FR")
+keyboard = Keyboard(hid, "FR")
 keyboard_state = {
     "modifiers": [],
     "keys": [],
