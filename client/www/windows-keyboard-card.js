@@ -7,7 +7,7 @@ class WindowsKeyboardCard extends HTMLElement {
     this._hass = null;
     this._layoutReady = false;
     this._uiBuilt = false;
-    this.layoutUrl = '/config/www/layouts/windows/FR.json'; // Default keyboard layout when not user configuration
+    this.layoutUrl = '/local/layouts/windows/FR.json'; // Default keyboard layout when not user configuration
 
     this.capsLock = false;
     this.shift = false;
@@ -46,7 +46,7 @@ class WindowsKeyboardCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
-      this.buildKeyboard();
+      this.buildKeyboard(this._hass);
     }
   }
 
@@ -68,16 +68,19 @@ class WindowsKeyboardCard extends HTMLElement {
     console.log("Windows Keyboard - set hass():", hass);
     this._hass = hass;
     if (this._layoutReady && !this._uiBuilt) {
-      this.buildKeyboard();
+      this.buildKeyboard(this._hass);
     }
   }
 
-  buildKeyboard() {
+  buildKeyboard(hass) {
     if (this._uiBuilt) {
       console.log("Windows Keyboard - buildKeyboard() SKIPPED");
       return;
     }
     console.log("Windows Keyboard - buildKeyboard() ENTER");
+
+    // Clear existing content (if any)
+    this.innerHTML = '';
 
     this._uiBuilt = true;
     // Re-add global handlers to ensure proper out-of-bound handling
