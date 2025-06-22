@@ -5,7 +5,13 @@ Home Assistant (HA) integration for zero-hid project
 Transform your Raspberry Pi zero into a remote mouse controlled through Home Assistant dashboard (Lovelace UI). 
 The mouse can be used to control whatever end-device that accept standard USB mouse (AndroidTV, computer, ...).
 
-`Project status`: beta stage, fully working mouse with trackpad card. Manual installation. Trackpad card cannot be customized.
+`Project status`:
+- beta stage
+- fully working mouse with dedicated card (left / middle / right click, horizontal / vertical scroll)
+- fully working Windows keyboard with dedicated card (supports keyboard layouts, US QWERTY + FR AZERTY implemented)
+- fully working Android keyboard with dedicated card (supports keyboard layouts, US QWERTY + FR AZERTY implemented, supports Android buttons)
+- manual installation
+- dedicated cards cannot be customized
 
 # What's needed
 - A running Home Assistant instance
