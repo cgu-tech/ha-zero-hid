@@ -2,7 +2,7 @@
     "Name": "US",
     "layoutName": "QWERTY",
     "Description": "Contains key mappings for android keyboard QWERTY (United States)",
-    "rowsConfig": [9, 10, 10, 9, 9, 5],
+    "rowsConfig": [9, 10, 10, 11, 9, 5],
     "keys": [
 
       { "code": "KEY_ESC",                 "label": { "normal": "Esc"        }, "special": true },
