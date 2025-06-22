@@ -21,7 +21,7 @@ class AndroidRemoteCard extends HTMLElement {
         color: #fff;
         font-family: sans-serif;
       }
-
+      
       .dpad-container {
         width: 100%;
         aspect-ratio: 4 / 3;
@@ -32,34 +32,82 @@ class AndroidRemoteCard extends HTMLElement {
         background: #2e2e2e;
         border-bottom: 1px solid #111;
       }
-
+      
       .dpad {
-        display: grid;
-        grid-template-columns: 60px 60px 60px;
-        grid-template-rows: 60px 60px 60px;
-        gap: 8px;
+        position: relative;
+        width: 180px;
+        height: 180px;
       }
-
+      
       .dpad button {
+        position: absolute;
+        width: 80px;
+        height: 80px;
         background: #3a3a3a;
         border: none;
         color: #eee;
-        font-size: 16px;
+        font-size: 24px;
         cursor: pointer;
-        border-radius: 6px;
         transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-
-      .dpad button:hover {
+      
+      .dpad button:hover,
+      .dpad button:focus {
         background: #4a4a4a;
       }
-
+      
+      /* Position & shape overrides */
+      .dpad .top {
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        border-top-left-radius: 40px;
+        border-top-right-radius: 40px;
+      }
+      
+      .dpad .bottom {
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        border-bottom-left-radius: 40px;
+        border-bottom-right-radius: 40px;
+      }
+      
+      .dpad .left {
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        border-top-left-radius: 40px;
+        border-bottom-left-radius: 40px;
+      }
+      
+      .dpad .right {
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        border-top-right-radius: 40px;
+        border-bottom-right-radius: 40px;
+      }
+      
+      .dpad .center {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+      }
+      
+      /* Keep all other styles unchanged */
       .foldable-buttons {
         display: flex;
         width: 100%;
         background: #1a1a1a;
       }
-
+      
       .foldable-button {
         flex: 1;
         background: #333;
@@ -70,18 +118,24 @@ class AndroidRemoteCard extends HTMLElement {
         user-select: none;
         border: none;
         font-weight: bold;
+        transition: background 0.2s;
       }
-
+      
       .foldable-button:hover {
         background: #444;
       }
-
+      
+      .foldable-button.active {
+        background: #555;
+        color: #00eaff;
+      }
+      
       .panel {
         display: none;
         width: 100%;
         background: #2b2b2b;
       }
-
+      
       .panel.active {
         display: block;
       }
@@ -104,9 +158,17 @@ class AndroidRemoteCard extends HTMLElement {
       "", "↓", ""
     ];
 
-    directions.forEach(dir => {
+    const positionClasses = [
+      "", "top", "",
+      "left", "center", "right",
+      "", "bottom", ""
+    ];
+    
+    directions.forEach((dir, idx) => {
       const btn = document.createElement("button");
       btn.textContent = dir;
+      btn.className = positionClasses[idx];
+    
       if (dir) {
         btn.addEventListener("click", () => {
           hass.callService("trackpad_mouse", "move", { direction: dir });
@@ -114,6 +176,7 @@ class AndroidRemoteCard extends HTMLElement {
       } else {
         btn.style.visibility = "hidden";
       }
+    
       dpad.appendChild(btn);
     });
 
@@ -145,10 +208,10 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Inject previously defined components
     const keyboardCard = document.createElement("android-keyboard-card");
-    keyboardCard.setConfig({
-      language: this.language || "FR",
-      layoutUrl: `/local/layouts/android/${this.language || "FR"}.json`
-    });
+    // keyboardCard.setConfig({
+    //   language: this.language || "FR",
+    //   layoutUrl: `/local/layouts/android/${this.language || "FR"}.json`
+    // });
     keyboardCard.hass = hass;
     keyboardPanel.appendChild(keyboardCard);
 
@@ -164,12 +227,18 @@ class AndroidRemoteCard extends HTMLElement {
       const isVisible = trackpadPanel.classList.contains("active");
       trackpadPanel.classList.toggle("active", !isVisible);
       keyboardPanel.classList.remove("active");
+    
+      leftButton.classList.toggle("active", !isVisible);
+      rightButton.classList.remove("active");
     });
-
+    
     rightButton.addEventListener("click", () => {
       const isVisible = keyboardPanel.classList.contains("active");
       keyboardPanel.classList.toggle("active", !isVisible);
       trackpadPanel.classList.remove("active");
+    
+      rightButton.classList.toggle("active", !isVisible);
+      leftButton.classList.remove("active");
     });
 
     card.appendChild(container);

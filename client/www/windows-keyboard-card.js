@@ -3,6 +3,7 @@ console.info("Loading Windows Keyboard Card");
 class WindowsKeyboardCard extends HTMLElement {
   constructor() {
     super();
+    this.attachShadow({ mode: "open" }); // Create shadow root
 
     this._hass = null;
     this._layoutReady = false;
@@ -80,7 +81,7 @@ class WindowsKeyboardCard extends HTMLElement {
     console.log("Windows Keyboard - buildKeyboard() ENTER");
 
     // Clear existing content (if any)
-    this.innerHTML = '';
+    this.shadowRoot.innerHTML = "";
 
     this._uiBuilt = true;
     // Re-add global handlers to ensure proper out-of-bound handling
@@ -188,7 +189,7 @@ class WindowsKeyboardCard extends HTMLElement {
         user-select: none;
       }
     `;
-    this.appendChild(style);
+    this.shadowRoot.appendChild(style);
 
     const container = document.createElement("div");
     container.className = "keyboard-container";
@@ -246,7 +247,7 @@ class WindowsKeyboardCard extends HTMLElement {
     });
 
     card.appendChild(container);
-    this.appendChild(card);
+    this.shadowRoot.appendChild(card);
 
     this.content = container;
     this.updateLabels();

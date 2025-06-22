@@ -3,6 +3,7 @@ console.info("Loading Android Keyboard Card");
 class AndroidKeyboardCard extends HTMLElement {
   constructor() {
     super();
+    this.attachShadow({ mode: "open" }); // Create shadow root
     
     this._hass = null;
     this._layoutReady = false;
@@ -114,7 +115,7 @@ class AndroidKeyboardCard extends HTMLElement {
     console.log("Android Keyboard - buildKeyboard() ENTER");
     
     // Clear existing content (if any)
-    this.innerHTML = '';
+    this.shadowRoot.innerHTML = '';
 
     this._uiBuilt = true;
     
@@ -301,7 +302,7 @@ class AndroidKeyboardCard extends HTMLElement {
         position: relative;
       }
     `;
-    this.appendChild(style);
+    this.shadowRoot.appendChild(style);
     
     const container = document.createElement("div");
     container.className = "keyboard-container";
@@ -389,7 +390,7 @@ class AndroidKeyboardCard extends HTMLElement {
     });
     
     card.appendChild(container);
-    this.appendChild(card);
+    this.shadowRoot.appendChild(card);
     
     this.card = card;
     this.content = container;

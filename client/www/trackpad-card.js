@@ -1,8 +1,15 @@
 console.info("Loading Trackpad Card");
 
 class TrackpadCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" }); // Create shadow root
+  }
+
   set hass(hass) {
     if (!this.content) {
+      this.shadowRoot.innerHTML = "";
+
       const card = document.createElement("ha-card");
       // card.header = "Mouse Trackpad";
 
@@ -65,7 +72,7 @@ class TrackpadCard extends HTMLElement {
           color: #44739e !important;
         }
       `;
-      this.appendChild(style);
+      this.shadowRoot.appendChild(style);
 
       const container = document.createElement("div");
       container.style.display = "flex";
@@ -269,7 +276,7 @@ class TrackpadCard extends HTMLElement {
       container.appendChild(this.content);
       container.appendChild(buttonRow);
       card.appendChild(container);
-      this.appendChild(card);
+      this.shadowRoot.appendChild(card);
     }
   }
 
