@@ -169,7 +169,7 @@ class AndroidKeyboardCard extends HTMLElement {
         cursor: default;
       }
       button.key.half {
-        flex-grow: 0.5;
+        flex-grow: 0.4;
       }
       button.key.wide {
         flex-grow: 2;
