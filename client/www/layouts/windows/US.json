@@ -61,7 +61,7 @@
       { "code": "KEY_K", "label": { "normal": "k", "shift": "K" } },
       { "code": "KEY_L", "label": { "normal": "l", "shift": "L" } },
       { "code": "KEY_SEMICOLON", "label": { "normal": ";", "shift": ":" } },
-      { "code": "KEY_APOSTROPHE", "label": { "normal": "'", "shift": """ } },
+      { "code": "KEY_APOSTROPHE", "label": { "normal": "'", "shift": "\"" } },
       { "code": "KEY_ENTER", "label": { "normal": "Return" }, "special": true, "width": "wider" },
 
       { "code": "MOD_LEFT_SHIFT", "label": { "normal": "\u21EA" }, "special": true, "width": "wider" },
