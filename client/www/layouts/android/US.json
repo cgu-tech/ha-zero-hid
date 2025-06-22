@@ -75,6 +75,7 @@
       { "code": "KEY_P", "label": { "normal": "p", "shift": "P", "alt1": "]" }  },
 
 
+      { "code": "SPACER_LEFT", "label": { "normal": "" }, "special": true, "width": "half" },
       { "code": "KEY_A",         "label": { "normal": "a", "shift": "A", "alt1": "!" }, 
         "popinKeys": [
           { "code": "KEY_A_GRAVE", "label": { "normal": "à", "shift": "À" } },
@@ -91,7 +92,7 @@
       { "code": "KEY_J",         "label": { "normal": "j", "shift": "J", "alt1": "&" } },
       { "code": "KEY_K",         "label": { "normal": "k", "shift": "K", "alt1": "*" } },
       { "code": "KEY_L",         "label": { "normal": "l", "shift": "L", "alt1": "(" } },
-
+      { "code": "SPACER_RIGHT", "label": { "normal": "" }, "special": true, "width": "half" }
 
 
       { "code": "MOD_LEFT_SHIFT", "label": { "normal": "\u21EA", "shift": "\u21EA", "alt1": "1/2", "alt2": "2/2" }, "special": true, "width": "altkey" },

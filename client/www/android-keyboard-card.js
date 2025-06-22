@@ -160,6 +160,9 @@ class AndroidKeyboardCard extends HTMLElement {
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
         outline: none; /* Prevent focus ring override */
       }
+      button.key.half {
+        flex-grow: 0.5;
+      }
       button.key.wide {
         flex-grow: 2;
       }
