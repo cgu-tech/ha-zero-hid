@@ -1,6 +1,20 @@
 #!/bin/bash
 # Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
 
+cleanup() {
+    # Cleanup existing client elements when needed
+    rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
+    
+    rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
+    rm /config/www/layouts/windows/US.json >/dev/null 2>&1 || true
+    
+    rm /config/www/android-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
+    rm /config/www/layouts/android/US.json >/dev/null 2>&1 || true
+    rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
+}
+
 install() {
     # Create HA client integration
     (rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true) && cp -R custom_components /config
@@ -21,30 +35,14 @@ install() {
         fi
     done
     
-    # Cleanup existing client elements when needed
-    rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
-    
-    rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
-    rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
-    
-    rm /config/www/android-keyboard-card.js >/dev/null 2>&1 || true
-    rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
-    rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
+    cleanup
     
     # Install all client elements
     cp -R www /config
 }
 
 uninstall () {
-    # Cleanup existing client elements when needed
-    rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
-    
-    rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
-    rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
-    
-    rm /config/www/android-keyboard-card.js >/dev/null 2>&1 || true
-    rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
-    rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
+    cleanup
     
     # Disable HA client integration
     sed -i '/^trackpad_mouse:$/d' /config/configuration.yaml
