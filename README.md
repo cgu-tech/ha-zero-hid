@@ -117,8 +117,12 @@ cd ~/ha-zero-hid/client/ && /bin/bash install.sh
 ### Add custom cards into HA ressources
 - Go to: `Settings` → `Dashboards` → (`⋮` on your dashboard) → `Resources`
 - Click `Add Resource`
-  - URL: `/local/trackpad-card.js`
-  - Type: `JavaScript Module`
+| URL                               | Resource type       |
+| --------------------------------- | ------------------- |
+| `/local/trackpad-card.js`         | `JavaScript Module` |
+| `/local/arrowpad-card.js`         | `JavaScript Module` |
+| `/local/windows-keyboard-card.js` | `JavaScript Module` |
+| `/local/android-keyboard-card.js` | `JavaScript Module` |
 
 Reboot Home Assistant **(not reload)**
 
@@ -131,6 +135,11 @@ Reboot Home Assistant **(not reload)**
 #### Trackpad card
 ```yaml
 type: custom:trackpad-card
+```
+
+#### Arrowpad card
+```yaml
+type: custom:arrowpad-card
 ```
 
 #### Windows keyboard card

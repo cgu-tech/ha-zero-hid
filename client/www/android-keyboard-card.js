@@ -7,7 +7,11 @@ class AndroidKeyboardCard extends HTMLElement {
     this._hass = null;
     this._layoutReady = false;
     this._uiBuilt = false;
-    this.layoutUrl = '/local/layouts/android/FR.json'; // Default keyboard layout when not user configured
+    
+    // when not user configured, fallback to default 
+    // international language and keyboard layout
+    this.language = "FR";
+    this.layoutUrl = '/local/layouts/android/${language}.json';
     
     // 0: normal/shift mode
     // 1: alternative mode
@@ -44,6 +48,11 @@ class AndroidKeyboardCard extends HTMLElement {
   setConfig(config) {
     this.config = config;
     
+    // Retrieve user configured language
+    if (config.language) {
+      this.language = config.language;
+    }
+    
     // Retrieve user configured layout
     if (config.layoutUrl) {
       this.layoutUrl = config.layoutUrl;
@@ -63,6 +72,15 @@ class AndroidKeyboardCard extends HTMLElement {
     // Only build UI if hass is already set
     if (this._hass) {
       this.buildKeyboard(this._hass);
+    }
+  }
+
+  async setLanguage(language) {
+    console.log("Android Keyboard - setting keyboard language:", language);
+    try {
+      
+    } catch (e) {
+      console.error("Android Keyboard - Failed to set keyboard language:", e);
     }
   }
 
@@ -866,6 +884,14 @@ class AndroidKeyboardCard extends HTMLElement {
       this.pressedConsumers.delete(code);
     }
     this.sendConsumerUpdate(hass);
+  }
+
+  // Set the layout used by keyboard server
+  // (different from this keyboard client displayed layout)
+  setKeyboardLayout(hass) {
+    hass.callService("trackpad_mouse", "setlayout", {
+      sendLayout: this.language,
+    });
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
