@@ -5,15 +5,15 @@
     "rowsConfig": [9, 10, 10, 10, 9, 5],
     "keys": [
 
-      { "code": "KEY_ESC",                 "label": { "normal": "Échap"        }, " special": true },
-      { "code": "CON_AC_BACK",             "label": { "normal": "\u2B8C"       }, " special": true, "width": "android" },
-      { "code": "CON_AC_HOME",             "label": { "normal": "\u2302"       }, " special": true, "width": "android" },
-      { "code": "KEY_ALT_TAB",             "label": { "normal": "🗗"           }, " special": true, "width": "android" },
-      { "code": "KEY_COMPOSE",             "label": { "normal": "\u2699"       }, " special": true },
-      { "code": "CON_SCAN_PREVIOUS_TRACK", "label": { "normal": "\u23EE"       }, " special": true },
-      { "code": "CON_PLAY_PAUSE",          "label": { "normal": "\u23EF"       }, " special": true },
-      { "code": "CON_SCAN_NEXT_TRACK",     "label": { "normal": "\u23ED"       }, " special": true },
-      { "code": "KEY_DELETE",              "label": { "normal": "Suppr"        }, " special": true },
+      { "code": "KEY_ESC",                 "label": { "normal": "Échap"        }, "special": true },
+      { "code": "CON_AC_BACK",             "label": { "normal": "\u2B8C"       }, "special": true, "width": "android" },
+      { "code": "CON_AC_HOME",             "label": { "normal": "\u2302"       }, "special": true, "width": "android" },
+      { "code": "KEY_ALT_TAB",             "label": { "normal": "🗗"           }, "special": true, "width": "android" },
+      { "code": "KEY_COMPOSE",             "label": { "normal": "\u2699"       }, "special": true },
+      { "code": "CON_SCAN_PREVIOUS_TRACK", "label": { "normal": "\u23EE"       }, "special": true },
+      { "code": "CON_PLAY_PAUSE",          "label": { "normal": "\u23EF"       }, "special": true },
+      { "code": "CON_SCAN_NEXT_TRACK",     "label": { "normal": "\u23ED"       }, "special": true },
+      { "code": "KEY_DELETE",              "label": { "normal": "Suppr"        }, "special": true },
 
 
       { "code": "KEY_1", "label": { "normal": "1" }, "fallback": "normal" },
@@ -95,7 +95,7 @@
 
 
 
-      { "code": "MOD_LEFT_SHIFT", "label": { "normal": "\u21EA", "shift": "\u21EA", "alt1": "1/2", "alt2": "2/2" }, " special": true, "width": "altkey" },
+      { "code": "MOD_LEFT_SHIFT", "label": { "normal": "\u21EA", "shift": "\u21EA", "alt1": "1/2", "alt2": "2/2" }, "special": true, "width": "altkey" },
       { "code": "KEY_Z",          "label": { "normal": "w",      "shift": "W",      "alt1": "-" } },
       { "code": "KEY_X",          "label": { "normal": "x",      "shift": "X",      "alt1": "'" } },
       { "code": "KEY_C",          "label": { "normal": "c",      "shift": "C",      "alt1": "\"" } },
@@ -107,14 +107,14 @@
         ]
       },
       { "code": "KEY_QUOTE",      "label": { "normal": "\u2018", "shift": "\u2019", "alt1": "?" } },
-      { "code": "KEY_BACKSPACE",  "label": { "normal": "\u232B" }, " special": true, "width": "altkey" },
+      { "code": "KEY_BACKSPACE",  "label": { "normal": "\u232B" }, "special": true, "width": "altkey" },
 
 
 
-      { "code": "KEY_MODE",       "label": { "normal": "!#1", "shift": "!#1", "alt1": "ABC", "alt2": "ABC" }, " special": true, "width": "altkey" },
+      { "code": "KEY_MODE",       "label": { "normal": "!#1", "shift": "!#1", "alt1": "ABC", "alt2": "ABC" }, "special": true, "width": "altkey" },
       { "code": "KEY_COMMA",      "label": { "normal": "," }, "fallback": "normal" },
       { "code": "KEY_SPACE",      "label": { "normal": " " }, "fallback": "normal", "width": "spacebar" },
       { "code": "KEY_DOT",        "label": { "normal": "." }, "fallback": "normal" },
-      { "code": "KEY_ENTER",      "label": { "normal": "Entrée" }, " special": true, "width": "altkey" }
+      { "code": "KEY_ENTER",      "label": { "normal": "Entrée" }, "special": true, "width": "altkey" }
     ]
 }
