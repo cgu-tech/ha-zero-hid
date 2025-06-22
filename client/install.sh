@@ -28,6 +28,7 @@ install() {
     rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
     
     rm /config/www/azerty-android-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
     rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
     
     # Install all client elements
@@ -42,6 +43,7 @@ uninstall () {
     rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
     
     rm /config/www/azerty-android-keyboard-card.js >/dev/null 2>&1 || true
+    rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
     rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
     
     # Disable HA client integration

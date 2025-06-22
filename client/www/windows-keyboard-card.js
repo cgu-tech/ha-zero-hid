@@ -7,7 +7,7 @@ class WindowsKeyboardCard extends HTMLElement {
     this._hass = null;
     this._layoutReady = false;
     this._uiBuilt = false;
-    this.layoutUrl = '/local/layouts/windows/FR.json'; // Default keyboard layout when not user configuration
+    this.layoutUrl = '/local/layouts/windows/FR.json'; // Default keyboard layout when not user configured
 
     this.capsLock = false;
     this.shift = false;
@@ -51,14 +51,14 @@ class WindowsKeyboardCard extends HTMLElement {
   }
 
   async loadLayout(layoutUrl) {
-    console.log("Loading keyboard layout:", layoutUrl);
+    console.log("Windows Keyboard - loading keyboard layout:", layoutUrl);
     try {
       const response = await fetch(layoutUrl);
       const layout = await response.json();
       this.keys = layout.keys;
       this.rowsConfig = layout.rowsConfig;
     } catch (e) {
-      console.error("Failed to load keyboard layout:", e);
+      console.error("Windows Keyboard - Failed to load keyboard layout:", e);
       this.keys = [];
       this.rowsConfig = [];
     }
