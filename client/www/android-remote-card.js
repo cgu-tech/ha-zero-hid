@@ -7,7 +7,16 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   set hass(hass) {
-    if (this.content) return;
+    this._hass = hass;
+
+    if (this.content) {
+      // update dynamic children with new hass
+      const foldable = this.shadowRoot.getElementById("foldable-container");
+      if (foldable && foldable.firstChild && foldable.firstChild.tagName) {
+        foldable.firstChild.hass = hass;
+      }
+      return;
+    }
 
     const card = document.createElement("ha-card");
     const style = document.createElement("style");
@@ -308,6 +317,7 @@ class AndroidRemoteCard extends HTMLElement {
         </div>
         <button class="circle-button right">☰</button>
       </div>
+      <div id="foldable-container" style="width: 100%; display: none; margin-top: 10px;"></div>
       <div class="circular-buttons">
         <button class="circle-button left"><div class="speaker">🔈</div><div class="volume-low">)</div></button>
         <button class="circle-button left"><div class="track-triangle">|◀◀</div></button>
@@ -437,14 +447,40 @@ class AndroidRemoteCard extends HTMLElement {
     const toggle = this.shadowRoot.getElementById("ts-toggle-threeStateToggle");
     const indicator = toggle.querySelector(".ts-toggle-indicator");
     const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
+    const foldable = this.shadowRoot.getElementById("foldable-container");
     let state = 1;
-
+  
+    const updateFoldable = () => {
+      foldable.innerHTML = "";
+      if (state === 1) {
+        foldable.style.display = "none";
+        return;
+      }
+  
+      foldable.style.display = "block";
+      let element;
+      if (state === 0) {
+        element = document.createElement("android-keyboard-card");
+      } else if (state === 2) {
+        element = document.createElement("trackpad-card");
+      }
+  
+      if (element) {
+        element.setAttribute("style", "width: 100%;");
+        if (this._hass) {
+          element.hass = this._hass;
+        }
+        foldable.appendChild(element);
+      }
+    };
+  
     const updateUI = () => {
       const btnWidth = 83;
       indicator.style.left = `${state * btnWidth + 3.5}px`;
       options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
+      updateFoldable();
     };
-
+  
     options.forEach((option, index) => {
       option.addEventListener("click", () => {
         if (state !== index) {
@@ -453,7 +489,7 @@ class AndroidRemoteCard extends HTMLElement {
         }
       });
     });
-
+  
     updateUI();
   }
 
