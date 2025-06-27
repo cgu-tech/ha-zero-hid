@@ -11,7 +11,9 @@ cleanup() {
     
     rm /config/www/android-keyboard-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
+    rm /config/www/layouts/android/FR-remote.json >/dev/null 2>&1 || true
     rm /config/www/layouts/android/US.json >/dev/null 2>&1 || true
+    rm /config/www/layouts/android/US-remote.json >/dev/null 2>&1 || true
     rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
     
     rm /config/www/arrowpad-card.js >/dev/null 2>&1 || true
