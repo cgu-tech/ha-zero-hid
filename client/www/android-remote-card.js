@@ -4,6 +4,29 @@ class AndroidRemoteCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    
+    // when not user configured, fallback to default 
+    // international language and keyboard layout
+    this.language = "FR";
+    this.layoutUrl = `/local/layouts/android/${this.language}-remote.json`;
+  }
+
+  setConfig(config) {
+    this.config = config;
+    
+    // Retrieve user configured language
+    if (config.language) {
+      this.language = config.language;
+    }
+    
+    // Retrieve user configured layout
+    if (config.layoutUrl) {
+      this.layoutUrl = config.layoutUrl;
+    }
+  }
+  
+  getCardSize() {
+    return 5;
   }
 
   set hass(hass) {
@@ -477,6 +500,7 @@ class AndroidRemoteCard extends HTMLElement {
         element.setAttribute("style", "width: 100%;");
         if (this._hass) {
           element.hass = this._hass;
+          element.setConfig(this.config);
         }
         foldable.appendChild(element);
       }
@@ -500,11 +524,7 @@ class AndroidRemoteCard extends HTMLElement {
   
     updateUI();
   }
-
-  setConfig(config) {}
-  getCardSize() {
-    return 5;
-  }
+  
 }
 
 customElements.define("android-remote-card", AndroidRemoteCard);
