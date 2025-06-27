@@ -39,7 +39,7 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        align-items: center;
+        align-items: stretch;
         gap: 20px;
       }
       
@@ -75,8 +75,8 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         justify-content: space-between;
         gap: 6px; /* padLineThick */
-        margin-top: 30px;
-        margin-bottom: 30px;
+        margin-top: 20px;
+        margin-bottom: 20px;
       }
       
       .side-button {
@@ -146,11 +146,14 @@ class AndroidRemoteCard extends HTMLElement {
       
       .circular-buttons {
         display: flex;
-        justify-content: flex-start;
+        align-items: center;
+        justify-content: space-between;
         gap: 20px;
         padding: 0;
-        margin-top: 20px;
-        margin-bottom: 20px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        margin-left: 30px;
+        margin-right: 30px;
       }
       
       .circular-buttons.no-margin-bottom {
@@ -276,6 +279,11 @@ class AndroidRemoteCard extends HTMLElement {
         display: inline-block;
         transform: translate(0px, calc(var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.0);
       }
+      
+      #foldable-container > * {
+        width: 100%;
+        box-sizing: border-box;
+      }
     `;
 //      .circular-buttons-wrapper {
 //        display: flex;
@@ -326,7 +334,7 @@ class AndroidRemoteCard extends HTMLElement {
         <button class="circle-button right"><div class="speaker">🔈</div><div class="volume-low">)</div><div class="volume-medium">)</div><div class="volume-high">)</div></button>
       </div>
     `;
-
+      // <div id="foldable-container" style="width: 100%; display: none; margin-top: 10px;"></div>
     container.appendChild(wrapper);
     card.appendChild(container);
     this.shadowRoot.appendChild(style);
