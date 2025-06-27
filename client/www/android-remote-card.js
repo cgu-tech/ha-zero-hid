@@ -12,218 +12,445 @@ class AndroidRemoteCard extends HTMLElement {
     const card = document.createElement("ha-card");
     const style = document.createElement("style");
     style.textContent = `
+      :host {
+        --background-color: #f0f0f0;
+        --pad-radius: 30;
+        --pad-line-thick: 5px;
+        --circle-button-height: 70px;
+        --circle-button-width: 70px;
+        --ts-button-height: 70px; /* full height of toggle button */
+        --ts-button-width: 83px; /* width per toggle state */
+        --side-button-height: 60px;
+        --side-button-width: 200px;
+        background: var(--background-color);
+        color: var(--background-color);
+      }
+      
       .container {
         display: flex;
         flex-direction: column;
+        justify-content: center;
         align-items: center;
-        width: 100%;
-        background: #1e1e1e;
-        color: #fff;
-        font-family: sans-serif;
+        gap: 20px;
       }
-
-      .dpad-container {
-        width: 100%;
-        max-width: 400px;
-        aspect-ratio: 1 / 1;
+      
+      svg {
+        display: block;
+      }
+      
+      .quarter {
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      
+      .quarter:hover {
+        opacity: 0.0
+      }
+      
+      .gap {
+        fill: currentColor;
+        pointer-events: none !important;
+      }
+      
+      text {
+        font-family: sans-serif;
+        font-size: 20px;
+        fill: #bfbfbf;
+        pointer-events: none;
+        user-select: none;
+      }
+      
+      /* Container for the two bottom buttons */
+      .bottom-buttons {
+        width: calc(2 * var(--pad-radius) + var(--pad-line-thick));
+        display: flex;
+        justify-content: space-between;
+        gap: 6px; /* padLineThick */
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .side-button {
+        width: var(--side-button-width);
+        height: var(--side-button-height);
+        background-color: #3a3a3a;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #bfbfbf;
+        font-family: sans-serif;
+        font-size: 24px;
+        border: none;
+        outline: none;
+        padding: 0 20px;
+        margin-top: 10px;
+        user-select: none;
+      }
+      
+      /* Left button: semi-circular convex on left side */
+      .side-button.left {
+        border-top-left-radius: calc(var(--side-button-height) / 2);
+        border-bottom-left-radius: calc(var(--side-button-height) / 2);
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      
+      /* Right button: semi-circular convex on right side */
+      .side-button.right {
+        border-top-right-radius: calc(var(--side-button-height) / 2);
+        border-bottom-right-radius: calc(var(--side-button-height) / 2);
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      
+      /* Hover and pressed effect similar to dpad */
+      .side-button:hover {
+        background-color: #4a4a4a;
+      }
+      
+      .side-button.pressed {
+        transform: scale(0.95);
+      }
+      
+      .side-button:active {
+        transform: scale(0.95);
+      }
+      
+      .return-button {
+        transform: scaleY(-1);
+      }
+      
+      .home-button {
+        transform: translate(0px, -5px) scale(2.25, 1.5); /* 1.0 is original size, 1.5 is 150% */
+        transition: transform 0.3s ease; /* optional: smooth scaling */
+      }
+      
+      .circular-buttons-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* horizontally center each child row */
+        justify-content: space-between;
+        padding: 0;
+      }
+      
+      .circular-buttons {
+        display: flex;
+        justify-content: flex-start;
+        gap: 20px;
+        padding: 0;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .circle-button {
+        width: var(--circle-button-width);
+        height: var(--circle-button-height);
+        border-radius: 50%;
+        background-color: #3a3a3a;
+        color: #bfbfbf;
+        font-size: 20px;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #0000;
-        border-bottom: 1px solid #111;
+        font-family: sans-serif;
       }
-
-      svg.dpad {
-        width: 85%;
-        height: auto;
+      
+      .circle-button:hover {
+        background-color: #4a4a4a;
       }
-
-      .dpad-button {
-        fill: #3a3a3a;
-        stroke: #2e2e2e;
-        cursor: pointer;
-        transition: fill 0.2s;
+      
+      .circle-button:active {
+        transform: scale(0.95);
       }
-
-      .dpad-button:hover {
-        fill: #4a4a4a;
+      
+      .kb {
+        transform: scale(1.3, 1.3);
       }
-
-      .center-button {
-        fill: #3a3a3a;
-        cursor: pointer;
-        transition: fill 0.2s;
+      
+      .speaker {
+        transform: scale(1.0, 1.3);
       }
-
-      .center-button:hover {
-        fill: #4a4a4a;
+      
+      .volume-low {
+        transform: scale(1.0, 0.4);
       }
-
-      .foldable-buttons {
+      
+      .volume-medium {
+        transform: scale(1.0, 0.7);
+      }
+      
+      .volume-high {
+        transform: scale(1.0, 1.0);
+      }
+      
+      .track-triangle {
+        transform: scale(1.0, 1.0);
+      }
+      
+      .mouse-triangle {
+        display: inline-block; /* keep it inline for better control */
+        transform: rotate(315deg) scale(1.0, 1.5) translate(4px, -5px);
+      }
+      
+      .mouse-power {
+        display: inline-block; /* keep it inline for better control */
+        transform: translate(-4px, 8px) rotate(315deg) scale(1.0, 1.0);
+      }
+      
+      .ts-toggle-container {
         display: flex;
-        width: 100%;
-        background: #1a1a1a;
-      }
-
-      .foldable-button {
-        flex: 1;
-        background: #333;
-        color: white;
-        padding: 10px;
-        cursor: pointer;
-        text-align: center;
+        align-items: center;
+        position: relative;
+        width: calc(var(--ts-button-width) * 3);
+        height: var(--ts-button-height);
+        background-color: #3a3a3a;
+        border-radius: 999px;
         user-select: none;
-        border: none;
+      }
+      
+      .ts-toggle-option {
+        flex: 0 0 var(--ts-button-width);
+        text-align: center;
+        line-height: var(--ts-button-height);
+        font-size: 16px;
+        z-index: 1;
+        color: #bfbfbf;
+        font-weight: normal;
+        cursor: pointer;
+        transition: color 0.2s ease, font-weight 0.2s ease, background-color 0.2s ease;
+        border-radius: 999px;
+        box-sizing: border-box;
+      }
+      
+      .ts-toggle-option:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      
+      .ts-toggle-option.active {
+        color: #bfbfbf;
         font-weight: bold;
-        transition: background 0.2s;
       }
-
-      .foldable-button:hover {
-        background: #444;
+      
+      .ts-toggle-indicator {
+        position: absolute;
+        top: calc(var(--ts-button-height) * 0.05);
+        bottom: calc(var(--ts-button-height) * 0.05);
+        width: calc(var(--ts-button-width) - calc(var(--ts-button-height) * 0.1));
+        background-color: #4a4a4a;
+        border-radius: 999px;
+        transition: left 0.25s ease;
+        z-index: 0;
+        box-sizing: border-box;
       }
-
-      .foldable-button.active {
-        background: #555;
-        color: #3399ff;
+      
+      .ts-toggle-kb {
+        transform: scale(1.3);
+        display: inline-block;
       }
-
-      .panel {
-        display: none;
-        width: 100%;
-        background: #2b2b2b;
+      
+      .ts-toggle-mouse-triangle {
+        display: inline-block;
+        transform: translate(2px, calc(-1 * var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.5);
       }
-
-      .panel.active {
-        display: block;
+      
+      .ts-toggle-mouse-power {
+        display: inline-block;
+        transform: translate(0px, calc(var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.0);
       }
     `;
+//      .circular-buttons-wrapper {
+//        display: flex;
+//        flex-direction: column;
+//        align-items: center; /* horizontally center each child row */
+//      }
+//    `;
     this.shadowRoot.appendChild(style);
 
     const container = document.createElement("div");
     container.className = "container";
 
-    const dpadContainer = document.createElement("div");
-    dpadContainer.className = "dpad-container";
+    // --- Move content from HTML into this container ---
+    const wrapper = document.createElement("div");
+    wrapper.className = "circular-buttons-wrapper";
+    wrapper.innerHTML = `
+      <div class="circular-buttons">
+        <button class="circle-button left">⏻</button>
+      </div>
+      <div class="circular-buttons-center">
+        <svg id="dpad"></svg>
+      </div>
+      <div class="circular-buttons-center">
+        <div class="bottom-buttons">
+          <button class="side-button left"><div class="return-button">↩</div></button>
+          <button class="side-button right"><div class="home-button">⌂</div></button>
+        </div>
+      </div>
+      <div class="circular-buttons">
+        <button class="circle-button left">⌫</button>
+        <div id="ts-toggle-threeStateToggle" class="ts-toggle-container center" data-state="1">
+          <div class="ts-toggle-indicator"></div>
+          <div class="ts-toggle-option"><div class="ts-toggle-kb">⌨︎</div></div>
+          <div class="ts-toggle-option">●</div>
+          <div class="ts-toggle-option">
+            <div class="ts-toggle-mouse-triangle">▲</div>
+            <div class="ts-toggle-mouse-power">⏻</div>
+          </div>
+        </div>
+        <button class="circle-button right">☰</button>
+      </div>
+      <div class="circular-buttons">
+        <button class="circle-button left"><div class="speaker">🔈</div><div class="volume-low">)</div></button>
+        <button class="circle-button left"><div class="track-triangle">|◀◀</div></button>
+        <button class="circle-button center"><div class="track-triangle">▶| |</div></button>
+        <button class="circle-button right"><div class="track-triangle">▶▶|</div></button>
+        <button class="circle-button right"><div class="speaker">🔈</div><div class="volume-low">)</div><div class="volume-medium">)</div><div class="volume-high">)</div></button>
+      </div>
+    `;
 
-    const svgNS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("viewBox", "0 0 200 200");
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    svg.setAttribute("class", "dpad");
+    container.appendChild(wrapper);
+    card.appendChild(container);
+    this.shadowRoot.appendChild(style);
+    this.shadowRoot.appendChild(card);
 
-    const directions = {
-      top: { label: "↑", angle: -90 },
-      right: { label: "→", angle: 0 },
-      bottom: { label: "↓", angle: 90 },
-      left: { label: "←", angle: 180 }
+    this.content = container;
+
+    this.renderSVG();
+    this.setupInteractions();
+  }
+
+  renderSVG() {
+    const svg = this.shadowRoot.getElementById("dpad");
+
+    const padRadius = 160;
+    const padPadding = 90;
+    const padLineThick = 8;
+    const center = padRadius;
+    const rOuter = padRadius;
+    const rInner = padRadius - padPadding;
+    const centerRadius = padRadius - padPadding - padLineThick;
+
+    const svgSize = padRadius * 2;
+    svg.setAttribute("width", svgSize);
+    svg.setAttribute("height", svgSize);
+    svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
+
+    const ns = "http://www.w3.org/2000/svg";
+    const defs = document.createElementNS(ns, "defs");
+    svg.appendChild(defs);
+
+    const degToRad = (deg) => (deg * Math.PI) / 180;
+    const pointOnCircle = (cx, cy, r, deg) => {
+      const rad = degToRad(deg);
+      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
     };
 
-    const rOuter = 95;   // Larger radius
-    const rInner = 41;   // Increased inner radius for bigger button size
-    const gap = 1;       // Small gap between buttons
+    const createQuarterPath = (angleStart) => {
+      const angleEnd = (angleStart + 90) % 360;
+      const p1 = pointOnCircle(center, center, rOuter, angleStart);
+      const p2 = pointOnCircle(center, center, rOuter, angleEnd);
+      const p3 = pointOnCircle(center, center, rInner, angleEnd);
+      const p4 = pointOnCircle(center, center, rInner, angleStart);
 
-    Object.entries(directions).forEach(([dir, { label, angle }]) => {
-      const path = document.createElementNS(svgNS, "path");
+      return `M ${p1.x} ${p1.y}
+              A ${rOuter} ${rOuter} 0 0 1 ${p2.x} ${p2.y}
+              L ${p3.x} ${p3.y}
+              A ${rInner} ${rInner} 0 0 0 ${p4.x} ${p4.y}
+              Z`;
+    };
 
-      const startAngle = angle - 45 + gap;
-      const endAngle = angle + 45 - gap;
+    const quarters = [
+      { id: 1, angleStart: 225, label: "▲" },
+      { id: 2, angleStart: 315, label: "▶" },
+      { id: 3, angleStart: 45, label: "▼" },
+      { id: 4, angleStart: 135, label: "◀" }
+    ];
 
-      const rad = a => (a * Math.PI) / 180;
-      const x1 = 100 + rInner * Math.cos(rad(startAngle));
-      const y1 = 100 + rInner * Math.sin(rad(startAngle));
-      const x2 = 100 + rOuter * Math.cos(rad(startAngle));
-      const y2 = 100 + rOuter * Math.sin(rad(startAngle));
-      const x3 = 100 + rOuter * Math.cos(rad(endAngle));
-      const y3 = 100 + rOuter * Math.sin(rad(endAngle));
-      const x4 = 100 + rInner * Math.cos(rad(endAngle));
-      const y4 = 100 + rInner * Math.sin(rad(endAngle));
+    quarters.forEach(({ id, angleStart, label }) => {
+      const quarterPath = createQuarterPath(angleStart);
+      const clipId = `clip-quarter-${id}`;
+      const clip = document.createElementNS(ns, "clipPath");
+      clip.setAttribute("id", clipId);
+      const clipShape = document.createElementNS(ns, "path");
+      clipShape.setAttribute("d", quarterPath);
+      clip.appendChild(clipShape);
+      defs.appendChild(clip);
 
-      const d = [
-        `M ${x1} ${y1}`,
-        `L ${x2} ${y2}`,
-        `A ${rOuter} ${rOuter} 0 0 1 ${x3} ${y3}`,
-        `L ${x4} ${y4}`,
-        `A ${rInner} ${rInner} 0 0 0 ${x1} ${y1}`,
-        "Z"
-      ].join(" ");
+      const bg = document.createElementNS(ns, "path");
+      bg.setAttribute("d", quarterPath);
+      bg.setAttribute("fill", "#4a4a4a");
+      bg.setAttribute("clip-path", `url(#${clipId})`);
+      svg.appendChild(bg);
 
-      path.setAttribute("d", d);
-      path.setAttribute("class", "dpad-button");
-      path.addEventListener("click", () => {
-        hass.callService("trackpad_mouse", "move", { direction: label });
+      const btn = document.createElementNS(ns, "path");
+      btn.setAttribute("d", quarterPath);
+      btn.setAttribute("fill", "#3a3a3a");
+      btn.setAttribute("clip-path", `url(#${clipId})`);
+      btn.setAttribute("class", "quarter");
+      svg.appendChild(btn);
+
+      const angle = (angleStart + 45) % 360;
+      const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
+      const text = document.createElementNS(ns, "text");
+      text.setAttribute("x", labelPos.x);
+      text.setAttribute("y", labelPos.y);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "middle");
+      text.textContent = label;
+      svg.appendChild(text);
+    });
+
+    const centerCircle = document.createElementNS(ns, "circle");
+    centerCircle.setAttribute("cx", center);
+    centerCircle.setAttribute("cy", center);
+    centerCircle.setAttribute("r", centerRadius);
+    centerCircle.setAttribute("fill", "#4a4a4a");
+    svg.appendChild(centerCircle);
+
+    const centerButton = document.createElementNS(ns, "circle");
+    centerButton.setAttribute("cx", center);
+    centerButton.setAttribute("cy", center);
+    centerButton.setAttribute("r", centerRadius);
+    centerButton.setAttribute("fill", "#3a3a3a");
+    centerButton.setAttribute("class", "quarter");
+    svg.appendChild(centerButton);
+
+    const centerLabel = document.createElementNS(ns, "text");
+    centerLabel.setAttribute("x", center);
+    centerLabel.setAttribute("y", center);
+    centerLabel.setAttribute("text-anchor", "middle");
+    centerLabel.setAttribute("dominant-baseline", "middle");
+    centerLabel.textContent = "OK";
+    svg.appendChild(centerLabel);
+  }
+
+  setupInteractions() {
+    const toggle = this.shadowRoot.getElementById("ts-toggle-threeStateToggle");
+    const indicator = toggle.querySelector(".ts-toggle-indicator");
+    const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
+    let state = 1;
+
+    const updateUI = () => {
+      const btnWidth = 83;
+      indicator.style.left = `${state * btnWidth + 3.5}px`;
+      options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
+    };
+
+    options.forEach((option, index) => {
+      option.addEventListener("click", () => {
+        if (state !== index) {
+          state = index;
+          updateUI();
+        }
       });
-
-      svg.appendChild(path);
     });
 
-    // Center button
-    const center = document.createElementNS(svgNS, "circle");
-    center.setAttribute("cx", "100");
-    center.setAttribute("cy", "100");
-    center.setAttribute("r", "38");
-    center.setAttribute("class", "center-button");
-    center.addEventListener("click", () => {
-      hass.callService("trackpad_mouse", "move", { direction: "⦿" });
-    });
-
-    svg.appendChild(center);
-    dpadContainer.appendChild(svg);
-    container.appendChild(dpadContainer);
-
-    // Foldable buttons
-    const foldableButtons = document.createElement("div");
-    foldableButtons.className = "foldable-buttons";
-
-    const leftButton = document.createElement("button");
-    leftButton.className = "foldable-button";
-    leftButton.textContent = "Trackpad";
-
-    const rightButton = document.createElement("button");
-    rightButton.className = "foldable-button";
-    rightButton.textContent = "Keyboard";
-
-    foldableButtons.appendChild(leftButton);
-    foldableButtons.appendChild(rightButton);
-    container.appendChild(foldableButtons);
-
-    // Panels
-    const trackpadPanel = document.createElement("div");
-    trackpadPanel.className = "panel";
-
-    const keyboardPanel = document.createElement("div");
-    keyboardPanel.className = "panel";
-
-    const keyboardCard = document.createElement("android-keyboard-card");
-    keyboardCard.hass = hass;
-    keyboardPanel.appendChild(keyboardCard);
-
-    const trackpadCard = document.createElement("trackpad-card");
-    trackpadCard.hass = hass;
-    trackpadPanel.appendChild(trackpadCard);
-
-    container.appendChild(trackpadPanel);
-    container.appendChild(keyboardPanel);
-
-    // Toggle panel logic
-    leftButton.addEventListener("click", () => {
-      const isVisible = trackpadPanel.classList.contains("active");
-      trackpadPanel.classList.toggle("active", !isVisible);
-      keyboardPanel.classList.remove("active");
-      leftButton.classList.toggle("active", !isVisible);
-      rightButton.classList.remove("active");
-    });
-
-    rightButton.addEventListener("click", () => {
-      const isVisible = keyboardPanel.classList.contains("active");
-      keyboardPanel.classList.toggle("active", !isVisible);
-      trackpadPanel.classList.remove("active");
-      rightButton.classList.toggle("active", !isVisible);
-      leftButton.classList.remove("active");
-    });
-
-    card.appendChild(container);
-    this.shadowRoot.appendChild(card);
-    this.content = container;
+    updateUI();
   }
 
   setConfig(config) {}
