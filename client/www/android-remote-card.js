@@ -66,8 +66,8 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         justify-content: space-between;
         gap: 6px; /* padLineThick */
-        margin-top: 20px;
-        margin-bottom: 20px;
+        margin-top: 30px;
+        margin-bottom: 30px;
       }
       
       .side-button {
@@ -142,6 +142,10 @@ class AndroidRemoteCard extends HTMLElement {
         padding: 0;
         margin-top: 20px;
         margin-bottom: 20px;
+      }
+      
+      .circular-buttons.no-margin-bottom {
+        margin-bottom: 0;
       }
       
       .circle-button {
@@ -279,7 +283,7 @@ class AndroidRemoteCard extends HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "circular-buttons-wrapper";
     wrapper.innerHTML = `
-      <div class="circular-buttons">
+      <div class="circular-buttons no-margin-bottom">
         <button class="circle-button left">⏻</button>
       </div>
       <div class="circular-buttons-center">
