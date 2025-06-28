@@ -184,6 +184,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     @callback
     async def handle_chartap(call: ServiceCall) -> None:
         chars = call.data.get("sendChars")
+        _LOGGER.exception(f"handle_chartap.call.data.sendChars: {chars}")
         _LOGGER.debug(f"handle_chartap.call.data.sendChars: {chars}")
 
         # Use shared client
