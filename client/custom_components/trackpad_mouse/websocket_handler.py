@@ -31,6 +31,9 @@ class WebSocketClient:
         await self.send("click:release")
 
     async def send_chartap(self, chars):
+        charsOnly = chars[:-1]
+        origin = chars[-1]
+        _LOGGER.warning(f"send_chartap:charsOnly:{charsOnly},origin=:{origin}")
         await self.send(f"chartap:{chars}")
 
     async def send_keypress(self, modifiers, keys):
