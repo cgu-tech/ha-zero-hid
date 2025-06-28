@@ -13,7 +13,6 @@ class AndroidRemoteCard extends HTMLElement {
     // international language and keyboard layout
     this.language = "FR";
     this.layoutUrl = `/local/layouts/android/${this.language}-remote.json`;
-    this._layoutLoaded = null;
   }
 
   setConfig(config) {
@@ -340,17 +339,11 @@ class AndroidRemoteCard extends HTMLElement {
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
 
-    this.card
+    this.card = card;
     this.content = container;
 
     this.renderSVG();
     this.setupInteractions();
-    
-    // update dynamic children with new hass
-    const foldable = this.shadowRoot.getElementById("foldable-container");
-    if (foldable && foldable.firstChild && foldable.firstChild.tagName) {
-      foldable.firstChild.hass = hass;
-    }
   }
 
   renderSVG() {
@@ -464,11 +457,7 @@ class AndroidRemoteCard extends HTMLElement {
     const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
     const foldable = this.shadowRoot.getElementById("foldable-container");
     const foldableKeyboard = document.createElement("android-keyboard-card");
-    //const foldableKeyboard.hass = this._hass;
-    //const foldableKeyboard.setConfig(this.config);
     const foldableMouse = document.createElement("trackpad-card");
-    //const foldableMouse.hass = this._hass;
-    //const foldableMouse.setConfig(this.config);
 
     let state = 1;
     
