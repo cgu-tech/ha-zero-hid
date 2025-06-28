@@ -45,7 +45,7 @@ create_cert() {
 EOF
     
     # === Generate private key ===
-    openssl genrsa -out "$KEY_FILE" 1024
+    openssl genrsa -out "$KEY_FILE" 2048
     
     # === Generate self-signed certificate that expires in 100 years ===
     openssl req -new -x509 -key "$KEY_FILE" -out "$CERT_FILE" -days 365000 -config "$CONFIG_FILE"
