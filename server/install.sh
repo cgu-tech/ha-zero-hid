@@ -5,7 +5,7 @@
 # -e (exit on error) Fail-fast on errors
 # -u (unset variable is an error) Avoid silent bugs from typos or partial failures
 # -o pipefail Safer and more predictable in production or automation
-set -euo pipefail
+#set -euo pipefail
 
 # === Configuration ===
 KEY_FILE="server.key"
