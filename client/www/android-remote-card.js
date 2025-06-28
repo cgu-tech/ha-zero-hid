@@ -406,7 +406,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setupDpad() {
-    const svg = this.content.getElementById("dpad");
+    const svg = this.content.querySelector("#dpad");
 
     const padRadius = 160;
     const padPadding = 90;
@@ -513,10 +513,10 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setupFoldables() {
-    const toggle = this.content.getElementById("ts-toggle-threeStateToggle");
+    const toggle = this.content.querySelector("#ts-toggle-threeStateToggle");
     const indicator = toggle.querySelector(".ts-toggle-indicator");
     const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
-    const foldable = this.content.getElementById("foldable-container");
+    const foldable = this.content.querySelector("#foldable-container");
     const foldableKeyboard = document.createElement("android-keyboard-card");
     const foldableMouse = document.createElement("trackpad-card");
 
