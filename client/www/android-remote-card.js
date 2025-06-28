@@ -402,7 +402,7 @@ class AndroidRemoteCard extends HTMLElement {
       btn.addEventListener("touchcancel", (e) => {
         this.handlePointerUp(e, hass, btn);
       });
-    }
+    });
 
   }
 
@@ -590,7 +590,7 @@ class AndroidRemoteCard extends HTMLElement {
         if (btn.classList.contains("active")) {
           this.handleKeyRelease(this._hass, btn);
         }
-      }
+      });
     }
   }
   
