@@ -4,6 +4,7 @@ import ast
 import json
 import logging
 import logging.config
+import ssl
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger(__name__)
 
@@ -11,6 +12,10 @@ from zero_hid import Device
 from zero_hid import Mouse
 from zero_hid import Keyboard, KeyCodes
 from zero_hid import Consumer, ConsumerCodes
+
+# SSL Context
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain(certfile="server.crt", keyfile="server.key")
 
 hid = Device()
 mouse = Mouse(hid)
@@ -160,8 +165,8 @@ async def handle_client(websocket):
 
 async def main():
     # Start websockets server infinite loop
-    async with websockets.serve(handle_client, "0.0.0.0", 8765):
-        logger.info("WebSocket server running at ws://0.0.0.0:8765")
+    async with websockets.serve(handle_client, "0.0.0.0", 8765, ssl=ssl_context):
+        logger.info("WebSocket server running at wss://0.0.0.0:8765")
         await asyncio.Future()  # Run forever
 
 asyncio.run(main())

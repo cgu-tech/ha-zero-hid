@@ -1,6 +1,17 @@
 #!/bin/bash
 # Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
 
+# Makes this script:
+# -e (exit on error) Fail-fast on errors
+# -u (unset variable is an error) Avoid silent bugs from typos or partial failures
+# -o pipefail Safer and more predictable in production or automation
+set -euo pipefail
+
+# === Configuration ===
+KEY_FILE="server.key"
+CERT_FILE="server.crt"
+PEM_FILE="server.pem"
+CONFIG_FILE="openssl.cnf"
 ZERO_HID_BRANCH="${1:-main}"
 SKIP_UPDATE="${2:-}"
 
@@ -10,6 +21,49 @@ check_root() {
         echo "This script must be executed with root privileges."
         exit 1
     fi
+}
+
+create_cert() {
+    # === Clean up previous files (optional) ===
+    rm -f "$KEY_FILE" "$CERT_FILE" "$PEM_FILE" "$CONFIG_FILE"
+    
+    # === Create a minimal OpenSSL config file ===
+    cat > "$CONFIG_FILE" <<EOF
+    [ req ]
+    default_bits       = 1024
+    prompt             = no
+    default_md         = sha256
+    distinguished_name = dn
+    
+    [ dn ]
+    C  = XX
+    ST = State
+    L  = City
+    O  = MyOrg
+    OU = MyUnit
+    CN = localhost
+EOF
+    
+    # === Generate private key ===
+    openssl genrsa -out "$KEY_FILE" 1024
+    
+    # === Generate self-signed certificate that expires in 100 years ===
+    openssl req -new -x509 -key "$KEY_FILE" -out "$CERT_FILE" -days 365000 -config "$CONFIG_FILE"
+    
+    # === Combine into PEM file ===
+    cat "$CERT_FILE" "$KEY_FILE" > "$PEM_FILE"
+    
+    # === Set file permissions ===
+    chmod 600 "$KEY_FILE"
+    chmod 644 "$CERT_FILE" "$PEM_FILE"
+    
+    # === Cleanup config file ===
+    rm -f "$CONFIG_FILE"
+    
+    echo "Self-signed certificate, key, and PEM generated:"
+    echo " - $KEY_FILE"
+    echo " - $CERT_FILE"
+    echo " - $PEM_FILE"
 }
 
 install() {
@@ -47,7 +101,15 @@ install() {
     useradd --system --no-create-home ha_zero_hid
     chown -R :ha_zero_hid /opt/ha_zero_hid
     chmod -R g+w /opt/ha_zero_hid
-    
+
+    # Security: create self-signed certificate
+    #   server.key – private key
+    #   server.crt – self-signed certificate
+    #   server.pem – combined certificate + key (sometimes used)
+    create_cert
+    cp "$CERT_FILE" /opt/ha_zero_hid/
+    cp "$KEY_FILE" /opt/ha_zero_hid/
+
     # Configure systemd unit
     cp websockets_server.service /etc/systemd/system/
     systemctl daemon-reload

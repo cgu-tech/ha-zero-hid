@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import ssl
 import websockets
 
 _LOGGER = logging.getLogger(__name__)
@@ -89,7 +90,11 @@ class WebSocketClient:
                 return
 
             try:
-                self.websocket = await websockets.connect(self.url)
+                ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE  # Accept self-signed certs (insecure but OK for testing)
+
+                self.websocket = await websockets.connect(self.url, ssl=ssl_context)
                 _LOGGER.info("WebSocket connection established.")
             except Exception as e:
                 _LOGGER.error(f"Failed to connect to WebSocket: {e}")
