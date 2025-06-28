@@ -10,6 +10,9 @@ class WebSocketClient:
     def __init__(self, url):
         self.url = url
         self.websocket = None
+        self.ssl = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        self.ssl.check_hostname = False
+        self.ssl.verify_mode = ssl.CERT_NONE  # Accept self-signed certs (insecure but OK for testing)
         self._lock = asyncio.Lock()  # Prevent race conditions
 
     async def send_scroll(self, x, y):
@@ -93,11 +96,7 @@ class WebSocketClient:
                 return
 
             try:
-                ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-                ssl_context.check_hostname = False
-                ssl_context.verify_mode = ssl.CERT_NONE  # Accept self-signed certs (insecure but OK for testing)
-
-                self.websocket = await websockets.connect(self.url, ssl=ssl_context)
+                self.websocket = await websockets.connect(self.url, ssl=self.ssl)
                 _LOGGER.info("WebSocket connection established.")
             except Exception as e:
                 _LOGGER.error(f"Failed to connect to WebSocket: {e}")
