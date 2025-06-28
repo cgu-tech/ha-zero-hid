@@ -98,7 +98,7 @@ install() {
     pip install websockets
     
     # Security: create user+group dedicated to service
-    useradd --system --no-create-home ha_zero_hid
+    (useradd --system --no-create-home ha_zero_hid >/dev/null 2>&1 || true)
     chown -R :ha_zero_hid /opt/ha_zero_hid
     chmod -R g+w /opt/ha_zero_hid
 
