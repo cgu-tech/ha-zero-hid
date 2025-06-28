@@ -378,7 +378,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Init all interractions
     this.remoteButtons.forEach((remoteButton) => {
-      const btn = this.content.getElementById(remoteButton.id);
+      const btn = this.content.querySelector(`#${remoteButton.id}`);
       btn._keyData = { code: remoteButton.code };
       
       // Add pointer Down events:
@@ -584,7 +584,7 @@ class AndroidRemoteCard extends HTMLElement {
     //console.log("handleGlobalPointerUp:", this.content, this._hass);
     if (this.content && this._hass) {
       this.remoteButtons.forEach((remoteButton) => {
-        const btn = this.content.getElementById(remoteButton.id);
+        const btn = this.content.querySelector(`#${remoteButton.id}`);
         if (btn.classList.contains("active")) {
           this.handleKeyRelease(this._hass, btn);
         }
