@@ -109,6 +109,8 @@ install() {
     create_cert
     cp "$CERT_FILE" /opt/ha_zero_hid/
     cp "$KEY_FILE" /opt/ha_zero_hid/
+    chown -R ha_zero_hid:ha_zero_hid /opt/ha_zero_hid/"$CERT_FILE" 
+    chown -R ha_zero_hid:ha_zero_hid /opt/ha_zero_hid/"$KEY_FILE"
 
     # Configure systemd unit
     cp websockets_server.service /etc/systemd/system/
