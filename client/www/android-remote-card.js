@@ -379,7 +379,6 @@ class AndroidRemoteCard extends HTMLElement {
     // Init all interractions
     this.remoteButtons.forEach((remoteButton) => {
       const btn = this.content.getElementById(remoteButton.id);
-      if (!btn) continue;
       btn._keyData = { code: remoteButton.code };
       
       // Add pointer Down events:
@@ -586,7 +585,6 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.content && this._hass) {
       this.remoteButtons.forEach((remoteButton) => {
         const btn = this.content.getElementById(remoteButton.id);
-        if (!btn) continue;
         if (btn.classList.contains("active")) {
           this.handleKeyRelease(this._hass, btn);
         }
