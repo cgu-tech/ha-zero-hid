@@ -3,7 +3,12 @@ console.info("Loading Android Remote Card");
 class AndroidRemoteCard extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
+    this.attachShadow({ mode: "open" }); // Create shadow root
+    
+    this._hass = null;
+    this._layoutReady = false;
+    this._uiBuilt = false;
+    this.card = null;
     
     // when not user configured, fallback to default 
     // international language and keyboard layout
@@ -29,18 +34,52 @@ class AndroidRemoteCard extends HTMLElement {
     return 5;
   }
 
-  set hass(hass) {
-    this._hass = hass;
+  async connectedCallback() {
+    console.log("Android Remote - connectedCallback");
+    // Load keyboard layout
+    await this.loadLayout(this.layoutUrl);
+    this._layoutReady = true;
 
-    if (this.content) {
-      // update dynamic children with new hass
-      const foldable = this.shadowRoot.getElementById("foldable-container");
-      if (foldable && foldable.firstChild && foldable.firstChild.tagName) {
-        foldable.firstChild.hass = hass;
-      }
+    // Only build UI if hass is already set
+    if (this._hass) {
+      this.buildUi(this._hass);
+    }
+  }
+
+  async loadLayout(layoutUrl) {
+    console.log("Android Remote - loading keyboard layout:", layoutUrl);
+    try {
+      const response = await fetch(layoutUrl);
+      const layout = await response.json();
+      this.keys = layout.keys;
+      this.rowsConfig = layout.rowsConfig;
+    } catch (e) {
+      console.error("Android Remote - Failed to load keyboard layout:", e);
+      this.keys = [];
+      this.rowsConfig = [];
+    }
+  }
+
+  set hass(hass) {
+    console.log("Android Remote - set hass():", hass);
+    this._hass = hass;
+    if (this._layoutReady && !this._uiBuilt) {
+      this.buildUi(this._hass);
+    }
+  }
+
+  buildUi(hass) {
+    if (this._uiBuilt) {
+      console.log("Android Remote - buildUi() SKIPPED");
       return;
     }
+    console.log("Android Remote - buildUi() ENTER");
+    
+    // Clear existing content (if any)
+    this.shadowRoot.innerHTML = '';
 
+    this._uiBuilt = true;
+    
     const card = document.createElement("ha-card");
     const style = document.createElement("style");
     style.textContent = `
@@ -57,33 +96,27 @@ class AndroidRemoteCard extends HTMLElement {
         background: var(--background-color);
         color: var(--background-color);
       }
-      
-      .container {
+      .remote-container {
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: stretch;
         gap: 20px;
       }
-      
       svg {
         display: block;
       }
-      
       .quarter {
         cursor: pointer;
         transition: opacity 0.2s;
       }
-      
       .quarter:hover {
         opacity: 0.0
       }
-      
       .gap {
         fill: currentColor;
         pointer-events: none !important;
       }
-      
       text {
         font-family: sans-serif;
         font-size: 20px;
@@ -91,7 +124,6 @@ class AndroidRemoteCard extends HTMLElement {
         pointer-events: none;
         user-select: none;
       }
-      
       /* Container for the two bottom buttons */
       .bottom-buttons {
         width: calc(2 * var(--pad-radius) + var(--pad-line-thick));
@@ -101,7 +133,6 @@ class AndroidRemoteCard extends HTMLElement {
         margin-top: 20px;
         margin-bottom: 20px;
       }
-      
       .side-button {
         width: var(--side-button-width);
         height: var(--side-button-height);
@@ -120,7 +151,6 @@ class AndroidRemoteCard extends HTMLElement {
         margin-top: 10px;
         user-select: none;
       }
-      
       /* Left button: semi-circular convex on left side */
       .side-button.left {
         border-top-left-radius: calc(var(--side-button-height) / 2);
@@ -128,7 +158,6 @@ class AndroidRemoteCard extends HTMLElement {
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
       }
-      
       /* Right button: semi-circular convex on right side */
       .side-button.right {
         border-top-right-radius: calc(var(--side-button-height) / 2);
@@ -136,29 +165,23 @@ class AndroidRemoteCard extends HTMLElement {
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
       }
-      
       /* Hover and pressed effect similar to dpad */
       .side-button:hover {
         background-color: #4a4a4a;
       }
-      
       .side-button.pressed {
         transform: scale(0.95);
       }
-      
       .side-button:active {
         transform: scale(0.95);
       }
-      
       .return-button {
         transform: scaleY(-1);
       }
-      
       .home-button {
         transform: translate(0px, -5px) scale(2.25, 1.5); /* 1.0 is original size, 1.5 is 150% */
         transition: transform 0.3s ease; /* optional: smooth scaling */
       }
-      
       .circular-buttons-center {
         display: flex;
         flex-direction: column;
@@ -166,7 +189,6 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: space-between;
         padding: 0;
       }
-      
       .circular-buttons {
         display: flex;
         align-items: center;
@@ -178,11 +200,9 @@ class AndroidRemoteCard extends HTMLElement {
         margin-left: 30px;
         margin-right: 30px;
       }
-      
       .circular-buttons.no-margin-bottom {
         margin-bottom: 0;
       }
-      
       .circle-button {
         width: var(--circle-button-width);
         height: var(--circle-button-height);
@@ -199,49 +219,38 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: center;
         font-family: sans-serif;
       }
-      
       .circle-button:hover {
         background-color: #4a4a4a;
       }
-      
       .circle-button:active {
         transform: scale(0.95);
       }
-      
       .kb {
         transform: scale(1.3, 1.3);
       }
-      
       .speaker {
         transform: scale(1.0, 1.3);
       }
-      
       .volume-low {
         transform: scale(1.0, 0.4);
       }
-      
       .volume-medium {
         transform: scale(1.0, 0.7);
       }
-      
       .volume-high {
         transform: scale(1.0, 1.0);
       }
-      
       .track-triangle {
         transform: scale(1.0, 1.0);
       }
-      
       .mouse-triangle {
         display: inline-block; /* keep it inline for better control */
         transform: rotate(315deg) scale(1.0, 1.5) translate(4px, -5px);
       }
-      
       .mouse-power {
         display: inline-block; /* keep it inline for better control */
         transform: translate(-4px, 8px) rotate(315deg) scale(1.0, 1.0);
       }
-      
       .ts-toggle-container {
         display: flex;
         align-items: center;
@@ -252,7 +261,6 @@ class AndroidRemoteCard extends HTMLElement {
         border-radius: 999px;
         user-select: none;
       }
-      
       .ts-toggle-option {
         flex: 0 0 var(--ts-button-width);
         text-align: center;
@@ -266,16 +274,13 @@ class AndroidRemoteCard extends HTMLElement {
         border-radius: 999px;
         box-sizing: border-box;
       }
-      
       .ts-toggle-option:hover {
         background-color: rgba(0, 0, 0, 0.05);
       }
-      
       .ts-toggle-option.active {
         color: #bfbfbf;
         font-weight: bold;
       }
-      
       .ts-toggle-indicator {
         position: absolute;
         top: calc(var(--ts-button-height) * 0.05);
@@ -287,37 +292,27 @@ class AndroidRemoteCard extends HTMLElement {
         z-index: 0;
         box-sizing: border-box;
       }
-      
       .ts-toggle-kb {
         transform: scale(1.3);
         display: inline-block;
       }
-      
       .ts-toggle-mouse-triangle {
         display: inline-block;
         transform: translate(2px, calc(-1 * var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.5);
       }
-      
       .ts-toggle-mouse-power {
         display: inline-block;
         transform: translate(0px, calc(var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.0);
       }
-      
       #foldable-container > * {
         width: 100%;
         box-sizing: border-box;
       }
     `;
-//      .circular-buttons-wrapper {
-//        display: flex;
-//        flex-direction: column;
-//        align-items: center; /* horizontally center each child row */
-//      }
-//    `;
     this.shadowRoot.appendChild(style);
 
     const container = document.createElement("div");
-    container.className = "container";
+    container.className = "remote-container";
 
     // --- Move content from HTML into this container ---
     const wrapper = document.createElement("div");
@@ -357,16 +352,22 @@ class AndroidRemoteCard extends HTMLElement {
         <button class="circle-button right"><div class="speaker">🔈</div><div class="volume-low">)</div><div class="volume-medium">)</div><div class="volume-high">)</div></button>
       </div>
     `;
-      // <div id="foldable-container" style="width: 100%; display: none; margin-top: 10px;"></div>
     container.appendChild(wrapper);
+    
     card.appendChild(container);
-    this.shadowRoot.appendChild(style);
     this.shadowRoot.appendChild(card);
 
+    this.card
     this.content = container;
 
     this.renderSVG();
     this.setupInteractions();
+    
+    // update dynamic children with new hass
+    const foldable = this.shadowRoot.getElementById("foldable-container");
+    if (foldable && foldable.firstChild && foldable.firstChild.tagName) {
+      foldable.firstChild.hass = hass;
+    }
   }
 
   renderSVG() {
@@ -498,10 +499,8 @@ class AndroidRemoteCard extends HTMLElement {
   
       if (element) {
         element.setAttribute("style", "width: 100%;");
-        if (this._hass) {
-          element.hass = this._hass;
-          element.setConfig(this.config);
-        }
+        element.hass = this._hass;
+        element.setConfig(this.config);
         foldable.appendChild(element);
       }
     };

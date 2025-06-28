@@ -8,6 +8,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this._hass = null;
     this._layoutReady = false;
     this._uiBuilt = false;
+    this.card = null;
     
     // when not user configured, fallback to default 
     // international language and keyboard layout
@@ -34,7 +35,6 @@ class AndroidKeyboardCard extends HTMLElement {
 
     this.popin = null;
     this.popinTimeout = null;
-    this.card = null;
 
     // To track pressed modifiers and keys
     this.pressedModifiers = new Set();
@@ -72,16 +72,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
-      this.buildKeyboard(this._hass);
-    }
-  }
-
-  async setLanguage(language) {
-    console.log("Android Keyboard - setting keyboard language:", language);
-    try {
-      
-    } catch (e) {
-      console.error("Android Keyboard - Failed to set keyboard language:", e);
+      this.buildUi(this._hass);
     }
   }
 
@@ -103,16 +94,16 @@ class AndroidKeyboardCard extends HTMLElement {
     console.log("Android Keyboard - set hass():", hass);
     this._hass = hass;
     if (this._layoutReady && !this._uiBuilt) {
-      this.buildKeyboard(this._hass);
+      this.buildUi(this._hass);
     }
   }
 
-  buildKeyboard(hass) {
+  buildUi(hass) {
     if (this._uiBuilt) {
-      console.log("Android Keyboard - buildKeyboard() SKIPPED");
+      console.log("Android Keyboard - buildUi() SKIPPED");
       return;
     }
-    console.log("Android Keyboard - buildKeyboard() ENTER");
+    console.log("Android Keyboard - buildUi() ENTER");
     
     // Clear existing content (if any)
     this.shadowRoot.innerHTML = '';
@@ -124,8 +115,6 @@ class AndroidKeyboardCard extends HTMLElement {
     this.addGlobalHandlers();
     
     const card = document.createElement("ha-card");
-    // card.header = "Android Keyboard";
-    
     const style = document.createElement("style");
     style.textContent = `
       :host {
@@ -242,9 +231,6 @@ class AndroidKeyboardCard extends HTMLElement {
         font-weight: 500;
         user-select: none;
       }
-    `;
-    
-    style.textContent += `
       .key-popin {
         position: fixed; /* Use fixed instead of absolute for document.body */
         background: var(--key-bg, #3b3a3a); /* Fallback if var is missing */
@@ -394,7 +380,17 @@ class AndroidKeyboardCard extends HTMLElement {
     
     this.card = card;
     this.content = container;
+
     this.updateLabels();
+  }
+
+  async setLanguage(language) {
+    console.log("Android Keyboard - setting keyboard language:", language);
+    try {
+      
+    } catch (e) {
+      console.error("Android Keyboard - Failed to set keyboard language:", e);
+    }
   }
 
   showPopin(evt, hass, card, btn) {
