@@ -14,6 +14,7 @@ class AndroidKeyboardCard extends HTMLElement {
     // international language and keyboard layout
     this.language = "FR";
     this.layoutUrl = `/local/layouts/android/${this.language}.json`;
+    this._layoutLoaded = null;
     
     // 0: normal/shift mode
     // 1: alternative mode
@@ -67,8 +68,12 @@ class AndroidKeyboardCard extends HTMLElement {
   async connectedCallback() {
     console.log("Android Keyboard - connectedCallback");
     // Load keyboard layout
-    await this.loadLayout(this.layoutUrl);
-    this._layoutReady = true;
+    if (!this._layoutLoaded || this._layoutLoaded !== this.layoutUrl) {
+      this._layoutReady = false;
+      await this.loadLayout(this.layoutUrl);
+      this._layoutLoaded = this.layoutUrl;
+      this._layoutReady = true;
+    }
 
     // Only build UI if hass is already set
     if (this._hass) {

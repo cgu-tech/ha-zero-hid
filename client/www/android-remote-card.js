@@ -6,7 +6,6 @@ class AndroidRemoteCard extends HTMLElement {
     this.attachShadow({ mode: "open" }); // Create shadow root
     
     this._hass = null;
-    this._layoutReady = false;
     this._uiBuilt = false;
     this.card = null;
     
@@ -14,6 +13,7 @@ class AndroidRemoteCard extends HTMLElement {
     // international language and keyboard layout
     this.language = "FR";
     this.layoutUrl = `/local/layouts/android/${this.language}-remote.json`;
+    this._layoutLoaded = null;
   }
 
   setConfig(config) {
@@ -36,9 +36,6 @@ class AndroidRemoteCard extends HTMLElement {
 
   async connectedCallback() {
     console.log("Android Remote - connectedCallback");
-    // Load keyboard layout
-    await this.loadLayout(this.layoutUrl);
-    this._layoutReady = true;
 
     // Only build UI if hass is already set
     if (this._hass) {
@@ -46,24 +43,10 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  async loadLayout(layoutUrl) {
-    console.log("Android Remote - loading keyboard layout:", layoutUrl);
-    try {
-      const response = await fetch(layoutUrl);
-      const layout = await response.json();
-      this.keys = layout.keys;
-      this.rowsConfig = layout.rowsConfig;
-    } catch (e) {
-      console.error("Android Remote - Failed to load keyboard layout:", e);
-      this.keys = [];
-      this.rowsConfig = [];
-    }
-  }
-
   set hass(hass) {
     console.log("Android Remote - set hass():", hass);
     this._hass = hass;
-    if (this._layoutReady && !this._uiBuilt) {
+    if (!this._uiBuilt) {
       this.buildUi(this._hass);
     }
   }
