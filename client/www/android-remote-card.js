@@ -480,8 +480,15 @@ class AndroidRemoteCard extends HTMLElement {
     const indicator = toggle.querySelector(".ts-toggle-indicator");
     const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
     const foldable = this.shadowRoot.getElementById("foldable-container");
+    const foldableKeyboard = document.createElement("android-keyboard-card");
+    //const foldableKeyboard.hass = this._hass;
+    //const foldableKeyboard.setConfig(this.config);
+    const foldableMouse = document.createElement("trackpad-card");
+    //const foldableMouse.hass = this._hass;
+    //const foldableMouse.setConfig(this.config);
+
     let state = 1;
-  
+    
     const updateFoldable = () => {
       foldable.innerHTML = "";
       if (state === 1) {
@@ -490,18 +497,18 @@ class AndroidRemoteCard extends HTMLElement {
       }
   
       foldable.style.display = "block";
-      let element;
+      let foldableContent;
       if (state === 0) {
-        element = document.createElement("android-keyboard-card");
+        foldableContent = foldableKeyboard;
       } else if (state === 2) {
-        element = document.createElement("trackpad-card");
+        foldableContent = foldableMouse;
       }
   
-      if (element) {
-        element.setAttribute("style", "width: 100%;");
-        element.hass = this._hass;
-        element.setConfig(this.config);
-        foldable.appendChild(element);
+      if (foldableContent) {
+        foldableContent.setAttribute("style", "width: 100%;");
+        foldableContent.hass = this._hass;
+        foldableContent.setConfig(this.config);
+        foldable.appendChild(foldableContent);
       }
     };
   
