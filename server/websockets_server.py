@@ -123,7 +123,10 @@ async def handle_client(websocket):
                             keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
 
             elif message.startswith("chartap:"):
-                chars = message.replace("chartap:", "")
+                charsAndOrigin = map(safe_eval, message.replace("chartap:", ""))
+                chars = charsAndOrigin[:-1]
+                origin = charsAndOrigin[-1]
+                logger.debug("chartap:origin='%s'", origin)
 
                 # Press the keyboard 0..N modifiers and/or 0..1 key (0 means no key)
                 keyboard.type(chars)

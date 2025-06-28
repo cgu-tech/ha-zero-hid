@@ -503,7 +503,7 @@ class AndroidKeyboardCard extends HTMLElement {
         popinBtn.addEventListener("pointerleave", () => popinBtn.classList.remove("active"));
         popinBtn.addEventListener("pointerup", (e) => {
           this.handleKeyPress(hass, popinBtn);
-          this.handleKeyRelease(hass, popinBtn);
+          this.handleKeyRelease(hass, popinBtn, "EVT_POPIN_BTN");
           this.closePopin();
         });
 
@@ -661,9 +661,9 @@ class AndroidKeyboardCard extends HTMLElement {
     //console.log("handleGlobalPointerUp:", this.content, this._hass);
     if (this.content && this._hass) {
       for (const btn of this.content.querySelectorAll("button.key.active")) {
-        this.handleKeyRelease(this._hass, btn);
+        this.handleKeyRelease(this._hass, btn, "EVT_GLOBAL_POINTER_UP");
       }
-      
+
       // close popin if it's open
       if (this.popinElement) {
         this.closePopin();
@@ -687,7 +687,7 @@ class AndroidKeyboardCard extends HTMLElement {
       btn._usedPopin = false;
       return; // Skip base key release
     }
-    this.handleKeyRelease(hass, btn);
+    this.handleKeyRelease(hass, btn, "EVT_POINTER_UP");
   }
 
   handleKeyPress(hass, btn) {
@@ -752,7 +752,7 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
 
-  handleKeyRelease(hass, btn) {
+  handleKeyRelease(hass, btn, evt) {
     const keyData = btn._keyData;
     if (!keyData) return;
 
@@ -790,7 +790,7 @@ class AndroidKeyboardCard extends HTMLElement {
       const charToSend = btn._lowerLabel.textContent || "";
       if (charToSend) {
         //console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
-        this.clickChar(hass, code, charToSend);
+        this.clickChar(hass, code, charToSend, evt);
       }
     }
 
@@ -801,9 +801,9 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
 
-  clickChar(hass, code, charToSend) {
+  clickChar(hass, code, charToSend, evt) {
     console.log("Key clicked:", code, "Char:", charToSend);
-    this.sendKeyboardClick(hass, charToSend);
+    this.sendKeyboardClick(hass, charToSend, evt);
   }
 
   appendCode(hass, code) {
@@ -916,9 +916,9 @@ class AndroidKeyboardCard extends HTMLElement {
 
   // Send clicked char symbols to HID keyboard 
   // and let it handle the right key-press combination using current kb layout
-  sendKeyboardClick(hass, charToSend) {
+  sendKeyboardClick(hass, charToSend, evt) {
     hass.callService("trackpad_mouse", "chartap", {
-      sendChars: charToSend,
+      sendChars: [charToSend, evt],
     });
   }
 
