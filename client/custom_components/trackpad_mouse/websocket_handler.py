@@ -10,9 +10,6 @@ class WebSocketClient:
     def __init__(self, url):
         self.url = url
         self.websocket = None
-        self.ssl = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-        self.ssl.check_hostname = False
-        self.ssl.verify_mode = ssl.CERT_NONE  # Accept self-signed certs (insecure but OK for testing)
         self._lock = asyncio.Lock()  # Prevent race conditions
 
     async def send_scroll(self, x, y):
@@ -34,9 +31,6 @@ class WebSocketClient:
         await self.send("click:release")
 
     async def send_chartap(self, chars):
-        charsOnly = chars[:-1]
-        origin = chars[-1]
-        _LOGGER.warning(f"send_chartap:charsOnly:{charsOnly},origin=:{origin}")
         await self.send(f"chartap:{chars}")
 
     async def send_keypress(self, modifiers, keys):
@@ -96,7 +90,11 @@ class WebSocketClient:
                 return
 
             try:
-                self.websocket = await websockets.connect(self.url, ssl=self.ssl)
+                ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE  # Accept self-signed certs (insecure but OK for testing)
+
+                self.websocket = await websockets.connect(self.url, ssl=ssl_context)
                 _LOGGER.info("WebSocket connection established.")
             except Exception as e:
                 _LOGGER.error(f"Failed to connect to WebSocket: {e}")
