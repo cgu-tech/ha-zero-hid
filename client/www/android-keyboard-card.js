@@ -357,7 +357,7 @@ class AndroidKeyboardCard extends HTMLElement {
         btn.addEventListener("pointercancel", (e) => {
           btn._pointerDown = false;
           clearTimeout(this.popinTimeout);
-          this.handlePointerCancel(e, hass, btn);
+          this.handlePointerUp(e, hass, btn);
           //console.log("pointercancel->clearTimeout");
         });
         // For older touch devices fallback
@@ -370,7 +370,7 @@ class AndroidKeyboardCard extends HTMLElement {
         btn.addEventListener("touchcancel", (e) => {
           btn._pointerDown = false;
           clearTimeout(this.popinTimeout);
-          this.handlePointerCancel(e, hass, btn);
+          this.handlePointerUp(e, hass, btn);
           //console.log("touchcancel->clearTimeout");
         });
 
@@ -690,15 +690,6 @@ class AndroidKeyboardCard extends HTMLElement {
     this.handleKeyRelease(hass, btn);
   }
 
-  handlePointerCancel(evt, hass, btn) {
-    evt.preventDefault();
-    if (btn._usedPopin) {
-      btn._usedPopin = false;
-      return; // Skip base key release
-    }
-    this.handleKeyRelease(hass, btn);
-  }
-
   handleKeyPress(hass, btn) {
     // Mark button active visually
     btn.classList.add("active");
@@ -756,7 +747,7 @@ class AndroidKeyboardCard extends HTMLElement {
     // Special key pressed
     if (btn._keyData.special) {
       //console.log("handleKeyPress->special-key-pressed:", code);
-      // Release special key press through websockets
+      // Press special key press through websockets
       this.appendCode(hass, code);
     }
   }
@@ -810,11 +801,6 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
 
-  // When key code is a virtual modifier key, returns true. Returns false otherwise.
-  isVirtualModifier(code) {
-    return code === "KEY_MODE" || code === "MOD_LEFT_SHIFT";
-  }
-
   clickChar(hass, code, charToSend) {
     console.log("Key clicked:", code, "Char:", charToSend);
     this.sendKeyboardClick(hass, charToSend);
@@ -822,9 +808,9 @@ class AndroidKeyboardCard extends HTMLElement {
 
   appendCode(hass, code) {
     if (code) {
-      if (code.startsWith("KEY_") || code.startsWith("MOD_")) {
+      if (this.isKey(code) || this.isModifier(code)) {
         this.appendKeyCode(hass, code);
-      } else if (code.startsWith("CON_")) {
+      } else if (this.isConsumer(code)) {
         this.appendConsumerCode(hass, code);
       } else {
         console.log("appendCode->Unknown code type:", code);
@@ -856,9 +842,9 @@ class AndroidKeyboardCard extends HTMLElement {
 
   removeCode(hass, code) {
     if (code) {
-      if (code.startsWith("KEY_") || code.startsWith("MOD_")) {
+      if (this.isKey(code) || this.isModifier(code)) {
         this.removeKeyCode(hass, code);
-      } else if (code.startsWith("CON_")) {
+      } else if (this.isConsumer(code)) {
         this.removeConsumerCode(hass, code);
       } else {
         console.log("removeCode->Unknown code type:", code);
@@ -886,6 +872,23 @@ class AndroidKeyboardCard extends HTMLElement {
       this.pressedConsumers.delete(code);
     }
     this.sendConsumerUpdate(hass);
+  }
+
+  // When key code is a virtual modifier key, returns true. Returns false otherwise.
+  isVirtualModifier(code) {
+    return code === "KEY_MODE" || code === "MOD_LEFT_SHIFT";
+  }
+
+  isKey(code) {
+    return code && code.startsWith("KEY_");
+  }
+
+  isModifier(code) {
+    return code && code.startsWith("MOD_");
+  }
+  
+  isConsumer(code) {
+    return code && code.startsWith("CON_");
   }
 
   // Set the layout used by keyboard server

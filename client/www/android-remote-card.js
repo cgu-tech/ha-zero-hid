@@ -13,6 +13,33 @@ class AndroidRemoteCard extends HTMLElement {
     // international language and keyboard layout
     this.language = "FR";
     this.layoutUrl = `/local/layouts/android/${this.language}-remote.json`;
+
+    this.remoteButtons = [
+      { id: "remote-power-button",          code: "CON_POWER"               },
+      { id: "remote-arrow-up-button",       code: "KEY_UP"                  },
+      { id: "remote-arrow-right-button",    code: "KEY_RIGHT"               },
+      { id: "remote-arrow-down-button",     code: "KEY_DOWN"                },
+      { id: "remote-arrow-left-button",     code: "KEY_LEFT"                },
+      { id: "remote-ok-button",             code: "KEY_ENTER"               },
+      { id: "remote-return-button",         code: "CON_AC_BACK"             },
+      { id: "remote-home-button",           code: "CON_AC_HOME"             },
+      { id: "remote-backspace-button",      code: "KEY_BACKSPACE"           },
+      { id: "remote-settings-button",       code: "KEY_COMPOSE"             },
+      { id: "remote-volume-down-button",    code: "CON_VOLUME_DECREMENT"    },
+      { id: "remote-previous-track-button", code: "CON_SCAN_PREVIOUS_TRACK" },
+      { id: "remote-play-pause-button",     code: "CON_PLAY_PAUSE"          },
+      { id: "remote-next-track-button",     code: "CON_SCAN_NEXT_TRACK"     },
+      { id: "remote-volume-up-button",      code: "CON_VOLUME_INCREMENT"    }
+    ]
+
+    // To track pressed modifiers and keys
+    this.pressedModifiers = new Set();
+    this.pressedKeys = new Set();
+    this.pressedConsumers = new Set();
+
+    // Handle out of bounds mouse releases
+    this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
+    this._handleGlobalTouchEnd = this.handleGlobalPointerUp.bind(this); // reuse same logic
   }
 
   setConfig(config) {
@@ -61,6 +88,10 @@ class AndroidRemoteCard extends HTMLElement {
     this.shadowRoot.innerHTML = '';
 
     this._uiBuilt = true;
+    
+    // Re-add global handlers to ensure proper out-of-bound handling
+    this.removeGlobalHandlers();
+    this.addGlobalHandlers();
     
     const card = document.createElement("ha-card");
     const style = document.createElement("style");
@@ -301,19 +332,19 @@ class AndroidRemoteCard extends HTMLElement {
     wrapper.className = "circular-buttons-wrapper";
     wrapper.innerHTML = `
       <div class="circular-buttons no-margin-bottom">
-        <button class="circle-button left">⏻</button>
+        <button class="circle-button left" id="remote-power-button">⏻</button>
       </div>
       <div class="circular-buttons-center">
         <svg id="dpad"></svg>
       </div>
       <div class="circular-buttons-center">
         <div class="bottom-buttons">
-          <button class="side-button left"><div class="return-button">↩</div></button>
-          <button class="side-button right"><div class="home-button">⌂</div></button>
+          <button class="side-button left" id="remote-return-button"><div class="return-button">↩</div></button>
+          <button class="side-button right" id="remote-home-button"><div class="home-button">⌂</div></button>
         </div>
       </div>
       <div class="circular-buttons">
-        <button class="circle-button left">⌫</button>
+        <button class="circle-button left" id="remote-backspace-button">⌫</button>
         <div id="ts-toggle-threeStateToggle" class="ts-toggle-container center" data-state="1">
           <div class="ts-toggle-indicator"></div>
           <div class="ts-toggle-option"><div class="ts-toggle-kb">⌨︎</div></div>
@@ -323,31 +354,60 @@ class AndroidRemoteCard extends HTMLElement {
             <div class="ts-toggle-mouse-power">⏻</div>
           </div>
         </div>
-        <button class="circle-button right">☰</button>
+        <button class="circle-button right" id="remote-settings-button">☰</button>
       </div>
       <div id="foldable-container" style="width: 100%; display: none; margin-top: 10px;"></div>
       <div class="circular-buttons">
-        <button class="circle-button left"><div class="speaker">🔈</div><div class="volume-low">)</div></button>
-        <button class="circle-button left"><div class="track-triangle">|◀◀</div></button>
-        <button class="circle-button center"><div class="track-triangle">▶| |</div></button>
-        <button class="circle-button right"><div class="track-triangle">▶▶|</div></button>
-        <button class="circle-button right"><div class="speaker">🔈</div><div class="volume-low">)</div><div class="volume-medium">)</div><div class="volume-high">)</div></button>
+        <button class="circle-button left"   id="remote-volume-down-button"><div class="speaker">🔈</div><div class="volume-low">)</div></button>
+        <button class="circle-button left"   id="remote-previous-track-button"><div class="track-triangle">|◀◀</div></button>
+        <button class="circle-button center" id="remote-play-pause-button"><div class="track-triangle">▶| |</div></button>
+        <button class="circle-button right"  id="remote-next-track-button"><div class="track-triangle">▶▶|</div></button>
+        <button class="circle-button right"  id="remote-volume-up-button"><div class="speaker">🔈</div><div class="volume-low">)</div><div class="volume-medium">)</div><div class="volume-high">)</div></button>
       </div>
     `;
     container.appendChild(wrapper);
-    
+
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
 
     this.card = card;
     this.content = container;
 
-    this.renderSVG();
-    this.setupInteractions();
+    this.setupDpad();
+    this.setupFoldables();
+
+    // Init all interractions
+    this.remoteButtons.forEach((remoteButton) => {
+      const btn = this.content.getElementById(remoteButton.id);
+      if (!btn) continue;
+      btn._keyData = { code: remoteButton.code };
+      
+      // Add pointer Down events:
+      btn.addEventListener("pointerdown", (e) => {
+        this.handlePointerDown(e, hass, btn);
+      });
+
+      // Add pointer Up events:
+      btn.addEventListener("pointerup", (e) => {
+        this.handlePointerUp(e, hass, btn);
+      });
+      btn.addEventListener("pointercancel", (e) => {
+        this.handlePointerUp(e, hass, btn);
+      });
+
+      // Add pointer Up events: for older touch devices fallback
+      btn.addEventListener("touchend", (e) => {
+        this.handlePointerUp(e, hass, btn);
+      });
+      btn.addEventListener("touchcancel", (e) => {
+        this.handlePointerUp(e, hass, btn);
+      });
+    }
+
   }
 
-  renderSVG() {
-    const svg = this.shadowRoot.getElementById("dpad");
+  setupDpad() {
+    const svg = this.content.getElementById("dpad");
 
     const padRadius = 160;
     const padPadding = 90;
@@ -387,13 +447,13 @@ class AndroidRemoteCard extends HTMLElement {
     };
 
     const quarters = [
-      { id: 1, angleStart: 225, label: "▲" },
-      { id: 2, angleStart: 315, label: "▶" },
-      { id: 3, angleStart: 45, label: "▼" },
-      { id: 4, angleStart: 135, label: "◀" }
+      { id: 1, angleStart: 225, keyId: "remote-arrow-up-button", label: "▲" },
+      { id: 2, angleStart: 315, keyId: "remote-arrow-right-button", label: "▶" },
+      { id: 3, angleStart: 45,  keyId: "remote-arrow-down-button", label: "▼" },
+      { id: 4, angleStart: 135, keyId: "remote-arrow-left-button", label: "◀" }
     ];
 
-    quarters.forEach(({ id, angleStart, label }) => {
+    quarters.forEach(({ id, keyId, angleStart, label }) => {
       const quarterPath = createQuarterPath(angleStart);
       const clipId = `clip-quarter-${id}`;
       const clip = document.createElementNS(ns, "clipPath");
@@ -414,6 +474,7 @@ class AndroidRemoteCard extends HTMLElement {
       btn.setAttribute("fill", "#3a3a3a");
       btn.setAttribute("clip-path", `url(#${clipId})`);
       btn.setAttribute("class", "quarter");
+      btn.setAttribute("id", keyId);
       svg.appendChild(btn);
 
       const angle = (angleStart + 45) % 360;
@@ -440,6 +501,7 @@ class AndroidRemoteCard extends HTMLElement {
     centerButton.setAttribute("r", centerRadius);
     centerButton.setAttribute("fill", "#3a3a3a");
     centerButton.setAttribute("class", "quarter");
+    centerButton.setAttribute("id", "remote-ok-button");
     svg.appendChild(centerButton);
 
     const centerLabel = document.createElementNS(ns, "text");
@@ -451,11 +513,11 @@ class AndroidRemoteCard extends HTMLElement {
     svg.appendChild(centerLabel);
   }
 
-  setupInteractions() {
-    const toggle = this.shadowRoot.getElementById("ts-toggle-threeStateToggle");
+  setupFoldables() {
+    const toggle = this.content.getElementById("ts-toggle-threeStateToggle");
     const indicator = toggle.querySelector(".ts-toggle-indicator");
     const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
-    const foldable = this.shadowRoot.getElementById("foldable-container");
+    const foldable = this.content.getElementById("foldable-container");
     const foldableKeyboard = document.createElement("android-keyboard-card");
     const foldableMouse = document.createElement("trackpad-card");
 
@@ -484,7 +546,7 @@ class AndroidRemoteCard extends HTMLElement {
       }
     };
   
-    const updateUI = () => {
+    const updateFoldableUI = () => {
       const btnWidth = 83;
       indicator.style.left = `${state * btnWidth + 3.5}px`;
       options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
@@ -495,12 +557,183 @@ class AndroidRemoteCard extends HTMLElement {
       option.addEventListener("click", () => {
         if (state !== index) {
           state = index;
-          updateUI();
+          updateFoldableUI();
         }
       });
     });
   
-    updateUI();
+    updateFoldableUI();
+  }
+  
+  addGlobalHandlers() {
+    window.addEventListener("pointerup", this._handleGlobalPointerUp);
+    window.addEventListener("touchend", this._handleGlobalTouchEnd);
+    window.addEventListener("mouseleave", this._handleGlobalPointerUp);
+    window.addEventListener("touchcancel", this._handleGlobalPointerUp);
+    //console.log("handleGlobalPointerUp added");
+  }
+
+  removeGlobalHandlers() {
+    window.removeEventListener("pointerup", this._handleGlobalPointerUp);
+    window.removeEventListener("touchend", this._handleGlobalTouchEnd);
+    window.removeEventListener("mouseleave", this._handleGlobalPointerUp);
+    window.removeEventListener("touchcancel", this._handleGlobalPointerUp);
+    //console.log("handleGlobalPointerUp removed");
+  }
+  
+  handleGlobalPointerUp(evt) {
+    //console.log("handleGlobalPointerUp:", this.content, this._hass);
+    if (this.content && this._hass) {
+      this.remoteButtons.forEach((remoteButton) => {
+        const btn = this.content.getElementById(remoteButton.id);
+        if (!btn) continue;
+        if (btn.classList.contains("active")) {
+          this.handleKeyRelease(this._hass, btn);
+        }
+      }
+    }
+  }
+  
+  handlePointerDown(evt, hass, btn) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this.handleKeyPress(hass, btn);
+  }
+
+  handlePointerUp(evt, hass, btn) {
+    evt.preventDefault();
+    this.handleKeyRelease(hass, btn);
+  }
+  
+  handleKeyPress(hass, btn) {
+    // Mark button active visually
+    btn.classList.add("active");
+
+    // Retrieve key data
+    const keyData = btn._keyData;
+    if (!keyData) return;
+
+    // track the key press to avoid unwanted other key release
+    this._currentBaseKey = btn;
+
+    // Pressed key code (keyboard layout independant, later send to remote keyboard)
+    const code = keyData.code;
+
+    // Press HID key
+    this.appendCode(hass, code);
+  }
+
+  handleKeyRelease(hass, btn) {
+    const keyData = btn._keyData;
+    if (!keyData) return;
+
+    const code = keyData.code;
+
+    // Remove active visual for all other keys / states
+    btn.classList.remove("active");
+
+    // When the mouse is released over another key than the first pressed key
+    if (this._currentBaseKey && this._currentBaseKey._keyData.code !== keyData.code) {
+      //console.log("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code);
+      return; // suppress the unwanted other key release
+    }
+
+    // Release HID key
+    this.removeCode(hass, code);
+  }
+  
+  appendCode(hass, code) {
+    if (code) {
+      if (this.isKey(code) || this.isModifier(code)) {
+        this.appendKeyCode(hass, code);
+      } else if (this.isConsumer(code)) {
+        this.appendConsumerCode(hass, code);
+      } else {
+        console.log("appendCode->Unknown code type:", code);
+      }
+    }
+  }
+
+  appendKeyCode(hass, code) {
+    console.log("Key pressed:", code);
+    if (code) {
+      if (this.isModifier(code)) {
+        // Modifier key pressed
+        this.pressedModifiers.add(code);
+      } else {
+        // Standard key pressed
+        this.pressedKeys.add(code);
+      }
+    }
+    this.sendKeyboardUpdate(hass);
+  }
+
+  appendConsumerCode(hass, code) {
+    console.log("Consumer pressed:", code);
+    if (code) {
+      this.pressedConsumers.add(code);
+    }
+    this.sendConsumerUpdate(hass);
+  }
+
+  removeCode(hass, code) {
+    if (code) {
+      if (this.isKey(code) || this.isModifier(code)) {
+        this.removeKeyCode(hass, code);
+      } else if (this.isConsumer(code)) {
+        this.removeConsumerCode(hass, code);
+      } else {
+        console.log("removeCode->Unknown code type:", code);
+      }
+    }
+  }
+
+  removeKeyCode(hass, code) {
+    console.log("Key released:", code);
+    if (code) {
+      if (this.isModifier(code)) {
+        // Modifier key released
+        this.pressedModifiers.delete(code);
+      } else {
+        // Standard key released
+        this.pressedKeys.delete(code);
+      }
+    }
+    this.sendKeyboardUpdate(hass);
+  }
+
+  removeConsumerCode(hass, code) {
+    console.log("Consumer released:", code);
+    if (code) {
+      this.pressedConsumers.delete(code);
+    }
+    this.sendConsumerUpdate(hass);
+  }
+
+  isKey(code) {
+    return code && code.startsWith("KEY_");
+  }
+
+  isModifier(code) {
+    return code && code.startsWith("MOD_");
+  }
+  
+  isConsumer(code) {
+    return code && code.startsWith("CON_");
+  }
+
+  // Send all current pressed modifiers and keys to HID keyboard
+  sendKeyboardUpdate(hass) {
+    hass.callService("trackpad_mouse", "keypress", {
+      sendModifiers: Array.from(this.pressedModifiers),
+      sendKeys: Array.from(this.pressedKeys),
+    });
+  }
+  
+  // Send all current pressed modifiers and keys to HID keyboard
+  sendConsumerUpdate(hass) {
+    hass.callService("trackpad_mouse", "conpress", {
+      sendCons: Array.from(this.pressedConsumers),
+    });
   }
   
 }
