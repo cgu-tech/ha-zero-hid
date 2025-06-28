@@ -8,7 +8,10 @@ class WindowsKeyboardCard extends HTMLElement {
     this._hass = null;
     this._layoutReady = false;
     this._uiBuilt = false;
+    this.card = null;
+
     this.layoutUrl = '/local/layouts/windows/FR.json'; // Default keyboard layout when not user configured
+    this._layoutLoaded = null;
 
     this.capsLock = false;
     this.shift = false;
@@ -42,8 +45,12 @@ class WindowsKeyboardCard extends HTMLElement {
   async connectedCallback() {
     console.log("Windows Keyboard - connectedCallback");
     // Load keyboard layout
-    await this.loadLayout(this.layoutUrl);
-    this._layoutReady = true;
+    if (!this._layoutLoaded || this._layoutLoaded !== this.layoutUrl) {
+      this._layoutReady = false;
+      await this.loadLayout(this.layoutUrl);
+      this._layoutLoaded = this.layoutUrl;
+      this._layoutReady = true;
+    }
 
     // Only build UI if hass is already set
     if (this._hass) {
