@@ -4,6 +4,7 @@ class AndroidKeyboardCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" }); // Create shadow root
+    this.loadListenersMap();
     
     this._hass = null;
     this._layoutReady = false;
@@ -45,6 +46,20 @@ class AndroidKeyboardCard extends HTMLElement {
     // Handle out of bounds mouse releases
     this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
     this._handleGlobalTouchEnd = this.handleGlobalPointerUp.bind(this); // reuse same logic
+  }
+
+  loadListenersMap() {
+    this.EVTS_POINTER_DOWN     = ["pointerdown", "touchstart", "mousedown"];
+    this.EVTS_POINTER_ENTER    = ["pointerenter", "mouseenter"];
+    this.EVTS_POINTER_OVER     = ["pointerover", "mouseover"];
+    this.EVTS_POINTER_MOVE     = ["pointermove", "touchmove", "mousemove"];
+    this.EVTS_POINTER_LEAVE    = ["pointerleave", "mouseleave"];
+    this.EVTS_POINTER_UP       = ["pointerup", "touchend", "mouseup"];
+    this.EVTS_POINTER_CANCEL   = ["pointercancel", "touchcancel"];
+    this.EVTS_POINTER_OUT      = ["pointerout", "mouseout"];
+    this.EVTS_POINTER_CLICK    = ["click"];
+    this.EVTS_POINTER_DBLCLICK = ["dblclick"];
+    this.EVTS_POINTER_CTXMENU  = ["contextmenu"];
   }
 
   setConfig(config) {
@@ -331,7 +346,7 @@ class AndroidKeyboardCard extends HTMLElement {
         btn._usedPopin = false;
 
         // Add pointer and touch events:
-        btn.addEventListener("pointerdown", (e) => {
+        this.addPointerDownListener(btn, (e) => {
           this.handlePointerDown(e, hass, btn);
           btn._pointerDown = true;
         
@@ -348,30 +363,17 @@ class AndroidKeyboardCard extends HTMLElement {
           }
         });
 
-        btn.addEventListener("pointerup", (e) => {
+        this.addPointerUpListener(btn, (e) => {
           btn._pointerDown = false;
           clearTimeout(this.popinTimeout);
-          this.handlePointerUp(e, hass, btn);
+          this.handlePointerUp(e, hass, btn, "EVT_POINTER_UP");
           //console.log("pointerup->clearTimeout");
         });
-        btn.addEventListener("pointercancel", (e) => {
+        this.addPointerCancelListener(btn, (e) => {
           btn._pointerDown = false;
           clearTimeout(this.popinTimeout);
-          this.handlePointerUp(e, hass, btn);
+          this.handlePointerUp(e, hass, btn, "EVT_POINTER_CANCEL");
           //console.log("pointercancel->clearTimeout");
-        });
-        // For older touch devices fallback
-        btn.addEventListener("touchend", (e) => {
-          btn._pointerDown = false;
-          clearTimeout(this.popinTimeout);
-          this.handlePointerUp(e, hass, btn);
-          //console.log("touchend->clearTimeout");
-        });
-        btn.addEventListener("touchcancel", (e) => {
-          btn._pointerDown = false;
-          clearTimeout(this.popinTimeout);
-          this.handlePointerUp(e, hass, btn);
-          //console.log("touchcancel->clearTimeout");
         });
 
         row.appendChild(btn);
@@ -499,9 +501,9 @@ class AndroidKeyboardCard extends HTMLElement {
         popinBtn.style.width = `${baseBtnWidth}px`;
 
         // Handle events on button
-        popinBtn.addEventListener("pointerenter", () => popinBtn.classList.add("active"));
-        popinBtn.addEventListener("pointerleave", () => popinBtn.classList.remove("active"));
-        popinBtn.addEventListener("pointerup", (e) => {
+        this.addPointerEnterListener(popinBtn, () => popinBtn.classList.add("active"));
+        this.addPointerLeaveListener(popinBtn, () => popinBtn.classList.remove("active"));
+        this.addPointerUpListener(popinBtn, (e) => {
           this.handleKeyPress(hass, popinBtn);
           this.handleKeyRelease(hass, popinBtn, "EVT_POPIN_BTN");
           this.closePopin();
@@ -555,7 +557,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Close on pointerup anywhere
     const close = () => this.closePopin();
-    document.addEventListener("pointerup", close, { once: true });
+    this.addPointerUpListener(document, close, { once: true });
   }
 
   closePopin() {
@@ -642,18 +644,16 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   addGlobalHandlers() {
-    window.addEventListener("pointerup", this._handleGlobalPointerUp);
-    window.addEventListener("touchend", this._handleGlobalTouchEnd);
-    window.addEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.addEventListener("touchcancel", this._handleGlobalPointerUp);
+    this.addPointerUpListener(window, this._handleGlobalPointerUp);
+    this.addPointerLeaveListener(window, this._handleGlobalPointerUp);
+    this.addPointerCancelListener(window, this._handleGlobalPointerUp);
     //console.log("handleGlobalPointerUp added");
   }
 
   removeGlobalHandlers() {
-    window.removeEventListener("pointerup", this._handleGlobalPointerUp);
-    window.removeEventListener("touchend", this._handleGlobalTouchEnd);
-    window.removeEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.removeEventListener("touchcancel", this._handleGlobalPointerUp);
+    this.removePointerUpListener(window, this._handleGlobalPointerUp);
+    this.removePointerLeaveListener(window, this._handleGlobalPointerUp);
+    this.removePointerCancelListener(window, this._handleGlobalPointerUp);
     //console.log("handleGlobalPointerUp removed");
   }
 
@@ -681,13 +681,13 @@ class AndroidKeyboardCard extends HTMLElement {
     this.handleKeyPress(hass, btn);
   }
 
-  handlePointerUp(evt, hass, btn) {
+  handlePointerUp(evt, hass, btn, orig) {
     evt.preventDefault();
     if (btn._usedPopin) {
       btn._usedPopin = false;
       return; // Skip base key release
     }
-    this.handleKeyRelease(hass, btn, "EVT_POINTER_UP");
+    this.handleKeyRelease(hass, btn, orig);
   }
 
   handleKeyPress(hass, btn) {
@@ -920,6 +920,146 @@ class AndroidKeyboardCard extends HTMLElement {
     hass.callService("trackpad_mouse", "chartap", {
       sendChars: "" + charToSend + "" + evt,
     });
+  }
+
+  addPointerDownListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_DOWN );
+  }
+  addPointerEnterListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_ENTER );
+  }
+  addPointerOverListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_OVER );
+  }
+  addPointerMoveListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_MOVE );
+  }
+  addPointerLeaveListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_LEAVE );
+  }
+  addPointerUpListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_UP );
+  }
+  addPointerCancelListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_CANCEL );
+  }
+  addPointerOutListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_OUT );
+  }
+  addPointerClickListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_CLICK );
+  }
+  addPointerDblClickListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_DBLCLICK );
+  }
+  addPointerContextmenuListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_CTXMENU );
+  }
+
+  // Add the available event listener using 
+  // - supported event first (when available) 
+  // - then falling back to legacy event (when available)
+  addAvailableEventListener(target, callback, options, events) {
+    const eventName = this.getSupportedEventListener(events);
+    if (eventName) {
+      this.addGivenEventListener(target, callback, options, eventName);
+    }
+    return eventName;
+  }
+
+  // Add the specified event listener
+  addGivenEventListener(target, callback, options, eventName) {
+    if (this.isTargetListenable(target)) {
+      console.log(`Adding event listener ${eventName} on ${target}`);
+      if (options) {
+        target.addEventListener(eventName, callback, options);
+      } else {
+        target.addEventListener(eventName, callback);
+      }
+    }
+  }
+
+  removePointerDownListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_DOWN );
+  }
+  removePointerEnterListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_ENTER );
+  }
+  removePointerOverListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_OVER );
+  }
+  removePointerMoveListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_MOVE );
+  }
+  removePointerLeaveListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_LEAVE );
+  }
+  removePointerUpListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_UP );
+  }
+  removePointerCancelListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_CANCEL );
+  }
+  removePointerOutListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_OUT );
+  }
+  removePointerClickListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_CLICK );
+  }
+  removePointerDblClickListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_DBLCLICK );
+  }
+  removePointerContextmenuListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_CTXMENU );
+  }
+
+  // Remove the available event listener using 
+  // - supported event first (when available) 
+  // - then falling back to legacy event (when available)
+  removeAvailableEventListener(target, callback, events) {
+    const eventName = this.getSupportedEventListener(events);
+    if (eventName) {
+      this.removeGivenEventListener(target, callback, options, eventName);
+    }
+    return eventName;
+  }
+
+  // Remove the specified event listener
+  removeGivenEventListener(target, callback, eventName) {
+    if (this.isTargetListenable(target)) {
+      console.log(`Removing event listener ${eventName} on ${target}`);
+      target.removeEventListener(eventName, callback);
+    }
+  }
+
+  // Checks whether or not target is listenable
+  isTargetListenable(target) {
+    if (!target || typeof target.addEventListener !== 'function') {
+      console.warn(`Invalid target ${target} element provided to isTargetListenable`);
+      return false;
+    }
+    return true;
+  }
+
+  // Gets the available event listener using 
+  // - supported event first (when available) 
+  // - then falling back to legacy event (when available)
+  getSupportedEventListener(events) {
+    if (!events || !Array.isArray(events)) {
+      console.warn(`Invalid events ${events}: expected an array`);
+      return null;
+    }
+
+    for (const eventName of events) {
+      const isEventSupported = eventName in window;
+      if (isEventSupported) {
+        console.log(`Event ${eventName} supported by device`);
+        return eventName;
+      }
+    }
+
+    console.error(`No event supported device: ${events}`);
+    return null;    
   }
 
 }
