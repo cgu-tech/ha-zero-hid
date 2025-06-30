@@ -207,7 +207,7 @@ class AndroidRemoteCard extends HTMLElement {
         align-items: center;
         justify-content: center;
         border-radius: 999px;
-        padding: 0 10px;
+        padding: 0;
         user-select: none;
         position: relative; /* Needed for absolute children */
       }
@@ -216,11 +216,16 @@ class AndroidRemoteCard extends HTMLElement {
         flex: 1 1 0;
         aspect-ratio: 1 / 1;
         max-width: 100%;
+        position: relative;
         z-index: 1;
         font-size: 20px;
         color: #bfbfbf;
         border-radius: 999px;
         user-select: none;
+        
+        display: flex;
+        align-items: center;   /* vertical alignment */
+        justify-content: center; /* horizontal alignment */
       }
       
       .ts-toggle-indicator {
@@ -230,13 +235,18 @@ class AndroidRemoteCard extends HTMLElement {
         width: calc(100% / 3); /* Assuming 3 options */
         left: 0;
         z-index: 0;
-        background: #007bff;
+        background-color: #4a4a4a;
         border-radius: 999px;
         transition: left 0.3s ease;
       }
       
+      .ts-toggle-option:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      
       .ts-toggle-option.active {
-        color: white;
+        color: #bfbfbf;
+        font-weight: bold;
       }
       
       .ts-toggle-kb, .ts-toggle-mouse-triangle, .ts-toggle-mouse-power {
