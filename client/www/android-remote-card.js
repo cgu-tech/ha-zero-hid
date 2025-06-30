@@ -235,7 +235,6 @@ class AndroidRemoteCard extends HTMLElement {
         border: none;
         font-family: sans-serif;
         color: #bfbfbf;
-        font-size: 1rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -315,8 +314,22 @@ class AndroidRemoteCard extends HTMLElement {
         color: #bfbfbf;
         font-weight: bold;
       }
+            
+      .ts-toggle-kb {
+        transform: scale(1.3);
+        display: inline-block;
+        pointer-events: none; /* so clicks bubble up */
+      }
       
-      .ts-toggle-kb, .ts-toggle-mouse-triangle, .ts-toggle-mouse-power {
+      .ts-toggle-mouse-triangle {
+        display: inline-block;
+        transform: translate(2px, calc(-1 * var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.5);
+        pointer-events: none; /* so clicks bubble up */
+      }
+      
+      .ts-toggle-mouse-power {
+        display: inline-block;
+        transform: translate(0px, calc(var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.0);
         pointer-events: none; /* so clicks bubble up */
       }
 
@@ -335,7 +348,6 @@ class AndroidRemoteCard extends HTMLElement {
       }
       text {
         font-family: sans-serif;
-        font-size: 1rem;
         fill: #bfbfbf;
         pointer-events: none;
         user-select: none;
