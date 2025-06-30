@@ -348,6 +348,13 @@ class AndroidRemoteCard extends HTMLElement {
         display: block; /* removes any inline space */
         transform: scale(0.4, 0.4) rotate(315deg);
       }
+      
+      #remote-home-button svg {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.7, 0.7);
+      }
 
       /* SVG styling */
       svg {
@@ -406,8 +413,20 @@ class AndroidRemoteCard extends HTMLElement {
       <div class="circular-buttons-center">
         <div class="remote-dpad-filler"></div>
         <div class="bottom-buttons">
-          <button class="side-button left" id="remote-return-button"><div class="return-button">↩</div></button>
-          <button class="side-button right" id="remote-home-button"><div class="home-button">⌂</div></button>
+          <button class="side-button left" id="remote-return-button">
+          RET
+          </button>
+          <button class="side-button right" id="remote-home-button">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+              <!-- Roof (triangle) -->
+              <path d="M 12 32 L 32 12 L 52 32" />
+              
+              <!-- House base without top line -->
+              <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
+              <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
+              <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
+            </svg>
+          </button>
         </div>
         <div class="remote-dpad-filler"></div>
       </div>
@@ -418,7 +437,7 @@ class AndroidRemoteCard extends HTMLElement {
           <div class="ts-toggle-option active"><div class="ts-toggle-kb">⌨︎</div></div>
           <div class="ts-toggle-option">●</div>
           <div class="ts-toggle-option" id="ts-toggle-mouse">
-            <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
               <!-- Mouse body with rounded top and slightly rounded bottom corners -->
               <path d="
                 M 20 30 
