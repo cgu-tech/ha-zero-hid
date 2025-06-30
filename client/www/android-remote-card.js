@@ -113,7 +113,7 @@ class AndroidRemoteCard extends HTMLElement {
       /* Flex containers */
       .circular-buttons, .circular-buttons-center, .bottom-buttons {
         display: flex;
-        align-items: center;
+        align-items: stretch;    /* stretch children vertically */
         justify-content: center;
         gap: 0.5rem;
         width: 100%;
@@ -158,12 +158,6 @@ class AndroidRemoteCard extends HTMLElement {
         /* optionally background-color: transparent; */
       }
       
-      #ts-toggle-threeStateToggle {
-        flex: 3.4;          /* 3/5 of space */
-        min-width: 0;
-        text-align: center;
-      }
-
       /* Side buttons scale with flex-ratio ~200 width vs 70px baseline */
       .side-button {
         flex: 20 1 0;
@@ -192,48 +186,61 @@ class AndroidRemoteCard extends HTMLElement {
       .side-button:active,
       .side-button.pressed { transform: scale(0.95); }
 
+      #ts-toggle-threeStateToggle {
+        flex: 3.4;          /* 3/5 of space */
+        min-width: 0;
+        text-align: center;
+        height: 100%;          /* Fill parent's height */
+        display: flex;         /* If you want inner content to align well */
+        align-items: center;
+      }
+
       .ts-toggle-container {
-        display: flex;
-        flex-grow: 1;        /* grow to fill vertical space */
-        flex-shrink: 1;
-        flex-basis: 0;
-        align-items: center;   /* vertical center content */
-        justify-content: center; /* horizontal center */
-        gap: 0.5rem;
-        position: relative;
+        flex: 1 1 0;
+        aspect-ratio: 3 / 1;
         background-color: #3a3a3a;
+        outline: none;
+        cursor: pointer;
+        font-family: sans-serif;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 0 10px;
+        user-select: none;
+        position: relative; /* Needed for absolute children */
+      }
+            
+      .ts-toggle-option {
+        flex: 1 1 0;
+        aspect-ratio: 1 / 1;
+        max-width: 100%;
+        z-index: 1;
+        font-size: 20px;
+        color: #bfbfbf;
         border-radius: 999px;
         user-select: none;
-        overflow: hidden; /* Make sure child fits inside */
-        height: 100%;          /* fill parent's height */
-        min-height: 3rem;      /* optional minimum height */
       }
       
-      .ts-toggle-option {
-        flex-grow: 1;
-        flex-shrink: 1;
-        flex-basis: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        font-size: 16px;
-        z-index: 1;
-        color: #bfbfbf;
-        cursor: pointer;
-        transition: color 0.2s ease;
-      }
-      .ts-toggle-option.active { font-weight: bold; }
-      .ts-toggle-option:hover { background-color: rgba(0,0,0,0.05); }
       .ts-toggle-indicator {
         position: absolute;
-        top: 5%;
-        height: 90%; /* fit inside the toggle height */
-        width: calc(var(--ts-button-width) - 10px); /* padding for visual spacing */
-        background-color: #4a4a4a;
-        border-radius: 999px;
-        transition: left 0.25s ease;
+        top: 0;
+        bottom: 0;
+        width: calc(100% / 3); /* Assuming 3 options */
+        left: 0;
         z-index: 0;
+        background: #007bff;
+        border-radius: 999px;
+        transition: left 0.3s ease;
+      }
+      
+      .ts-toggle-option.active {
+        color: white;
+      }
+      
+      .ts-toggle-kb, .ts-toggle-mouse-triangle, .ts-toggle-mouse-power {
+        pointer-events: none; /* so clicks bubble up */
       }
 
       /* SVG styling */
@@ -287,7 +294,7 @@ class AndroidRemoteCard extends HTMLElement {
         <button class="circle-button left" id="remote-backspace-button">⌫</button>
         <div id="ts-toggle-threeStateToggle" class="ts-toggle-container center" data-state="1">
           <div class="ts-toggle-indicator"></div>
-          <div class="ts-toggle-option"><div class="ts-toggle-kb">⌨︎</div></div>
+          <div class="ts-toggle-option active"><div class="ts-toggle-kb">⌨︎</div></div>
           <div class="ts-toggle-option">●</div>
           <div class="ts-toggle-option">
             <div class="ts-toggle-mouse-triangle">▲</div>
@@ -499,15 +506,13 @@ class AndroidRemoteCard extends HTMLElement {
     };
 
     const updateFoldableUI = () => {
-      const toggleStyles = getComputedStyle(toggle);
-      const btnWidthStr = toggleStyles.getPropertyValue('--ts-button-width');
-      const btnWidth = parseFloat(btnWidthStr) || 83; // fallback to default
-      
-      indicator.style.left = `${state * btnWidth}px`;
+      const leftPercentages = ["0%", "33.33%", "66.66%"];
+      indicator.style.left = leftPercentages[state];
     
       options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
       updateFoldable();
     };
+
 
     options.forEach((option, index) => {
       option.addEventListener("click", () => {
