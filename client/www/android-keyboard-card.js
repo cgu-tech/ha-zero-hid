@@ -960,7 +960,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
   addAvailableEventListener(target, callback, options, events) {
-    const eventName = this.getSupportedEventListener(events);
+    const eventName = this.getSupportedEventListener(target, events);
     if (eventName) {
       this.addGivenEventListener(target, callback, options, eventName);
     }
@@ -1017,7 +1017,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
   removeAvailableEventListener(target, callback, events) {
-    const eventName = this.getSupportedEventListener(events);
+    const eventName = this.getSupportedEventListener(target, events);
     if (eventName) {
       this.removeGivenEventListener(target, callback, options, eventName);
     }
@@ -1044,15 +1044,14 @@ class AndroidKeyboardCard extends HTMLElement {
   // Gets the available event listener using 
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
-  getSupportedEventListener(events) {
+  getSupportedEventListener(target, events) {
     if (!events || !Array.isArray(events)) {
       console.warn(`Invalid events ${events}: expected an array`);
       return null;
     }
 
     for (const eventName of events) {
-      const isEventSupported = eventName in window;
-      if (isEventSupported) {
+      if (this.isEventSupported(target, eventName)) {
         console.log(`Event ${eventName} supported by device`);
         return eventName;
       }
@@ -1061,6 +1060,11 @@ class AndroidKeyboardCard extends HTMLElement {
     console.error(`No event supported device: ${events}`);
     return null;    
   }
+
+  isEventSupported(target, eventName) {
+    return (typeof target[`on${eventName}`] === "function" || `on${eventName}` in target);
+  }
+
 
 }
 
