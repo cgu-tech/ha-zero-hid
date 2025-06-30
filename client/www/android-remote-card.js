@@ -178,6 +178,13 @@ class AndroidRemoteCard extends HTMLElement {
         min-width: 0;
         text-align: center;
       }
+      
+      #remote-power-button svg {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.4, 0.4);
+      }
             
       #remote-power-filler {
         flex: 4;          /* 4/5 of space */
@@ -377,7 +384,18 @@ class AndroidRemoteCard extends HTMLElement {
     wrapper.className = "circular-buttons-wrapper";
     wrapper.innerHTML = `
       <div class="circular-buttons no-padding-top no-padding-bottom">
-        <button class="circle-button left" id="remote-power-button">⏻</button>
+        <button class="circle-button left" id="remote-power-button">
+          <svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Left arc -->
+            <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
+            <!-- Right arc -->
+            <path d="M 40 8 A 26 26 0 0 1 58 34" stroke-width="4" />
+            <!-- Bottom arc -->
+            <path d="M 58 34 A 26 26 0 0 1 6 34" stroke-width="4" />
+            <!-- Vertical bar -->
+            <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
+          </svg>
+        </button>
         <div id="remote-power-filler"></div>
       </div>
       <div class="circular-buttons no-padding-top">
