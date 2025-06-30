@@ -322,6 +322,8 @@ class AndroidRemoteCard extends HTMLElement {
       }
       
       .ts-toggle-mouse-triangle {
+        overflow: visible;
+        transform-origin: center;
         display: inline-block;
         transform: translate(2px, calc(-1 * var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.5);
         pointer-events: none; /* so clicks bubble up */
@@ -331,6 +333,13 @@ class AndroidRemoteCard extends HTMLElement {
         display: inline-block;
         transform: translate(0px, calc(var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.0);
         pointer-events: none; /* so clicks bubble up */
+      }
+
+      #ts-toggle-mouse svg {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.4, 0.4) rotate(315deg);
       }
 
       /* SVG styling */
@@ -390,9 +399,29 @@ class AndroidRemoteCard extends HTMLElement {
           <div class="ts-toggle-indicator"></div>
           <div class="ts-toggle-option active"><div class="ts-toggle-kb">⌨︎</div></div>
           <div class="ts-toggle-option">●</div>
-          <div class="ts-toggle-option">
-            <div class="ts-toggle-mouse-triangle">▲</div>
-            <div class="ts-toggle-mouse-power">⏻</div>
+          <div class="ts-toggle-option" id="ts-toggle-mouse">
+            <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Mouse body with rounded top and slightly rounded bottom corners -->
+              <path d="
+                M 20 30 
+                Q 20 10, 50 10 
+                Q 80 10, 80 30
+                L 80 115
+                Q 80 125, 70 125
+                L 30 125
+                Q 20 125, 20 115
+                Z
+              " />
+              
+              <!-- Vertical center line (split buttons) -->
+              <line x1="50" y1="10" x2="50" y2="70" />
+            
+              <!-- Larger scroll wheel, moved near the top -->
+              <line x1="50" y1="30" x2="50" y2="50" stroke-width="8" stroke-linecap="round" />
+            
+              <!-- Cable (wire) -->
+              <path d="M50 130 C 50 140, 60 145, 70 150" />
+            </svg>
           </div>
         </div>
         <button class="circle-button right" id="remote-settings-button">☰</button>
