@@ -115,9 +115,9 @@ class AndroidRemoteCard extends HTMLElement {
         flex: 1 1 0;            /* ensures children shrink to fit */
         min-width: 0;           /* allows children to shrink properly */
       }
-
+      
       /* Flex containers */
-      .circular-buttons, .circular-buttons-center, .bottom-buttons {
+      .circular-buttons, .circular-buttons-center {
         display: flex;
         align-items: stretch;    /* stretch children vertically */
         justify-content: center;
@@ -127,9 +127,23 @@ class AndroidRemoteCard extends HTMLElement {
         padding-bottom: 10px;
       }
       
-      .no-margin-bottom {
+      .bottom-buttons {
+        flex: 5;
+        display: flex;
+        align-items: stretch;    /* stretch children vertically */
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
         padding-top: 10px;
         padding-bottom: 10px;
+      }
+      
+      .no-padding-bottom {
+        padding-bottom: 0px;
+      }
+      
+      .no-padding-top {
+        padding-top: 0px;
       }
 
       /* D‑pad SVG scales as square */
@@ -331,6 +345,7 @@ class AndroidRemoteCard extends HTMLElement {
         width: 100%;
         display: none;
       }
+      
     `;
     this.shadowRoot.appendChild(style);
 
@@ -340,20 +355,22 @@ class AndroidRemoteCard extends HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "circular-buttons-wrapper";
     wrapper.innerHTML = `
-      <div class="circular-buttons no-margin-bottom">
+      <div class="circular-buttons no-padding-top no-padding-bottom">
         <button class="circle-button left" id="remote-power-button">⏻</button>
         <div id="remote-power-filler"></div>
       </div>
-      <div class="circular-buttons">
+      <div class="circular-buttons no-padding-top">
         <div class="remote-dpad-filler"></div>
         <svg id="dpad"></svg>
         <div class="remote-dpad-filler"></div>
       </div>
       <div class="circular-buttons-center">
+        <div class="remote-dpad-filler"></div>
         <div class="bottom-buttons">
           <button class="side-button left" id="remote-return-button"><div class="return-button">↩</div></button>
           <button class="side-button right" id="remote-home-button"><div class="home-button">⌂</div></button>
         </div>
+        <div class="remote-dpad-filler"></div>
       </div>
       <div class="circular-buttons">
         <button class="circle-button left" id="remote-backspace-button">⌫</button>
