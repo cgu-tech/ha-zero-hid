@@ -107,7 +107,13 @@ class AndroidRemoteCard extends HTMLElement {
       .remote-container {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 10px;              /* adds spacing between children */
+        padding: 10px;          /* adds space around the group of children */
+        box-sizing: border-box; /* prevents overflow due to padding */
+      }
+      .remote-container > * {
+        flex: 1 1 0;            /* ensures children shrink to fit */
+        min-width: 0;           /* allows children to shrink properly */
       }
 
       /* Flex containers */
@@ -117,6 +123,11 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: center;
         gap: 0.5rem;
         width: 100%;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+      
+      .no-margin-bottom {
         padding-top: 10px;
         padding-bottom: 10px;
       }
@@ -156,6 +167,12 @@ class AndroidRemoteCard extends HTMLElement {
             
       #remote-power-filler {
         flex: 4;          /* 4/5 of space */
+        height: 100%;     /* fill vertically */
+        /* optionally background-color: transparent; */
+      }
+      
+      .remote-dpad-filler {
+        flex: 0.5;          /* 1/10 of space */
         height: 100%;     /* fill vertically */
         /* optionally background-color: transparent; */
       }
@@ -327,8 +344,10 @@ class AndroidRemoteCard extends HTMLElement {
         <button class="circle-button left" id="remote-power-button">⏻</button>
         <div id="remote-power-filler"></div>
       </div>
-      <div class="circular-buttons-center">
+      <div class="circular-buttons">
+        <div class="remote-dpad-filler"></div>
         <svg id="dpad"></svg>
+        <div class="remote-dpad-filler"></div>
       </div>
       <div class="circular-buttons-center">
         <div class="bottom-buttons">
@@ -399,9 +418,9 @@ class AndroidRemoteCard extends HTMLElement {
 
   setupDpad() {
     const svg = this.content.querySelector("#dpad");
-    const padRadius = 160;
-    const padPadding = 90;
-    const padLineThick = 8;
+    const padRadius = 100;
+    const padPadding = 56;
+    const padLineThick = 5;
     const center = padRadius;
     const rOuter = padRadius;
     const rInner = padRadius - padPadding;
@@ -412,6 +431,8 @@ class AndroidRemoteCard extends HTMLElement {
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     svg.style.width = "100%";
     svg.style.height = "auto";
+    svg.style.flex = "4";
+    svg.style["aspect-ratio"] = "1 / 1";
 
     const ns = "http://www.w3.org/2000/svg";
     const defs = document.createElementNS(ns, "defs");
