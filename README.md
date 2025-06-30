@@ -7,9 +7,12 @@ The mouse can be used to control whatever end-device that accept standard USB mo
 
 `Project status`:
 - beta stage
-- fully working mouse with dedicated card (left / middle / right click, horizontal / vertical scroll)
-- fully working Windows keyboard with dedicated card (supports keyboard layouts, US QWERTY + FR AZERTY implemented)
-- fully working Android keyboard with dedicated card (supports keyboard layouts, US QWERTY + FR AZERTY implemented, supports Android buttons)
+- 5 HomeAssistant cards:
+  - Trackpad with mouse, left click, middle click, right click, horizontal sroll, vertical scroll
+  - Arrowpad with left, up, right, down arrows keys
+  - Windows keyboard with keyboard layouts (US qwerty + FR azerty)
+  - Android keyboard with keyboard layouts (US qwerty + FR azerty)
+  - Android remote control with android functions, trackpad and simplified keyboard layouts (US qwerty + FR azerty)
 - manual installation
 - dedicated cards cannot be customized
 
@@ -153,6 +156,12 @@ layoutUrl: /local/layouts/windows/US.json
 ```yaml
 type: custom:android-keyboard-card
 layoutUrl: /local/layouts/android/US.json
+```
+
+#### Android remote control card
+```yaml
+type: custom:android-remote-card
+layoutUrl: /local/layouts/android/US-remote.json
 ```
 
 ## F.A.Q
