@@ -1,6 +1,7 @@
 console.info("Loading Android Remote Card");
 
 class AndroidRemoteCard extends HTMLElement {
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" }); // Create shadow root
@@ -83,39 +84,159 @@ class AndroidRemoteCard extends HTMLElement {
       return;
     }
     console.log("Android Remote - buildUi() ENTER");
-    
+
     // Clear existing content (if any)
+    if (this._uiBuilt) return;
     this.shadowRoot.innerHTML = '';
 
     this._uiBuilt = true;
-    
+
     // Re-add global handlers to ensure proper out-of-bound handling
     this.removeGlobalHandlers();
     this.addGlobalHandlers();
-    
+
     const card = document.createElement("ha-card");
     const style = document.createElement("style");
     style.textContent = `
       :host {
-        --background-color: #f0f0f0;
-        --pad-radius: 30;
-        --pad-line-thick: 5px;
-        --circle-button-height: 70px;
-        --circle-button-width: 70px;
-        --ts-button-height: 70px; /* full height of toggle button */
-        --ts-button-width: 83px; /* width per toggle state */
-        --side-button-height: 60px;
-        --side-button-width: 200px;
-        background: var(--background-color);
-        color: var(--background-color);
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
       }
+      
       .remote-container {
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: stretch;
-        gap: 20px;
+        gap: 1rem;
       }
+
+      /* Flex containers */
+      .circular-buttons, .circular-buttons-center, .bottom-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+      }
+
+      /* D‑pad SVG scales as square */
+      .circular-buttons-center svg {
+        flex: 1 1 0;
+        aspect-ratio: 1 / 1;
+        max-width: 100%;
+      }
+
+      /* Circle buttons scale proportionally */
+      .circle-button {
+        flex: 1 1 0;
+        aspect-ratio: 1 / 1;
+        background-color: #3a3a3a;
+        color: #bfbfbf;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        font-family: sans-serif;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;   /* This makes the button circular */
+      }
+      .circle-button:hover { background-color: #4a4a4a; }
+      .circle-button:active,
+      .circle-button.pressed { transform: scale(0.95); }
+
+      #remote-power-button {
+        flex: 1;          /* 1/5 of space */
+        min-width: 0;
+        text-align: center;
+      }
+            
+      #remote-power-filler {
+        flex: 4;          /* 4/5 of space */
+        height: 100%;     /* fill vertically */
+        /* optionally background-color: transparent; */
+      }
+      
+      #ts-toggle-threeStateToggle {
+        flex: 3.4;          /* 3/5 of space */
+        min-width: 0;
+        text-align: center;
+      }
+
+      /* Side buttons scale with flex-ratio ~200 width vs 70px baseline */
+      .side-button {
+        flex: 20 1 0;
+        aspect-ratio: 200 / 60;
+        background-color: #3a3a3a;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+        border: none;
+        font-family: sans-serif;
+        color: #bfbfbf;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+      }
+      .side-button.left {
+        border-top-left-radius: 999px;
+        border-bottom-left-radius: 999px;
+      }
+      .side-button.right {
+        border-top-right-radius: 999px;
+        border-bottom-right-radius: 999px;
+      }
+      .side-button:hover { background-color: #4a4a4a; }
+      .side-button:active,
+      .side-button.pressed { transform: scale(0.95); }
+
+      .ts-toggle-container {
+        display: flex;
+        flex-grow: 1;        /* grow to fill vertical space */
+        flex-shrink: 1;
+        flex-basis: 0;
+        align-items: center;   /* vertical center content */
+        justify-content: center; /* horizontal center */
+        gap: 0.5rem;
+        position: relative;
+        background-color: #3a3a3a;
+        border-radius: 999px;
+        user-select: none;
+        overflow: hidden; /* Make sure child fits inside */
+        height: 100%;          /* fill parent's height */
+        min-height: 3rem;      /* optional minimum height */
+      }
+      
+      .ts-toggle-option {
+        flex-grow: 1;
+        flex-shrink: 1;
+        flex-basis: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-size: 16px;
+        z-index: 1;
+        color: #bfbfbf;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+      .ts-toggle-option.active { font-weight: bold; }
+      .ts-toggle-option:hover { background-color: rgba(0,0,0,0.05); }
+      .ts-toggle-indicator {
+        position: absolute;
+        top: 5%;
+        height: 90%; /* fit inside the toggle height */
+        width: calc(var(--ts-button-width) - 10px); /* padding for visual spacing */
+        background-color: #4a4a4a;
+        border-radius: 999px;
+        transition: left 0.25s ease;
+        z-index: 0;
+      }
+
+      /* SVG styling */
       svg {
         display: block;
       }
@@ -123,203 +244,22 @@ class AndroidRemoteCard extends HTMLElement {
         cursor: pointer;
         transition: opacity 0.2s;
       }
-      .quarter:hover {
-        opacity: 0.0
-      }
+      .quarter:hover { opacity: 0.0; }
       .gap {
         fill: currentColor;
         pointer-events: none !important;
       }
       text {
         font-family: sans-serif;
-        font-size: 20px;
+        font-size: 1rem;
         fill: #bfbfbf;
         pointer-events: none;
         user-select: none;
       }
-      /* Container for the two bottom buttons */
-      .bottom-buttons {
-        width: calc(2 * var(--pad-radius) + var(--pad-line-thick));
-        display: flex;
-        justify-content: space-between;
-        gap: 6px; /* padLineThick */
-        margin-top: 20px;
-        margin-bottom: 20px;
-      }
-      .side-button {
-        width: var(--side-button-width);
-        height: var(--side-button-height);
-        background-color: #3a3a3a;
-        cursor: pointer;
-        transition: background-color 0.2s ease, transform 0.1s ease;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: #bfbfbf;
-        font-family: sans-serif;
-        font-size: 24px;
-        border: none;
-        outline: none;
-        padding: 0 20px;
-        margin-top: 10px;
-        user-select: none;
-      }
-      /* Left button: semi-circular convex on left side */
-      .side-button.left {
-        border-top-left-radius: calc(var(--side-button-height) / 2);
-        border-bottom-left-radius: calc(var(--side-button-height) / 2);
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-      }
-      /* Right button: semi-circular convex on right side */
-      .side-button.right {
-        border-top-right-radius: calc(var(--side-button-height) / 2);
-        border-bottom-right-radius: calc(var(--side-button-height) / 2);
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-      }
-      /* Hover and pressed effect similar to dpad */
-      .side-button:hover {
-        background-color: #4a4a4a;
-      }
-      .side-button.pressed {
-        transform: scale(0.95);
-      }
-      .side-button:active {
-        transform: scale(0.95);
-      }
-      .return-button {
-        transform: scaleY(-1);
-      }
-      .home-button {
-        transform: translate(0px, -5px) scale(2.25, 1.5); /* 1.0 is original size, 1.5 is 150% */
-        transition: transform 0.3s ease; /* optional: smooth scaling */
-      }
-      .circular-buttons-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* horizontally center each child row */
-        justify-content: space-between;
-        padding: 0;
-      }
-      .circular-buttons {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        padding: 0;
-        margin-top: 15px;
-        margin-bottom: 15px;
-        margin-left: 30px;
-        margin-right: 30px;
-      }
-      .circular-buttons.no-margin-bottom {
-        margin-bottom: 0;
-      }
-      .circle-button {
-        width: var(--circle-button-width);
-        height: var(--circle-button-height);
-        border-radius: 50%;
-        background-color: #3a3a3a;
-        color: #bfbfbf;
-        font-size: 20px;
-        border: none;
-        outline: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease, transform 0.1s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: sans-serif;
-      }
-      .circle-button:hover {
-        background-color: #4a4a4a;
-      }
-      .circle-button:active {
-        transform: scale(0.95);
-      }
-      .kb {
-        transform: scale(1.3, 1.3);
-      }
-      .speaker {
-        transform: scale(1.0, 1.3);
-      }
-      .volume-low {
-        transform: scale(1.0, 0.4);
-      }
-      .volume-medium {
-        transform: scale(1.0, 0.7);
-      }
-      .volume-high {
-        transform: scale(1.0, 1.0);
-      }
-      .track-triangle {
-        transform: scale(1.0, 1.0);
-      }
-      .mouse-triangle {
-        display: inline-block; /* keep it inline for better control */
-        transform: rotate(315deg) scale(1.0, 1.5) translate(4px, -5px);
-      }
-      .mouse-power {
-        display: inline-block; /* keep it inline for better control */
-        transform: translate(-4px, 8px) rotate(315deg) scale(1.0, 1.0);
-      }
-      .ts-toggle-container {
-        display: flex;
-        align-items: center;
-        position: relative;
-        width: calc(var(--ts-button-width) * 3);
-        height: var(--ts-button-height);
-        background-color: #3a3a3a;
-        border-radius: 999px;
-        user-select: none;
-      }
-      .ts-toggle-option {
-        flex: 0 0 var(--ts-button-width);
-        text-align: center;
-        line-height: var(--ts-button-height);
-        font-size: 16px;
-        z-index: 1;
-        color: #bfbfbf;
-        font-weight: normal;
-        cursor: pointer;
-        transition: color 0.2s ease, font-weight 0.2s ease, background-color 0.2s ease;
-        border-radius: 999px;
-        box-sizing: border-box;
-      }
-      .ts-toggle-option:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-      }
-      .ts-toggle-option.active {
-        color: #bfbfbf;
-        font-weight: bold;
-      }
-      .ts-toggle-indicator {
-        position: absolute;
-        top: calc(var(--ts-button-height) * 0.05);
-        bottom: calc(var(--ts-button-height) * 0.05);
-        width: calc(var(--ts-button-width) - calc(var(--ts-button-height) * 0.1));
-        background-color: #4a4a4a;
-        border-radius: 999px;
-        transition: left 0.25s ease;
-        z-index: 0;
-        box-sizing: border-box;
-      }
-      .ts-toggle-kb {
-        transform: scale(1.3);
-        display: inline-block;
-      }
-      .ts-toggle-mouse-triangle {
-        display: inline-block;
-        transform: translate(2px, calc(-1 * var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.5);
-      }
-      .ts-toggle-mouse-power {
-        display: inline-block;
-        transform: translate(0px, calc(var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.0);
-      }
-      #foldable-container > * {
+
+      #foldable-container {
         width: 100%;
-        box-sizing: border-box;
+        display: none;
       }
     `;
     this.shadowRoot.appendChild(style);
@@ -327,12 +267,12 @@ class AndroidRemoteCard extends HTMLElement {
     const container = document.createElement("div");
     container.className = "remote-container";
 
-    // --- Move content from HTML into this container ---
     const wrapper = document.createElement("div");
     wrapper.className = "circular-buttons-wrapper";
     wrapper.innerHTML = `
       <div class="circular-buttons no-margin-bottom">
         <button class="circle-button left" id="remote-power-button">⏻</button>
+        <div id="remote-power-filler"></div>
       </div>
       <div class="circular-buttons-center">
         <svg id="dpad"></svg>
@@ -356,7 +296,7 @@ class AndroidRemoteCard extends HTMLElement {
         </div>
         <button class="circle-button right" id="remote-settings-button">☰</button>
       </div>
-      <div id="foldable-container" style="width: 100%; display: none; margin-top: 10px;"></div>
+      <div id="foldable-container" style="margin-top:10px;"></div>
       <div class="circular-buttons">
         <button class="circle-button left"   id="remote-volume-down-button"><div class="speaker">🔈</div><div class="volume-low">)</div></button>
         <button class="circle-button left"   id="remote-previous-track-button"><div class="track-triangle">|◀◀</div></button>
@@ -366,7 +306,6 @@ class AndroidRemoteCard extends HTMLElement {
       </div>
     `;
     container.appendChild(wrapper);
-
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
 
@@ -407,7 +346,6 @@ class AndroidRemoteCard extends HTMLElement {
 
   setupDpad() {
     const svg = this.content.querySelector("#dpad");
-
     const padRadius = 160;
     const padPadding = 90;
     const padLineThick = 8;
@@ -415,11 +353,12 @@ class AndroidRemoteCard extends HTMLElement {
     const rOuter = padRadius;
     const rInner = padRadius - padPadding;
     const centerRadius = padRadius - padPadding - padLineThick;
-
     const svgSize = padRadius * 2;
-    svg.setAttribute("width", svgSize);
-    svg.setAttribute("height", svgSize);
+    
     svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svg.style.width = "100%";
+    svg.style.height = "auto";
 
     const ns = "http://www.w3.org/2000/svg";
     const defs = document.createElementNS(ns, "defs");
@@ -558,14 +497,18 @@ class AndroidRemoteCard extends HTMLElement {
         });
       }
     };
-  
+
     const updateFoldableUI = () => {
-      const btnWidth = 83;
-      indicator.style.left = `${state * btnWidth + 3.5}px`;
+      const toggleStyles = getComputedStyle(toggle);
+      const btnWidthStr = toggleStyles.getPropertyValue('--ts-button-width');
+      const btnWidth = parseFloat(btnWidthStr) || 83; // fallback to default
+      
+      indicator.style.left = `${state * btnWidth}px`;
+    
       options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
       updateFoldable();
     };
-  
+
     options.forEach((option, index) => {
       option.addEventListener("click", () => {
         if (state !== index) {
