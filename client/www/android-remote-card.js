@@ -517,8 +517,10 @@ class AndroidRemoteCard extends HTMLElement {
     const indicator = toggle.querySelector(".ts-toggle-indicator");
     const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
     const foldable = this.content.querySelector("#foldable-container");
-    const foldableKeyboard = document.createElement("android-keyboard-card");
-    const foldableMouse = document.createElement("trackpad-card");
+    const foldableKeyboardName = "android-keyboard-card";
+    const foldableMouseName = "trackpad-card";
+    let foldableKeyboard;
+    let foldableMouse;
 
     let state = 1;
     
@@ -530,18 +532,30 @@ class AndroidRemoteCard extends HTMLElement {
       }
   
       foldable.style.display = "block";
-      let foldableContent;
+      let foldableContentName;
       if (state === 0) {
-        foldableContent = foldableKeyboard;
+        foldableContentName = foldableKeyboardName;
       } else if (state === 2) {
-        foldableContent = foldableMouse;
+        foldableContentName = foldableMouseName;
       }
-  
-      if (foldableContent) {
-        foldableContent.setAttribute("style", "width: 100%;");
-        foldableContent.hass = this._hass;
-        foldableContent.setConfig(this.config);
-        foldable.appendChild(foldableContent);
+      
+      if (foldableContentName) {
+        customElements.whenDefined(foldableContentName).then(() => {
+          let foldableContent;
+          if (foldableContentName === foldableKeyboardName) {
+            if (!foldableKeyboard) foldableKeyboard = document.createElement(foldableKeyboardName); // Safe init of imported component
+            foldableContent = foldableKeyboard;
+          } else if (foldableContentName === foldableMouseName) {
+            if (!foldableMouse) foldableMouse = document.createElement(foldableMouseName); // Safe init of imported component
+            foldableContent = foldableMouse;
+          } else {
+            throw new Error(`Unkwnon foldable component ${foldableContentName}`);
+          }
+          foldableContent.setAttribute("style", "width: 100%;");
+          foldableContent.hass = this._hass;
+          foldableContent.setConfig(this.config);
+          foldable.appendChild(foldableContent);
+        });
       }
     };
   
