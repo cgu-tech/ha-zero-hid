@@ -355,6 +355,13 @@ class AndroidRemoteCard extends HTMLElement {
         display: block; /* removes any inline space */
         transform: scale(0.7, 0.7);
       }
+      
+      #remote-return-button svg {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.7, 0.7);
+      }
 
       /* SVG styling */
       svg {
@@ -414,7 +421,16 @@ class AndroidRemoteCard extends HTMLElement {
         <div class="remote-dpad-filler"></div>
         <div class="bottom-buttons">
           <button class="side-button left" id="remote-return-button">
-          RET
+           <svg viewBox="-14 0 78 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+             <!-- Top horizontal line -->
+             <line x1="8" y1="17" x2="48" y2="17" />
+             <!-- Bottom horizontal line -->
+             <line x1="8" y1="47" x2="48" y2="47" />
+             <!-- Vertically flipped arc from bottom right to top right -->
+             <path d="M48 47 A15 15 0 0 0 48 17" />
+             <!-- Left-pointing isosceles triangle with reduced width -->
+             <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
+           </svg>
           </button>
           <button class="side-button right" id="remote-home-button">
             <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
