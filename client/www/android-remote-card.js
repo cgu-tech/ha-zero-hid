@@ -117,6 +117,8 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: center;
         gap: 0.5rem;
         width: 100%;
+        padding-top: 10px;
+        padding-bottom: 10px;
       }
 
       /* D‑pad SVG scales as square */
@@ -136,7 +138,7 @@ class AndroidRemoteCard extends HTMLElement {
         outline: none;
         cursor: pointer;
         font-family: sans-serif;
-        transition: background-color 0.2s ease, transform 0.1s ease;
+        transition: background-color 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -156,6 +158,40 @@ class AndroidRemoteCard extends HTMLElement {
         flex: 4;          /* 4/5 of space */
         height: 100%;     /* fill vertically */
         /* optionally background-color: transparent; */
+      }
+      
+      .kb {
+        transform: scale(1.3, 1.3);
+      }
+      
+      .speaker {
+        transform: scale(1.0, 1.3);
+      }
+      
+      .volume-low {
+        transform: scale(1.0, 0.4);
+      }
+      
+      .volume-medium {
+        transform: scale(1.0, 0.7);
+      }
+      
+      .volume-high {
+        transform: scale(1.0, 1.0);
+      }
+      
+      .track-triangle {
+        transform: scale(1.0, 1.0);
+      }
+      
+      .mouse-triangle {
+        display: inline-block; /* keep it inline for better control */
+        transform: rotate(315deg) scale(1.0, 1.5) translate(4px, -5px);
+      }
+      
+      .mouse-power {
+        display: inline-block; /* keep it inline for better control */
+        transform: translate(-4px, 8px) rotate(315deg) scale(1.0, 1.0);
       }
       
       /* Side buttons scale with flex-ratio ~200 width vs 70px baseline */
