@@ -13,6 +13,7 @@ The mouse can be used to control whatever end-device that accept standard USB mo
   - Windows keyboard with keyboard layouts (US qwerty + FR azerty)
   - Android keyboard with keyboard layouts (US qwerty + FR azerty)
   - Android remote control with android functions, trackpad and simplified keyboard layouts (US qwerty + FR azerty)
+- Optionnal haptic feedback support
 - manual installation
 - dedicated cards cannot be customized
 
@@ -156,12 +157,14 @@ layoutUrl: /local/layouts/windows/US.json
 ```yaml
 type: custom:android-keyboard-card
 layoutUrl: /local/layouts/android/US.json
+haptic: true
 ```
 
 #### Android remote control card
 ```yaml
 type: custom:android-remote-card
 layoutUrl: /local/layouts/android/US-remote.json
+haptic: true
 ```
 
 ## F.A.Q
