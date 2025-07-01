@@ -4,7 +4,22 @@ class AndroidKeyboardCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" }); // Create shadow root
-    this.loadListenersMap();
+    
+    this.eventsMap = new Map();
+    this.eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
+    this.eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
+    this.eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
+    this.eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
+    this.eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
+    this.eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
+    this.eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
+    this.eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
+    this.eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
+    this.eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
+    this.eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
+    
+    // Optimization: init map of already found prefered listeners (future lookup speedup)
+    this.preferedEventsNames = new Map();
     
     this._hass = null;
     this._layoutReady = false;
@@ -47,20 +62,6 @@ class AndroidKeyboardCard extends HTMLElement {
     // Handle out of bounds mouse releases
     this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
     this._handleGlobalTouchEnd = this.handleGlobalPointerUp.bind(this); // reuse same logic
-  }
-
-  loadListenersMap() {
-    this.EVTS_POINTER_DOWN     = ["pointerdown", "touchstart", "mousedown"];
-    this.EVTS_POINTER_ENTER    = ["pointerenter", "mouseenter"];
-    this.EVTS_POINTER_OVER     = ["pointerover", "mouseover"];
-    this.EVTS_POINTER_MOVE     = ["pointermove", "touchmove", "mousemove"];
-    this.EVTS_POINTER_LEAVE    = ["pointerleave", "mouseleave"];
-    this.EVTS_POINTER_UP       = ["pointerup", "touchend", "mouseup"];
-    this.EVTS_POINTER_CANCEL   = ["pointercancel", "touchcancel"];
-    this.EVTS_POINTER_OUT      = ["pointerout", "mouseout"];
-    this.EVTS_POINTER_CLICK    = ["click"];
-    this.EVTS_POINTER_DBLCLICK = ["dblclick"];
-    this.EVTS_POINTER_CTXMENU  = ["contextmenu"];
   }
 
   setConfig(config) {
@@ -946,37 +947,37 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   addPointerDownListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_DOWN );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" );
   }
   addPointerEnterListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_ENTER );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" );
   }
   addPointerOverListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_OVER );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" );
   }
   addPointerMoveListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_MOVE );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" );
   }
   addPointerLeaveListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_LEAVE );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" );
   }
   addPointerUpListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_UP );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_UP" );
   }
   addPointerCancelListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_CANCEL );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" );
   }
   addPointerOutListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_OUT );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" );
   }
   addPointerClickListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_CLICK );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" );
   }
   addPointerDblClickListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_DBLCLICK );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" );
   }
   addPointerContextmenuListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, this.EVTS_POINTER_CTXMENU );
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" );
   }
 
   // Add the available event listener using 
@@ -1003,44 +1004,44 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   removePointerDownListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_DOWN );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" );
   }
   removePointerEnterListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_ENTER );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" );
   }
   removePointerOverListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_OVER );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" );
   }
   removePointerMoveListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_MOVE );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" );
   }
   removePointerLeaveListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_LEAVE );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" );
   }
   removePointerUpListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_UP );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_UP" );
   }
   removePointerCancelListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_CANCEL );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" );
   }
   removePointerOutListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_OUT );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" );
   }
   removePointerClickListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_CLICK );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" );
   }
   removePointerDblClickListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_DBLCLICK );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" );
   }
   removePointerContextmenuListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, this.EVTS_POINTER_CTXMENU );
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" );
   }
 
   // Remove the available event listener using 
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
-  removeAvailableEventListener(target, callback, events) {
-    const eventName = this.getSupportedEventListener(target, events);
+  removeAvailableEventListener(target, callback, abstractEventName) {
+    const eventName = this.getSupportedEventListener(target, abstractEventName);
     if (eventName) {
       this.removeGivenEventListener(target, callback, options, eventName);
     }
@@ -1067,20 +1068,37 @@ class AndroidKeyboardCard extends HTMLElement {
   // Gets the available event listener using 
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
-  getSupportedEventListener(target, events) {
-    if (!events || !Array.isArray(events)) {
-      console.warn(`Invalid events ${events}: expected an array`);
+  getSupportedEventListener(target, abstractEventName) {
+    if (!abstractEventName) {
+      console.warn(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`);
+      return null;
+    }
+    
+    // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
+    const preferedEventName = this.preferedEventsNames.get(abstractEventName);
+    if (preferedEventName) return preferedEventName;
+    
+    // When no prefered concrete js event, then try to retrieve mapped events
+    const mappedEvents = this.eventsMap.get(abstractEventName);
+    if (!mappedEvents) {
+      console.warn(`Unknwon abstractEventName ${abstractEventName}`);
       return null;
     }
 
-    for (const eventName of events) {
-      if (this.isEventSupported(target, eventName)) {
-        console.log(`Event ${eventName} supported by device`);
-        return eventName;
+    // Check for supported event into all mapped events
+    for (const mappedEvent of mappedEvents) {
+      if (this.isEventSupported(target, mappedEvent)) {
+          
+        // First supported event found: cache-it as prefered concrete js event
+        this.preferedEventsNames.set(preferedEventName, mappedEvent);
+        
+        // Return prefered concrete js event
+        console.log(`Cached supported concrete js event ${mappedEvent} as prefered event for ${abstractEventName}`);
+        return mappedEvent;
       }
     }
 
-    console.error(`No event supported device: ${events}`);
+    console.error(`No concrete js event supported for ${abstractEventName}`);
     return null;    
   }
 
