@@ -14,6 +14,7 @@ class AndroidRemoteCard extends HTMLElement {
     // international language and keyboard layout
     this.language = "FR";
     this.layoutUrl = `/local/layouts/android/${this.language}-remote.json`;
+    this.haptic = false;
 
     this.remoteButtons = [
       { id: "remote-power-button",          code: "CON_POWER"               },
@@ -45,15 +46,20 @@ class AndroidRemoteCard extends HTMLElement {
 
   setConfig(config) {
     this.config = config;
-    
+
     // Retrieve user configured language
     if (config.language) {
       this.language = config.language;
     }
-    
+
     // Retrieve user configured layout
     if (config.layoutUrl) {
       this.layoutUrl = config.layoutUrl;
+    }
+
+    // Retrieve user configured haptic feedback
+    if (config.haptic) {
+      this.haptic = config.haptic;
     }
   }
   
@@ -758,6 +764,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Press HID key
     this.appendCode(hass, code);
+
+    // Send haptic feedback to make user acknownledgable of succeeded press event
+    this.hapticFeedback();
   }
 
   handleKeyRelease(hass, btn) {
@@ -777,8 +786,11 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Release HID key
     this.removeCode(hass, code);
+
+    // Send haptic feedback to make user acknownledgable of succeeded release event
+    this.hapticFeedback();
   }
-  
+    
   appendCode(hass, code) {
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
@@ -874,6 +886,20 @@ class AndroidRemoteCard extends HTMLElement {
     });
   }
   
+  // vibrate the device like an haptic feedback
+  hapticFeedback() {
+    if (this.haptic) this.vibrateDevice(10);
+  }
+
+  // vibrate the device during specified duration (in milliseconds)
+  vibrateDevice(duration) {
+    if (navigator.vibrate) {
+      navigator.vibrate(duration);
+    } else {
+      console.warn('Vibration not supported on this device.');
+    }
+  }
+
 }
 
 customElements.define("android-remote-card", AndroidRemoteCard);

@@ -16,6 +16,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.language = "FR";
     this.layoutUrl = `/local/layouts/android/${this.language}.json`;
     this._layoutLoaded = null;
+    this.haptic = false;
     
     // 0: normal/shift mode
     // 1: alternative mode
@@ -64,15 +65,20 @@ class AndroidKeyboardCard extends HTMLElement {
 
   setConfig(config) {
     this.config = config;
-    
+
     // Retrieve user configured language
     if (config.language) {
       this.language = config.language;
     }
-    
+
     // Retrieve user configured layout
     if (config.layoutUrl) {
       this.layoutUrl = config.layoutUrl;
+    }
+
+    // Retrieve user configured haptic feedback
+    if (config.haptic) {
+      this.haptic = config.haptic;
     }
   }
 
@@ -366,13 +372,13 @@ class AndroidKeyboardCard extends HTMLElement {
         this.addPointerUpListener(btn, (e) => {
           btn._pointerDown = false;
           clearTimeout(this.popinTimeout);
-          this.handlePointerUp(e, hass, btn, "EVT_POINTER_UP");
+          this.handlePointerUp(e, hass, btn);
           //console.log("pointerup->clearTimeout");
         });
         this.addPointerCancelListener(btn, (e) => {
           btn._pointerDown = false;
           clearTimeout(this.popinTimeout);
-          this.handlePointerUp(e, hass, btn, "EVT_POINTER_CANCEL");
+          this.handlePointerUp(e, hass, btn);
           //console.log("pointercancel->clearTimeout");
         });
 
@@ -505,7 +511,7 @@ class AndroidKeyboardCard extends HTMLElement {
         this.addPointerLeaveListener(popinBtn, () => popinBtn.classList.remove("active"));
         this.addPointerUpListener(popinBtn, (e) => {
           this.handleKeyPress(hass, popinBtn);
-          this.handleKeyRelease(hass, popinBtn, "EVT_POPIN_BTN");
+          this.handleKeyRelease(hass, popinBtn);
           this.closePopin();
         });
 
@@ -643,25 +649,11 @@ class AndroidKeyboardCard extends HTMLElement {
     return modifiedLabel;
   }
 
-  addGlobalHandlers() {
-    this.addPointerUpListener(window, this._handleGlobalPointerUp);
-    this.addPointerLeaveListener(window, this._handleGlobalPointerUp);
-    this.addPointerCancelListener(window, this._handleGlobalPointerUp);
-    //console.log("handleGlobalPointerUp added");
-  }
-
-  removeGlobalHandlers() {
-    this.removePointerUpListener(window, this._handleGlobalPointerUp);
-    this.removePointerLeaveListener(window, this._handleGlobalPointerUp);
-    this.removePointerCancelListener(window, this._handleGlobalPointerUp);
-    //console.log("handleGlobalPointerUp removed");
-  }
-
   handleGlobalPointerUp(evt) {
     //console.log("handleGlobalPointerUp:", this.content, this._hass);
     if (this.content && this._hass) {
       for (const btn of this.content.querySelectorAll("button.key.active")) {
-        this.handleKeyRelease(this._hass, btn, "EVT_GLOBAL_POINTER_UP");
+        this.handleKeyRelease(this._hass, btn);
       }
 
       // close popin if it's open
@@ -681,16 +673,24 @@ class AndroidKeyboardCard extends HTMLElement {
     this.handleKeyPress(hass, btn);
   }
 
-  handlePointerUp(evt, hass, btn, orig) {
+  handlePointerUp(evt, hass, btn) {
     evt.preventDefault();
     if (btn._usedPopin) {
       btn._usedPopin = false;
       return; // Skip base key release
     }
-    this.handleKeyRelease(hass, btn, orig);
+    this.handleKeyRelease(hass, btn);
   }
 
+  // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
   handleKeyPress(hass, btn) {
+    this.handleKeyPressInternal(hass, btn);
+
+    // Send haptic feedback to make user acknownledgable of succeeded press event
+    this.hapticFeedback();
+  }
+
+  handleKeyPressInternal(hass, btn) {
     // Mark button active visually
     btn.classList.add("active");
 
@@ -752,7 +752,16 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
 
-  handleKeyRelease(hass, btn, evt) {
+  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
+  handleKeyRelease(hass, btn) {
+    this.handleKeyReleaseInternal(hass, btn);
+
+    // Send haptic feedback to make user acknownledgable of succeeded release event
+    this.hapticFeedback();
+  }
+
+  // The effective handleKeyRelease internal logic
+  handleKeyReleaseInternal(hass, btn) {
     const keyData = btn._keyData;
     if (!keyData) return;
 
@@ -790,7 +799,7 @@ class AndroidKeyboardCard extends HTMLElement {
       const charToSend = btn._lowerLabel.textContent || "";
       if (charToSend) {
         //console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
-        this.clickChar(hass, code, charToSend, evt);
+        this.clickChar(hass, code, charToSend);
       }
     }
 
@@ -801,9 +810,9 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
 
-  clickChar(hass, code, charToSend, evt) {
+  clickChar(hass, code, charToSend) {
     console.log("Key clicked:", code, "Char:", charToSend);
-    this.sendKeyboardClick(hass, charToSend, evt);
+    this.sendKeyboardClick(hass, charToSend);
   }
 
   appendCode(hass, code) {
@@ -916,10 +925,24 @@ class AndroidKeyboardCard extends HTMLElement {
 
   // Send clicked char symbols to HID keyboard 
   // and let it handle the right key-press combination using current kb layout
-  sendKeyboardClick(hass, charToSend, evt) {
+  sendKeyboardClick(hass, charToSend) {
     hass.callService("trackpad_mouse", "chartap", {
-      sendChars: "" + charToSend + "" + evt,
+      sendChars: charToSend,
     });
+  }
+
+  addGlobalHandlers() {
+    this.addPointerUpListener(window, this._handleGlobalPointerUp);
+    this.addPointerLeaveListener(window, this._handleGlobalPointerUp);
+    this.addPointerCancelListener(window, this._handleGlobalPointerUp);
+    //console.log("handleGlobalPointerUp added");
+  }
+
+  removeGlobalHandlers() {
+    this.removePointerUpListener(window, this._handleGlobalPointerUp);
+    this.removePointerLeaveListener(window, this._handleGlobalPointerUp);
+    this.removePointerCancelListener(window, this._handleGlobalPointerUp);
+    //console.log("handleGlobalPointerUp removed");
   }
 
   addPointerDownListener(target, callback, options = null) {
@@ -1065,6 +1088,19 @@ class AndroidKeyboardCard extends HTMLElement {
     return (typeof target[`on${eventName}`] === "function" || `on${eventName}` in target);
   }
 
+  // vibrate the device like an haptic feedback
+  hapticFeedback() {
+    if (this.haptic) this.vibrateDevice(10);
+  }
+
+  // vibrate the device during specified duration (in milliseconds)
+  vibrateDevice(duration) {
+    if (navigator.vibrate) {
+      navigator.vibrate(duration);
+    } else {
+      console.warn('Vibration not supported on this device.');
+    }
+  }
 
 }
 
