@@ -1,8 +1,38 @@
 console.info("Loading Android Keyboard Card");
 
+// Define logger helper class
+class Logger {
+  constructor(level = 'info') {
+    this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
+    this.setLevel(level);
+  }
+  setLevel(level) { this.level = this.levels[level] ?? 0; }
+  isLevelEnabled(level) { return (level <= this.level); }
+  isErrorEnabled() { return this.isLevelEnabled(0); }
+  isWarnEnabled() { return this.isLevelEnabled(1); }
+  isInfoEnabled() { return this.isLevelEnabled(2); }
+  isDebugEnabled() { return this.isLevelEnabled(3); }
+  isTraceEnabled() { return this.isLevelEnabled(4); }
+  
+  getArgs(header, logStyle, ...args) {
+    if (args && args.length && args.length > 0) {
+      return [`%c[${header}]`, logStyle, ...args];
+    }
+    return [`%c[${header}]`, logStyle];
+  }
+
+  error(...args) { return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
+  warn(...args)  { return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
+  info(...args)  { return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
+  debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
+  trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
+}
+
 class AndroidKeyboardCard extends HTMLElement {
   constructor() {
     super();
+    this.logger = new Logger('debug');
+    
     this.attachShadow({ mode: "open" }); // Create shadow root
     
     this.eventsMap = new Map();
@@ -88,7 +118,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   async connectedCallback() {
-    console.log("Android Keyboard - connectedCallback");
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Keyboard - connectedCallback"));
     // Load keyboard layout
     if (!this._layoutLoaded || this._layoutLoaded !== this.layoutUrl) {
       this._layoutReady = false;
@@ -104,21 +134,21 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   async loadLayout(layoutUrl) {
-    console.log("Android Keyboard - loading keyboard layout:", layoutUrl);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Keyboard - loading keyboard layout:", layoutUrl));
     try {
       const response = await fetch(layoutUrl);
       const layout = await response.json();
       this.keys = layout.keys;
       this.rowsConfig = layout.rowsConfig;
     } catch (e) {
-      console.error("Android Keyboard - Failed to load keyboard layout:", e);
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error("Android Keyboard - Failed to load keyboard layout:", e));
       this.keys = [];
       this.rowsConfig = [];
     }
   }
 
   set hass(hass) {
-    console.log("Android Keyboard - set hass():", hass);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Keyboard - set hass():", hass));
     this._hass = hass;
     if (this._layoutReady && !this._uiBuilt) {
       this.buildUi(this._hass);
@@ -127,10 +157,10 @@ class AndroidKeyboardCard extends HTMLElement {
 
   buildUi(hass) {
     if (this._uiBuilt) {
-      console.log("Android Keyboard - buildUi() SKIPPED");
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Keyboard - buildUi() SKIPPED"));
       return;
     }
-    console.log("Android Keyboard - buildUi() ENTER");
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Keyboard - buildUi() ENTER"));
     
     // Clear existing content (if any)
     this.shadowRoot.innerHTML = '';
@@ -359,7 +389,7 @@ class AndroidKeyboardCard extends HTMLElement {
         
           // Long press timer (only for non-special keys)
           if (!btn._keyData.special) {
-            //console.log("pointerdown->!btn._keyData.special");
+            if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("pointerdown->!btn._keyData.special"));
             this.popinTimeout = setTimeout(() => {
               // Check for poppin race condition
               if (btn._pointerDown) {
@@ -374,13 +404,13 @@ class AndroidKeyboardCard extends HTMLElement {
           btn._pointerDown = false;
           clearTimeout(this.popinTimeout);
           this.handlePointerUp(e, hass, btn);
-          //console.log("pointerup->clearTimeout");
+          if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("pointerup->clearTimeout"));
         });
         this.addPointerCancelListener(btn, (e) => {
           btn._pointerDown = false;
           clearTimeout(this.popinTimeout);
           this.handlePointerUp(e, hass, btn);
-          //console.log("pointercancel->clearTimeout");
+          if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("pointercancel->clearTimeout"));
         });
 
         row.appendChild(btn);
@@ -399,16 +429,16 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   async setLanguage(language) {
-    console.log("Android Keyboard - setting keyboard language:", language);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Keyboard - setting keyboard language:", language));
     try {
       
     } catch (e) {
-      console.error("Android Keyboard - Failed to set keyboard language:", e);
+      if (this.logger.isErrorEnabled()) console.error(this.logger.error("Android Keyboard - Failed to set keyboard language:", e));
     }
   }
 
   showPopin(evt, hass, card, btn) {
-    //console.log("showPopin:", btn);
+    if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("showPopin:", btn));
     if (this.popin) this.closePopin();
         
     // Retrieve key data
@@ -568,7 +598,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   closePopin() {
-    //console.log("closePopin");
+    if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("closePopin"));
     if (this.popin && this.popin.parentElement) {
       this.popin.remove();
       this.popin = null;
@@ -651,7 +681,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   handleGlobalPointerUp(evt) {
-    //console.log("handleGlobalPointerUp:", this.content, this._hass);
+    if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("handleGlobalPointerUp:", this.content, this._hass));
     if (this.content && this._hass) {
       for (const btn of this.content.querySelectorAll("button.key.active")) {
         this.handleKeyRelease(this._hass, btn);
@@ -747,7 +777,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Special key pressed
     if (btn._keyData.special) {
-      //console.log("handleKeyPress->special-key-pressed:", code);
+      if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("handleKeyPress->special-key-pressed:", code));
       // Press special key press through websockets
       this.appendCode(hass, code);
     }
@@ -776,7 +806,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // When the mouse is released over another key than the first pressed key
     if (this._currentBaseKey && this._currentBaseKey._keyData.code !== keyData.code) {
-      //console.log("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code);
+      if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code));
       return; // suppress the unwanted other key release
     }
 
@@ -785,7 +815,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Special but not virtual key released
     if (btn._keyData.special) {
-      //console.log("handleKeyRelease->special-key-released:", code);
+      if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("handleKeyRelease->special-key-released:", code));
       // Release special key release through websockets
       this.removeCode(hass, code);
     } else {
@@ -799,7 +829,7 @@ class AndroidKeyboardCard extends HTMLElement {
       // Non-special and not virtual key clicked
       const charToSend = btn._lowerLabel.textContent || "";
       if (charToSend) {
-        //console.log("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend);
+        if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend));
         this.clickChar(hass, code, charToSend);
       }
     }
@@ -812,7 +842,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   clickChar(hass, code, charToSend) {
-    console.log("Key clicked:", code, "Char:", charToSend);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key clicked:", code, "Char:", charToSend));
     this.sendKeyboardClick(hass, charToSend);
   }
 
@@ -823,13 +853,13 @@ class AndroidKeyboardCard extends HTMLElement {
       } else if (this.isConsumer(code)) {
         this.appendConsumerCode(hass, code);
       } else {
-        console.log("appendCode->Unknown code type:", code);
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("appendCode->Unknown code type:", code));
       }
     }
   }
 
   appendKeyCode(hass, code) {
-    console.log("Key pressed:", code);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
     if (code) {
       if (this.isVirtualModifier(code)) {
         // Modifier key pressed
@@ -843,7 +873,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   appendConsumerCode(hass, code) {
-    console.log("Consumer pressed:", code);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer pressed:", code));
     if (code) {
       this.pressedConsumers.add(code);
     }
@@ -863,7 +893,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   removeKeyCode(hass, code) {
-    console.log("Key released:", code);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
     if (code) {
       if (this.isVirtualModifier(code)) {
         // Modifier key released
@@ -877,7 +907,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   removeConsumerCode(hass, code) {
-    console.log("Consumer released:", code);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer released:", code));
     if (code) {
       this.pressedConsumers.delete(code);
     }
@@ -936,14 +966,14 @@ class AndroidKeyboardCard extends HTMLElement {
     this.addPointerUpListener(window, this._handleGlobalPointerUp);
     this.addPointerLeaveListener(window, this._handleGlobalPointerUp);
     this.addPointerCancelListener(window, this._handleGlobalPointerUp);
-    //console.log("handleGlobalPointerUp added");
+    if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("handleGlobalPointerUp added"));
   }
 
   removeGlobalHandlers() {
     this.removePointerUpListener(window, this._handleGlobalPointerUp);
     this.removePointerLeaveListener(window, this._handleGlobalPointerUp);
     this.removePointerCancelListener(window, this._handleGlobalPointerUp);
-    //console.log("handleGlobalPointerUp removed");
+    if (this.logger.isTraceEnabled()) console.trace(...this.logger.trace("handleGlobalPointerUp removed"));
   }
 
   addPointerDownListener(target, callback, options = null) {
@@ -994,7 +1024,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // Add the specified event listener
   addGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
-      console.log(`Adding event listener ${eventName} on ${target}`);
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on ${target}`));
       if (options) {
         target.addEventListener(eventName, callback, options);
       } else {
@@ -1051,7 +1081,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // Remove the specified event listener
   removeGivenEventListener(target, callback, eventName) {
     if (this.isTargetListenable(target)) {
-      console.log(`Removing event listener ${eventName} on ${target}`);
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on ${target}`));
       target.removeEventListener(eventName, callback);
     }
   }
@@ -1059,7 +1089,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // Checks whether or not target is listenable
   isTargetListenable(target) {
     if (!target || typeof target.addEventListener !== 'function') {
-      console.warn(`Invalid target ${target} element provided to isTargetListenable`);
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Invalid target ${target} element provided to isTargetListenable`));
       return false;
     }
     return true;
@@ -1070,35 +1100,35 @@ class AndroidKeyboardCard extends HTMLElement {
   // - then falling back to legacy event (when available)
   getSupportedEventListener(target, abstractEventName) {
     if (!abstractEventName) {
-      console.warn(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`);
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
       return null;
     }
-    
+
     // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
     const preferedEventName = this.preferedEventsNames.get(abstractEventName);
     if (preferedEventName) return preferedEventName;
-    
+
     // When no prefered concrete js event, then try to retrieve mapped events
     const mappedEvents = this.eventsMap.get(abstractEventName);
     if (!mappedEvents) {
-      console.warn(`Unknwon abstractEventName ${abstractEventName}`);
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknwon abstractEventName ${abstractEventName}`));
       return null;
     }
 
     // Check for supported event into all mapped events
     for (const mappedEvent of mappedEvents) {
       if (this.isEventSupported(target, mappedEvent)) {
-          
+
         // First supported event found: cache-it as prefered concrete js event
         this.preferedEventsNames.set(preferedEventName, mappedEvent);
-        
+
         // Return prefered concrete js event
-        console.log(`Cached supported concrete js event ${mappedEvent} as prefered event for ${abstractEventName}`);
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Cached supported concrete js event ${mappedEvent} as prefered event for ${abstractEventName}`));
         return mappedEvent;
       }
     }
 
-    console.error(`No concrete js event supported for ${abstractEventName}`);
+    if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`No concrete js event supported for ${abstractEventName}`));
     return null;    
   }
 
@@ -1116,7 +1146,7 @@ class AndroidKeyboardCard extends HTMLElement {
     if (navigator.vibrate) {
       navigator.vibrate(duration);
     } else {
-      console.warn('Vibration not supported on this device.');
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug('Vibration not supported on this device.'));
     }
   }
 
