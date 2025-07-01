@@ -100,6 +100,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   setConfig(config) {
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Keyboard - setConfig(config):", this.config, config));
     this.config = config;
 
     // Retrieve user configured language
@@ -407,15 +408,19 @@ class AndroidKeyboardCard extends HTMLElement {
 
         this.addPointerUpListener(btn, (e) => {
           btn._pointerDown = false;
-          clearTimeout(this.popinTimeout);
-          this.handlePointerUp(e, hass, btn);
+          
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerup->clearTimeout"));
+          clearTimeout(this.popinTimeout);
+          
+          this.handlePointerUp(e, hass, btn);
         });
         this.addPointerCancelListener(btn, (e) => {
           btn._pointerDown = false;
-          clearTimeout(this.popinTimeout);
-          this.handlePointerUp(e, hass, btn);
+          
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointercancel->clearTimeout"));
+          clearTimeout(this.popinTimeout);
+          
+          this.handlePointerUp(e, hass, btn);
         });
 
         row.appendChild(btn);
@@ -782,8 +787,9 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Special key pressed
     if (btn._keyData.special) {
+
+      // Press HID special key
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleKeyPress->special-key-pressed:", code));
-      // Press special key press through websockets
       this.appendCode(hass, code);
     }
   }
@@ -820,8 +826,9 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Special but not virtual key released
     if (btn._keyData.special) {
+
+      // Release HID special key
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleKeyRelease->special-key-released:", code));
-      // Release special key release through websockets
       this.removeCode(hass, code);
     } else {
 
@@ -834,6 +841,8 @@ class AndroidKeyboardCard extends HTMLElement {
       // Non-special and not virtual key clicked
       const charToSend = btn._lowerLabel.textContent || "";
       if (charToSend) {
+
+        // Click HID key
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleKeyRelease->normal-key-clicked:", code, "Char:", charToSend));
         this.clickChar(hass, code, charToSend);
       }
@@ -892,7 +901,7 @@ class AndroidKeyboardCard extends HTMLElement {
       } else if (this.isConsumer(code)) {
         this.removeConsumerCode(hass, code);
       } else {
-        console.log("removeCode->Unknown code type:", code);
+        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Unknown code type:", code));
       }
     }
   }

@@ -1,10 +1,61 @@
 console.info("Loading Android Remote Card");
 
+// Define logger helper class
+class Logger {
+  constructor(level = 'info') {
+    this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
+    this.setLevel(level);
+  }
+  setLevel(level) { this.level = this.levels[level] ?? 0; }
+  isLevelEnabled(level) { return (level <= this.level); }
+  isErrorEnabled() { return this.isLevelEnabled(0); }
+  isWarnEnabled() { return this.isLevelEnabled(1); }
+  isInfoEnabled() { return this.isLevelEnabled(2); }
+  isDebugEnabled() { return this.isLevelEnabled(3); }
+  isTraceEnabled() { return this.isLevelEnabled(4); }
+  
+  getArgs(header, logStyle, ...args) {
+    if (args && args.length && args.length > 0) {
+      return [`%c[${header}]`, logStyle, ...args];
+    }
+    return [`%c[${header}]`, logStyle];
+  }
+
+  // ERROR: if (this.logger.isErrorEnabled()) console.error(...this.logger.error(args));
+  error(...args) { return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
+  // WARN: if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(args));
+  warn(...args)  { return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
+  // INFO: if (this.logger.isInfoEnabled()) console.info(...this.logger.info(args));
+  info(...args)  { return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
+  // DEBUG: if (this.logger.isDebugEnabled()) console.log(...this.logger.debug(args));
+  debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
+  // TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
+  trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
+}
+
 class AndroidRemoteCard extends HTMLElement {
 
   constructor() {
     super();
+    this.logger = new Logger('debug');
+    
     this.attachShadow({ mode: "open" }); // Create shadow root
+    
+    this.eventsMap = new Map();
+    this.eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
+    this.eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
+    this.eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
+    this.eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
+    this.eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
+    this.eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
+    this.eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
+    this.eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
+    this.eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
+    this.eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
+    this.eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
+    
+    // Optimization: init map of already found prefered listeners (future lookup speedup)
+    this.preferedEventsNames = new Map();
     
     this._hass = null;
     this._uiBuilt = false;
@@ -45,6 +96,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setConfig(config) {
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Remote - setConfig(config):", this.config, config));
     this.config = config;
 
     // Retrieve user configured language
@@ -68,7 +120,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   async connectedCallback() {
-    console.log("Android Remote - connectedCallback");
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Remote - connectedCallback"));
 
     // Only build UI if hass is already set
     if (this._hass) {
@@ -77,7 +129,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   set hass(hass) {
-    console.log("Android Remote - set hass():", hass);
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Remote - set hass():", hass));
     this._hass = hass;
     if (!this._uiBuilt) {
       this.buildUi(this._hass);
@@ -86,10 +138,10 @@ class AndroidRemoteCard extends HTMLElement {
 
   buildUi(hass) {
     if (this._uiBuilt) {
-      console.log("Android Remote - buildUi() SKIPPED");
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Android Remote - buildUi() - already built"));
       return;
     }
-    console.log("Android Remote - buildUi() ENTER");
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Remote - buildUi():", hass));
 
     // Clear existing content (if any)
     if (this._uiBuilt) return;
@@ -510,23 +562,16 @@ class AndroidRemoteCard extends HTMLElement {
       btn._keyData = { code: remoteButton.code };
       
       // Add pointer Down events:
-      btn.addEventListener("pointerdown", (e) => {
+      this.addPointerDownListener(btn, (e) => {
         this.handlePointerDown(e, hass, btn);
       });
 
       // Add pointer Up events:
-      btn.addEventListener("pointerup", (e) => {
+      this.addPointerUpListener(btn, (e) => {
         this.handlePointerUp(e, hass, btn);
       });
-      btn.addEventListener("pointercancel", (e) => {
-        this.handlePointerUp(e, hass, btn);
-      });
-
-      // Add pointer Up events: for older touch devices fallback
-      btn.addEventListener("touchend", (e) => {
-        this.handlePointerUp(e, hass, btn);
-      });
-      btn.addEventListener("touchcancel", (e) => {
+      
+      this.addPointerCancelListener(btn, (e) => {
         this.handlePointerUp(e, hass, btn);
       });
     });
@@ -699,7 +744,7 @@ class AndroidRemoteCard extends HTMLElement {
 
 
     options.forEach((option, index) => {
-      option.addEventListener("click", () => {
+      this.addPointerClickListener(option, () => {
         if (state !== index) {
           state = index;
           updateFoldableUI();
@@ -709,25 +754,9 @@ class AndroidRemoteCard extends HTMLElement {
   
     updateFoldableUI();
   }
-  
-  addGlobalHandlers() {
-    window.addEventListener("pointerup", this._handleGlobalPointerUp);
-    window.addEventListener("touchend", this._handleGlobalTouchEnd);
-    window.addEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.addEventListener("touchcancel", this._handleGlobalPointerUp);
-    //console.log("handleGlobalPointerUp added");
-  }
 
-  removeGlobalHandlers() {
-    window.removeEventListener("pointerup", this._handleGlobalPointerUp);
-    window.removeEventListener("touchend", this._handleGlobalTouchEnd);
-    window.removeEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.removeEventListener("touchcancel", this._handleGlobalPointerUp);
-    //console.log("handleGlobalPointerUp removed");
-  }
-  
   handleGlobalPointerUp(evt) {
-    //console.log("handleGlobalPointerUp:", this.content, this._hass);
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp:", this.content, this._hass));
     if (this.content && this._hass) {
       this.remoteButtons.forEach((remoteButton) => {
         const btn = this.content.querySelector(`#${remoteButton.id}`);
@@ -748,7 +777,15 @@ class AndroidRemoteCard extends HTMLElement {
     this.handleKeyRelease(hass, btn);
   }
   
+  // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
   handleKeyPress(hass, btn) {
+    this.handleKeyPressInternal(hass, btn);
+
+    // Send haptic feedback to make user acknownledgable of succeeded press event
+    this.hapticFeedback();
+  }
+  
+  handleKeyPressInternal(hass, btn) {
     // Mark button active visually
     btn.classList.add("active");
 
@@ -764,12 +801,17 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Press HID key
     this.appendCode(hass, code);
+  }
 
-    // Send haptic feedback to make user acknownledgable of succeeded press event
+  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
+  handleKeyRelease(hass, btn) {
+    this.handleKeyReleaseInternal(hass, btn);
+
+    // Send haptic feedback to make user acknownledgable of succeeded release event
     this.hapticFeedback();
   }
 
-  handleKeyRelease(hass, btn) {
+  handleKeyReleaseInternal(hass, btn) {
     const keyData = btn._keyData;
     if (!keyData) return;
 
@@ -780,15 +822,13 @@ class AndroidRemoteCard extends HTMLElement {
 
     // When the mouse is released over another key than the first pressed key
     if (this._currentBaseKey && this._currentBaseKey._keyData.code !== keyData.code) {
-      //console.log("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code);
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code));
       return; // suppress the unwanted other key release
     }
 
     // Release HID key
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleKeyRelease->key-released:", code));
     this.removeCode(hass, code);
-
-    // Send haptic feedback to make user acknownledgable of succeeded release event
-    this.hapticFeedback();
   }
     
   appendCode(hass, code) {
@@ -798,13 +838,13 @@ class AndroidRemoteCard extends HTMLElement {
       } else if (this.isConsumer(code)) {
         this.appendConsumerCode(hass, code);
       } else {
-        console.log("appendCode->Unknown code type:", code);
+        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Unknown code type:", code));
       }
     }
   }
 
   appendKeyCode(hass, code) {
-    console.log("Key pressed:", code);
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Key pressed:", code));
     if (code) {
       if (this.isModifier(code)) {
         // Modifier key pressed
@@ -818,7 +858,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   appendConsumerCode(hass, code) {
-    console.log("Consumer pressed:", code);
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Consumer pressed:", code));
     if (code) {
       this.pressedConsumers.add(code);
     }
@@ -832,13 +872,13 @@ class AndroidRemoteCard extends HTMLElement {
       } else if (this.isConsumer(code)) {
         this.removeConsumerCode(hass, code);
       } else {
-        console.log("removeCode->Unknown code type:", code);
+        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Unknown code type:", code));
       }
     }
   }
 
   removeKeyCode(hass, code) {
-    console.log("Key released:", code);
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Key released:", code));
     if (code) {
       if (this.isModifier(code)) {
         // Modifier key released
@@ -852,7 +892,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   removeConsumerCode(hass, code) {
-    console.log("Consumer released:", code);
+    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Consumer released:", code));
     if (code) {
       this.pressedConsumers.delete(code);
     }
@@ -885,7 +925,181 @@ class AndroidRemoteCard extends HTMLElement {
       sendCons: Array.from(this.pressedConsumers),
     });
   }
-  
+
+  addGlobalHandlers() {
+    this.addPointerUpListener(window, this._handleGlobalPointerUp);
+    this.addPointerLeaveListener(window, this._handleGlobalPointerUp);
+    this.addPointerCancelListener(window, this._handleGlobalPointerUp);
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp added"));
+  }
+
+  removeGlobalHandlers() {
+    this.removePointerUpListener(window, this._handleGlobalPointerUp);
+    this.removePointerLeaveListener(window, this._handleGlobalPointerUp);
+    this.removePointerCancelListener(window, this._handleGlobalPointerUp);
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp removed"));
+  }
+
+  addPointerDownListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" );
+  }
+  addPointerEnterListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" );
+  }
+  addPointerOverListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" );
+  }
+  addPointerMoveListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" );
+  }
+  addPointerLeaveListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" );
+  }
+  addPointerUpListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_UP" );
+  }
+  addPointerCancelListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" );
+  }
+  addPointerOutListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" );
+  }
+  addPointerClickListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" );
+  }
+  addPointerDblClickListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" );
+  }
+  addPointerContextmenuListener(target, callback, options = null) {
+    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" );
+  }
+
+  // Add the available event listener using 
+  // - supported event first (when available) 
+  // - then falling back to legacy event (when available)
+  addAvailableEventListener(target, callback, options, events) {
+    const eventName = this.getSupportedEventListener(target, events);
+    if (eventName) {
+      this.addGivenEventListener(target, callback, options, eventName);
+    }
+    return eventName;
+  }
+
+  // Add the specified event listener
+  addGivenEventListener(target, callback, options, eventName) {
+    if (this.isTargetListenable(target)) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Adding event listener ${eventName} on ${target}`));
+      if (options) {
+        target.addEventListener(eventName, callback, options);
+      } else {
+        target.addEventListener(eventName, callback);
+      }
+    }
+  }
+
+  removePointerDownListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" );
+  }
+  removePointerEnterListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" );
+  }
+  removePointerOverListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" );
+  }
+  removePointerMoveListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" );
+  }
+  removePointerLeaveListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" );
+  }
+  removePointerUpListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_UP" );
+  }
+  removePointerCancelListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" );
+  }
+  removePointerOutListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" );
+  }
+  removePointerClickListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" );
+  }
+  removePointerDblClickListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" );
+  }
+  removePointerContextmenuListener(target, callback, options = null) {
+    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" );
+  }
+
+  // Remove the available event listener using 
+  // - supported event first (when available) 
+  // - then falling back to legacy event (when available)
+  removeAvailableEventListener(target, callback, abstractEventName) {
+    const eventName = this.getSupportedEventListener(target, abstractEventName);
+    if (eventName) {
+      this.removeGivenEventListener(target, callback, options, eventName);
+    }
+    return eventName;
+  }
+
+  // Remove the specified event listener
+  removeGivenEventListener(target, callback, eventName) {
+    if (this.isTargetListenable(target)) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Removing event listener ${eventName} on ${target}`));
+      target.removeEventListener(eventName, callback);
+    }
+  }
+
+  // Checks whether or not target is listenable
+  isTargetListenable(target) {
+    if (!target || typeof target.addEventListener !== 'function') {
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Invalid target ${target} element provided to isTargetListenable`));
+      return false;
+    }
+    return true;
+  }
+
+  // Gets the available event listener using 
+  // - supported event first (when available) 
+  // - then falling back to legacy event (when available)
+  getSupportedEventListener(target, abstractEventName) {
+    if (!abstractEventName) {
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
+      return null;
+    }
+
+    // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
+    const preferedEventName = this.preferedEventsNames.get(abstractEventName);
+    if (preferedEventName) return preferedEventName;
+
+    // When no prefered concrete js event, then try to retrieve mapped events
+    const mappedEvents = this.eventsMap.get(abstractEventName);
+    if (!mappedEvents) {
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknwon abstractEventName ${abstractEventName}`));
+      return null;
+    }
+
+    // Check for supported event into all mapped events
+    for (const mappedEvent of mappedEvents) {
+      if (this.isEventSupported(target, mappedEvent)) {
+
+        // First supported event found: cache-it as prefered concrete js event
+        this.preferedEventsNames.set(preferedEventName, mappedEvent);
+
+        // Return prefered concrete js event
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cached supported concrete js event ${mappedEvent} as prefered event for ${abstractEventName}`));
+        return mappedEvent;
+      }
+    }
+
+    if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`No concrete js event supported for ${abstractEventName}`));
+    return null;    
+  }
+
+  isEventSupported(target, eventName) {
+    return (typeof target[`on${eventName}`] === "function" || `on${eventName}` in target);
+  }
+
   // vibrate the device like an haptic feedback
   hapticFeedback() {
     if (this.haptic) this.vibrateDevice(10);
@@ -896,7 +1110,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (navigator.vibrate) {
       navigator.vibrate(duration);
     } else {
-      console.warn('Vibration not supported on this device.');
+      if (this.logger.isDebugEnabled()) console.log(...this.logger.debug('Vibration not supported on this device.'));
     }
   }
 
