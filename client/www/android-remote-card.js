@@ -150,7 +150,6 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
 
     // Clear existing content (if any)
-    if (this._uiBuilt) return;
     this.shadowRoot.innerHTML = '';
 
     // Mark UI as "built" to prevent re-enter
@@ -1015,39 +1014,17 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp removed"));
   }
 
-  addPointerDownListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" );
-  }
-  addPointerEnterListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" );
-  }
-  addPointerOverListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" );
-  }
-  addPointerMoveListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" );
-  }
-  addPointerLeaveListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" );
-  }
-  addPointerUpListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_UP" );
-  }
-  addPointerCancelListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" );
-  }
-  addPointerOutListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" );
-  }
-  addPointerClickListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" );
-  }
-  addPointerDblClickListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" );
-  }
-  addPointerContextmenuListener(target, callback, options = null) {
-    this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" );
-  }
+  addPointerDownListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
+  addPointerEnterListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
+  addPointerOverListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
+  addPointerMoveListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
+  addPointerLeaveListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
+  addPointerUpListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
+  addPointerCancelListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
+  addPointerOutListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
+  addPointerClickListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
+  addPointerDblClickListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
+  addPointerContextmenuListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
 
   // Add the available event listener using 
   // - supported event first (when available) 
@@ -1073,39 +1050,17 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  removePointerDownListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" );
-  }
-  removePointerEnterListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" );
-  }
-  removePointerOverListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" );
-  }
-  removePointerMoveListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" );
-  }
-  removePointerLeaveListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" );
-  }
-  removePointerUpListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_UP" );
-  }
-  removePointerCancelListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" );
-  }
-  removePointerOutListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" );
-  }
-  removePointerClickListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" );
-  }
-  removePointerDblClickListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" );
-  }
-  removePointerContextmenuListener(target, callback, options = null) {
-    this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" );
-  }
+  removePointerDownListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
+  removePointerEnterListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
+  removePointerOverListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
+  removePointerMoveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
+  removePointerLeaveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
+  removePointerUpListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
+  removePointerCancelListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
+  removePointerOutListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
+  removePointerClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
+  removePointerDblClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
+  removePointerContextmenuListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
 
   // Remove the available event listener using 
   // - supported event first (when available) 
