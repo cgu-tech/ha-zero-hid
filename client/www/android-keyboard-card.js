@@ -1038,10 +1038,11 @@ class AndroidKeyboardCard extends HTMLElement {
   // Add the specified event listener
   addGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Adding event listener ${eventName} on ${target}`));
       if (options) {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Adding event listener ${eventName} on ${target} with options ${options}`));
         target.addEventListener(eventName, callback, options);
       } else {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Adding event listener ${eventName} on ${target}`));
         target.addEventListener(eventName, callback);
       }
     }
@@ -1084,7 +1085,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // Remove the available event listener using 
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
-  removeAvailableEventListener(target, callback, abstractEventName) {
+  removeAvailableEventListener(target, callback, options, abstractEventName) {
     const eventName = this.getSupportedEventListener(target, abstractEventName);
     if (eventName) {
       this.removeGivenEventListener(target, callback, options, eventName);
@@ -1093,10 +1094,15 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   // Remove the specified event listener
-  removeGivenEventListener(target, callback, eventName) {
+  removeGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Removing event listener ${eventName} on ${target}`));
-      target.removeEventListener(eventName, callback);
+      if (options) {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Removing event listener ${eventName} on ${target} with options ${options}`));
+        target.removeEventListener(eventName, callback, options);
+      } else {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Removing event listener ${eventName} on ${target}`));
+        target.removeEventListener(eventName, callback);
+      }
     }
   }
 
