@@ -410,6 +410,13 @@ class AndroidRemoteCard extends HTMLElement {
         pointer-events: none; /* so clicks bubble up */
       }
 
+      #remote-backspace-button svg {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.4, 0.4);
+      }
+
       #ts-toggle-mouse svg {
         height: 100%;
         width: auto;  /* maintain aspect ratio */
@@ -522,7 +529,16 @@ class AndroidRemoteCard extends HTMLElement {
         <div class="remote-dpad-filler"></div>
       </div>
       <div class="circular-buttons">
-        <button class="circle-button left" id="remote-backspace-button">⌫</button>
+        <button class="circle-button left" id="remote-backspace-button">
+         <svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+           <!-- Backspace key outline (trapezoid-like shape) -->
+           <path d="M8 24 L20 8 H56 V40 H20 Z" />
+         
+           <!-- 'X' inside the key (representing delete action) -->
+           <line x1="28" y1="18" x2="44" y2="30" />
+           <line x1="44" y1="18" x2="28" y2="30" />
+         </svg>
+        </button>
         <div id="ts-toggle-threeStateToggle" class="ts-toggle-container center" data-state="1">
           <div class="ts-toggle-indicator"></div>
           <div class="ts-toggle-option active"><div class="ts-toggle-kb">⌨︎</div></div>
