@@ -27,7 +27,7 @@ class Logger {
   warn(...args)  { return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
   // INFO: if (this.logger.isInfoEnabled()) console.info(...this.logger.info(args));
   info(...args)  { return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
-  // DEBUG: if (this.logger.isDebugEnabled()) console.log(...this.logger.debug(args));
+  // DEBUG: if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(args));
   debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
   // TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
   trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
@@ -96,7 +96,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Remote - setConfig(config):", this.config, config));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Remote - setConfig(config):", this.config, config));
     this.config = config;
 
     // Retrieve user configured language
@@ -120,7 +120,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   async connectedCallback() {
-    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Remote - connectedCallback"));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Remote - connectedCallback"));
 
     // Only build UI if hass is already set
     if (this._hass) {
@@ -129,7 +129,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   set hass(hass) {
-    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Remote - set hass():", hass));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Remote - set hass():", hass));
     this._hass = hass;
     if (!this._uiBuilt) {
       this.buildUi(this._hass);
@@ -141,7 +141,7 @@ class AndroidRemoteCard extends HTMLElement {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Android Remote - buildUi() - already built"));
       return;
     }
-    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Android Remote - buildUi():", hass));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Remote - buildUi():", hass));
 
     // Clear existing content (if any)
     if (this._uiBuilt) return;
@@ -844,7 +844,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   appendKeyCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Key pressed:", code));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
     if (code) {
       if (this.isModifier(code)) {
         // Modifier key pressed
@@ -858,7 +858,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   appendConsumerCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Consumer pressed:", code));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer pressed:", code));
     if (code) {
       this.pressedConsumers.add(code);
     }
@@ -878,7 +878,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   removeKeyCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Key released:", code));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
     if (code) {
       if (this.isModifier(code)) {
         // Modifier key released
@@ -892,7 +892,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   removeConsumerCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.log(...this.logger.debug("Consumer released:", code));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer released:", code));
     if (code) {
       this.pressedConsumers.delete(code);
     }
@@ -1064,7 +1064,7 @@ class AndroidRemoteCard extends HTMLElement {
   // - then falling back to legacy event (when available)
   getSupportedEventListener(target, abstractEventName) {
     if (!abstractEventName) {
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
       return null;
     }
 
@@ -1075,7 +1075,7 @@ class AndroidRemoteCard extends HTMLElement {
     // When no prefered concrete js event, then try to retrieve mapped events
     const mappedEvents = this.eventsMap.get(abstractEventName);
     if (!mappedEvents) {
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknwon abstractEventName ${abstractEventName}`));
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Unknwon abstractEventName ${abstractEventName}`));
       return null;
     }
 
@@ -1110,7 +1110,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (navigator.vibrate) {
       navigator.vibrate(duration);
     } else {
-      if (this.logger.isDebugEnabled()) console.log(...this.logger.debug('Vibration not supported on this device.'));
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug('Vibration not supported on this device.'));
     }
   }
 
