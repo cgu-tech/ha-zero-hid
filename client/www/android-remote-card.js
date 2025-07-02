@@ -410,6 +410,20 @@ class AndroidRemoteCard extends HTMLElement {
         pointer-events: none; /* so clicks bubble up */
       }
 
+      #remote-home-button svg {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.7, 0.7);
+      }
+      
+      #remote-return-button svg {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.7, 0.7);
+      }
+
       #remote-backspace-button svg {
         height: 100%;
         width: auto;  /* maintain aspect ratio */
@@ -430,19 +444,19 @@ class AndroidRemoteCard extends HTMLElement {
         display: block; /* removes any inline space */
         transform: scale(0.4, 0.4);
       }
-
-      #remote-home-button svg {
+      
+      #remote-volume-down-button svg {
         height: 100%;
         width: auto;  /* maintain aspect ratio */
         display: block; /* removes any inline space */
-        transform: scale(0.7, 0.7);
+        transform: scale(0.4, 0.4);
       }
       
-      #remote-return-button svg {
+      #remote-volume-up-button svg {
         height: 100%;
         width: auto;  /* maintain aspect ratio */
         display: block; /* removes any inline space */
-        transform: scale(0.7, 0.7);
+        transform: scale(0.4, 0.4);
       }
 
       /* SVG styling */
@@ -481,7 +495,7 @@ class AndroidRemoteCard extends HTMLElement {
     wrapper.innerHTML = `
       <div class="circular-buttons no-padding-top no-padding-bottom">
         <button class="circle-button left" id="remote-power-button">
-          <svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
             <!-- Left arc -->
             <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
             <!-- Right arc -->
@@ -581,11 +595,29 @@ class AndroidRemoteCard extends HTMLElement {
       </div>
       <div id="foldable-container" style="margin-top:10px;"></div>
       <div class="circular-buttons">
-        <button class="circle-button left"   id="remote-volume-down-button"><div class="speaker">🔈</div><div class="volume-low">)</div></button>
+        <button class="circle-button left"   id="remote-volume-down-button">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Speaker body (filled) -->
+            <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
+          
+            <!-- Small volume arc -->
+            <path d="M42 26 A6 6 0 0 1 42 38" />
+          </svg>
+        </button>
         <button class="circle-button left"   id="remote-previous-track-button"><div class="track-triangle">|◀◀</div></button>
         <button class="circle-button center" id="remote-play-pause-button"><div class="track-triangle">▶| |</div></button>
         <button class="circle-button right"  id="remote-next-track-button"><div class="track-triangle">▶▶|</div></button>
-        <button class="circle-button right"  id="remote-volume-up-button"><div class="speaker">🔈</div><div class="volume-low">)</div><div class="volume-medium">)</div><div class="volume-high">)</div></button>
+        <button class="circle-button right"  id="remote-volume-up-button">
+          <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Speaker body with fill -->
+            <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
+          
+            <!-- Volume arcs (wire view) -->
+            <path d="M38 26 A6 6 0 0 1 38 38" />
+            <path d="M42 22 A10 10 0 0 1 42 42" />
+            <path d="M46 18 A14 14 0 0 1 46 46" />
+          </svg>
+        </button>
       </div>
     `;
     container.appendChild(wrapper);
