@@ -37,7 +37,8 @@ class AndroidRemoteCard extends HTMLElement {
 
   constructor() {
     super();
-    this.logger = new Logger('debug');
+    this.loglevel = 'warn';
+    this.logger = new Logger(this.loglevel);
     
     this.attachShadow({ mode: "open" }); // Create shadow root
     
@@ -96,8 +97,13 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Remote - setConfig(config):", this.config, config));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config, config));
     this.config = config;
+
+    // Retrieve user configured logging level
+    if (config.loglevel) {
+      this.loglevel = config.loglevel;
+    }
 
     // Retrieve user configured language
     if (config.language) {
@@ -120,7 +126,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   async connectedCallback() {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Remote - connectedCallback"));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
 
     // Only build UI if hass is already set
     if (this._hass) {
@@ -129,7 +135,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   set hass(hass) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Remote - set hass():", hass));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
     this._hass = hass;
     if (!this._uiBuilt) {
       this.buildUi(this._hass);
@@ -138,16 +144,20 @@ class AndroidRemoteCard extends HTMLElement {
 
   buildUi(hass) {
     if (this._uiBuilt) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Android Remote - buildUi() - already built"));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
       return;
     }
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Android Remote - buildUi():", hass));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
 
     // Clear existing content (if any)
     if (this._uiBuilt) return;
     this.shadowRoot.innerHTML = '';
 
+    // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
+
+    // Create a new logger
+    this.logger = new Logger(this.loglevel);
 
     // Re-add global handlers to ensure proper out-of-bound handling
     this.removeGlobalHandlers();
@@ -756,7 +766,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   handleGlobalPointerUp(evt) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp:", this.content, this._hass));
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp(evt):", evt));
     if (this.content && this._hass) {
       this.remoteButtons.forEach((remoteButton) => {
         const btn = this.content.querySelector(`#${remoteButton.id}`);
@@ -800,6 +810,7 @@ class AndroidRemoteCard extends HTMLElement {
     const code = keyData.code;
 
     // Press HID key
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-pressed:", code));
     this.appendCode(hass, code);
   }
 
@@ -822,12 +833,12 @@ class AndroidRemoteCard extends HTMLElement {
 
     // When the mouse is released over another key than the first pressed key
     if (this._currentBaseKey && this._currentBaseKey._keyData.code !== keyData.code) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleKeyRelease->suppressed-key:", keyData.code, "Char:", btn._lowerLabel.textContent || "", "wanted-key:", this._currentBaseKey._keyData.code));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-suppressed:", keyData.code, "char:", btn._lowerLabel.textContent || "", "in-favor-of-key:", this._currentBaseKey._keyData.code));
       return; // suppress the unwanted other key release
     }
 
     // Release HID key
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleKeyRelease->key-released:", code));
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-released:", code));
     this.removeCode(hass, code);
   }
     
