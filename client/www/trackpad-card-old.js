@@ -41,6 +41,22 @@ class TrackpadCard extends HTMLElement {
 
     this.attachShadow({ mode: "open" }); // Create shadow root
     
+    this.eventsMap = new Map();
+    this.eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
+    this.eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
+    this.eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
+    this.eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
+    this.eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
+    this.eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
+    this.eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
+    this.eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
+    this.eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
+    this.eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
+    this.eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
+    
+    // Optimization: init map of already found prefered listeners (future lookup speedup)
+    this.preferedEventsNames = new Map();
+    
     this._hass = null;
     this._uiBuilt = false;
     this.card = null;
