@@ -1013,10 +1013,10 @@ class AndroidKeyboardCard extends HTMLElement {
   addGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
       if (options) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on ${target} with options ${options}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on target with options:`, target, options));
         target.addEventListener(eventName, callback, options);
       } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on ${target}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on target:`, target));
         target.addEventListener(eventName, callback);
       }
     }
@@ -1049,10 +1049,10 @@ class AndroidKeyboardCard extends HTMLElement {
   removeGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
       if (options) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on ${target} with options ${options}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on target with options:`, target, options));
         target.removeEventListener(eventName, callback, options);
       } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on ${target}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on target:`, target));
         target.removeEventListener(eventName, callback);
       }
     }
