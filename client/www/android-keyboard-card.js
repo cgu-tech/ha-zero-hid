@@ -36,23 +36,24 @@ class Logger {
 class AndroidKeyboardCard extends HTMLElement {
   constructor() {
     super();
-    this.loglevel = 'warn';
-    this.logger = new Logger(this.loglevel);
-    
     this.attachShadow({ mode: "open" }); // Create shadow root
 
+    this.config = null;
     this._hass = null;
-    this._layoutReady = false;
     this._uiBuilt = false;
     this.card = null;
-    
-    // when not user configured, fallback to default 
-    // international language and keyboard layout
-    this.language = "FR";
-    this.layoutUrl = `/local/layouts/android/${this.language}.json`;
-    this._layoutLoaded = null;
+
+    // Config parameters
+    this.loglevel = 'warn';
+    this.logger = new Logger(this.loglevel);
     this.haptic = false;
-    
+    this.layout = 'US';
+    this.layoutUrl = `/local/layouts/android/${this.layout}.json`;
+
+    // Layout loading flags
+    this._layoutReady = false;
+    this._layoutLoaded = null;
+
     // 0: normal/shift mode
     // 1: alternative mode
     this.MODE_NORMAL = 0;
@@ -85,32 +86,34 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   setConfig(config) {
-    // Retrieve user configured logging level
-    if (config['log_level'] && config['log_level'] !== this.loglevel) {
-      console.warn(`Updating log_level: old=${this.loglevel},new=${config['log_level']}`);
-      this.loglevel = config['log_level'];
-      this.logger = new Logger(this.loglevel);
-    }
-
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config, config));
     this.config = config;
 
-    // Retrieve user configured logging level
+    // Set log level
+    const oldLoglevel = this.loglevel;
     if (config['log_level']) {
       this.loglevel = config['log_level'];
     }
 
-    // Retrieve user configured language
-    if (config['language']) {
-      this.language = config['language'];
+    // Update logger when needed
+    if (!oldLoglevel || oldLoglevel !== this.loglevel) {
+      console.log(`Log level set to ${this.loglevel}`);
+      this.logger = new Logger(this.loglevel);
+    }
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
+
+    // Set layout
+    if (config['layout']) {
+      this.layout = config['layout'];
     }
 
-    // Retrieve user configured layout
+    // Set layout URL
     if (config['layout_url']) {
       this.layoutUrl = config['layout_url'];
+    } else {
+      this.layoutUrl = `/local/layouts/android/${this.layout}.json`;
     }
 
-    // Retrieve user configured haptic feedback
+    // Set haptic feedback
     if (config['haptic']) {
       this.haptic = config['haptic'];
     }
@@ -952,7 +955,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // (different from this keyboard client displayed layout)
   setKeyboardLayout(hass) {
     hass.callService("trackpad_mouse", "setlayout", {
-      sendLayout: this.language,
+      sendLayout: this.layout,
     });
   }
 

@@ -167,7 +167,7 @@ haptic: true
 log_level: debug
 keyboard:
   log_level: debug
-  layout_url: /local/layouts/android/FR-remote.json
+  layout: FR-remote
   haptic: true
 mouse:
   log_level: trace
