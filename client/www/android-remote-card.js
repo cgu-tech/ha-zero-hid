@@ -80,9 +80,14 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setConfig(config) {
-    console.log("setConfig(config) before logger");
+    // Retrieve user configured logging level
+    if (config['log_level'] && config['log_level'] !== this.loglevel) {
+      console.warn(`Updating log_level: old=${this.loglevel},new=${config['log_level']}`);
+      this.loglevel = config['log_level'];
+      this.logger = new Logger(this.loglevel);
+    }
+
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config, config));
-    console.log("setConfig(config) after logger");
     this.config = config;
 
     // Retrieve user configured logging level

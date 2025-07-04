@@ -49,15 +49,15 @@ class TrackpadCard extends HTMLElement {
   }
 
   setConfig(config) {
-    console.log("setConfig(config) before logger");
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config, config));
-    console.log("setConfig(config) after logger");
-    this.config = config;
-
     // Retrieve user configured logging level
-    if (config['log_level']) {
+    if (config['log_level'] && config['log_level'] !== this.loglevel) {
+      console.warn(`Updating log_level: old=${this.loglevel},new=${config['log_level']}`);
       this.loglevel = config['log_level'];
+      this.logger = new Logger(this.loglevel);
     }
+
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config, config));
+    this.config = config;
 
     // Retrieve user configured haptic feedback
     if (config['haptic']) {
@@ -98,9 +98,6 @@ class TrackpadCard extends HTMLElement {
 
     // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
-
-    // Create a new logger
-    this.logger = new Logger(this.loglevel);
 
     const card = document.createElement("ha-card");
     card.style.borderRadius = "10px";
