@@ -1025,10 +1025,10 @@ class AndroidRemoteCard extends HTMLElement {
   addGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
       if (options) {
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Adding event listener ${eventName} on ${target} with options ${options}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on ${target} with options ${options}`));
         target.addEventListener(eventName, callback, options);
       } else {
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Adding event listener ${eventName} on ${target}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on ${target}`));
         target.addEventListener(eventName, callback);
       }
     }
@@ -1061,10 +1061,10 @@ class AndroidRemoteCard extends HTMLElement {
   removeGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
       if (options) {
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Removing event listener ${eventName} on ${target} with options ${options}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on ${target} with options ${options}`));
         target.removeEventListener(eventName, callback, options);
       } else {
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Removing event listener ${eventName} on ${target}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on ${target}`));
         target.removeEventListener(eventName, callback);
       }
     }
@@ -1113,10 +1113,10 @@ class AndroidRemoteCard extends HTMLElement {
     // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
     const preferedEventName = this.preferedEventsNames.get(abstractEventName);
     if (preferedEventName) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache HIT for event ${abstractEventName}: found prefered event ${preferedEventName}`));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache HIT for event ${abstractEventName}: found cached prefered event ${preferedEventName}`));
       return preferedEventName;
     }
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache MISS for event ${abstractEventName}`));
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache MISS for event ${abstractEventName}: no supported prefered event cached`));
 
     // When no prefered concrete js event, then try to retrieve mapped events
     const mappedEvents = this.eventsMap.get(abstractEventName);
@@ -1133,7 +1133,7 @@ class AndroidRemoteCard extends HTMLElement {
         this.preferedEventsNames.set(abstractEventName, mappedEvent);
 
         // Return prefered concrete js event
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Event ${abstractEventName} mapped to supported prefered event ${mappedEvent}`));
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache UPDATE for event ${abstractEventName}: set to prefered event ${mappedEvent}`));
         return mappedEvent;
       }
     }
