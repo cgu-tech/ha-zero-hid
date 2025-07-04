@@ -163,8 +163,15 @@ haptic: true
 #### Android remote control card
 ```yaml
 type: custom:android-remote-card
-layoutUrl: /local/layouts/android/US-remote.json
 haptic: true
+log_level: debug
+keyboard:
+  log_level: debug
+  layout_url: /local/layouts/android/FR-remote.json
+  haptic: true
+mouse:
+  log_level: trace
+  haptic: true
 ```
 
 ## F.A.Q
