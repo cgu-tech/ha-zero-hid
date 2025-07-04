@@ -102,9 +102,11 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Children configs
     if (config['keyboard']) {
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config)->this.keyboardConfig:", this.keyboardConfig, config['keyboard']));
       this.keyboardConfig = config['keyboard'];
     }
     if (config['mouse']) {
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config)->this.mouseConfig:", this.keyboardConfig, config['mouse']));
       this.mouseConfig = config['mouse'];
     }
   }
