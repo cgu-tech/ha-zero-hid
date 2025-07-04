@@ -47,6 +47,11 @@ class TrackpadCard extends HTMLElement {
     this.loglevel = 'warn';
     this.logger = new Logger(this.loglevel);
     this.haptic = false;
+    
+    this.isToggledOn = false;
+
+    this.pointersStart = new Map();
+    this.pointersEnd = new Map();
   }
 
   setConfig(config) {
@@ -220,11 +225,6 @@ class TrackpadCard extends HTMLElement {
         points="52.5,36.75 57.75,42 52.5,47.25"
         fill="none" stroke="currentColor" stroke-width="2" />
     `;
-
-    let isToggledOn = false;
-    let lastX = null;
-    let lastY = null;
-    let trackpadMode = null;
     
     // let tapStartTime = 0;
     // let longPressTimeout;
@@ -234,87 +234,51 @@ class TrackpadCard extends HTMLElement {
 
     this.addPointerClickListener(scrollIcon, e => {
       e.stopPropagation();
-      isToggledOn = !isToggledOn;
-      scrollIcon.classList.toggle("toggled-on", isToggledOn);
+      this.isToggledOn = !this.isToggledOn;
+      scrollIcon.classList.toggle("toggled-on", this.isToggledOn);
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll mode toggle on:", this.isToggledOn));
     });
 
     trackpad.appendChild(scrollIcon);
 
-    // Two-finger tap detection
-    const activePointers = new Map();
-    const twoFingerSwipes = {
-      startPositions: new Map(),
-      endPositions: new Map(),
-    };
-    
-    function getAverageDelta(startMap, endMap) {
-      let dx = 0;
-      let dy = 0;
-      let count = 0;
-      for (const [id, start] of startMap.entries()) {
-        const end = endMap.get(id);
-        if (end) {
-          dx += end.clientX - start.clientX;
-          dy += end.clientY - start.clientY;
-          count++;
-        }
-      }
-      if (count === 0) return { dx: 0, dy: 0 };
-      return { dx: dx / count, dy: dy / count };
-    }
-    
     // Track touches
     this.addPointerDownListener(trackpad, (e) => {
-      activePointers.set(e.pointerId, e);
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerDown(e):", e));
+      this.pointersStart.set(e.pointerId, e);
+      this.pointersEnd.set(e.pointerId);
     });
 
     this.addPointerUpListener(trackpad, (e) => {
-      activePointers.delete(e.pointerId);
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerUp(e):", e));
+      this.pointersStart.delete(e.pointerId);
+      this.pointersEnd.delete(e.pointerId);
     });
 
     this.addPointerCancelListener(trackpad, (e) => {
-      activePointers.delete(e.pointerId);
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerCancel(e):", e));
+      this.pointersStart.delete(e.pointerId);
+      this.pointersEnd.delete(e.pointerId);
     });
 
     this.addPointerLeaveListener(trackpad, (e) => {
-      activePointers.delete(e.pointerId);
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerLeave(e):", e));
+      this.pointersStart.delete(e.pointerId);
+      this.pointersEnd.delete(e.pointerId);
     });
 
     this.addPointerMoveListener(trackpad, (e) => {      
-      if (activePointers.has(e.pointerId)) {
-        twoFingerSwipes.endPositions.set(e.pointerId, e);
+      if (this.pointersStart.has(e.pointerId)) {
+        this.pointersEnd.set(e.pointerId, e);
 
-        if (activePointers.size === 1) {
+        if (this.pointersStart.size === 1) {
           // Single touch: mouse move
-          const lastE = activePointers.get(e.pointerId);
-          const lastX = lastE.clientX;
-          const lastY = lastE.clientY;
-          const dx = e.clientX - lastX;
-          const dy = e.clientY - lastY;
-          activePointers.set(e.pointerId, e);
-
-          if (isToggledOn) {
-            trackpadMode = "scroll";
-          } else {
-            trackpadMode = "move";
-          }
-          hass.callService("trackpad_mouse", trackpadMode, {
-            x: dx,
-            y: dy,
-          });
-        } else if (activePointers.size === 2 && twoFingerSwipes.endPositions.size === 2) {
+          this.handleSinglePointerMove(e);
+        } else if (this.pointersStart.size === 2 && this.pointersEnd.size === 2) {
           // Double-touch: mouse scroll
-          const { dx, dy } = getAverageDelta(
-            activePointers,
-            twoFingerSwipes.endPositions
-          );
-          activePointers.set(e.pointerId, e);
-
-          hass.callService("trackpad_mouse", "scroll", {
-            x: dx,
-            y: dy,
-          });
+          this.handleDoublePointersMove(e);
         }
+
+        this.pointersStart.set(e.pointerId, e);
       }
     });
 
@@ -434,6 +398,57 @@ class TrackpadCard extends HTMLElement {
     
     this.card = card;
     this.content = container;
+  }
+
+  handleSinglePointerMove(e) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerMove(e):", e));
+    const lastE = this.pointersStart.get(e.pointerId);
+    const lastX = lastE.clientX;
+    const lastY = lastE.clientY;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+
+    hass.callService("trackpad_mouse", this.getTrackpadMode(), {
+      x: dx,
+      y: dy,
+    });
+  }
+
+  handleDoublePointersMove(e) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleDoublePointersMove(e):", e));
+    const { dx, dy } = this.getAverageDelta(
+      pointersStart,
+      pointersEnd
+    );
+
+    hass.callService("trackpad_mouse", "scroll", {
+      x: dx,
+      y: dy,
+    });
+  }
+
+  getTrackpadMode() {
+    if (this.isToggledOn) {
+      return "scroll";
+    } else {
+      return "move";
+    }
+  }
+
+  getAverageDelta(startMap, endMap) {
+    let dx = 0;
+    let dy = 0;
+    let count = 0;
+    for (const [id, start] of startMap.entries()) {
+      const end = endMap.get(id);
+      if (end) {
+        dx += end.clientX - start.clientX;
+        dy += end.clientY - start.clientY;
+        count++;
+      }
+    }
+    if (count === 0) return { dx: 0, dy: 0 };
+    return { dx: dx / count, dy: dy / count };
   }
 
   addPointerDownListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
