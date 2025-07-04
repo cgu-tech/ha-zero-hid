@@ -69,13 +69,13 @@ class TrackpadCard extends HTMLElement {
     this.config = config;
 
     // Retrieve user configured logging level
-    if (config.loglevel) {
-      this.loglevel = config.loglevel;
+    if (config['log_level']) {
+      this.loglevel = config['log_level'];
     }
 
     // Retrieve user configured haptic feedback
-    if (config.haptic) {
-      this.haptic = config.haptic;
+    if (config['haptic']) {
+      this.haptic = config['haptic'];
     }
   }
 

@@ -105,23 +105,23 @@ class AndroidKeyboardCard extends HTMLElement {
     this.config = config;
 
     // Retrieve user configured logging level
-    if (config.loglevel) {
-      this.loglevel = config.loglevel;
+    if (config['log_level']) {
+      this.loglevel = config['log_level'];
     }
 
     // Retrieve user configured language
-    if (config.language) {
-      this.language = config.language;
+    if (config['language']) {
+      this.language = config['language'];
     }
 
     // Retrieve user configured layout
-    if (config.layoutUrl) {
-      this.layoutUrl = config.layoutUrl;
+    if (config['layout_url']) {
+      this.layoutUrl = config['layout_url'];
     }
 
     // Retrieve user configured haptic feedback
-    if (config.haptic) {
-      this.haptic = config.haptic;
+    if (config['haptic']) {
+      this.haptic = config['haptic'];
     }
   }
 
