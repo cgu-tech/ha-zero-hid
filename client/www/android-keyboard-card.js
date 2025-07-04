@@ -1121,7 +1121,7 @@ class AndroidKeyboardCard extends HTMLElement {
         this.preferedEventsNames.set(abstractEventName, mappedEvent);
 
         // Return prefered concrete js event
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Event ${abstractEventName} mapped to supported prefered event ${mappedEvent}`));
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Event ${abstractEventName} mapped to supported prefered event ${mappedEvent}`));
         return mappedEvent;
       }
     }
