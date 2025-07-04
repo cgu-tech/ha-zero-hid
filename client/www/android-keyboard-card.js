@@ -85,7 +85,9 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   setConfig(config) {
+    console.log("setConfig(config) before logger");
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config, config));
+    console.log("setConfig(config) after logger");
     this.config = config;
 
     // Retrieve user configured logging level
