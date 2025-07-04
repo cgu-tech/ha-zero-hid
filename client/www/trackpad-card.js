@@ -40,23 +40,7 @@ class TrackpadCard extends HTMLElement {
     this.logger = new Logger(this.loglevel);
 
     this.attachShadow({ mode: "open" }); // Create shadow root
-    
-    this.eventsMap = new Map();
-    this.eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
-    this.eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
-    this.eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
-    this.eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
-    this.eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
-    this.eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
-    this.eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
-    this.eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
-    this.eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
-    this.eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
-    this.eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
-    
-    // Optimization: init map of already found prefered listeners (future lookup speedup)
-    this.preferedEventsNames = new Map();
-    
+
     this._hass = null;
     this._uiBuilt = false;
     this.card = null;
@@ -536,10 +520,36 @@ class TrackpadCard extends HTMLElement {
       if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
       return null;
     }
+    
+    // Init events mapping and cache when needed
+    if (!this.eventsMap) {
+      
+      // Mapping for "virtual" event names with their "real" event names counterparts 
+      // that might be supported by device - or not (by preference order)
+      this.eventsMap = new Map();
+      this.eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
+      this.eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
+      this.eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
+      this.eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
+      this.eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
+      this.eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
+      this.eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
+      this.eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
+      this.eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
+      this.eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
+      this.eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
+      
+      // Cache for prefered listeners (lookup speedup)
+      this.preferedEventsNames = new Map();
+    }
 
     // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
     const preferedEventName = this.preferedEventsNames.get(abstractEventName);
-    if (preferedEventName) return preferedEventName;
+    if (preferedEventName) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache HIT for event ${abstractEventName}: found prefered event ${preferedEventName}`));
+      return preferedEventName;
+    }
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache MISS for event ${abstractEventName}`));
 
     // When no prefered concrete js event, then try to retrieve mapped events
     const mappedEvents = this.eventsMap.get(abstractEventName);
@@ -553,10 +563,10 @@ class TrackpadCard extends HTMLElement {
       if (this.isEventSupported(target, mappedEvent)) {
 
         // First supported event found: cache-it as prefered concrete js event
-        this.preferedEventsNames.set(preferedEventName, mappedEvent);
+        this.preferedEventsNames.set(abstractEventName, mappedEvent);
 
         // Return prefered concrete js event
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cached supported concrete js event ${mappedEvent} as prefered event for ${abstractEventName}`));
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Event ${abstractEventName} mapped to supported prefered event ${mappedEvent}`));
         return mappedEvent;
       }
     }
