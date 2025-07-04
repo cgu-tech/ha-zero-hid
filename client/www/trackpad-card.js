@@ -408,7 +408,7 @@ class TrackpadCard extends HTMLElement {
     const dx = e.clientX - lastX;
     const dy = e.clientY - lastY;
 
-    hass.callService("trackpad_mouse", this.getTrackpadMode(), {
+    this._hass.callService("trackpad_mouse", this.getTrackpadMode(), {
       x: dx,
       y: dy,
     });
@@ -421,7 +421,7 @@ class TrackpadCard extends HTMLElement {
       pointersEnd
     );
 
-    hass.callService("trackpad_mouse", "scroll", {
+    this._hass.callService("trackpad_mouse", "scroll", {
       x: dx,
       y: dy,
     });
