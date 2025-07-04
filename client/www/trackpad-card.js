@@ -36,30 +36,36 @@ class Logger {
 class TrackpadCard extends HTMLElement {
   constructor() {
     super();
-    this.loglevel = 'warn';
-    this.logger = new Logger(this.loglevel);
-
     this.attachShadow({ mode: "open" }); // Create shadow root
 
     this._hass = null;
     this._uiBuilt = false;
     this.card = null;
     
+    // Configs
+    this.config = null;
+    this.loglevel = 'warn';
+    this.logger = new Logger(this.loglevel);
     this.haptic = false;
   }
 
   setConfig(config) {
-    // Retrieve user configured logging level
-    if (config['log_level'] && config['log_level'] !== this.loglevel) {
-      console.warn(`Updating log_level: old=${this.loglevel},new=${config['log_level']}`);
-      this.loglevel = config['log_level'];
-      this.logger = new Logger(this.loglevel);
-    }
-
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config, config));
     this.config = config;
 
-    // Retrieve user configured haptic feedback
+    // Set log level
+    const oldLoglevel = this.loglevel;
+    if (config['log_level']) {
+      this.loglevel = config['log_level'];
+    }
+
+    // Update logger when needed
+    if (!oldLoglevel || oldLoglevel !== this.loglevel) {
+      console.log(`Log level set to ${this.loglevel}`);
+      this.logger = new Logger(this.loglevel);
+    }
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
+
+    // Set haptic feedback
     if (config['haptic']) {
       this.haptic = config['haptic'];
     }

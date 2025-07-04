@@ -38,12 +38,12 @@ class AndroidKeyboardCard extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" }); // Create shadow root
 
-    this.config = null;
     this._hass = null;
     this._uiBuilt = false;
     this.card = null;
 
-    // Config parameters
+    // Configs
+    this.config = null;
     this.loglevel = 'warn';
     this.logger = new Logger(this.loglevel);
     this.haptic = false;
@@ -101,6 +101,11 @@ class AndroidKeyboardCard extends HTMLElement {
     }
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
 
+    // Set haptic feedback
+    if (config['haptic']) {
+      this.haptic = config['haptic'];
+    }
+
     // Set layout
     if (config['layout']) {
       this.layout = config['layout'];
@@ -111,11 +116,6 @@ class AndroidKeyboardCard extends HTMLElement {
       this.layoutUrl = config['layout_url'];
     } else {
       this.layoutUrl = `/local/layouts/android/${this.layout}.json`;
-    }
-
-    // Set haptic feedback
-    if (config['haptic']) {
-      this.haptic = config['haptic'];
     }
   }
 

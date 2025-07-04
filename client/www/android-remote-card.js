@@ -34,19 +34,18 @@ class Logger {
 }
 
 class AndroidRemoteCard extends HTMLElement {
-
   constructor() {
-    super();
-    this.loglevel = 'warn';
-    this.logger = new Logger(this.loglevel);
-    
+    super();    
     this.attachShadow({ mode: "open" }); // Create shadow root
-        
+
     this._hass = null;
     this._uiBuilt = false;
     this.card = null;
 
-    // Config
+    // Configs
+    this.config = null;
+    this.loglevel = 'warn';
+    this.logger = new Logger(this.loglevel);
     this.haptic = false;
     this.keyboardConfig = {};
     this.mouseConfig = {};
@@ -80,37 +79,37 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setConfig(config) {
-    // Retrieve user configured logging level
-    if (config['log_level'] && config['log_level'] !== this.loglevel) {
-      console.warn(`Updating log_level: old=${this.loglevel},new=${config['log_level']}`);
-      this.loglevel = config['log_level'];
-      this.logger = new Logger(this.loglevel);
-    }
-
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config, config));
     this.config = config;
 
-    // Retrieve user configured logging level
+    // Set log level
+    const oldLoglevel = this.loglevel;
     if (config['log_level']) {
       this.loglevel = config['log_level'];
     }
 
-    // Retrieve user configured haptic feedback
+    // Update logger when needed
+    if (!oldLoglevel || oldLoglevel !== this.loglevel) {
+      console.log(`Log level set to ${this.loglevel}`);
+      this.logger = new Logger(this.loglevel);
+    }
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
+
+    // Set haptic feedback
     if (config['haptic']) {
       this.haptic = config['haptic'];
     }
 
-    // Children configs
+    // Set keyboard configs
     if (config['keyboard']) {
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config)->this.keyboardConfig:", this.keyboardConfig, config['keyboard']));
       this.keyboardConfig = config['keyboard'];
     }
+
+    // Set mouse configs
     if (config['mouse']) {
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config)->this.mouseConfig:", this.keyboardConfig, config['mouse']));
       this.mouseConfig = config['mouse'];
     }
   }
-  
+
   getCardSize() {
     return 5;
   }
