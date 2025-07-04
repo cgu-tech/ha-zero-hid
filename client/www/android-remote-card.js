@@ -144,9 +144,6 @@ class AndroidRemoteCard extends HTMLElement {
     // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
 
-    // Create a new logger
-    this.logger = new Logger(this.loglevel);
-
     // Re-add global handlers to ensure proper out-of-bound handling
     this.removeGlobalHandlers();
     this.addGlobalHandlers();

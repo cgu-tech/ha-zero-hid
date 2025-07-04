@@ -125,6 +125,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
+
     // Load keyboard layout
     if (!this._layoutLoaded || this._layoutLoaded !== this.layoutUrl) {
       this._layoutReady = false;
@@ -173,9 +174,6 @@ class AndroidKeyboardCard extends HTMLElement {
     
     // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
-    
-    // Create a new logger
-    this.logger = new Logger(this.loglevel);
     
     // Re-add global handlers to ensure proper out-of-bound handling
     this.removeGlobalHandlers();
