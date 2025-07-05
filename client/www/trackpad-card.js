@@ -2,11 +2,13 @@ console.info("Loading Trackpad Card");
 
 // Define logger helper class
 class Logger {
-  constructor(level = 'info') {
+  constructor(level, hass = null) {
     this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
     this.setLevel(level);
+    this._hass = hass;
   }
   setLevel(level) { this.level = this.levels[level] ?? 0; }
+  setHass(hass) { this._hass = hass; }
   isLevelEnabled(level) { return (level <= this.level); }
   isErrorEnabled() { return this.isLevelEnabled(0); }
   isWarnEnabled() { return this.isLevelEnabled(1); }
@@ -16,6 +18,7 @@ class Logger {
   
   getArgs(header, logStyle, ...args) {
     if (args && args.length && args.length > 0) {
+      if (this._hass) this._hass.callService("trackpad_mouse", "log", { level: header, logs: args, });
       return [`%c[${header}]`, logStyle, ...args];
     }
     return [`%c[${header}]`, logStyle];
@@ -92,6 +95,7 @@ class TrackpadCard extends HTMLElement {
   set hass(hass) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
     this._hass = hass;
+    this.logger.setHass(hass);
     if (!this._uiBuilt) {
       this.buildUi(this._hass);
     }

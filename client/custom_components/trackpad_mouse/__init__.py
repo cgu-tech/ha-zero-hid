@@ -15,6 +15,17 @@ from homeassistant.components.websocket_api import (
 from .websocket_handler import WebSocketClient
 from .const import DOMAIN, MIN_RANGE, MAX_RANGE
 
+# Define TRACE level (lower than DEBUG, which is 10)
+TRACE_LEVEL_NUM = 5
+logging.addLevelName(TRACE_LEVEL_NUM, "TRACE")
+
+def trace(self, message, *args, **kwargs):
+    if self.isEnabledFor(TRACE_LEVEL_NUM):
+        self._log(TRACE_LEVEL_NUM, message, args, **kwargs)
+
+# Add 'trace' method to logger
+logging.Logger.trace = trace
+
 _LOGGER = logging.getLogger(__name__)
 
 # Use empty_config_schema because the component does not have any config options
@@ -58,6 +69,11 @@ KEYPRESS_SERVICE_SCHEMA = vol.Schema({
 
 CONPRESS_SERVICE_SCHEMA = vol.Schema({
     vol.Optional("sendCons", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
+})
+
+LOG_SERVICE_SCHEMA = vol.Schema({
+    vol.Required("level"): vol.All(lambda v: v or "", ensure_string_or_empty),
+    vol.Required("logs"): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
 @websocket_command({vol.Required("type"): "trackpad_mouse/sync_keyboard"})
@@ -184,7 +200,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     @callback
     async def handle_chartap(call: ServiceCall) -> None:
         chars = call.data.get("sendChars")
-        _LOGGER.exception(f"handle_chartap.call.data.sendChars: {chars}")
         _LOGGER.debug(f"handle_chartap.call.data.sendChars: {chars}")
 
         # Use shared client
@@ -234,6 +249,31 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_conpress: {e}")
 
+    """Handle logging to home assistant backend."""
+    @callback
+    async def handle_log(call: ServiceCall) -> None:
+        level = call.data.get("level")
+        logs = call.data.get("logs")
+        if level == "TRA":
+            for log in logs:
+                _LOGGER.trace(log)
+        elif level == "DBG":
+            for log in logs:
+                _LOGGER.debug(log)
+        elif level == "INF":
+            for log in logs:
+                _LOGGER.info(log)
+        elif level == "WRN":
+            for log in logs:
+                _LOGGER.warning(log)
+        elif level == "ERR":
+            for log in logs:
+                _LOGGER.error(log)
+        else:
+            for log in logs:
+                _LOGGER.critical(log)
+
+
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
@@ -244,6 +284,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "chartap", handle_chartap, schema=CHARTAP_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "conpress", handle_conpress, schema=CONPRESS_SERVICE_SCHEMA)
+    hass.services.async_register(DOMAIN, "log", handle_log, schema=LOG_SERVICE_SCHEMA)
 
     # Register WebSocket command
     async_register_command(hass, websocket_sync_keyboard)
