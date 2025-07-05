@@ -243,24 +243,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_log(call: ServiceCall) -> None:
         level = call.data.get("level")
         logs = call.data.get("logs")
+        fmt = "[CLIENT][%s]" + (" %s" * len(logs))
         if level == "TRA":
-            for log in logs:
-                _LOGGER.debug("[CLIENT][%s] %s", level, log)
+            _LOGGER.debug(fmt, level, *logs)
         elif level == "DBG":
-            for log in logs:
-                _LOGGER.debug("[CLIENT][%s] %s", level, log)
+            _LOGGER.debug(fmt, level, *logs)
         elif level == "INF":
-            for log in logs:
-                _LOGGER.info("[CLIENT][%s] %s", level, log)
+            _LOGGER.info(fmt, level, *logs)
         elif level == "WRN":
-            for log in logs:
-                _LOGGER.warning("[CLIENT][%s] %s", level, log)
+            _LOGGER.warning(fmt, level, *logs)
         elif level == "ERR":
-            for log in logs:
-                _LOGGER.error("[CLIENT][%s] %s", level, log)
+            _LOGGER.error(fmt, level, *logs)
         else:
-            for log in logs:
-                _LOGGER.critical("[CLIENT][%s] %s", level, log)
+            _LOGGER.critical(fmt, level, *logs)
 
 
     # Register our services with Home Assistant.
