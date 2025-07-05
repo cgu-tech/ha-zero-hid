@@ -72,7 +72,7 @@ class Logger {
   
     // Handle arrays
     if (Array.isArray(input)) {
-      return input.map(item => deepSerialize(item, seen));
+      return input.map(item => this.deepSerialize(item, seen));
     }
   
     const output = {};
@@ -85,7 +85,7 @@ class Logger {
           try {
             const value = input[key];
             if (typeof value === "function") return; // skip functions
-            output[key] = deepSerialize(value, seen);
+            output[key] = this.deepSerialize(value, seen);
           } catch (err) {
             output[key] = `[unreadable: ${err.message}]`;
           }
