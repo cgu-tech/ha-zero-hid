@@ -3,6 +3,8 @@
 
 cleanup() {
     # Cleanup existing client elements when needed
+    rm /config/www/utils/logger.js >/dev/null 2>&1 || true
+    
     rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
     
     rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
