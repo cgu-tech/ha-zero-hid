@@ -34,13 +34,16 @@ export class Logger {
   isTraceEnabled() { return this.isLevelEnabled(4); }
   
   getArgs(header, logStyle, ...args) {
-    if (args && args.length && args.length > 0) {
-      if (this._hass && this._pushback) {
-        const serializedArgs = args.map(arg => this.deepSerialize(arg, this.objByteLimit, this.objLevelLimit));
-        if (serializedArgs.length > 0) {
-          this._hass.callService("trackpad_mouse", "log", { "level": header, "logs": serializedArgs, });
-        }
+    // Push logs to backend when needed
+    if (this._hass && this._pushback) {
+      const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.deepSerialize(arg, this.objByteLimit, this.objLevelLimit)) : [];
+      if (serializedArgs.length > 0) {
+        this._hass.callService("trackpad_mouse", "log", { "level": header, "logs": serializedArgs, });
       }
+    }
+    
+    // Give frontend logs format
+    if (args && args.length && args.length > 0) {
       return [`%c[${header}]`, logStyle, ...args];
     }
     return [`%c[${header}]`, logStyle];
