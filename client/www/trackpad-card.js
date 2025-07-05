@@ -5,15 +5,16 @@ class Logger {
   constructor(level, hass = null) {
     this.levels = { error: 0, warning: 1, info: 2, debug: 3, trace: 4 };
     this.levelsKeys = Object.fromEntries(Object.entries(original).map(([key, value]) => [value, key]));
-    this.setLevel(level);
     this._hass = hass;
+    this.setLevel(level);
   }
   setLevel(level) {
+    console.log(`Log level set to ${this.loglevel}`);
     this.level = this.levels[level] ?? 0;
     if (this._hass) {
       const hassLoggerLevel = this.levelsKeys[String(this.level)];
       this._hass.callService("logger", "set_level", { "custom_components.trackpad_mouse": hassLoggerLevel });
-      console.log(`Setup custom_components.trackpad_mouse logger to ${hassLoggerLevel}`);
+      console.log(`Backend log level set to ${hassLoggerLevel} for custom_components.trackpad_mouse`);
     }
   }
   setHass(hass) {
@@ -79,7 +80,6 @@ class TrackpadCard extends HTMLElement {
 
     // Update logger when needed
     if (!oldLoglevel || oldLoglevel !== this.loglevel) {
-      console.log(`Log level set to ${this.loglevel}`);
       this.logger = new Logger(this.loglevel);
     }
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
