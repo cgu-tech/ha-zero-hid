@@ -343,7 +343,7 @@ class TrackpadCard extends HTMLElement {
   handleSinglePointerMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerMove(e):", e));
     const { dx, dy } = this.getSinglePointerDelta(this.pointersStart, this.pointersEnd);
-
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
     }
@@ -352,8 +352,8 @@ class TrackpadCard extends HTMLElement {
   handleDoublePointersMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleDoublePointersMove(e):", e));
     const { dx, dy } = this.getDoublePointerDelta(this.pointersStart, this.pointersEnd);
-
-    if (dxRound !== 0 || dyRound !== 0) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for two pointers:`, dx, dy));
+    if (dx !== 0 || dy !== 0) {
       this._hass.callService("trackpad_mouse", "scroll", { x: dx, y: dy, });
     }
   }
