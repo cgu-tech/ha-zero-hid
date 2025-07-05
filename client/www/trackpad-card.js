@@ -18,6 +18,7 @@ class Logger {
   }
   setHass(hass) {
     this._hass = hass;
+    console.log(`Hass set to ${hass}`);
     this.setLevel(this.levelsKeys[String(this.level)]);
   }
   isLevelEnabled(level) { return (level <= this.level); }
