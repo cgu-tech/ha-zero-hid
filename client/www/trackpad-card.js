@@ -14,7 +14,7 @@ class Logger {
     this.level = this.levels[level] ?? 0;
     if (this._hass) {
       const hassLoggerLevel = this.levelsKeys[String(this.level)];
-      this._hass.callService("logger", "set_level", { [componentName]: hassLoggerLevel });
+      this._hass.callService("logger", "set_level", { "trackpad_mouse": hassLoggerLevel });
     }
   }
   setHass(hass) {
