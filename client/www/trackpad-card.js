@@ -31,7 +31,12 @@ class Logger {
   
   getArgs(header, logStyle, ...args) {
     if (args && args.length && args.length > 0) {
-      if (this._hass) this._hass.callService("trackpad_mouse", "log", { "level": header, "logs": args, });
+      if (this._hass) {
+        const serializedArgs = args.map(arg => this.deepSerialize(arg));
+        if (serializedArgs.length > 0) {
+          this._hass.callService("trackpad_mouse", "log", { "level": header, "logs": serializedArgs, });
+        }
+      }
       return [`%c[${header}]`, logStyle, ...args];
     }
     return [`%c[${header}]`, logStyle];
@@ -47,6 +52,51 @@ class Logger {
   debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
   // TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
   trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
+  
+  deepSerialize(input, seen = new WeakSet()) {
+    // Handle primitives
+    if (
+      input === null ||
+      typeof input !== "object" ||
+      input instanceof Date ||
+      input instanceof RegExp
+    ) {
+      return input;
+    }
+  
+    // Prevent circular references
+    if (seen.has(input)) {
+      return "[Circular]";
+    }
+    seen.add(input);
+  
+    // Handle arrays
+    if (Array.isArray(input)) {
+      return input.map(item => deepSerialize(item, seen));
+    }
+  
+    const output = {};
+    let current = input;
+  
+    // Walk prototype chain
+    while (current && current !== Object.prototype) {
+      Object.getOwnPropertyNames(current).forEach(key => {
+        if (!(key in output)) {
+          try {
+            const value = input[key];
+            if (typeof value === "function") return; // skip functions
+            output[key] = deepSerialize(value, seen);
+          } catch (err) {
+            output[key] = `[unreadable: ${err.message}]`;
+          }
+        }
+      });
+      current = Object.getPrototypeOf(current);
+    }
+  
+    return output;
+  }
+
 }
 
 class TrackpadCard extends HTMLElement {
