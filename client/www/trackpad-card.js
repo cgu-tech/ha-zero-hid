@@ -238,7 +238,7 @@ class TrackpadCard extends HTMLElement {
         const startTime = clickEntry["event"].timestamp;
         const endTime = e.timestamp;
         const duration = endTime - startTime; // in milliseconds
-        if (duration < triggerLongClick) {
+        if (duration < this.triggerLongClick) {
           // Short click
           this.handleSinglePointerClick(e);
         }
