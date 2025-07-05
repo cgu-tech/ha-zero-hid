@@ -4,7 +4,7 @@ console.info("Loading Trackpad Card");
 class Logger {
   constructor(level, hass = null) {
     this.levels = { error: 0, warning: 1, info: 2, debug: 3, trace: 4 };
-    this.levelsKeys = Object.fromEntries(Object.entries(original).map(([key, value]) => [value, key]));
+    this.levelsKeys = Object.fromEntries(Object.entries(this.levels).map(([key, value]) => [value, key]));
     this._hass = hass;
     this.setLevel(level);
   }
