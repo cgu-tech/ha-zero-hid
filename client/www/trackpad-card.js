@@ -233,6 +233,7 @@ class TrackpadCard extends HTMLElement {
 
       if (clickEntry && !clickEntry["move-detected"]) {
         // No move detected as-of now:
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("No move detected for:", e));
 
         // Check if short click or long click
         const startTime = clickEntry["event"].timestamp;

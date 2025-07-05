@@ -1,6 +1,9 @@
 #!/bin/bash
 # Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
 
+CONFIG_FILE="/config/trackpad_mouse.config"
+MODULE_FILE="/config/custom_components/trackpad_mouse/__init__.py"
+
 cleanup() {
     # Cleanup existing client elements when needed
     rm /config/www/utils/logger.js >/dev/null 2>&1 || true
@@ -31,22 +34,55 @@ install() {
     # Enable HA client integration
     grep -qxF "trackpad_mouse:" /config/configuration.yaml || echo "trackpad_mouse:" >> /config/configuration.yaml
     
+    # Config flags
+    is_websocket_server_ip_retrieved=false
+    websocket_server_ip=""
+    
+    # Check if the config file exists
+    if [ -f "${CONFIG_FILE}" ]; then
+    
+        # Try to retrieve the value of "websocket_server_ip"
+        websocket_server_ip=$(grep "^websocket_server_ip:" "${CONFIG_FILE}" | cut -d':' -f2- | xargs)
+        if [ -n "$websocket_server_ip" ]; then
+            is_websocket_server_ip_retrieved=true
+        else
+            echo "Key 'websocket_server_ip' not found or has no value in ${CONFIG_FILE}"
+        fi
+      
+    else
+        echo "Config file not found: ${CONFIG_FILE}"
+    fi
+    
+    
     # Setup HA client integration: setup USB gadget server IP
     regex='^((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\.){3}(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))$'
     while true; do
         read -p "Enter your USB gadget server IPv4 address (ex: 192.168.1.15): " websocket_server_ip </dev/tty
         if [[ $websocket_server_ip =~ $regex ]]; then
-            sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/custom_components/trackpad_mouse/__init__.py
-            echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}"
+            is_websocket_server_ip_retrieved=true
             break
         else
             echo "Please answer a well-formed IPv4 address (vvv.xxx.yyy.zzz expected, where 0 <= vvv <= 255, etc)"
         fi
     done
     
+    # Write updated config file
+    echo "Writing config file ${CONFIG_FILE}..."
+    cat <<EOF > "${CONFIG_FILE}"
+websocket_server_ip: ${websocket_server_ip}
+EOF
+
+    # Configure using new configurations
+    echo "Configuring trackpad_mouse component..."
+    sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${MODULE_FILE}"
+    echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}"
+    
+    # Remove residual files when needed
+    echo "Cleaning trackpad_mouse old component files..."
     cleanup
     
-    # Install all client elements
+    # Copy all updated configured files to install client components
+    echo "Installing trackpad_mouse newly configured component..."
     cp -R www /config
 }
 
@@ -58,6 +94,25 @@ uninstall () {
     
     # Remove HA client integration
     rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true
+
+    if [ -f "${CONFIG_FILE}" ]; then
+    read -rp "Keep integration config? (y/n) " confirm </dev/tty
+        case "$confirm" in
+            [Yy]* )
+                echo "Config was not deleted."
+                exit 0
+                ;;
+            [Nn]* )
+                rm "${CONFIG_FILE}" >/dev/null 2>&1 || true
+                echo "Config deleted."
+                exit 0
+                ;;
+            * )
+                echo "Please answer y or n."
+                exit 1
+                ;;
+        esac
+    fi
 }
 
 if [ -d "/config/custom_components/trackpad_mouse" ]; then
