@@ -31,14 +31,14 @@ install() {
     
     # Setup HA client integration: setup USB gadget server IP
     regex='^((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\.){3}(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))$'
-    read -p "Enter USB gadget server IP v4 LAN address (ex: 192.168.1.15): " websocket_server_ip </dev/tty
     while true; do
+        read -p "Enter your USB gadget server IPv4 address (ex: 192.168.1.15): " websocket_server_ip </dev/tty
         if [[ $websocket_server_ip =~ $regex ]]; then
             sed -i "s/<websocket_server_ip>/${websocket_server_ip}/g" /config/custom_components/trackpad_mouse/__init__.py
             echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}"
             break
         else
-            echo "Please answer a valid IP v4 address (vvv.xxx.yyy.zzz)"
+            echo "Please answer a well-formed IPv4 address (vvv.xxx.yyy.zzz expected, where 0 <= vvv <= 255, etc)"
         fi
     done
     
