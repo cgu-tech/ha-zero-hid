@@ -9,12 +9,11 @@ class Logger {
     this.setLevel(level);
   }
   setLevel(level) {
-    console.log(`Log level set to ${this.loglevel}`);
     this.level = this.levels[level] ?? 0;
+    console.log(`Log level set to ${level}`);
     if (this._hass) {
-      const hassLoggerLevel = this.levelsKeys[String(this.level)];
-      this._hass.callService("logger", "set_level", { "custom_components.trackpad_mouse": hassLoggerLevel });
-      console.log(`Backend log level set to ${hassLoggerLevel} for custom_components.trackpad_mouse`);
+      this._hass.callService("logger", "set_level", { "custom_components.trackpad_mouse": level });
+      console.log(`Backend log level set to ${level} for custom_components.trackpad_mouse`);
     }
   }
   setHass(hass) {
