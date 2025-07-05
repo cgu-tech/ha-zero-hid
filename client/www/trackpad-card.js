@@ -207,12 +207,6 @@ class TrackpadCard extends HTMLElement {
         fill="none" stroke="currentColor" stroke-width="2" />
     `;
     
-    // let tapStartTime = 0;
-    // let longPressTimeout;
-    // let lastTapTime = 0;
-    // let doubleTapMode = false;
-    // let scrollDirection = null;
-
     this.addPointerClickListener(scrollIcon, e => {
       e.stopPropagation();
       this.isToggledOn = !this.isToggledOn;
@@ -241,8 +235,8 @@ class TrackpadCard extends HTMLElement {
         // No move detected as-of now:
 
         // Check if short click or long click
-        startTime = clickEntry["event"].timestamp;
-        endTime = e.timestamp;
+        const startTime = clickEntry["event"].timestamp;
+        const endTime = e.timestamp;
         const duration = endTime - startTime; // in milliseconds
         if (duration < triggerLongClick) {
           // Short click
