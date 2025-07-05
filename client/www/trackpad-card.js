@@ -366,9 +366,9 @@ class TrackpadCard extends HTMLElement {
     }
   }
 
-  getSinglePointerDelta(startMap, endMap) {
-    const startEvent = startMap.entries().next().value;
-    const endEvent = endMap.entries().next().value;
+  getSinglePointerDelta(e) {
+    const startEvent = this.pointersStart.get(e.pointerId);
+    const endEvent = this.pointersEnd.get(e.pointerId);
     return this.getPointerDelta(startEvent, endEvent);
   }
 
