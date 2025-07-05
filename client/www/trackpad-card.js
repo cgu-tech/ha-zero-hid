@@ -1,14 +1,26 @@
 console.info("Loading Trackpad Card");
 
+const componentName = "trackpad-card";
+
 // Define logger helper class
 class Logger {
   constructor(level, hass = null) {
-    this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
+    this.levels = { error: 0, warning: 1, info: 2, debug: 3, trace: 4 };
+    this.levelsKeys = Object.fromEntries(Object.entries(original).map(([key, value]) => [value, key]));
     this.setLevel(level);
     this._hass = hass;
   }
-  setLevel(level) { this.level = this.levels[level] ?? 0; }
-  setHass(hass) { this._hass = hass; }
+  setLevel(level) {
+    this.level = this.levels[level] ?? 0;
+    if (this._hass) {
+      const hassLoggerLevel = this.levelsKeys[String(this.level)];
+      this._hass.callService("logger", "set_level", { [componentName]: hassLoggerLevel });
+    }
+  }
+  setHass(hass) {
+    this._hass = hass;
+    this.setLevel(this.levelsKeys[String(this.level)]);
+  }
   isLevelEnabled(level) { return (level <= this.level); }
   isErrorEnabled() { return this.isLevelEnabled(0); }
   isWarnEnabled() { return this.isLevelEnabled(1); }
@@ -18,7 +30,7 @@ class Logger {
   
   getArgs(header, logStyle, ...args) {
     if (args && args.length && args.length > 0) {
-      if (this._hass) this._hass.callService("trackpad_mouse", "log", { level: header, logs: args, });
+      if (this._hass) this._hass.callService("trackpad_mouse", "log", { "level": header, "logs": args, });
       return [`%c[${header}]`, logStyle, ...args];
     }
     return [`%c[${header}]`, logStyle];
@@ -47,7 +59,7 @@ class TrackpadCard extends HTMLElement {
     
     // Configs
     this.config = null;
-    this.loglevel = 'warn';
+    this.loglevel = 'warning';
     this.logger = new Logger(this.loglevel);
     this.haptic = false;
     
@@ -421,8 +433,8 @@ class TrackpadCard extends HTMLElement {
   handleDoublePointersMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleDoublePointersMove(e):", e));
     const { dx, dy } = this.getAverageDelta(
-      pointersStart,
-      pointersEnd
+      this.pointersStart,
+      this.pointersEnd
     );
 
     this._hass.callService("trackpad_mouse", "scroll", {
@@ -620,4 +632,4 @@ class TrackpadCard extends HTMLElement {
 }
 
 
-customElements.define("trackpad-card", TrackpadCard);
+customElements.define(componentName, TrackpadCard);
