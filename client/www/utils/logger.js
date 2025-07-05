@@ -1,5 +1,5 @@
 // Define logger helper class
-class Logger {
+export class Logger {
   constructor(level, hass) {
     this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
     this.levelsKeys = Object.fromEntries(Object.entries(this.levels).map(([key, value]) => [value, key]));
