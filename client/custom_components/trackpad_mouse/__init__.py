@@ -15,17 +15,6 @@ from homeassistant.components.websocket_api import (
 from .websocket_handler import WebSocketClient
 from .const import DOMAIN, MIN_RANGE, MAX_RANGE
 
-# Define TRACE level (lower than DEBUG, which is 10)
-TRACE_LEVEL_NUM = 5
-logging.addLevelName(TRACE_LEVEL_NUM, "TRACE")
-
-def trace(self, message, *args, **kwargs):
-    if self.isEnabledFor(TRACE_LEVEL_NUM):
-        self._log(TRACE_LEVEL_NUM, message, args, **kwargs)
-
-# Add 'trace' method to logger
-logging.Logger.trace = trace
-
 _LOGGER = logging.getLogger(__name__)
 
 # Use empty_config_schema because the component does not have any config options
@@ -256,22 +245,22 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         logs = call.data.get("logs")
         if level == "TRA":
             for log in logs:
-                _LOGGER.trace(log)
+                _LOGGER.debug("[CLIENT][%s] %s", level, log)
         elif level == "DBG":
             for log in logs:
-                _LOGGER.debug(log)
+                _LOGGER.debug"[CLIENT][%s] %s", level, log)
         elif level == "INF":
             for log in logs:
-                _LOGGER.info(log)
+                _LOGGER.info("[CLIENT][%s] %s", level, log)
         elif level == "WRN":
             for log in logs:
-                _LOGGER.warning(log)
+                _LOGGER.warning("[CLIENT][%s] %s", level, log)
         elif level == "ERR":
             for log in logs:
-                _LOGGER.error(log)
+                _LOGGER.error("[CLIENT][%s] %s", level, log)
         else:
             for log in logs:
-                _LOGGER.critical(log)
+                _LOGGER.critical("[CLIENT][%s] %s", level, log)
 
 
     # Register our services with Home Assistant.
