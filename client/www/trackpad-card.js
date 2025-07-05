@@ -332,17 +332,16 @@ class TrackpadCard extends HTMLElement {
   }
 
   handleSinglePointerClick(e) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerMove(e):", e));
-    const { dx, dy } = this.getSinglePointerDelta(this.pointersStart, this.pointersEnd);
-
-    if (dx !== 0 || dy !== 0) {
-      this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
-    }
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerClick(e):", e));
+    this._hass.callService("trackpad_mouse", "clickleft", {});
+    this._hass.callService("trackpad_mouse", "clickrelease", {});
   }
 
   handleSinglePointerMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerMove(e):", e));
-    const { dx, dy } = this.getSinglePointerDelta(this.pointersStart, this.pointersEnd);
+    const startEvent = this.pointersStart.get(e.pointerId);
+    const endEvent = this.pointersEnd.get(e.pointerId);
+    const { dx, dy } = this.getPointerDelta(startEvent, endEvent);
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
@@ -364,12 +363,6 @@ class TrackpadCard extends HTMLElement {
     } else {
       return "move";
     }
-  }
-
-  getSinglePointerDelta(e) {
-    const startEvent = this.pointersStart.get(e.pointerId);
-    const endEvent = this.pointersEnd.get(e.pointerId);
-    return this.getPointerDelta(startEvent, endEvent);
   }
 
   getPointerDelta(startEvent, endEvent) {
