@@ -1,24 +1,30 @@
 // Define logger helper class
 export class Logger {
-  constructor(level, hass) {
+  constructor(level, hass, pushback) {
     this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
     this.levelsKeys = Object.fromEntries(Object.entries(this.levels).map(([key, value]) => [value, key]));
     this._hass = hass;
+    this.setPushback(pushback);
     this.setLevel(level);
+    this.objLevelLimit = 1;
+    this.objByteLimit = 3000;
   }
   setLevel(level) {
     this.level = this.levels[level] ?? 0;
     console.log(`Log level set to ${level}`);
-    if (this._hass) {
-      const backendLevel = (!level || level === 'trace') ? 'debug' : level;
-      this._hass.callService("logger", "set_level", { "custom_components.trackpad_mouse": backendLevel });
-      console.log(`Log level of custom_components.trackpad_mouse set to ${backendLevel} for log level ${level}`);
+    this.setPushback(this._pushback);
+  }
+  setPushback(pushback) {
+    this._pushback = pushback;
+    if (this._hass && this._pushback) {
+      this._hass.callService("logger", "set_level", { "custom_components.trackpad_mouse": 'debug' });
+      console.log(`Log level of custom_components.trackpad_mouse set to debug`);
     }
   }
   setHass(hass) {
     this._hass = hass;
     console.log(`Hass set to ${hass}`);
-    this.setLevel(this.levelsKeys[String(this.level)]);
+    this.setPushback(this._pushback);
   }
   isLevelEnabled(level) { return (level <= this.level); }
   isErrorEnabled() { return this.isLevelEnabled(0); }
@@ -29,9 +35,8 @@ export class Logger {
   
   getArgs(header, logStyle, ...args) {
     if (args && args.length && args.length > 0) {
-      if (this._hass) {
-        // Deep serialization with limit
-        const serializedArgs = args.map(arg => this.deepSerialize(arg, 3000, 1));
+      if (this._hass && this._pushback) {
+        const serializedArgs = args.map(arg => this.deepSerialize(arg, this.objByteLimit, this.objLevelLimit));
         if (serializedArgs.length > 0) {
           this._hass.callService("trackpad_mouse", "log", { "level": header, "logs": serializedArgs, });
         }
@@ -53,7 +58,7 @@ export class Logger {
   trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
   
   // Entry point
-  deepSerialize(input, maxBytes = Infinity, maxDepth = Infinity) {
+  deepSerialize(input, maxBytes, maxDepth) {
     const seen = new WeakSet();
   
     // Step 1: Serialize only up to maxDepth
@@ -67,7 +72,7 @@ export class Logger {
   }
   
   // Internal deep serialization (bounded by maxDepth)
-  internalSerialize(input, seen = new WeakSet(), currentDepth = 0, maxDepth = Infinity) {
+  internalSerialize(input, seen = new WeakSet(), currentDepth = 0, maxDepth) {
     if (
       input === null ||
       typeof input !== "object" ||
