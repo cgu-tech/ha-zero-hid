@@ -1,7 +1,5 @@
 console.info("Loading Trackpad Card");
 
-const componentName = "trackpad-card";
-
 // Define logger helper class
 class Logger {
   constructor(level, hass = null) {
@@ -14,7 +12,8 @@ class Logger {
     this.level = this.levels[level] ?? 0;
     if (this._hass) {
       const hassLoggerLevel = this.levelsKeys[String(this.level)];
-      this._hass.callService("logger", "set_level", { "trackpad_mouse": hassLoggerLevel });
+      this._hass.callService("logger", "set_level", { "custom_components.trackpad_mouse": hassLoggerLevel });
+      console.log(`Setup custom_components.trackpad_mouse logger to ${hassLoggerLevel}`);
     }
   }
   setHass(hass) {
@@ -632,4 +631,4 @@ class TrackpadCard extends HTMLElement {
 }
 
 
-customElements.define(componentName, TrackpadCard);
+customElements.define("trackpad-card", TrackpadCard);
