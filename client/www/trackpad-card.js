@@ -20,8 +20,13 @@ class TrackpadCard extends HTMLElement {
     
     this.isToggledOn = false;
 
+    this.pointersClick = new Map();
     this.pointersStart = new Map();
     this.pointersEnd = new Map();
+
+    this.triggerDeltaX = 2;
+    this.triggerDeltaY = 2;
+    this.triggerLongClick = 500;
   }
 
   setConfig(config) {
@@ -220,29 +225,59 @@ class TrackpadCard extends HTMLElement {
     // Track touches
     this.addPointerDownListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerDown(e):", e));
+      this.pointersClick.set(e.pointerId, { "move-detected": false, "event": e } );
       this.pointersStart.set(e.pointerId, e);
       this.pointersEnd.set(e.pointerId);
     });
 
     this.addPointerUpListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerUp(e):", e));
-      this.pointersStart.delete(e.pointerId);
+      const clickEntry = this.pointersClick.get(e.pointerId);
       this.pointersEnd.delete(e.pointerId);
+      this.pointersStart.delete(e.pointerId);
+      this.pointersClick.delete(e.pointerId);
+
+      if (clickEntry && !clickEntry["move-detected"]) {
+        // No move detected as-of now:
+
+        // Check if short click or long click
+        startTime = clickEntry["event"].timestamp;
+        endTime = e.timestamp;
+        const duration = endTime - startTime; // in milliseconds
+        if (duration < triggerLongClick) {
+          // Short click
+          this.handleSinglePointerClick(e);
+        }
+      }
     });
 
     this.addPointerCancelListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerCancel(e):", e));
-      this.pointersStart.delete(e.pointerId);
       this.pointersEnd.delete(e.pointerId);
+      this.pointersStart.delete(e.pointerId);
+      this.pointersClick.delete(e.pointerId);
     });
 
     this.addPointerLeaveListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerLeave(e):", e));
-      this.pointersStart.delete(e.pointerId);
       this.pointersEnd.delete(e.pointerId);
+      this.pointersStart.delete(e.pointerId);
+      this.pointersClick.delete(e.pointerId);
     });
 
-    this.addPointerMoveListener(trackpad, (e) => {      
+    this.addPointerMoveListener(trackpad, (e) => {
+      const clickEntry = this.pointersClick.get(e.pointerId);
+      if (clickEntry && !clickEntry["move-detected"]) {
+        // No move detected as-of now:
+        // check if pointer moved enough this time to trigger move-detection
+        const { dx, dy } = this.getPointerDelta(clickEntry["event"], e);
+
+        if (Math.abs(dx) > this.triggerDeltaX || Math.abs(dy) > this.triggerDeltaY) {
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Move detected for pointer:", e));
+          clickEntry["move-detected"] = true;
+        }
+      }
+
       if (this.pointersStart.has(e.pointerId)) {
         this.pointersEnd.set(e.pointerId, e);
 
@@ -257,80 +292,6 @@ class TrackpadCard extends HTMLElement {
         this.pointersStart.set(e.pointerId, e);
       }
     });
-
-    //// POINTER EVENTS
-    //trackpad.addEventListener("pointerdown", e => {
-    //  const now = Date.now();
-    //
-    //  if (now - lastTapTime < 300) {
-    //    doubleTapMode = true;
-    //    scrollDirection = null;
-    //  } else {
-    //    doubleTapMode = false;
-    //  }
-    //
-    //  lastTapTime = now;
-    //  tapStartTime = now;
-    //
-    //  longPressTimeout = setTimeout(() => {
-    //    hass.callService("trackpad_mouse", "clickright", {});
-    //    setTimeout(() => hass.callService("trackpad_mouse", "clickrelease", {}), 100);
-    //  }, 600);
-    //
-    //  lastX = e.clientX;
-    //  lastY = e.clientY;
-    //  trackpad.classList.add("dragging");
-    //});
-    //
-    //trackpad.addEventListener("pointerup", e => {
-    //  trackpad.classList.remove("dragging");
-    //  clearTimeout(longPressTimeout);
-    //
-    //  const tapDuration = Date.now() - tapStartTime;
-    //  if (tapDuration < 300 && !doubleTapMode) {
-    //    hass.callService("trackpad_mouse", "clickleft", {});
-    //    setTimeout(() => hass.callService("trackpad_mouse", "clickrelease", {}), 100);
-    //  }
-    //
-    //  doubleTapMode = false;
-    //  scrollDirection = null;
-    //  lastX = null;
-    //  lastY = null;
-    //});
-    //
-    //trackpad.addEventListener("pointerleave", () => {
-    //  trackpad.classList.remove("dragging");
-    //  clearTimeout(longPressTimeout);
-    //  lastX = null;
-    //  lastY = null;
-    //  doubleTapMode = false;
-    //  scrollDirection = null;
-    //});
-    //
-    //trackpad.addEventListener("pointermove", e => {
-    //  if (e.buttons === 1 && lastX !== null && lastY !== null) {
-    //    let dx = e.clientX - lastX;
-    //    let dy = e.clientY - lastY;
-    //    lastX = e.clientX;
-    //    lastY = e.clientY;
-    //
-    //    if (doubleTapMode) {
-    //      if (!scrollDirection) {
-    //        scrollDirection = Math.abs(dx) > Math.abs(dy) ? "vertical" : "horizontal";
-    //      }
-    //
-    //      if (scrollDirection === "vertical") {
-    //        hass.callService("trackpad_mouse", "scroll", { x: 0, y: dx });
-    //      } else {
-    //        hass.callService("trackpad_mouse", "scroll", { x: dy, y: 0 });
-    //      }
-    //    } else if (isToggledOn) {
-    //      hass.callService("trackpad_mouse", "scroll", { x: dx, y: dy });
-    //    } else {
-    //      hass.callService("trackpad_mouse", "move", { x: dx, y: dy });
-    //    }
-    //  }
-    //});
 
     // Buttons
     const buttonRow = document.createElement("div");
@@ -376,31 +337,31 @@ class TrackpadCard extends HTMLElement {
     this.content = container;
   }
 
+  handleSinglePointerClick(e) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerMove(e):", e));
+    const { dx, dy } = this.getSinglePointerDelta(this.pointersStart, this.pointersEnd);
+
+    if (dx !== 0 || dy !== 0) {
+      this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
+    }
+  }
+
   handleSinglePointerMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerMove(e):", e));
-    const lastE = this.pointersStart.get(e.pointerId);
-    const lastX = lastE.clientX;
-    const lastY = lastE.clientY;
-    const dx = e.clientX - lastX;
-    const dy = e.clientY - lastY;
+    const { dx, dy } = this.getSinglePointerDelta(this.pointersStart, this.pointersEnd);
 
-    this._hass.callService("trackpad_mouse", this.getTrackpadMode(), {
-      x: dx,
-      y: dy,
-    });
+    if (dx !== 0 || dy !== 0) {
+      this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
+    }
   }
 
   handleDoublePointersMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleDoublePointersMove(e):", e));
-    const { dx, dy } = this.getAverageDelta(
-      this.pointersStart,
-      this.pointersEnd
-    );
+    const { dx, dy } = this.getDoublePointerDelta(this.pointersStart, this.pointersEnd);
 
-    this._hass.callService("trackpad_mouse", "scroll", {
-      x: dx,
-      y: dy,
-    });
+    if (dxRound !== 0 || dyRound !== 0) {
+      this._hass.callService("trackpad_mouse", "scroll", { x: dx, y: dy, });
+    }
   }
 
   getTrackpadMode() {
@@ -411,7 +372,21 @@ class TrackpadCard extends HTMLElement {
     }
   }
 
-  getAverageDelta(startMap, endMap) {
+  getSinglePointerDelta(startMap, endMap) {
+    const startEvent = startMap.entries().next().value;
+    const endEvent = endMap.entries().next().value;
+    return this.getPointerDelta(startEvent, endEvent);
+  }
+
+  getPointerDelta(startEvent, endEvent) {
+    const dx = endEvent.clientX - startEvent.clientX;
+    const dy = endEvent.clientY - startEvent.clientY;
+    const dxRound = Math.round(dx);
+    const dyRound = Math.round(dy);
+    return { dx: dxRound, dy: dyRound };
+  }
+
+  getDoublePointerDelta(startMap, endMap) {
     let dx = 0;
     let dy = 0;
     let count = 0;
@@ -424,7 +399,9 @@ class TrackpadCard extends HTMLElement {
       }
     }
     if (count === 0) return { dx: 0, dy: 0 };
-    return { dx: dx / count, dy: dy / count };
+    const dxRound = Math.round(dx / count);
+    const dyRound = Math.round(dy / count);
+    return { dx: dxRound, dy: dyRound };
   }
 
   addPointerDownListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
