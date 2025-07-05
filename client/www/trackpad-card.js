@@ -32,7 +32,8 @@ class Logger {
   getArgs(header, logStyle, ...args) {
     if (args && args.length && args.length > 0) {
       if (this._hass) {
-        const serializedArgs = args.map(arg => this.deepSerialize(arg));
+        // Deep serialization with limit
+        const serializedArgs = args.map(arg => this.deepSerialize(arg, 4194304));
         if (serializedArgs.length > 0) {
           this._hass.callService("trackpad_mouse", "log", { "level": header, "logs": serializedArgs, });
         }
@@ -53,8 +54,21 @@ class Logger {
   // TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
   trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
   
-  deepSerialize(input, seen = new WeakSet()) {
-    // Handle primitives
+  deepSerialize(input, maxBytes = Infinity) {
+    const seen = new WeakSet();
+  
+    // Step 1: Deep clone/serialize
+    const full = this.internalSerialize(input, seen);
+  
+    // Step 2: Check size and prune if needed
+    let json = JSON.stringify(full);
+    if (json.length <= maxBytes) return full;
+  
+    return this.pruneToFit(full, maxBytes);
+  }
+  
+  // Internal deep serialization
+  internalSerialize(input, seen) {
     if (
       input === null ||
       typeof input !== "object" ||
@@ -64,37 +78,59 @@ class Logger {
       return input;
     }
   
-    // Prevent circular references
-    if (seen.has(input)) {
-      return "[Circular]";
-    }
+    if (seen.has(input)) return "[Circular]";
     seen.add(input);
   
-    // Handle arrays
     if (Array.isArray(input)) {
-      return input.map(item => this.deepSerialize(item, seen));
+      return input.map(item => this.internalSerialize(item, seen));
     }
   
-    const output = {};
+    const result = {};
     let current = input;
   
-    // Walk prototype chain
     while (current && current !== Object.prototype) {
-      Object.getOwnPropertyNames(current).forEach(key => {
-        if (!(key in output)) {
-          try {
-            const value = input[key];
-            if (typeof value === "function") return; // skip functions
-            output[key] = this.deepSerialize(value, seen);
-          } catch (err) {
-            output[key] = `[unreadable: ${err.message}]`;
-          }
+      for (const key of Object.getOwnPropertyNames(current)) {
+        if (key in result) continue;
+        try {
+          const value = input[key];
+          if (typeof value === "function") continue;
+          result[key] = this.internalSerialize(value, seen);
+        } catch (err) {
+          result[key] = `[unreadable: ${err.message}]`;
         }
-      });
+      }
       current = Object.getPrototypeOf(current);
     }
   
-    return output;
+    return result;
+  }
+  
+  // Step 3: Prune function
+  pruneToFit(obj, maxBytes) {
+    const clone = structuredClone(obj); // Make a mutable deep copy
+    let json = JSON.stringify(clone);
+  
+    if (json.length <= maxBytes) return clone;
+  
+    // Iteratively prune until the size fits
+    while (json.length > maxBytes) {
+      this.pruneOneLevel(clone);
+      json = JSON.stringify(clone);
+      if (json.length <= maxBytes) break;
+    }
+  
+    return clone;
+  }
+
+  // Helper to prune one level of nested properties
+  pruneOneLevel(obj, depth = 0) {
+    if (typeof obj !== "object" || obj === null) return;
+  
+    for (const key in obj) {
+      if (typeof obj[key] === "object" && obj[key] !== null) {
+        obj[key] = "[pruned]";
+      }
+    }
   }
 
 }
