@@ -1,37 +1,6 @@
+import { Logger } from './utils/logger.js';
+
 console.info("Loading Android Remote Card");
-
-// Define logger helper class
-class Logger {
-  constructor(level = 'info') {
-    this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
-    this.setLevel(level);
-  }
-  setLevel(level) { this.level = this.levels[level] ?? 0; }
-  isLevelEnabled(level) { return (level <= this.level); }
-  isErrorEnabled() { return this.isLevelEnabled(0); }
-  isWarnEnabled() { return this.isLevelEnabled(1); }
-  isInfoEnabled() { return this.isLevelEnabled(2); }
-  isDebugEnabled() { return this.isLevelEnabled(3); }
-  isTraceEnabled() { return this.isLevelEnabled(4); }
-  
-  getArgs(header, logStyle, ...args) {
-    if (args && args.length && args.length > 0) {
-      return [`%c[${header}]`, logStyle, ...args];
-    }
-    return [`%c[${header}]`, logStyle];
-  }
-
-  // ERROR: if (this.logger.isErrorEnabled()) console.error(...this.logger.error(args));
-  error(...args) { return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
-  // WARN: if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(args));
-  warn(...args)  { return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
-  // INFO: if (this.logger.isInfoEnabled()) console.info(...this.logger.info(args));
-  info(...args)  { return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
-  // DEBUG: if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(args));
-  debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
-  // TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
-  trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
-}
 
 class AndroidRemoteCard extends HTMLElement {
   constructor() {
@@ -45,7 +14,8 @@ class AndroidRemoteCard extends HTMLElement {
     // Configs
     this.config = null;
     this.loglevel = 'warn';
-    this.logger = new Logger(this.loglevel);
+    this.logpushback = false;
+    this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.haptic = false;
     this.keyboardConfig = {};
     this.mouseConfig = {};
@@ -87,10 +57,15 @@ class AndroidRemoteCard extends HTMLElement {
       this.loglevel = config['log_level'];
     }
 
+    // Set log pushback
+    const oldLogpushback = this.logpushback;
+    if (config['log_pushback']) {
+      this.logpushback = config['log_pushback'];
+    }
+
     // Update logger when needed
-    if (!oldLoglevel || oldLoglevel !== this.loglevel) {
-      console.log(`Log level set to ${this.loglevel}`);
-      this.logger = new Logger(this.loglevel);
+    if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
+      this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     }
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
 
