@@ -248,7 +248,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 _LOGGER.debug("[CLIENT][%s] %s", level, log)
         elif level == "DBG":
             for log in logs:
-                _LOGGER.debug"[CLIENT][%s] %s", level, log)
+                _LOGGER.debug("[CLIENT][%s] %s", level, log)
         elif level == "INF":
             for log in logs:
                 _LOGGER.info("[CLIENT][%s] %s", level, log)
