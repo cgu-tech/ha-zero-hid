@@ -68,7 +68,7 @@ class Logger {
   }
   
   // Internal deep serialization
-  internalSerialize(input, seen) {
+  internalSerialize(input, seen = new WeakSet()) {
     if (
       input === null ||
       typeof input !== "object" ||
@@ -80,6 +80,20 @@ class Logger {
   
     if (seen.has(input)) return "[Circular]";
     seen.add(input);
+  
+    const tag = Object.prototype.toString.call(input);
+    const forbidden = [
+      "[object Window]",
+      "[object HTMLDocument]",
+      "[object HTMLAllCollection]",
+      "[object Event]",
+      "[object PointerEvent]",
+      "[object Node]",
+      "[object HTMLElement]",
+    ];
+    if (forbidden.includes(tag)) {
+      return `[uncloneable: ${tag}]`;
+    }
   
     if (Array.isArray(input)) {
       return input.map(item => this.internalSerialize(item, seen));
@@ -107,7 +121,8 @@ class Logger {
   
   // Step 3: Prune function
   pruneToFit(obj, maxBytes) {
-    const clone = structuredClone(obj); // Make a mutable deep copy
+    const clone = this.internalSerialize(obj); // Make a mutable deep copy
+
     let json = JSON.stringify(clone);
   
     if (json.length <= maxBytes) return clone;
