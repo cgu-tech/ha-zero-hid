@@ -2,7 +2,7 @@ console.info("Loading Trackpad Card");
 
 // Define logger helper class
 class Logger {
-  constructor(level, hass = null) {
+  constructor(level, hass) {
     this.levels = { error: 0, warning: 1, info: 2, debug: 3, trace: 4 };
     this.levelsKeys = Object.fromEntries(Object.entries(this.levels).map(([key, value]) => [value, key]));
     this._hass = hass;
@@ -60,7 +60,7 @@ class TrackpadCard extends HTMLElement {
     // Configs
     this.config = null;
     this.loglevel = 'warning';
-    this.logger = new Logger(this.loglevel);
+    this.logger = new Logger(this.loglevel, this._hass);
     this.haptic = false;
     
     this.isToggledOn = false;
@@ -80,7 +80,7 @@ class TrackpadCard extends HTMLElement {
 
     // Update logger when needed
     if (!oldLoglevel || oldLoglevel !== this.loglevel) {
-      this.logger = new Logger(this.loglevel);
+      this.logger = new Logger(this.loglevel, this._hass);
     }
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
 
