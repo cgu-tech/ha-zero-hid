@@ -144,18 +144,6 @@ class AndroidRemoteCard extends HTMLElement {
         min-width: 0;           /* allows children to shrink properly */
       }
       
-      .remote-sub-container {
-        display: flex;
-        flex-direction: column;
-        gap: 0px 10px;             /* adds horizontal spacing between children */
-        padding: 0px 10px 0 10px; /* adds space around the group of children (top right bottom left) */ 
-        box-sizing: border-box; /* prevents overflow due to padding */
-      }
-      .remote-sub-container > * {
-        flex: 1 1 0;            /* ensures children shrink to fit */
-        min-width: 0;           /* allows children to shrink properly */
-      }
-      
       /* Flex containers */
       .circular-buttons, .circular-buttons-center {
         display: flex;
@@ -186,8 +174,21 @@ class AndroidRemoteCard extends HTMLElement {
         padding-top: 0px;
       }
       
-      .force-margin-top {
-        margin-top: 10px;
+      .small-padding-bottom {
+        padding-bottom: 5px;
+      }
+      
+      .sides-spaces {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .space-left {
+        margin-left: 10px;
+      }
+
+      .space-right {
+        margin-right: 10px;
       }
 
       /* D‑pad SVG scales as square */
@@ -469,8 +470,8 @@ class AndroidRemoteCard extends HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "circular-buttons-wrapper";
     wrapper.innerHTML = `
-      <div class="circular-buttons no-padding-top no-padding-bottom">
-        <button class="circle-button left force-margin-top" id="remote-power-button">
+      <div class="circular-buttons small-padding-bottom">
+        <button class="circle-button left space-left" id="remote-power-button">
           <svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
             <!-- Left arc -->
             <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
@@ -519,7 +520,7 @@ class AndroidRemoteCard extends HTMLElement {
         <div class="remote-dpad-filler"></div>
       </div>
       <div class="circular-buttons">
-        <button class="circle-button left" id="remote-backspace-button">
+        <button class="circle-button left space-left" id="remote-backspace-button">
          <svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
            <!-- Backspace key outline (trapezoid-like shape) -->
            <path d="M8 24 L20 8 H56 V40 H20 Z" />
@@ -558,7 +559,7 @@ class AndroidRemoteCard extends HTMLElement {
             </svg>
           </div>
         </div>
-        <button class="circle-button right" id="remote-settings-button">
+        <button class="circle-button right space-right" id="remote-settings-button">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <!-- Top line -->
             <line x1="4" y1="6" x2="20" y2="6" />
@@ -573,7 +574,7 @@ class AndroidRemoteCard extends HTMLElement {
       <div id="foldable-container" style="margin-top:10px;"></div>
       
       <div class="circular-buttons">
-        <button class="circle-button left"   id="remote-volume-down-button">
+        <button class="circle-button left space-left"   id="remote-volume-down-button">
           <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <!-- Speaker body (filled) -->
             <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
@@ -585,7 +586,7 @@ class AndroidRemoteCard extends HTMLElement {
         <button class="circle-button left"   id="remote-previous-track-button"><div class="track-triangle">|◀◀</div></button>
         <button class="circle-button center" id="remote-play-pause-button"><div class="track-triangle">▶| |</div></button>
         <button class="circle-button right"  id="remote-next-track-button"><div class="track-triangle">▶▶|</div></button>
-        <button class="circle-button right"  id="remote-volume-up-button">
+        <button class="circle-button right space-right"  id="remote-volume-up-button">
           <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <!-- Speaker body with fill -->
             <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
