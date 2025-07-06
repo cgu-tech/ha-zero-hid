@@ -212,5 +212,5 @@ sudo journalctl -u websockets_server -f
 ```
 or only high level logs:
 ```bash
-sudo journalctl -u websockets_server -f | grep -v "websockets.server"
+sudo journalctl -u websockets_server -f --no-pager | sed 's/\x1b\[[0-9;]*m//g' | grep -v "websockets\\.server"
 ```
