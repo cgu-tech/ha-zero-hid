@@ -87,25 +87,16 @@ EOF
 }
 
 uninstall () {
-    cleanup
-    
-    # Disable HA client integration
-    sed -i '/^trackpad_mouse:$/d' /config/configuration.yaml
-    
-    # Remove HA client integration
-    rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true
-
     if [ -f "${CONFIG_FILE}" ]; then
     read -rp "Keep integration config? (y/n) " confirm </dev/tty
         case "$confirm" in
             [Yy]* )
-                echo "Config was not deleted."
-                exit 0
+                echo "Config file not deleted (${CONFIG_FILE})"
                 ;;
             [Nn]* )
+                # Cleaning up component custom config file
                 rm "${CONFIG_FILE}" >/dev/null 2>&1 || true
-                echo "Config deleted."
-                exit 0
+                echo "Config file deleted (${CONFIG_FILE})"
                 ;;
             * )
                 echo "Please answer y or n."
@@ -113,6 +104,15 @@ uninstall () {
                 ;;
         esac
     fi
+        
+    # Disabling component into HA configuration
+    sed -i '/^trackpad_mouse:$/d' /config/configuration.yaml
+    
+    # Cleaning up component python resources (py)
+    rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true
+    
+    # Cleaning up component web resources (js, html, css, svg, ...)
+    cleanup
 }
 
 if [ -d "/config/custom_components/trackpad_mouse" ]; then
