@@ -239,6 +239,7 @@ class TrackpadCard extends HTMLElement {
         const startTime = clickEntry["event"].timestamp;
         const endTime = e.timestamp;
         const duration = endTime - startTime; // in milliseconds
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`pointerUp(e): startTime:${startTime}ms,endTime:${endTime}ms,duration:${duration}ms:`, e));
         if (duration < this.triggerLongClick) {
           // Short click
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Click of ${duration}ms detected for:`, e));
