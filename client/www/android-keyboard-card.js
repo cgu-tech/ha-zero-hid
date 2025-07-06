@@ -166,6 +166,7 @@ class AndroidKeyboardCard extends HTMLElement {
     const style = document.createElement("style");
     style.textContent = `
       :host {
+        --base-font-size: 1rem; /* base scaling unit */
         --key-bg: #3b3a3a;
         --key-hover-bg: #4a4a4a;
         --key-active-bg: #2c2b2b;
@@ -173,6 +174,7 @@ class AndroidKeyboardCard extends HTMLElement {
         --key-special-color: #ccc;
         --key-height: 3.5rem;
         --key-margin: 0.15rem;
+        font-size: var(--base-font-size);
         display: block;
         width: 100%;
         user-select: none;
@@ -182,24 +184,24 @@ class AndroidKeyboardCard extends HTMLElement {
       .keyboard-container {
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
-        padding: 0.5rem 0.3rem 1rem;
+        gap: 0.5em;
+        padding: 0.5em 0.3em 1em;
         background: #1a1a1a;
-        border-radius: 8px;
+        border-radius: 0.5em;
         box-sizing: border-box;
         width: 100%;
       }
       .keyboard-row {
         display: flex;
-        gap: 0.3rem;
+        gap: 0.3em;
         width: 100%;
       }
       button.key {
         background: var(--key-bg);
         border: none;
-        border-radius: 5px;
+        border-radius: 0.4em;
         color: #eee;
-        font-size: 1.1rem;
+        font-size: 1em;
         cursor: pointer;
         height: var(--key-height);
         flex-grow: 1;
@@ -210,7 +212,7 @@ class AndroidKeyboardCard extends HTMLElement {
         position: relative;
         box-sizing: border-box;
         transition: background 0.15s ease;
-        padding: 0 0.5rem;
+        padding: 0 0.8em;
         white-space: nowrap;
         overflow: hidden;
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
@@ -246,7 +248,7 @@ class AndroidKeyboardCard extends HTMLElement {
         background: var(--key-special-bg);
         color: var(--key-special-color);
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.95em;
       }
       button.key:hover {
         background: var(--key-hover-bg);
@@ -268,23 +270,23 @@ class AndroidKeyboardCard extends HTMLElement {
       }
       .label-upper {
         position: absolute;
-        top: 0.3rem;
-        right: 0.5rem;
-        font-size: 0.6rem;
+        top: 0.3em;
+        right: 0.5em;
+        font-size: 0.6em;
         opacity: 0.7;
         user-select: none;
       }
       .label-lower {
-        font-size: inherit;
+        font-size: 1em;
         font-weight: 500;
         user-select: none;
       }
       .key-popin {
         position: fixed; /* Use fixed instead of absolute for document.body */
         background: var(--key-bg, #3b3a3a); /* Fallback if var is missing */
-        border-radius: 6px;
-        padding: 0.25rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        border-radius: 0.5em;
+        padding: 0.3em;
+        box-shadow: 0 0.2em 0.8em rgba(0,0,0,0.4);
         z-index: 9999;
         display: flex;
         flex-direction: column;
@@ -295,14 +297,14 @@ class AndroidKeyboardCard extends HTMLElement {
         display: flex;
       }
       .key-popin button.key {
-        margin: var(--key-margin, 0.15rem);
-        height: var(--key-height, 3.5rem);
+        margin: var(--key-margin);
+        height: var(--key-height);
         background: var(--key-bg, #3b3a3a);
         color: #fff;
         border: none;
         border-radius: 5px;
-        font-size: 1rem;
-        padding: 0 0.5rem;
+        font-size: 0.9em;
+        padding: 0 0.8em;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -337,7 +339,11 @@ class AndroidKeyboardCard extends HTMLElement {
       }
     `;
     this.shadowRoot.appendChild(style);
-    
+
+    // Adjust font size based on screen size or user config
+    const scale = window.innerWidth < 480 ? '1.4rem' : '1rem';
+    this.shadowRoot.host.style.setProperty('--base-font-size', scale);
+
     const container = document.createElement("div");
     container.className = "keyboard-container";
 
