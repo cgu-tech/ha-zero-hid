@@ -128,6 +128,7 @@ cd ~/ha-zero-hid/client/ && /bin/bash install.sh
 | `/local/arrowpad-card.js`         | `JavaScript Module` |
 | `/local/windows-keyboard-card.js` | `JavaScript Module` |
 | `/local/android-keyboard-card.js` | `JavaScript Module` |
+| `/local/android-remote-card.js`   | `JavaScript Module` |
 
 Reboot Home Assistant **(not reload)**
 
