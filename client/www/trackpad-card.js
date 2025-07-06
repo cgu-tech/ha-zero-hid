@@ -413,9 +413,9 @@ class TrackpadCard extends HTMLElement {
           {serviceCall: "clickright", className: "trackpad-right"}
         ];
       }
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Create buttons for configured mode:${this.buttonsMode})`));
       createButtons(buttonsToCreate);
       container.appendChild(buttonRow);
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Create buttons for configured mode:${this.buttonsMode})`));
     }
 
     card.appendChild(container);
