@@ -27,6 +27,16 @@ class TrackpadCard extends HTMLElement {
     this.triggerDeltaX = 2;
     this.triggerDeltaY = 2;
     this.triggerLongClick = 500;
+    
+    this.buttonsModeHide = 'hidden'
+    this.buttonsModeLeftButton = 'left'
+    this.buttonsModeMiddleButton = 'middle'
+    this.buttonsModeRightButton = 'right'
+    this.buttonsModeLeftRightButtons = 'left-right'
+    this.buttonsModeLeftMiddleButtons = 'left-middle'
+    this.buttonsModeMiddleRightButtons = 'middle-right'
+    this.buttonsModeLeftMiddleRightButtons = 'left-middle-right'
+    this.buttonsMode = this.buttonsModeLeftMiddleRightButtons;
   }
 
   setConfig(config) {
@@ -53,6 +63,11 @@ class TrackpadCard extends HTMLElement {
     // Set haptic feedback
     if (config['haptic']) {
       this.haptic = config['haptic'];
+    }
+    
+    // Set haptic feedback
+    if (config['buttons_mode']) {
+      this.buttonsMode = config['buttons_mode'];
     }
   }
 
@@ -295,43 +310,103 @@ class TrackpadCard extends HTMLElement {
         this.pointersStart.set(e.pointerId, e);
       }
     });
-    
-    // Buttons
-    const buttonRow = document.createElement("div");
-    buttonRow.style.display = "flex";
-    buttonRow.style.width = "100%";
-    buttonRow.style.background = "#00000000";
-
-    const createButton = (serviceCall, className) => {
-      const btn = document.createElement("button");
-      btn.className = `trackpad-btn ${className}`;
-      this.addPointerDownListener(btn, () => {
-        hass.callService("trackpad_mouse", serviceCall, {});
-      });
-      this.addPointerUpListener(btn, () => {
-        hass.callService("trackpad_mouse", "clickrelease", {});
-      });
-      return btn;
-    };
-
-    const leftBtn = createButton("clickleft", "trackpad-left");
-    const middleBtn = createButton("clickmiddle", "trackpad-middle");
-    const rightBtn = createButton("clickright", "trackpad-right");
-
-    const sep1 = document.createElement("div");
-    sep1.className = "btn-separator";
-
-    const sep2 = document.createElement("div");
-    sep2.className = "btn-separator";
-
-    buttonRow.appendChild(leftBtn);
-    buttonRow.appendChild(sep1);
-    buttonRow.appendChild(middleBtn);
-    buttonRow.appendChild(sep2);
-    buttonRow.appendChild(rightBtn);
 
     container.appendChild(trackpad);
-    container.appendChild(buttonRow);
+
+    // Buttons
+    if (this.buttonsMode !== this.buttonsModeHide) {
+
+      const buttonRow = document.createElement("div");
+      buttonRow.style.display = "flex";
+      buttonRow.style.width = "100%";
+      buttonRow.style.background = "#00000000";
+
+      const createButton = (serviceCall, className) => {
+        const btn = document.createElement("button");
+        btn.className = `trackpad-btn ${className}`;
+        this.addPointerDownListener(btn, () => {
+          hass.callService("trackpad_mouse", serviceCall, {});
+        });
+        this.addPointerUpListener(btn, () => {
+          hass.callService("trackpad_mouse", "clickrelease", {});
+        });
+        return btn;
+      };
+
+      const createOneButton = (serviceCall, className) => {
+        const bnt = createButton(serviceCall, className);
+        buttonRow.appendChild(bnt);
+      };
+
+      const createOneMoreButton = (serviceCall, className) => {
+        const sep = document.createElement("div");
+        sep.className = "btn-separator";
+        buttonRow.appendChild(sep);
+        const bnt = createButton(serviceCall, className);
+        buttonRow.appendChild(bnt);
+      };
+
+      const createButtons = (buttons) => {
+        if (typeof buttons === 'undefined' || !Array.isArray(buttons)) {
+          throw new TypeError('Expected an array for buttons, but got ' + typeof buttons);
+        }
+        if (buttons.length < 1) {
+          throw new RangeError("Expected at least one button, but got none");
+        }
+
+        const buttonsQueue = [...buttons];
+        let isFirstButton = true;
+
+        while (buttonsQueue.length > 0) {
+          const button = buttonsQueue.shift(); // Retrieves and removes one button
+          if (isFirstButton) {
+            isFirstButton = false;
+            createOneButton(button.serviceCall, button.className);
+          } else {
+            createOneMoreButton(button.serviceCall, button.className);
+          }
+        }
+      };
+
+      let buttonsToCreate;
+      if (this.buttonsMode === this.buttonsModeLeftButton) {
+        buttonsToCreate = [
+          {serviceCall: "clickleft", className: "trackpad-left"}
+        ];
+      } else if (this.buttonsMode === this.buttonsModeMiddleButton) {
+        buttonsToCreate = [
+          {serviceCall: "clickmiddle", className: "trackpad-middle"}
+        ];
+      } else if (this.buttonsMode === this.buttonsModeRightButton) {
+        buttonsToCreate = [
+          {serviceCall: "clickright", className: "trackpad-right"}
+        ];
+      } else if (this.buttonsMode === this.buttonsModeLeftRightButtons) {
+        buttonsToCreate = [ 
+          {serviceCall: "clickleft", className: "trackpad-left"}, 
+          {serviceCall: "clickright", className: "trackpad-right"}
+        ];
+      } else if (this.buttonsMode === this.buttonsModeLeftMiddleButtons) {
+        buttonsToCreate = [ 
+          {serviceCall: "clickleft", className: "trackpad-left"}, 
+          {serviceCall: "clickmiddle", className: "trackpad-middle"}
+        ];
+      } else if (this.buttonsMode === this.buttonsModeMiddleRightButtons) {
+        buttonsToCreate = [ 
+          {serviceCall: "clickmiddle", className: "trackpad-middle"}, 
+          {serviceCall: "clickright", className: "trackpad-right"}
+        ];
+      } else if (this.buttonsMode === this.buttonsModeLeftMiddleRightButtons) {
+        buttonsToCreate = [ 
+          {serviceCall: "clickleft", className: "trackpad-left"}, 
+          {serviceCall: "clickmiddle", className: "trackpad-middle"},
+          {serviceCall: "clickright", className: "trackpad-right"}
+        ];
+      }
+      createButtons(buttonsToCreate);
+
+      container.appendChild(buttonRow);
+    }
 
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
