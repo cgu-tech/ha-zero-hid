@@ -804,6 +804,7 @@ class AndroidRemoteCard extends HTMLElement {
         if (state !== index) {
           state = index;
           updateFoldableUI();
+          this.hapticFeedback();
         }
       });
     });
