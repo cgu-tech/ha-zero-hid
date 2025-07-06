@@ -316,7 +316,7 @@ class TrackpadCard extends HTMLElement {
 
     if (this.buttonsMode === this.buttonsModeHide) {
       // No-buttons
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Hidden buttons mode configured:${this.buttonsMode})`));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Hidden buttons mode configured:${this.buttonsMode}`));
     } else {
       // Buttons
       const buttonRow = document.createElement("div");
