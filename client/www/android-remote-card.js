@@ -783,8 +783,8 @@ class AndroidRemoteCard extends HTMLElement {
             throw new Error(`Unkwnon foldable component ${foldableContentName}`);
           }
           foldableContent.setAttribute("style", "width: 100%;");
-          foldableContent.hass = this._hass;
           foldableContent.setConfig(foldableContentConfig);
+          foldableContent.hass = this._hass;
           foldable.appendChild(foldableContent);
         });
       }

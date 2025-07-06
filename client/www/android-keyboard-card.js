@@ -150,6 +150,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
   buildUi(hass) {
     if (this._uiBuilt) {
+      this.setFontscale(this.fontscale);
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
       return;
     }
@@ -346,8 +347,7 @@ class AndroidKeyboardCard extends HTMLElement {
     `;
     this.shadowRoot.appendChild(style);
 
-    // Adjust font size based on current fontscale
-    this.shadowRoot.host.style.setProperty('--base-font-size', this.getScale(this.fontscale));
+    this.setFontscale(this.fontscale);
 
     const container = document.createElement("div");
     container.className = "keyboard-container";
@@ -650,6 +650,13 @@ class AndroidKeyboardCard extends HTMLElement {
 
       // Set displayed labels
       btn._lowerLabel.textContent = displayLower;
+    }
+  }
+
+  setFontScale(scale) {
+    if (this.shadowRoot && this.shadowRoot.host && this.shadowRoot.host.style) {
+      // Adjust font size based on current fontscale
+      this.shadowRoot.host.style.setProperty('--base-font-size', this.getScale(scale));
     }
   }
 
