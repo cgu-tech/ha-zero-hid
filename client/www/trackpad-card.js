@@ -210,6 +210,11 @@ class TrackpadCard extends HTMLElement {
       .trackpad-area.dragging .scroll-icon {
         cursor: crosshair;
       }
+      .no-buttons {
+        height: 260px;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      }
       .scroll-icon.toggled-on {
         stroke: #44739e !important;
         fill: #44739e !important;
@@ -349,7 +354,6 @@ class TrackpadCard extends HTMLElement {
         this.pointersStart.set(e.pointerId, e);
       }
     });
-
     container.appendChild(trackpad);
 
     // Buttons
@@ -401,6 +405,8 @@ class TrackpadCard extends HTMLElement {
       container.appendChild(buttonRow);
     } else {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Layout does not contain any buttons for mode:${this.buttonsMode}`));
+      // Add special no-buttons class
+      trackpad.classList.add('no-buttons');
     }
 
     card.appendChild(container);
