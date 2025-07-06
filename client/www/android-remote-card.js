@@ -186,8 +186,8 @@ class AndroidRemoteCard extends HTMLElement {
         padding-top: 0px;
       }
       
-      .force-padding-top {
-        padding-top: 10px;
+      .force-margin-top {
+        margin-top: 10px;
       }
 
       /* D‑pad SVG scales as square */
@@ -471,7 +471,7 @@ class AndroidRemoteCard extends HTMLElement {
     wrapper.innerHTML = `
       <div class="remote-sub-container" id="top-container">
         <div class="circular-buttons no-padding-top no-padding-bottom">
-          <button class="circle-button left force-padding-top" id="remote-power-button">
+          <button class="circle-button left force-margin-top" id="remote-power-button">
             <svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
               <!-- Left arc -->
               <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
