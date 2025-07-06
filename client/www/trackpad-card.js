@@ -108,9 +108,10 @@ class TrackpadCard extends HTMLElement {
   
   async loadLayout(buttonsMode) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(buttonsMode):", buttonsMode));
-    this.buttonsLayout = this.buttonsLayouts.find(buttonsLayout => buttonsLayout.mode === buttonsMode);
-    if (this.buttonsLayout) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Buttons layout found for buttons mode:${buttonsMode}:`, this.buttonsLayout));
+    const buttonsFullLayout = this.buttonsLayouts.find(buttonsLayout => buttonsLayout.mode === buttonsMode);
+    if (buttonsFullLayout) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Buttons layout found for buttons mode:${buttonsMode}:`, buttonsFullLayout.layout));
+      this.buttonsLayout = buttonsFullLayout.layout;
     } else {
       if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`No buttons layout found for buttons mode:${buttonsMode}. Using default buttons layout:`, this.buttonsLayoutDefault.layout));
       this.buttonsLayout = this.buttonsLayoutDefault.layout;
@@ -348,7 +349,7 @@ class TrackpadCard extends HTMLElement {
 
     // Buttons
     if (this.buttonsLayout && this.buttonsLayout.length > 0) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating buttons for mode:${this.buttonsMode})`));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating buttons for mode:${this.buttonsMode}`));
 
       const buttonRow = document.createElement("div");
       buttonRow.style.display = "flex";
@@ -394,7 +395,7 @@ class TrackpadCard extends HTMLElement {
       }
       container.appendChild(buttonRow);
     } else {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Layout does not contain any buttons for mode:${this.buttonsMode})`));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Layout does not contain any buttons for mode:${this.buttonsMode}`));
     }
 
     card.appendChild(container);
