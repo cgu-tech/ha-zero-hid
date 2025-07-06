@@ -17,9 +17,13 @@ class TrackpadCard extends HTMLElement {
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.haptic = false;
+    this.buttonsMode = 'left-middle-right';
+    
+    // Layout loading flags
+    this._layoutReady = false;
+    this._layoutLoaded = { buttonsMode: null };
     
     this.isToggledOn = false;
-
     this.pointersClick = new Map();
     this.pointersStart = new Map();
     this.pointersEnd = new Map();
@@ -28,15 +32,20 @@ class TrackpadCard extends HTMLElement {
     this.triggerDeltaY = 2;
     this.triggerLongClick = 500;
     
-    this.buttonsModeHide = 'hidden'
-    this.buttonsModeLeftButton = 'left'
-    this.buttonsModeMiddleButton = 'middle'
-    this.buttonsModeRightButton = 'right'
-    this.buttonsModeLeftRightButtons = 'left-right'
-    this.buttonsModeLeftMiddleButtons = 'left-middle'
-    this.buttonsModeMiddleRightButtons = 'middle-right'
-    this.buttonsModeLeftMiddleRightButtons = 'left-middle-right'
-    this.buttonsMode = this.buttonsModeLeftMiddleRightButtons;
+    this.buttonsLayouts = [
+      { id: 'hidden'           , layout: [] },
+      { id: 'left'             , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  } ] },
+      { id: 'middle'           , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  } ] },
+      { id: 'right'            , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  } ] },
+      { id: 'left-right'       , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { id: 'left-middle'      , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
+      { id: 'middle-left'      , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
+      { id: 'middle-right'     , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { id: 'right-left'       , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
+      { id: 'right-middle'     , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
+      { id: 'left-middle-right', layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { id: 'right-middle-left', layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] }
+    ];
   }
 
   setConfig(config) {
@@ -65,7 +74,7 @@ class TrackpadCard extends HTMLElement {
       this.haptic = config['haptic'];
     }
     
-    // Set buttons mode
+    // Set layout buttons
     if (config['buttons']) {
       this.buttonsMode = config['buttons'];
     }
@@ -78,9 +87,38 @@ class TrackpadCard extends HTMLElement {
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
 
+    // Load trackpad layout
+    if (!this._layoutLoaded.buttonsMode || !this._layoutLoaded.buttonsMode !== this.buttonsMode) {
+      this._layoutReady = false;
+      await this.loadLayout(this.buttonsMode);
+      this._layoutLoaded.buttonsMode = this.buttonsMode;
+      this._layoutReady = true;
+    }
+
     // Only build UI if hass is already set
     if (this._hass) {
       this.buildUi(this._hass);
+    }
+  }
+  
+  async loadLayout(buttonsMode) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(buttonsMode):", buttonsMode));
+    let buttonsLayoutFound = false;
+    this.buttonsLayouts.forEach((buttonsLayout) => {
+      if (buttonsMode === buttonsLayout.id) {
+        buttonsLayoutFound = true;
+        this.buttonsLayout = buttonsLayout.layout;
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Found buttonsLayout:", this.buttonsLayout));
+      }
+    });
+    if (!buttonsLayoutFound) {
+      this.buttonsMode = 'left-middle-right';
+      this.buttonsLayouts.forEach((buttonsLayout) => {
+        if (buttonsMode === buttonsLayout.id) {
+          this.buttonsLayout = buttonsLayout.layout;
+          if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown buttons mode provided:${buttonsMode}. Defaulting to ${this.buttonsMode}`));
+        }
+      });
     }
   }
 
@@ -88,7 +126,7 @@ class TrackpadCard extends HTMLElement {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
     this._hass = hass;
     this.logger.setHass(hass);
-    if (!this._uiBuilt) {
+    if (this._layoutReady && !this._uiBuilt) {
       this.buildUi(this._hass);
     }
   }
@@ -314,9 +352,9 @@ class TrackpadCard extends HTMLElement {
     container.appendChild(trackpad);
 
 
-    if (this.buttonsMode === this.buttonsModeHide) {
+    if (this.layoutMode === this.buttonsModeHide) {
       // No-buttons
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Hidden buttons mode configured:${this.buttonsMode}`));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Hidden buttons mode configured:${this.layoutMode}`));
     } else {
       // Buttons
       const buttonRow = document.createElement("div");
@@ -370,51 +408,9 @@ class TrackpadCard extends HTMLElement {
           }
         }
       };
-
-      let buttonsToCreate;
-      if (this.buttonsMode === this.buttonsModeLeftButton) {
-        buttonsToCreate = [
-          {serviceCall: "clickleft", className: "trackpad-left"}
-        ];
-      } else if (this.buttonsMode === this.buttonsModeMiddleButton) {
-        buttonsToCreate = [
-          {serviceCall: "clickmiddle", className: "trackpad-middle"}
-        ];
-      } else if (this.buttonsMode === this.buttonsModeRightButton) {
-        buttonsToCreate = [
-          {serviceCall: "clickright", className: "trackpad-right"}
-        ];
-      } else if (this.buttonsMode === this.buttonsModeLeftRightButtons) {
-        buttonsToCreate = [ 
-          {serviceCall: "clickleft", className: "trackpad-left"}, 
-          {serviceCall: "clickright", className: "trackpad-right"}
-        ];
-      } else if (this.buttonsMode === this.buttonsModeLeftMiddleButtons) {
-        buttonsToCreate = [ 
-          {serviceCall: "clickleft", className: "trackpad-left"}, 
-          {serviceCall: "clickmiddle", className: "trackpad-middle"}
-        ];
-      } else if (this.buttonsMode === this.buttonsModeMiddleRightButtons) {
-        buttonsToCreate = [ 
-          {serviceCall: "clickmiddle", className: "trackpad-middle"}, 
-          {serviceCall: "clickright", className: "trackpad-right"}
-        ];
-      } else if (this.buttonsMode === this.buttonsModeLeftMiddleRightButtons) {
-        buttonsToCreate = [ 
-          {serviceCall: "clickleft", className: "trackpad-left"}, 
-          {serviceCall: "clickmiddle", className: "trackpad-middle"},
-          {serviceCall: "clickright", className: "trackpad-right"}
-        ];
-      } else {
-        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unsupported buttons mode detected ${this.buttonsMode}. Defaulting to ${this.buttonsModeLeftMiddleRightButtons}`));
-        buttonsToCreate = [ 
-          {serviceCall: "clickleft", className: "trackpad-left"}, 
-          {serviceCall: "clickmiddle", className: "trackpad-middle"},
-          {serviceCall: "clickright", className: "trackpad-right"}
-        ];
-      }
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Create buttons for configured mode:${this.buttonsMode})`));
-      createButtons(buttonsToCreate);
+      
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Create buttons for configured mode:${this.layoutMode})`));
+      createButtons(this.buttonsLayout);
       container.appendChild(buttonRow);
     }
 
