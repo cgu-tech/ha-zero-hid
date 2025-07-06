@@ -112,7 +112,8 @@ EOF
     # Configure using new configurations
     echo "Configuring trackpad_mouse component..."
     sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${MODULE_FILE}"
-    echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}"
+    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${MODULE_FILE}"
+    echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}:${websocket_server_port}"
     
     # Remove residual files when needed
     echo "Cleaning trackpad_mouse old component files..."
