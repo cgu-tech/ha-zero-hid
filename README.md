@@ -128,6 +128,7 @@ cd ~/ha-zero-hid/client/ && /bin/bash install.sh
 | `/local/arrowpad-card.js`         | `JavaScript Module` |
 | `/local/windows-keyboard-card.js` | `JavaScript Module` |
 | `/local/android-keyboard-card.js` | `JavaScript Module` |
+| `/local/carrousel-card.js`        | `JavaScript Module` |
 | `/local/android-remote-card.js`   | `JavaScript Module` |
 
 Reboot Home Assistant **(not reload)**
@@ -159,6 +160,36 @@ layoutUrl: /local/layouts/windows/US.json
 type: custom:android-keyboard-card
 layoutUrl: /local/layouts/android/US.json
 haptic: true
+```
+
+#### Carrousel card
+```yaml
+type: custom:carrousel-card
+cell_width: 60px
+cell_height: 60px
+cells:
+  netflix-activity:
+    name: Netflix
+    icon-url: https://upload.wikimedia.org/wikipedia/commons/7/75/Netflix_icon.svg
+    action:
+      tap_action:
+        action: perform-action
+        perform_action: remote.turn_on
+        target:
+          entity_id: remote.android_tv
+        data:
+          activity: com.netflix.ninja
+  canal-activity:
+    name: Amazon
+    icon-url: https://upload.wikimedia.org/wikipedia/commons/c/ca/Amazon_Prime_Video_logo_%282024%29.svg
+    action:
+      tap_action:
+        action: perform-action
+        perform_action: remote.turn_on
+        target:
+          entity_id: remote.android_tv
+        data:
+          activity: https://app.primevideo.com
 ```
 
 #### Android remote control card

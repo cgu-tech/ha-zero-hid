@@ -24,6 +24,8 @@ cleanup() {
     rm /config/www/arrowpad-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/arrowpad/common.json >/dev/null 2>&1 || true
     
+    rm /config/www/carrousel.js >/dev/null 2>&1 || true
+    
     rm /config/www/android-remote-card.js >/dev/null 2>&1 || true
 }
 
