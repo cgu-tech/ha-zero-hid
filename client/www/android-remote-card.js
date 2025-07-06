@@ -855,10 +855,18 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Pressed key code (keyboard layout independant, later send to remote keyboard)
     const code = keyData.code;
-
-    // Press HID key
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-pressed:", code));
-    this.appendCode(hass, code);
+
+    const btnId = btn.id;
+    if (btnId && this.config['buttons-override'] && this.config['buttons-override'][btnId]) {
+      // Override detected: do nothing (override action will be executed on button up)
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("override detected for button-down:", btnId));
+    } else {
+      // Default action
+
+      // Press HID key
+      this.appendCode(hass, code);
+    }
   }
 
   // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
@@ -883,10 +891,23 @@ class AndroidRemoteCard extends HTMLElement {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-suppressed:", keyData.code, "char:", btn._lowerLabel.textContent || "", "in-favor-of-key:", this._currentBaseKey._keyData.code));
       return; // suppress the unwanted other key release
     }
-
-    // Release HID key
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-released:", code));
-    this.removeCode(hass, code);
+
+    const btnId = btn.id;
+    if (btnId && this.config['buttons-override'] && this.config['buttons-override'][btnId]) {
+      // Override detected: do override action
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("override detected for button-up:", btnId, this.config['buttons-override'][btnId]));
+      const override = this.config['buttons-override'][btnId];
+      this.fireEvent(btn, "hass-action", {
+        config: override,
+        action: "tap",
+      });
+    } else {
+      // Default action
+
+      // Release HID key
+      this.removeCode(hass, code);
+    }
   }
     
   appendCode(hass, code) {
@@ -996,6 +1017,17 @@ class AndroidRemoteCard extends HTMLElement {
     this.removePointerLeaveListener(window, this._handleGlobalPointerUp);
     this.removePointerCancelListener(window, this._handleGlobalPointerUp);
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp removed"));
+  }
+
+  // Fires HomeAssistant event
+  fireEvent(node, type, detail, options = {}) {
+    const event = new CustomEvent(type, {
+      bubbles: options.bubbles ?? true,
+      cancelable: Boolean(options.cancelable),
+      composed: options.composed ?? true,
+      detail,
+    });
+    node.dispatchEvent(event);
   }
 
   addPointerDownListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
