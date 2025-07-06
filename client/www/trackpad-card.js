@@ -27,7 +27,6 @@ class TrackpadCard extends HTMLElement {
     this.triggerDeltaX = 2;
     this.triggerDeltaY = 2;
     this.triggerLongClick = 500;
-    this.longClickTimeout = null;
   }
 
   setConfig(config) {
