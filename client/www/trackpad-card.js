@@ -66,8 +66,8 @@ class TrackpadCard extends HTMLElement {
     }
     
     // Set haptic feedback
-    if (config['buttons_mode']) {
-      this.buttonsMode = config['buttons_mode'];
+    if (config['buttons']) {
+      this.buttonsMode = config['buttons'];
     }
   }
 
@@ -406,7 +406,7 @@ class TrackpadCard extends HTMLElement {
           {serviceCall: "clickright", className: "trackpad-right"}
         ];
       } else {
-        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unsupported buttons_mode detected ${this.buttonsMode}. Defaulting to ${this.buttonsModeLeftMiddleRightButtons}`));
+        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unsupported buttons mode detected ${this.buttonsMode}. Defaulting to ${this.buttonsModeLeftMiddleRightButtons}`));
         buttonsToCreate = [ 
           {serviceCall: "clickleft", className: "trackpad-left"}, 
           {serviceCall: "clickmiddle", className: "trackpad-middle"},
