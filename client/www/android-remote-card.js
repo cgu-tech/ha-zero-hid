@@ -87,7 +87,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Set activites configs
     if (config['activities']) {
-      this.activitiesConfig = config['activites'];
+      this.activitiesConfig = config['activities'];
     }
   }
 
