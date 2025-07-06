@@ -442,6 +442,7 @@ class TrackpadCard extends HTMLElement {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerLeftClick(e):", e));
     this._hass.callService("trackpad_mouse", "clickleft", {});
     this._hass.callService("trackpad_mouse", "clickrelease", {});
+    hapticFeedback();
   }
   
   handleSinglePointerLeftDblClick(e) {
@@ -450,6 +451,7 @@ class TrackpadCard extends HTMLElement {
     this._hass.callService("trackpad_mouse", "clickrelease", {});
     this._hass.callService("trackpad_mouse", "clickleft", {});
     this._hass.callService("trackpad_mouse", "clickrelease", {});
+    if (this.haptic) this.vibrateDevice(20);
   }
 
   handleSinglePointerMove(e) {
@@ -460,6 +462,7 @@ class TrackpadCard extends HTMLElement {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
+      hapticFeedback();
     }
   }
 
@@ -469,6 +472,7 @@ class TrackpadCard extends HTMLElement {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for two pointers:`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this._hass.callService("trackpad_mouse", "scroll", { x: dx, y: dy, });
+      hapticFeedback();
     }
   }
 
