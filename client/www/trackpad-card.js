@@ -212,6 +212,7 @@ class TrackpadCard extends HTMLElement {
       }
       .no-buttons {
         height: 260px;
+        border-bottom: none; /* or your desired override */
         border-bottom-left-radius: 10px;
         border-bottom-right-radius: 10px;
       }

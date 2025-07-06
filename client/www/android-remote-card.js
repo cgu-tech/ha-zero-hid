@@ -147,8 +147,8 @@ class AndroidRemoteCard extends HTMLElement {
       .remote-sub-container {
         display: flex;
         flex-direction: column;
-        gap: 10px;              /* adds spacing between children */
-        padding: 10px;          /* adds space around the group of children */
+        gap: 0px 10px;             /* adds horizontal spacing between children */
+        padding: 0px 10px 0 10px; /* adds space around the group of children (top right bottom left) */ 
         box-sizing: border-box; /* prevents overflow due to padding */
       }
       .remote-sub-container > * {
