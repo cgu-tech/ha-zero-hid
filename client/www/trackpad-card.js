@@ -300,25 +300,26 @@ class TrackpadCard extends HTMLElement {
     });
     
     addLongClickTimeout(e) {
-      const longClickTimeout = setTimeout(() => {
-        const clickEntry = this.pointersClick.get(e.pointerId);
-        if (clickEntry && !clickEntry["move-detected"]) {
-          // No move detected as-of now:
-          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("No move detected for:", e));
-          
-          const startTime = clickEntry["event"].timeStamp;
-          const endTime = e.timeStamp;
-          const duration = endTime - startTime; // in milliseconds
-          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Long-click of ${duration}ms detected for:`, e));
-          this.handleSinglePointerLeftDblClick(e);
-        }
-      }, this.triggerLongClick); // long-press duration
-      return longClickTimeout;
+      //const longClickTimeout = setTimeout(() => {
+      //  const clickEntry = this.pointersClick.get(e.pointerId);
+      //  if (clickEntry && !clickEntry["move-detected"]) {
+      //    // No move detected as-of now:
+      //    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("No move detected for:", e));
+      //    
+      //    const startTime = clickEntry["event"].timeStamp;
+      //    const endTime = e.timeStamp;
+      //    const duration = endTime - startTime; // in milliseconds
+      //    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Long-click of ${duration}ms detected for:`, e));
+      //    this.handleSinglePointerLeftDblClick(e);
+      //  }
+      //}, this.triggerLongClick); // long-press duration
+      //return longClickTimeout;
+      return {};
     }
     
     clearLongClickTimeout(e) {
       const clickEntry = this.pointersClick.get(e.pointerId);
-      if (clickEntry && clickEntry["long-click-timeout"]) clearTimeout(clickEntry["long-click-timeout"]);
+      //if (clickEntry && clickEntry["long-click-timeout"]) clearTimeout(clickEntry["long-click-timeout"]);
     }
 
     // Buttons
