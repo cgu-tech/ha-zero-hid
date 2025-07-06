@@ -654,25 +654,33 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   getScale(scale) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("getScale(scale):", scale));
     const defaultScale = "1rem";
+    let safeScale;
     try {
       const num = parseFloat(value);
       if (!isNaN(num) && isFinite(num)) {
-        // scale is a string containing a number
-        return scale + 'rem';
+        // scale is a number
+        safeScale = scale + 'rem';
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Scale is a number:", safeScale));
       } else {
         if (/^-?\d+(\.\d+)?$/.test(scale)) {
           // scale is a string containing a number
-          return scale + 'rem';
+          safeScale = scale + 'rem';
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Scale is a string containing a number:", safeScale));
         } else if (/^-?\d+(\.\d+)?rem$/.test(scale)) {
-          return scale;
+          safeScale = scale;
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Scale is a string containing a scale:", safeScale));
         } else {
-          return defaultScale;
+          safeScale = defaultScale;
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Scale is not exploitable, defaulting to:", safeScale));
         }
       }
     } catch (e) {
-      return defaultScale;
+      safeScale = defaultScale;
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Scale conversion failed, defaulting to:", safeScale, e));
     }
+    return safeScale;
   }
 
   getlLabelNormal(keyData) {
