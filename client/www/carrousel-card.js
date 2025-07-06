@@ -17,8 +17,13 @@ class CarrouselCard extends HTMLElement {
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.haptic = false;
-    this.keyboardConfig = {};
-    this.mouseConfig = {};
+    this.cellsWidth = 60;
+    this.cellsHeight = 60;
+    this.cells = [];
+    
+    // Layout loading flags
+    this._layoutReady = false;
+    this._layoutLoaded = {};
   }
 
   setConfig(config) {
@@ -46,6 +51,22 @@ class CarrouselCard extends HTMLElement {
     if (config['haptic']) {
       this.haptic = config['haptic'];
     }
+
+    // Set cells width
+    if (config['cell_width']) {
+      this.cellsWidth = config['cell_width'];
+    }
+
+    // Set cells height
+    if (config['cell_height']) {
+      this.cellsHeight = config['cell_height'];
+    }
+
+    // Set cells
+    if (config['cells']) {
+      this.cells = config['cells'];
+    }
+    
   }
 
   getCardSize() {
@@ -55,9 +76,46 @@ class CarrouselCard extends HTMLElement {
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
 
+    // Check if layout needs loading
+    if (!this._layoutLoaded.cellsWidth || this._layoutLoaded.cellsWidth !== this.cellsWidth
+         || !this._layoutLoaded.cellsHeight || this._layoutLoaded.cellsHeight !== this.cellsHeight
+         || !this._layoutLoaded.cells || (this.cells && !this.arraysEqual(this._layoutLoaded.cells, this.cells))
+       ) {
+      this._layoutReady = false;
+
+      // Load layout
+      await this.loadLayout();
+
+      // Update loaded layout
+      this._layoutLoaded.cellsWidth = this.cellsWidth;
+      this._layoutLoaded.cellsHeight = this.cellsHeight;
+      this._layoutLoaded.cells = this.cells;
+      this._layoutReady = true;
+    }
+
     // Only build UI if hass is already set
     if (this._hass) {
       this.buildUi(this._hass);
+    }
+  }
+
+  async loadLayout() {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout():"));
+    if (this.cells) {
+      Object.entries(this.cells).forEach(([id, cell]) => {
+        const cellIconUrl = cell["icon-url"];
+        if (cellIconUrl) {
+          try {
+            const response = await fetch(cellIconUrl);
+            const blob = await response.blob(); // Get binary data
+            const blobUrl = URL.createObjectURL(blob); // Create a URL usable by <img>
+            cell.blobUrl = blobUrl;
+          } catch (e) {
+            if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load cell image blob from ${cellIconUrl}`, id));
+            cell.blobUrl = null;
+          }
+        }
+      });
     }
   }
 
@@ -82,9 +140,6 @@ class CarrouselCard extends HTMLElement {
     // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
 
-    const cellWidth = this.config.cell_width || "100px";
-    const cellHeight = this.config.cell_height || "100px";
-
     const card = document.createElement("ha-card");
     const style = document.createElement("style");
     style.textContent = `
@@ -101,8 +156,8 @@ class CarrouselCard extends HTMLElement {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        width: ${cellWidth};
-        height: ${cellHeight};
+        width: ${this.cellsWidth};
+        height: ${this.cellsHeight};
         margin-right: 8px;
         background: #2c2c2c;
         border-radius: 8px;
@@ -129,14 +184,14 @@ class CarrouselCard extends HTMLElement {
     const container = document.createElement("div");
     container.className = "carrousel-container";
 
-    Object.entries(this.config.cells).forEach(([id, cell]) => {
+    Object.entries(this.cells).forEach(([id, cell]) => {
       const cellDiv = document.createElement("div");
       cellDiv.className = "carrousel-cell";
       cellDiv.id = id;
 
-      if (cell["icon-url"]) {
+      if (cell.blobUrl) {
         const img = document.createElement("img");
-        img.src = cell["icon-url"];
+        img.src = cell.blobUrl;
         img.alt = cell.name || id;
         cellDiv.appendChild(img);
       } else {
@@ -175,6 +230,13 @@ class CarrouselCard extends HTMLElement {
     }
     
     this.hapticFeedback();
+  }
+
+  arraysEqual(a, b) {
+    return Array.isArray(a) &&
+           Array.isArray(b) &&
+           a.length === b.length &&
+           a.every((val, index) => val === b[index]);
   }
 
   // Fires HomeAssistant event
