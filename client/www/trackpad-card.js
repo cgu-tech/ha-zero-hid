@@ -451,8 +451,7 @@ class TrackpadCard extends HTMLElement {
     this._hass.callService("trackpad_mouse", "clickrelease", {});
     this._hass.callService("trackpad_mouse", "clickleft", {});
     this._hass.callService("trackpad_mouse", "clickrelease", {});
-    this.hapticFeedback();
-    this.hapticFeedback();
+    this.longClickHapticFeedback();
   }
 
   handleSinglePointerMove(e) {
@@ -463,7 +462,7 @@ class TrackpadCard extends HTMLElement {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
-      this.hapticFeedback();
+      this.moveHapticFeedback();
     }
   }
 
@@ -473,8 +472,18 @@ class TrackpadCard extends HTMLElement {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for two pointers:`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this._hass.callService("trackpad_mouse", "scroll", { x: dx, y: dy, });
-      this.hapticFeedback();
+      this.moveHapticFeedback();
     }
+  }
+
+  // vibrate the device like an haptic feedback
+  longClickHapticFeedback() {
+    if (this.haptic) this.vibrateDevice(20);
+  }
+
+  // vibrate the device like an haptic feedback
+  moveHapticFeedback() {
+    if (this.haptic) this.vibrateDevice(5);
   }
 
   getTrackpadMode() {
