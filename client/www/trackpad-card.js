@@ -300,7 +300,7 @@ class TrackpadCard extends HTMLElement {
     });
     
     addLongClickTimeout(e) {
-      return setTimeout(() => {
+      const longClickTimeout = setTimeout(() => {
         const clickEntry = this.pointersClick.get(e.pointerId);
         if (clickEntry && !clickEntry["move-detected"]) {
           // No move detected as-of now:
@@ -313,6 +313,7 @@ class TrackpadCard extends HTMLElement {
           this.handleSinglePointerLeftDblClick(e);
         }
       }, this.triggerLongClick); // long-press duration
+      return longClickTimeout;
     }
     
     clearLongClickTimeout(e) {
