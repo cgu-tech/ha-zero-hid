@@ -27,6 +27,7 @@ class TrackpadCard extends HTMLElement {
     this.triggerDeltaX = 2;
     this.triggerDeltaY = 2;
     this.triggerLongClick = 500;
+    this.longClickTimeout = null;
   }
 
   setConfig(config) {
@@ -222,6 +223,20 @@ class TrackpadCard extends HTMLElement {
       this.pointersClick.set(e.pointerId, { "move-detected": false, "event": e } );
       this.pointersStart.set(e.pointerId, e);
       this.pointersEnd.set(e.pointerId);
+      
+      this.longClickTimeout = setTimeout(() => {
+        const clickEntry = this.pointersClick.get(e.pointerId);
+        if (clickEntry && !clickEntry["move-detected"]) {
+          // No move detected as-of now:
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("No move detected for:", e));
+          
+          const startTime = clickEntry["event"].timeStamp;
+          const endTime = e.timeStamp;
+          const duration = endTime - startTime; // in milliseconds
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Long-click of ${duration}ms detected for:`, e));
+          this.handleSinglePointerLeftDblClick(e);
+        }
+      }, this.triggerLongClick); // long-press duration
     });
 
     this.addPointerUpListener(trackpad, (e) => {
@@ -239,11 +254,10 @@ class TrackpadCard extends HTMLElement {
         const startTime = clickEntry["event"].timeStamp;
         const endTime = e.timeStamp;
         const duration = endTime - startTime; // in milliseconds
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`pointerUp(e): startTime:${startTime}ms,endTime:${endTime}ms,duration:${duration}ms:`, e));
         if (duration < this.triggerLongClick) {
           // Short click
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Click of ${duration}ms detected for:`, e));
-          this.handleSinglePointerClick(e);
+          this.handleSinglePointerLeftClick(e);
         } else {
           // Too long click
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Debounced click of ${duration}ms detected for:`, e));
@@ -337,8 +351,16 @@ class TrackpadCard extends HTMLElement {
     this.content = container;
   }
 
-  handleSinglePointerClick(e) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerClick(e):", e));
+  handleSinglePointerLeftClick(e) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerLeftClick(e):", e));
+    this._hass.callService("trackpad_mouse", "clickleft", {});
+    this._hass.callService("trackpad_mouse", "clickrelease", {});
+  }
+  
+  handleSinglePointerLeftDblClick(e) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerLeftDblClick(e):", e));
+    this._hass.callService("trackpad_mouse", "clickleft", {});
+    this._hass.callService("trackpad_mouse", "clickrelease", {});
     this._hass.callService("trackpad_mouse", "clickleft", {});
     this._hass.callService("trackpad_mouse", "clickrelease", {});
   }

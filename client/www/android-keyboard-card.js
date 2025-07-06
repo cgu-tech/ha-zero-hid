@@ -42,6 +42,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.ALT_PAGE_TWO = 1;
     this.altState = this.ALT_PAGE_ONE;
 
+    this.triggerPopin = 500;
     this.popin = null;
     this.popinTimeout = null;
 
@@ -382,7 +383,7 @@ class AndroidKeyboardCard extends HTMLElement {
                 btn._usedPopin = true;
                 this.showPopin(e, hass, card, btn);
               }
-            }, 500); // 500ms long-press duration
+            }, this.triggerPopin); // long-press duration
           }
         });
 
