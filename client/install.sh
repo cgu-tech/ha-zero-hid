@@ -93,6 +93,7 @@ install() {
             if [ -z "${websocket_server_port}" ]; then
                 websocket_server_port="8765"
                 echo "Using default 8765 server port"
+                break
             elif [[ ${websocket_server_port} =~ ${regex} ]]; then
                 break
             else
