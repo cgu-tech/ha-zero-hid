@@ -29,42 +29,44 @@ class CarrouselCard extends HTMLElement {
   setConfig(config) {
     this.config = config;
 
-    // Set log level
-    const oldLoglevel = this.loglevel;
-    if (config['log_level']) {
-      this.loglevel = config['log_level'];
-    }
-
-    // Set log pushback
-    const oldLogpushback = this.logpushback;
-    if (config['log_pushback']) {
-      this.logpushback = config['log_pushback'];
-    }
-
-    // Update logger when needed
-    if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
-      this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
-    }
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
-
-    // Set haptic feedback
-    if (config['haptic']) {
-      this.haptic = config['haptic'];
-    }
-
-    // Set cells width
-    if (config['cell_width']) {
-      this.cellsWidth = config['cell_width'];
-    }
-
-    // Set cells height
-    if (config['cell_height']) {
-      this.cellsHeight = config['cell_height'];
-    }
-
-    // Set cells
-    if (config['cells']) {
-      this.cells = config['cells'];
+    if (config) {
+      // Set log level
+      const oldLoglevel = this.loglevel;
+      if (config['log_level']) {
+        this.loglevel = config['log_level'];
+      }
+      
+      // Set log pushback
+      const oldLogpushback = this.logpushback;
+      if (config['log_pushback']) {
+        this.logpushback = config['log_pushback'];
+      }
+      
+      // Update logger when needed
+      if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
+        this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
+      }
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
+      
+      // Set haptic feedback
+      if (config['haptic']) {
+        this.haptic = config['haptic'];
+      }
+      
+      // Set cells width
+      if (config['cell_width']) {
+        this.cellsWidth = config['cell_width'];
+      }
+      
+      // Set cells height
+      if (config['cell_height']) {
+        this.cellsHeight = config['cell_height'];
+      }
+      
+      // Set cells
+      if (config['cells']) {
+        this.cells = config['cells'];
+      }
     }
     
   }
