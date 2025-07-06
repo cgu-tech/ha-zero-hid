@@ -21,7 +21,7 @@ class TrackpadCard extends HTMLElement {
     
     // Layout loading flags
     this._layoutReady = false;
-    this._layoutLoaded = { buttonsMode: null };
+    this._layoutLoaded = {};
     
     this.isToggledOn = false;
     this.pointersClick = new Map();
@@ -33,19 +33,20 @@ class TrackpadCard extends HTMLElement {
     this.triggerLongClick = 500;
     
     this.buttonsLayouts = [
-      { id: 'hidden'           , layout: [] },
-      { id: 'left'             , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  } ] },
-      { id: 'middle'           , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  } ] },
-      { id: 'right'            , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  } ] },
-      { id: 'left-right'       , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
-      { id: 'left-middle'      , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
-      { id: 'middle-left'      , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
-      { id: 'middle-right'     , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
-      { id: 'right-left'       , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
-      { id: 'right-middle'     , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
-      { id: 'left-middle-right', layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
-      { id: 'right-middle-left', layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] }
+      { mode: 'hidden'           , layout: [] },
+      { mode: 'left'             , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  } ] },
+      { mode: 'middle'           , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  } ] },
+      { mode: 'right'            , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  } ] },
+      { mode: 'left-right'       , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { mode: 'left-middle'      , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
+      { mode: 'middle-left'      , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
+      { mode: 'middle-right'     , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { mode: 'right-left'       , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
+      { mode: 'right-middle'     , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
+      { mode: 'left-middle-right', layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { mode: 'right-middle-left', layout: [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] }
     ];
+    this.buttonsLayoutDefault = this.buttonsLayouts.find(buttonsMode => buttonsMode.mode === 'left-middle-right');
   }
 
   setConfig(config) {
@@ -87,10 +88,14 @@ class TrackpadCard extends HTMLElement {
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
 
-    // Load trackpad layout
-    if (!this._layoutLoaded.buttonsMode || !this._layoutLoaded.buttonsMode !== this.buttonsMode) {
+    // Check if layout needs loading
+    if (!this._layoutLoaded.buttonsMode || this._layoutLoaded.buttonsMode !== this.buttonsMode) {
       this._layoutReady = false;
+
+      // Load layout
       await this.loadLayout(this.buttonsMode);
+
+      // Update loaded layout
       this._layoutLoaded.buttonsMode = this.buttonsMode;
       this._layoutReady = true;
     }
@@ -103,22 +108,12 @@ class TrackpadCard extends HTMLElement {
   
   async loadLayout(buttonsMode) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(buttonsMode):", buttonsMode));
-    let buttonsLayoutFound = false;
-    this.buttonsLayouts.forEach((buttonsLayout) => {
-      if (buttonsMode === buttonsLayout.id) {
-        buttonsLayoutFound = true;
-        this.buttonsLayout = buttonsLayout.layout;
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Found buttonsLayout:", this.buttonsLayout));
-      }
-    });
-    if (!buttonsLayoutFound) {
-      this.buttonsMode = 'left-middle-right';
-      this.buttonsLayouts.forEach((buttonsLayout) => {
-        if (buttonsMode === buttonsLayout.id) {
-          this.buttonsLayout = buttonsLayout.layout;
-          if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown buttons mode provided:${buttonsMode}. Defaulting to ${this.buttonsMode}`));
-        }
-      });
+    this.buttonsLayout = this.buttonsLayouts.find(buttonsLayout => buttonsLayout.mode === buttonsMode);
+    if (this.buttonsLayout) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Buttons layout found for buttons mode:${buttonsMode}:`, this.buttonsLayout));
+    } else {
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`No buttons layout found for buttons mode:${buttonsMode}. Using default buttons layout:`, this.buttonsLayoutDefault.layout));
+      this.buttonsLayout = this.buttonsLayoutDefault.layout;
     }
   }
 
@@ -351,66 +346,52 @@ class TrackpadCard extends HTMLElement {
 
     container.appendChild(trackpad);
 
+    // Buttons
+    const createButton = (serviceCall, className) => {
+      const btn = document.createElement("button");
+      btn.className = `trackpad-btn ${className}`;
+      this.addPointerDownListener(btn, () => {
+        hass.callService("trackpad_mouse", serviceCall, {});
+      });
+      this.addPointerUpListener(btn, () => {
+        hass.callService("trackpad_mouse", "clickrelease", {});
+      });
+      return btn;
+    };
 
-    if (this.layoutMode === this.buttonsModeHide) {
-      // No-buttons
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Hidden buttons mode configured:${this.layoutMode}`));
-    } else {
-      // Buttons
+    const createFirstButton = (serviceCall, className) => {
+      const bnt = createButton(serviceCall, className);
+      buttonRow.appendChild(bnt);
+    };
+
+    const createSecondaryButton = (serviceCall, className) => {
+      const sep = document.createElement("div");
+      sep.className = "btn-separator";
+      buttonRow.appendChild(sep);
+      const bnt = createButton(serviceCall, className);
+      buttonRow.appendChild(bnt);
+    };
+
+    if (this.buttonsLayout && this.buttonsLayout.length > 0) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating buttons for mode:${this.buttonsMode})`));
+
       const buttonRow = document.createElement("div");
       buttonRow.style.display = "flex";
       buttonRow.style.width = "100%";
       buttonRow.style.background = "#00000000";
 
-      const createButton = (serviceCall, className) => {
-        const btn = document.createElement("button");
-        btn.className = `trackpad-btn ${className}`;
-        this.addPointerDownListener(btn, () => {
-          hass.callService("trackpad_mouse", serviceCall, {});
-        });
-        this.addPointerUpListener(btn, () => {
-          hass.callService("trackpad_mouse", "clickrelease", {});
-        });
-        return btn;
-      };
+      const buttonsQueue = [...this.buttonsLayout];
+      let isFirstButton = true;
 
-      const createOneButton = (serviceCall, className) => {
-        const bnt = createButton(serviceCall, className);
-        buttonRow.appendChild(bnt);
-      };
-
-      const createOneMoreButton = (serviceCall, className) => {
-        const sep = document.createElement("div");
-        sep.className = "btn-separator";
-        buttonRow.appendChild(sep);
-        const bnt = createButton(serviceCall, className);
-        buttonRow.appendChild(bnt);
-      };
-
-      const createButtons = (buttons) => {
-        if (typeof buttons === 'undefined' || !Array.isArray(buttons)) {
-          throw new TypeError('Expected an array for buttons, but got ' + typeof buttons);
+      while (buttonsQueue.length > 0) {
+        const buttonLayout = buttonsQueue.shift(); // Retrieves and removes one button
+        if (isFirstButton) {
+          isFirstButton = false;
+          createFirstButton(buttonLayout.serviceCall, buttonLayout.className);
+        } else {
+          createSecondaryButton(buttonLayout.serviceCall, buttonLayout.className);
         }
-        if (buttons.length < 1) {
-          throw new RangeError("Expected at least one button, but got none");
-        }
-
-        const buttonsQueue = [...buttons];
-        let isFirstButton = true;
-
-        while (buttonsQueue.length > 0) {
-          const button = buttonsQueue.shift(); // Retrieves and removes one button
-          if (isFirstButton) {
-            isFirstButton = false;
-            createOneButton(button.serviceCall, button.className);
-          } else {
-            createOneMoreButton(button.serviceCall, button.className);
-          }
-        }
-      };
-      
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Create buttons for configured mode:${this.layoutMode})`));
-      createButtons(this.buttonsLayout);
+      }
       container.appendChild(buttonRow);
     }
 
