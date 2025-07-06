@@ -105,17 +105,7 @@ class CarrouselCard extends HTMLElement {
       for (const [id, cell] of Object.entries(this.cells)) {
         const cellIconUrl = cell["icon-url"];
         if (cellIconUrl) {
-          try {
-            const response = await fetch(cellIconUrl);
-            const blob = await response.blob(); // Get binary data
-            const blobUrl = URL.createObjectURL(blob); // Create a URL usable by <img>
-            cell.blobUrl = blobUrl;
-          } catch (e) {
-            if (this.logger.isErrorEnabled()) {
-              console.error(...this.logger.error(`Failed to load cell image blob from ${cellIconUrl}`, id));
-            }
-            cell.blobUrl = null;
-          }
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found image URL:${cellIconUrl}`, id));
         }
       }
     }
@@ -191,9 +181,9 @@ class CarrouselCard extends HTMLElement {
       cellDiv.className = "carrousel-cell";
       cellDiv.id = id;
 
-      if (cell.blobUrl) {
+      if (cell["icon-url"]) {
         const img = document.createElement("img");
-        img.src = cell.blobUrl;
+        img.src = cell["icon-url"];
         img.alt = cell.name || id;
         cellDiv.appendChild(img);
       } else {
