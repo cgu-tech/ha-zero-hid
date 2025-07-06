@@ -658,7 +658,7 @@ class AndroidKeyboardCard extends HTMLElement {
     const defaultScale = "1rem";
     let safeScale;
     try {
-      const num = parseFloat(value);
+      const num = parseFloat(scale);
       if (!isNaN(num) && isFinite(num)) {
         // scale is a number
         safeScale = scale + 'rem';
