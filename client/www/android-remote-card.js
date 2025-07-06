@@ -19,6 +19,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.haptic = false;
     this.keyboardConfig = {};
     this.mouseConfig = {};
+    this.activitiesConfig = {};
 
     this.remoteButtons = [
       { id: "remote-power-button",          code: "CON_POWER"               },
@@ -82,6 +83,11 @@ class AndroidRemoteCard extends HTMLElement {
     // Set mouse configs
     if (config['mouse']) {
       this.mouseConfig = config['mouse'];
+    }
+
+    // Set activites configs
+    if (config['activities']) {
+      this.activitiesConfig = config['activites'];
     }
   }
 
@@ -746,23 +752,22 @@ class AndroidRemoteCard extends HTMLElement {
     const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
     const foldable = this.content.querySelector("#foldable-container");
     const foldableKeyboardName = "android-keyboard-card";
+    const foldableActivitiesName = "carrousel-card";
     const foldableMouseName = "trackpad-card";
     let foldableKeyboard;
+    let foldableActivites;
     let foldableMouse;
 
     let state = 1;
     
     const updateFoldable = () => {
-      foldable.innerHTML = "";
-      if (state === 1) {
-        foldable.style.display = "none";
-        return;
-      }
-  
+      foldable.innerHTML = "";  
       foldable.style.display = "block";
       let foldableContentName;
       if (state === 0) {
         foldableContentName = foldableKeyboardName;
+      } else if (state === 1) {
+        foldableContentName = foldableActivitiesName;
       } else if (state === 2) {
         foldableContentName = foldableMouseName;
       }
@@ -775,6 +780,10 @@ class AndroidRemoteCard extends HTMLElement {
             if (!foldableKeyboard) foldableKeyboard = document.createElement(foldableKeyboardName); // Safe init of imported component
             foldableContent = foldableKeyboard;
             foldableContentConfig = this.keyboardConfig;
+          } else if (foldableContentName === foldableActivitiesName) {
+            if (!foldableActivites) foldableActivites = document.createElement(foldableActivitiesName); // Safe init of imported component
+            foldableContent = foldableActivites;
+            foldableContentConfig = this.activitiesConfig;
           } else if (foldableContentName === foldableMouseName) {
             if (!foldableMouse) foldableMouse = document.createElement(foldableMouseName); // Safe init of imported component
             foldableContent = foldableMouse;
