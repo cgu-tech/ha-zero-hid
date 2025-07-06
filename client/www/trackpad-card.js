@@ -347,31 +347,6 @@ class TrackpadCard extends HTMLElement {
     container.appendChild(trackpad);
 
     // Buttons
-    const createButton = (serviceCall, className) => {
-      const btn = document.createElement("button");
-      btn.className = `trackpad-btn ${className}`;
-      this.addPointerDownListener(btn, () => {
-        hass.callService("trackpad_mouse", serviceCall, {});
-      });
-      this.addPointerUpListener(btn, () => {
-        hass.callService("trackpad_mouse", "clickrelease", {});
-      });
-      return btn;
-    };
-
-    const createFirstButton = (serviceCall, className) => {
-      const bnt = createButton(serviceCall, className);
-      buttonRow.appendChild(bnt);
-    };
-
-    const createSecondaryButton = (serviceCall, className) => {
-      const sep = document.createElement("div");
-      sep.className = "btn-separator";
-      buttonRow.appendChild(sep);
-      const bnt = createButton(serviceCall, className);
-      buttonRow.appendChild(bnt);
-    };
-
     if (this.buttonsLayout && this.buttonsLayout.length > 0) {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating buttons for mode:${this.buttonsMode})`));
 
@@ -379,6 +354,31 @@ class TrackpadCard extends HTMLElement {
       buttonRow.style.display = "flex";
       buttonRow.style.width = "100%";
       buttonRow.style.background = "#00000000";
+
+      const createButton = (serviceCall, className) => {
+        const btn = document.createElement("button");
+        btn.className = `trackpad-btn ${className}`;
+        this.addPointerDownListener(btn, () => {
+          hass.callService("trackpad_mouse", serviceCall, {});
+        });
+        this.addPointerUpListener(btn, () => {
+          hass.callService("trackpad_mouse", "clickrelease", {});
+        });
+        return btn;
+      };
+      
+      const createFirstButton = (serviceCall, className) => {
+        const bnt = createButton(serviceCall, className);
+        buttonRow.appendChild(bnt);
+      };
+      
+      const createSecondaryButton = (serviceCall, className) => {
+        const sep = document.createElement("div");
+        sep.className = "btn-separator";
+        buttonRow.appendChild(sep);
+        const bnt = createButton(serviceCall, className);
+        buttonRow.appendChild(bnt);
+      };
 
       const buttonsQueue = [...this.buttonsLayout];
       let isFirstButton = true;
@@ -393,6 +393,8 @@ class TrackpadCard extends HTMLElement {
         }
       }
       container.appendChild(buttonRow);
+    } else {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Layout does not contain any buttons for mode:${this.buttonsMode})`));
     }
 
     card.appendChild(container);
