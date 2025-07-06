@@ -34,9 +34,9 @@ class TrackpadCard extends HTMLElement {
     
     this.buttonsLayouts = [
       { mode: 'hidden'           , layout: [] },
-      { mode: 'left'             , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  } ] },
-      { mode: 'middle'           , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  } ] },
-      { mode: 'right'            , layout: [ {serviceCall: "clickright" , className: "trackpad-left"  } ] },
+      { mode: 'left'             , layout: [ {serviceCall: "clickleft"  , className: "trackpad-solo"  } ] },
+      { mode: 'middle'           , layout: [ {serviceCall: "clickmiddle", className: "trackpad-solo"  } ] },
+      { mode: 'right'            , layout: [ {serviceCall: "clickright" , className: "trackpad-solo"  } ] },
       { mode: 'left-right'       , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
       { mode: 'left-middle'      , layout: [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
       { mode: 'middle-left'      , layout: [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
@@ -168,6 +168,11 @@ class TrackpadCard extends HTMLElement {
       .trackpad-right {
         border-bottom-right-radius: 10px;
         flex: 3;
+      }
+      .trackpad-solo {
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+        flex: 7;
       }
       .btn-separator {
         width: 1px;
