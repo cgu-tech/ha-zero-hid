@@ -653,7 +653,7 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
 
-  setFontScale(scale) {
+  setFontscale(scale) {
     if (this.shadowRoot && this.shadowRoot.host && this.shadowRoot.host.style) {
       // Adjust font size based on current fontscale
       this.shadowRoot.host.style.setProperty('--base-font-size', this.getScale(scale));
