@@ -241,7 +241,11 @@ class TrackpadCard extends HTMLElement {
         const duration = endTime - startTime; // in milliseconds
         if (duration < this.triggerLongClick) {
           // Short click
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Click of ${duration}ms detected for:`, e));
           this.handleSinglePointerClick(e);
+        } else {
+          // Too long click
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Debounced click of ${duration}ms detected for:`, e));
         }
       }
     });
