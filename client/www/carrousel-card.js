@@ -102,7 +102,7 @@ class CarrouselCard extends HTMLElement {
   async loadLayout() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout():"));
     if (this.cells) {
-      Object.entries(this.cells).forEach(([id, cell]) => {
+      for (const [id, cell] of Object.entries(this.cells)) {
         const cellIconUrl = cell["icon-url"];
         if (cellIconUrl) {
           try {
@@ -111,11 +111,13 @@ class CarrouselCard extends HTMLElement {
             const blobUrl = URL.createObjectURL(blob); // Create a URL usable by <img>
             cell.blobUrl = blobUrl;
           } catch (e) {
-            if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load cell image blob from ${cellIconUrl}`, id));
+            if (this.logger.isErrorEnabled()) {
+              console.error(...this.logger.error(`Failed to load cell image blob from ${cellIconUrl}`, id));
+            }
             cell.blobUrl = null;
           }
         }
-      });
+      }
     }
   }
 
