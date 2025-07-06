@@ -65,7 +65,7 @@ class TrackpadCard extends HTMLElement {
       this.haptic = config['haptic'];
     }
     
-    // Set haptic feedback
+    // Set buttons mode
     if (config['buttons']) {
       this.buttonsMode = config['buttons'];
     }
@@ -415,6 +415,7 @@ class TrackpadCard extends HTMLElement {
       }
       createButtons(buttonsToCreate);
       container.appendChild(buttonRow);
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Create buttons for configured mode:${this.buttonsMode})`));
     }
 
     card.appendChild(container);
