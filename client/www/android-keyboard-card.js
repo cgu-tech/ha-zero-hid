@@ -22,7 +22,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Layout loading flags
     this._layoutReady = false;
-    this._layoutLoaded = null;
+    this._layoutLoaded = {};
 
     // 0: normal/shift mode
     // 1: alternative mode
@@ -102,11 +102,15 @@ class AndroidKeyboardCard extends HTMLElement {
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
 
-    // Load keyboard layout
-    if (!this._layoutLoaded || this._layoutLoaded !== this.layoutUrl) {
+    // Check if layout needs loading
+    if (!this._layoutLoaded.layoutUrl || this._layoutLoaded.layoutUrl !== this.layoutUrl) {
       this._layoutReady = false;
+
+      // Load layout
       await this.loadLayout(this.layoutUrl);
-      this._layoutLoaded = this.layoutUrl;
+
+      // Update loaded layout
+      this._layoutLoaded.layoutUrl = this.layoutUrl;
       this._layoutReady = true;
     }
 
