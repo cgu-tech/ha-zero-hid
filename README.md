@@ -164,14 +164,13 @@ haptic: true
 ```yaml
 type: custom:android-remote-card
 haptic: true
-log_level: debug
 keyboard:
-  log_level: debug
   layout: FR-remote
   haptic: true
+  font_scale: 1.4
 mouse:
-  log_level: trace
   haptic: true
+  buttons: hidden
 ```
 
 ## F.A.Q
@@ -207,7 +206,11 @@ Check server is running:
 ```bash
 sudo systemctl status websockets_server
 ```
-Check server logs in real-time:
+Check server logs in real-time with websockets low-level server logs:
 ```bash
 sudo journalctl -u websockets_server -f
+```
+or only high level logs:
+```bash
+sudo journalctl -u websockets_server -f | grep -v "websockets.server"
 ```
