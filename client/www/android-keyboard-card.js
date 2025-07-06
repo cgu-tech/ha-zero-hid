@@ -19,6 +19,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.haptic = false;
     this.layout = 'US';
     this.layoutUrl = `/local/layouts/android/${this.layout}.json`;
+    this.fontscale = 1.0;
 
     // Layout loading flags
     this._layoutReady = false;
@@ -92,6 +93,11 @@ class AndroidKeyboardCard extends HTMLElement {
       this.layoutUrl = config['layout_url'];
     } else {
       this.layoutUrl = `/local/layouts/android/${this.layout}.json`;
+    }
+
+    // Set font scale
+    if (config['font_scale']) {
+      this.fontscale = config['font_scale'];
     }
   }
 
@@ -340,9 +346,8 @@ class AndroidKeyboardCard extends HTMLElement {
     `;
     this.shadowRoot.appendChild(style);
 
-    // Adjust font size based on screen size or user config
-    const scale = window.innerWidth < 480 ? '1.4rem' : '1rem';
-    this.shadowRoot.host.style.setProperty('--base-font-size', scale);
+    // Adjust font size based on current fontscale
+    this.shadowRoot.host.style.setProperty('--base-font-size', this.getScale(this.fontscale));
 
     const container = document.createElement("div");
     container.className = "keyboard-container";
@@ -645,6 +650,28 @@ class AndroidKeyboardCard extends HTMLElement {
 
       // Set displayed labels
       btn._lowerLabel.textContent = displayLower;
+    }
+  }
+
+  getScale(scale) {
+    const defaultScale = "1rem";
+    try {
+      const num = parseFloat(value);
+      if (!isNaN(num) && isFinite(num)) {
+        // scale is a string containing a number
+        return scale + 'rem';
+      } else {
+        if (/^-?\d+(\.\d+)?$/.test(scale)) {
+          // scale is a string containing a number
+          return scale + 'rem';
+        } else if (/^-?\d+(\.\d+)?rem$/.test(scale)) {
+          return scale;
+        } else {
+          return defaultScale;
+        }
+      }
+    } catch (e) {
+      return defaultScale;
     }
   }
 
