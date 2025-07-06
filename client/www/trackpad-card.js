@@ -313,9 +313,12 @@ class TrackpadCard extends HTMLElement {
 
     container.appendChild(trackpad);
 
-    // Buttons
-    if (this.buttonsMode !== this.buttonsModeHide) {
 
+    if (this.buttonsMode === this.buttonsModeHide) {
+      // No-buttons
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Hidden buttons mode configured:${this.buttonsMode})`));
+    } else {
+      // Buttons
       const buttonRow = document.createElement("div");
       buttonRow.style.display = "flex";
       buttonRow.style.width = "100%";
@@ -402,9 +405,15 @@ class TrackpadCard extends HTMLElement {
           {serviceCall: "clickmiddle", className: "trackpad-middle"},
           {serviceCall: "clickright", className: "trackpad-right"}
         ];
+      } else {
+        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unsupported buttons_mode detected ${this.buttonsMode}. Defaulting to ${this.buttonsModeLeftMiddleRightButtons}`));
+        buttonsToCreate = [ 
+          {serviceCall: "clickleft", className: "trackpad-left"}, 
+          {serviceCall: "clickmiddle", className: "trackpad-middle"},
+          {serviceCall: "clickright", className: "trackpad-right"}
+        ];
       }
       createButtons(buttonsToCreate);
-
       container.appendChild(buttonRow);
     }
 
