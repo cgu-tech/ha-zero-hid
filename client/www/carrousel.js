@@ -90,12 +90,12 @@ class CarrouselCard extends HTMLElement {
     style.textContent = `
       .carrousel-container {
         display: flex;
-        overflow-x: hidden;
-        white-space: nowrap;
         width: 100%;
-        box-sizing: border-box;
+        overflow-x: auto; /* instead of hidden */
+        white-space: nowrap;
+        scroll-behavior: smooth; /* Optional */
       }
-
+      
       .carrousel-cell {
         display: inline-flex;
         flex-direction: column;
@@ -168,7 +168,7 @@ class CarrouselCard extends HTMLElement {
 
     if (config.action) {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Firing action for cell:", cell, config.action));
-      this.fireEvent(cellDiv, "hass-action", {
+      this.fireEvent(cell, "hass-action", {
         config: config.action,
         action: "tap",
       });
