@@ -135,11 +135,23 @@ class AndroidRemoteCard extends HTMLElement {
       .remote-container {
         display: flex;
         flex-direction: column;
+        gap: 0px;              /* adds spacing between children */
+        padding: 0px;          /* adds space around the group of children */
+        box-sizing: border-box; /* prevents overflow due to padding */
+      }
+      .remote-container > * {
+        flex: 1 1 0;            /* ensures children shrink to fit */
+        min-width: 0;           /* allows children to shrink properly */
+      }
+      
+      .remote-sub-container {
+        display: flex;
+        flex-direction: column;
         gap: 10px;              /* adds spacing between children */
         padding: 10px;          /* adds space around the group of children */
         box-sizing: border-box; /* prevents overflow due to padding */
       }
-      .remote-container > * {
+      .remote-sub-container > * {
         flex: 1 1 0;            /* ensures children shrink to fit */
         min-width: 0;           /* allows children to shrink properly */
       }
@@ -453,132 +465,138 @@ class AndroidRemoteCard extends HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "circular-buttons-wrapper";
     wrapper.innerHTML = `
-      <div class="circular-buttons no-padding-top no-padding-bottom">
-        <button class="circle-button left" id="remote-power-button">
-          <svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Left arc -->
-            <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
-            <!-- Right arc -->
-            <path d="M 40 8 A 26 26 0 0 1 58 34" stroke-width="4" />
-            <!-- Bottom arc -->
-            <path d="M 58 34 A 26 26 0 0 1 6 34" stroke-width="4" />
-            <!-- Vertical bar -->
-            <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
-          </svg>
-        </button>
-        <div id="remote-power-filler"></div>
-      </div>
-      <div class="circular-buttons no-padding-top">
-        <div class="remote-dpad-filler"></div>
-        <svg id="dpad"></svg>
-        <div class="remote-dpad-filler"></div>
-      </div>
-      <div class="circular-buttons-center">
-        <div class="remote-dpad-filler"></div>
-        <div class="bottom-buttons">
-          <button class="side-button left" id="remote-return-button">
-           <svg viewBox="-14 0 78 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-             <!-- Top horizontal line -->
-             <line x1="8" y1="17" x2="48" y2="17" />
-             <!-- Bottom horizontal line -->
-             <line x1="8" y1="47" x2="48" y2="47" />
-             <!-- Vertically flipped arc from bottom right to top right -->
-             <path d="M48 47 A15 15 0 0 0 48 17" />
-             <!-- Left-pointing isosceles triangle with reduced width -->
-             <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
+      <div class="remote-sub-container" id="top-container">
+        <div class="circular-buttons no-padding-top no-padding-bottom">
+          <button class="circle-button left" id="remote-power-button">
+            <svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Left arc -->
+              <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
+              <!-- Right arc -->
+              <path d="M 40 8 A 26 26 0 0 1 58 34" stroke-width="4" />
+              <!-- Bottom arc -->
+              <path d="M 58 34 A 26 26 0 0 1 6 34" stroke-width="4" />
+              <!-- Vertical bar -->
+              <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
+            </svg>
+          </button>
+          <div id="remote-power-filler"></div>
+        </div>
+        <div class="circular-buttons no-padding-top">
+          <div class="remote-dpad-filler"></div>
+          <svg id="dpad"></svg>
+          <div class="remote-dpad-filler"></div>
+        </div>
+        <div class="circular-buttons-center">
+          <div class="remote-dpad-filler"></div>
+          <div class="bottom-buttons">
+            <button class="side-button left" id="remote-return-button">
+             <svg viewBox="-14 0 78 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+               <!-- Top horizontal line -->
+               <line x1="8" y1="17" x2="48" y2="17" />
+               <!-- Bottom horizontal line -->
+               <line x1="8" y1="47" x2="48" y2="47" />
+               <!-- Vertically flipped arc from bottom right to top right -->
+               <path d="M48 47 A15 15 0 0 0 48 17" />
+               <!-- Left-pointing isosceles triangle with reduced width -->
+               <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
+             </svg>
+            </button>
+            <button class="side-button right" id="remote-home-button">
+              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+                <!-- Roof (triangle) -->
+                <path d="M 12 32 L 32 12 L 52 32" />
+                
+                <!-- House base without top line -->
+                <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
+                <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
+                <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
+              </svg>
+            </button>
+          </div>
+          <div class="remote-dpad-filler"></div>
+        </div>
+        <div class="circular-buttons">
+          <button class="circle-button left" id="remote-backspace-button">
+           <svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+             <!-- Backspace key outline (trapezoid-like shape) -->
+             <path d="M8 24 L20 8 H56 V40 H20 Z" />
+           
+             <!-- 'X' inside the key (representing delete action) -->
+             <line x1="28" y1="18" x2="44" y2="30" />
+             <line x1="44" y1="18" x2="28" y2="30" />
            </svg>
           </button>
-          <button class="side-button right" id="remote-home-button">
-            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-              <!-- Roof (triangle) -->
-              <path d="M 12 32 L 32 12 L 52 32" />
+          <div id="ts-toggle-threeStateToggle" class="ts-toggle-container center" data-state="1">
+            <div class="ts-toggle-indicator"></div>
+            <div class="ts-toggle-option active"><div class="ts-toggle-kb">⌨︎</div></div>
+            <div class="ts-toggle-option">●</div>
+            <div class="ts-toggle-option" id="ts-toggle-mouse">
+              <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Mouse body with rounded top and slightly rounded bottom corners -->
+                <path d="
+                  M 20 30 
+                  Q 20 10, 50 10 
+                  Q 80 10, 80 30
+                  L 80 115
+                  Q 80 125, 70 125
+                  L 30 125
+                  Q 20 125, 20 115
+                  Z
+                " />
+                
+                <!-- Vertical center line (split buttons) -->
+                <line x1="50" y1="10" x2="50" y2="70" />
               
-              <!-- House base without top line -->
-              <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
-              <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
-              <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
+                <!-- Larger scroll wheel, moved near the top -->
+                <line x1="50" y1="30" x2="50" y2="50" stroke-width="8" stroke-linecap="round" />
+              
+                <!-- Cable (wire) -->
+                <path d="M50 130 C 50 140, 60 145, 70 150" />
+              </svg>
+            </div>
+          </div>
+          <button class="circle-button right" id="remote-settings-button">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Top line -->
+              <line x1="4" y1="6" x2="20" y2="6" />
+              <!-- Middle line -->
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <!-- Bottom line -->
+              <line x1="4" y1="18" x2="20" y2="18" />
             </svg>
           </button>
         </div>
-        <div class="remote-dpad-filler"></div>
-      </div>
-      <div class="circular-buttons">
-        <button class="circle-button left" id="remote-backspace-button">
-         <svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-           <!-- Backspace key outline (trapezoid-like shape) -->
-           <path d="M8 24 L20 8 H56 V40 H20 Z" />
-         
-           <!-- 'X' inside the key (representing delete action) -->
-           <line x1="28" y1="18" x2="44" y2="30" />
-           <line x1="44" y1="18" x2="28" y2="30" />
-         </svg>
-        </button>
-        <div id="ts-toggle-threeStateToggle" class="ts-toggle-container center" data-state="1">
-          <div class="ts-toggle-indicator"></div>
-          <div class="ts-toggle-option active"><div class="ts-toggle-kb">⌨︎</div></div>
-          <div class="ts-toggle-option">●</div>
-          <div class="ts-toggle-option" id="ts-toggle-mouse">
-            <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-              <!-- Mouse body with rounded top and slightly rounded bottom corners -->
-              <path d="
-                M 20 30 
-                Q 20 10, 50 10 
-                Q 80 10, 80 30
-                L 80 115
-                Q 80 125, 70 125
-                L 30 125
-                Q 20 125, 20 115
-                Z
-              " />
-              
-              <!-- Vertical center line (split buttons) -->
-              <line x1="50" y1="10" x2="50" y2="70" />
-            
-              <!-- Larger scroll wheel, moved near the top -->
-              <line x1="50" y1="30" x2="50" y2="50" stroke-width="8" stroke-linecap="round" />
-            
-              <!-- Cable (wire) -->
-              <path d="M50 130 C 50 140, 60 145, 70 150" />
-            </svg>
-          </div>
-        </div>
-        <button class="circle-button right" id="remote-settings-button">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Top line -->
-            <line x1="4" y1="6" x2="20" y2="6" />
-            <!-- Middle line -->
-            <line x1="4" y1="12" x2="20" y2="12" />
-            <!-- Bottom line -->
-            <line x1="4" y1="18" x2="20" y2="18" />
-          </svg>
-        </button>
-      </div>
+      </div> <!-- top-container END -->
+      
       <div id="foldable-container" style="margin-top:10px;"></div>
-      <div class="circular-buttons">
-        <button class="circle-button left"   id="remote-volume-down-button">
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Speaker body (filled) -->
-            <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
-          
-            <!-- Small volume arc -->
-            <path d="M42 26 A6 6 0 0 1 42 38" />
-          </svg>
-        </button>
-        <button class="circle-button left"   id="remote-previous-track-button"><div class="track-triangle">|◀◀</div></button>
-        <button class="circle-button center" id="remote-play-pause-button"><div class="track-triangle">▶| |</div></button>
-        <button class="circle-button right"  id="remote-next-track-button"><div class="track-triangle">▶▶|</div></button>
-        <button class="circle-button right"  id="remote-volume-up-button">
-          <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Speaker body with fill -->
-            <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
-          
-            <!-- Volume arcs (wire view) -->
-            <path d="M38 26 A6 6 0 0 1 38 38" />
-            <path d="M42 22 A10 10 0 0 1 42 42" />
-            <path d="M46 18 A14 14 0 0 1 46 46" />
-          </svg>
-        </button>
-      </div>
+      
+      <div class="remote-sub-container" id="bottom-container">
+        <div class="circular-buttons">
+          <button class="circle-button left"   id="remote-volume-down-button">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Speaker body (filled) -->
+              <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
+            
+              <!-- Small volume arc -->
+              <path d="M42 26 A6 6 0 0 1 42 38" />
+            </svg>
+          </button>
+          <button class="circle-button left"   id="remote-previous-track-button"><div class="track-triangle">|◀◀</div></button>
+          <button class="circle-button center" id="remote-play-pause-button"><div class="track-triangle">▶| |</div></button>
+          <button class="circle-button right"  id="remote-next-track-button"><div class="track-triangle">▶▶|</div></button>
+          <button class="circle-button right"  id="remote-volume-up-button">
+            <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Speaker body with fill -->
+              <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
+            
+              <!-- Volume arcs (wire view) -->
+              <path d="M38 26 A6 6 0 0 1 38 38" />
+              <path d="M42 22 A10 10 0 0 1 42 42" />
+              <path d="M46 18 A14 14 0 0 1 46 46" />
+            </svg>
+          </button>
+        </div>
+      </div> <!-- bottom-container END -->
     `;
     container.appendChild(wrapper);
     card.appendChild(container);
