@@ -219,9 +219,7 @@ class TrackpadCard extends HTMLElement {
     // Track touches
     this.addPointerDownListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerDown(e):", e));
-      const longClickTimeout = this.addLongClickTimeout(e);
-
-      this.pointersClick.set(e.pointerId, { "move-detected": false, "event": e , "long-click-timeout": longClickTimeout } );
+      this.pointersClick.set(e.pointerId, { "move-detected": false, "event": e , "long-click-timeout": this.addLongClickTimeout(e) } );
       this.pointersStart.set(e.pointerId, e);
       this.pointersEnd.set(e.pointerId);
     });
@@ -298,29 +296,6 @@ class TrackpadCard extends HTMLElement {
       }
     });
     
-    addLongClickTimeout(e) {
-      //const longClickTimeout = setTimeout(() => {
-      //  const clickEntry = this.pointersClick.get(e.pointerId);
-      //  if (clickEntry && !clickEntry["move-detected"]) {
-      //    // No move detected as-of now:
-      //    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("No move detected for:", e));
-      //    
-      //    const startTime = clickEntry["event"].timeStamp;
-      //    const endTime = e.timeStamp;
-      //    const duration = endTime - startTime; // in milliseconds
-      //    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Long-click of ${duration}ms detected for:`, e));
-      //    this.handleSinglePointerLeftDblClick(e);
-      //  }
-      //}, this.triggerLongClick); // long-press duration
-      //return longClickTimeout;
-      return {};
-    }
-    
-    clearLongClickTimeout(e) {
-      const clickEntry = this.pointersClick.get(e.pointerId);
-      //if (clickEntry && clickEntry["long-click-timeout"]) clearTimeout(clickEntry["long-click-timeout"]);
-    }
-
     // Buttons
     const buttonRow = document.createElement("div");
     buttonRow.style.display = "flex";
@@ -363,6 +338,27 @@ class TrackpadCard extends HTMLElement {
     
     this.card = card;
     this.content = container;
+  }
+
+  addLongClickTimeout(e) {
+    return setTimeout(() => {
+      const clickEntry = this.pointersClick.get(e.pointerId);
+      if (clickEntry && !clickEntry["move-detected"]) {
+        // No move detected as-of now:
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("No move detected for:", e));
+        
+        const startTime = clickEntry["event"].timeStamp;
+        const endTime = e.timeStamp;
+        const duration = endTime - startTime; // in milliseconds
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Long-click of ${duration}ms detected for:`, e));
+        this.handleSinglePointerLeftDblClick(e);
+      }
+    }, this.triggerLongClick); // long-press duration
+  }
+  
+  clearLongClickTimeout(e) {
+    const clickEntry = this.pointersClick.get(e.pointerId);
+    if (clickEntry && clickEntry["long-click-timeout"]) clearTimeout(clickEntry["long-click-timeout"]);
   }
 
   handleSinglePointerLeftClick(e) {
