@@ -88,7 +88,7 @@ async def websocket_sync_keyboard(hass, connection, msg):
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websocket global client."""
-    ws_client = WebSocketClient("wss://<websocket_server_ip>:8765")
+    ws_client = WebSocketClient("wss://<websocket_server_ip>:<websocket_server_port>")
     hass.data[DOMAIN] = ws_client  # store globally
 
     """Handle scrolling mouse."""

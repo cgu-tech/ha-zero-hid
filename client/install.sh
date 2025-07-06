@@ -34,42 +34,78 @@ install() {
     # Enable HA client integration
     grep -qxF "trackpad_mouse:" /config/configuration.yaml || echo "trackpad_mouse:" >> /config/configuration.yaml
     
-    # Config flags
-    is_websocket_server_ip_retrieved=false
+    # Config parameters
     websocket_server_ip=""
+    websocket_server_port=""
     
-    # Check if the config file exists
+    # Config flags
+    conf_websocket_server_ip=false
+    conf_websocket_server_port=false
+    
+    # Automatic setup : try loading config file
     if [ -f "${CONFIG_FILE}" ]; then
     
-        # Try to retrieve the value of "websocket_server_ip"
-        websocket_server_ip=$(grep "^websocket_server_ip:" "${CONFIG_FILE}" | cut -d':' -f2- | xargs)
-        if [ -n "$websocket_server_ip" ]; then
-            is_websocket_server_ip_retrieved=true
+        # Automatic setup of "websocket_server_ip"
+        websocket_server_ip=$(grep "^websocket_server_ip:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_ip=$(echo "$websocket_server_ip" | xargs) # Trims whitespace
+        if [ -n "${websocket_server_ip}" ]; then
+            conf_websocket_server_ip=true
+            echo "Using pre-configured 'websocket_server_ip' value ${websocket_server_ip} from ${CONFIG_FILE}"
         else
             echo "Key 'websocket_server_ip' not found or has no value in ${CONFIG_FILE}"
         fi
+        
+        # Automatic setup of "websocket_server_port"
+        websocket_server_port=$(grep "^websocket_server_port:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
+        if [ -n "${websocket_server_port}" ]; then
+            conf_websocket_server_port=true
+            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${CONFIG_FILE}"
+        else
+            echo "Key 'websocket_server_port' not found or has no value in ${CONFIG_FILE}"
+        fi
       
     else
+        # Automatic setup : no config file or config file not accessible
         echo "Config file not found: ${CONFIG_FILE}"
     fi
     
+    # Manual setup of "websocket_server_ip":
+    if [ "${conf_websocket_server_ip}" != "true" ]; then
+        regex='^((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\.){3}(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))$'
+        while true; do
+            read -p "Enter your USB gadget server IPv4 address (ex: 192.168.1.15): " websocket_server_ip </dev/tty
+            websocket_server_ip=$(echo "$websocket_server_ip" | xargs) # Trims whitespace
+            if [[ ${websocket_server_ip} =~ ${regex} ]]; then
+                break
+            else
+                echo "Please answer a well-formed IPv4 address (vvv.xxx.yyy.zzz expected, where 0 <= vvv <= 255, etc)"
+            fi
+        done
+    fi
     
-    # Setup HA client integration: setup USB gadget server IP
-    regex='^((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\.){3}(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))$'
-    while true; do
-        read -p "Enter your USB gadget server IPv4 address (ex: 192.168.1.15): " websocket_server_ip </dev/tty
-        if [[ $websocket_server_ip =~ $regex ]]; then
-            is_websocket_server_ip_retrieved=true
-            break
-        else
-            echo "Please answer a well-formed IPv4 address (vvv.xxx.yyy.zzz expected, where 0 <= vvv <= 255, etc)"
-        fi
-    done
+    # Manual setup of "websocket_server_port":
+    if [ "${conf_websocket_server_port}" != "true" ]; then
+        regex='^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$'
+        while true; do
+            read -p "Enter your USB gadget server port (default: 8765): " websocket_server_port </dev/tty
+            websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
+            if [ -z "${websocket_server_port}" ]; then
+                websocket_server_port="8765"
+                echo "Using default 8765 server port"
+            elif [[ ${websocket_server_port} =~ ${regex} ]]; then
+                break
+            else
+                echo "Please answer a well-formed server port (vvvvv expected, where 1 <= vvvvv <= 65535)"
+            fi
+        done
+    fi
     
     # Write updated config file
     echo "Writing config file ${CONFIG_FILE}..."
     cat <<EOF > "${CONFIG_FILE}"
 websocket_server_ip: ${websocket_server_ip}
+websocket_server_port: ${websocket_server_port}
 EOF
 
     # Configure using new configurations
