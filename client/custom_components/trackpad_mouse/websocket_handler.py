@@ -4,13 +4,14 @@ import logging
 import ssl
 import struct
 import websockets
+from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 _LOGGER = logging.getLogger(__name__)
 
 class WebSocketClient:
     def __init__(self, url: str):
         self.url = url
-        self.websocket: None
+        self.websocket = None
         self._lock = asyncio.Lock()  # Prevent race conditions
 
     # Send scroll as 2 signed bytes: [0x01][x][y]
@@ -75,10 +76,10 @@ class WebSocketClient:
 
             async with self._lock:
                 await self.websocket.send(cmd)
-                if waitResponse:
+                if wait_response:
                     response = await self.websocket.recv()
                     return response
-        except websockets.exceptions.ConnectionClosedOK as e:
+        except ConnectionClosedOK as e:
             _LOGGER.warning(f"WebSocket closed cleanly: {e}. Reconnecting...")
             await self.recover_and_retry(cmd)
         except Exception as e:
