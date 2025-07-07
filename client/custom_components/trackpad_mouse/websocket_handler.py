@@ -4,14 +4,13 @@ import logging
 import ssl
 import struct
 import websockets
-from websockets import WebSocketClientProtocol
 
 _LOGGER = logging.getLogger(__name__)
 
 class WebSocketClient:
     def __init__(self, url: str):
         self.url = url
-        self.websocket: WebSocketClientProtocol | None = None
+        self.websocket: None
         self._lock = asyncio.Lock()  # Prevent race conditions
 
     # Send scroll as 2 signed bytes: [0x01][x][y]

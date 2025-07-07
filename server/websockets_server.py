@@ -40,7 +40,7 @@ def safe_eval(s):
             s, ValueError, SyntaxError)
         return []
 
-async def handle_client(websocket: WebSocketServerProtocol) -> None:
+async def handle_client(websocket) -> None:
     logger.info("Client connected")
     try:
         async for message in websocket:

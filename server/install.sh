@@ -100,6 +100,9 @@ install() {
     
     # Security: create user+group dedicated to service
     (useradd --system -m -d "${HA_ZERO_HID_HOME}" ha_zero_hid >/dev/null 2>&1 || true)
+    mkdir -p /home/ha_zero_hid
+    chown ha_zero_hid:ha_zero_hid /home/ha_zero_hid
+    chmod 750 /home/ha_zero_hid
     
     # Config server parameters
     websocket_server_port=""
@@ -179,7 +182,7 @@ EOF
 
 uninstall () {
     if [ -f "${CONFIG_FILE}" ]; then
-    read -rp "Keep server config? (y/n) " confirm </dev/tty
+        read -rp "Keep server config? (y/n) " confirm </dev/tty
         case "$confirm" in
             [Yy]* )
                 echo "Config file not deleted (${CONFIG_FILE})"

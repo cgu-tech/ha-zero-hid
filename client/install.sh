@@ -180,7 +180,7 @@ EOF
 
 uninstall () {
     if [ -f "${CONFIG_FILE}" ]; then
-    read -rp "Keep integration config? (y/n) " confirm </dev/tty
+        read -rp "Keep integration config? (y/n) " confirm </dev/tty
         case "$confirm" in
             [Yy]* )
                 echo "Config file not deleted (${CONFIG_FILE})"
