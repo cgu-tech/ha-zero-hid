@@ -2,45 +2,62 @@ import asyncio
 import json
 import logging
 import ssl
+import struct
 import websockets
+from websockets import WebSocketClientProtocol
 
 _LOGGER = logging.getLogger(__name__)
 
 class WebSocketClient:
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
-        self.websocket = None
+        self.websocket: WebSocketClientProtocol | None = None
         self._lock = asyncio.Lock()  # Prevent race conditions
 
-    async def send_scroll(self, x, y):
-        await self.send(f"scroll:{x},{y}")
+    # Send scroll as 2 signed bytes: [0x01][x][y]
+    async def send_scroll(self, x: int, y: int) -> None:
+        cmd = struct.pack("<Bbb", 0x01, x, y)
+        await self.send(cmd)
 
-    async def send_move(self, x, y):
-        await self.send(f"move:{x},{y}")
+    # Send move as 2 signed bytes: [0x02][x][y]
+    async def send_move(self, x: int, y: int) -> None:
+        cmd = struct.pack("<Bbb", 0x02, x, y)
+        await self.send(cmd)
 
-    async def send_clickleft(self):
-        await self.send("click:left")
+    # Mouse clicks: [0x10 + button_id]
+    async def send_clickleft(self) -> None:
+        await self.send(b'\x10')
 
-    async def send_clickmiddle(self):
-        await self.send("click:middle")
+    async def send_clickmiddle(self) -> None:
+        await self.send(b'\x11')
 
-    async def send_clickright(self):
-        await self.send("click:right")
+    async def send_clickright(self) -> None:
+        await self.send(b'\x12')
 
-    async def send_clickrelease(self):
-        await self.send("click:release")
+    async def send_clickrelease(self) -> None:
+        await self.send(b'\x13')
 
-    async def send_chartap(self, chars):
-        await self.send(f"chartap:{chars}")
+    # Chartap (send characters as UTF-8): [0x20][len][...chars...]
+    async def send_chartap(self, chars: str) -> None:
+        encoded = chars.encode("utf-8")
+        cmd = struct.pack("<BB", 0x20, len(encoded)) + encoded
+        await self.send(cmd)
 
-    async def send_keypress(self, modifiers, keys):
-        await self.send(f"keypress:{modifiers}:{keys}")
+    # Keypress with modifiers: [0x30][mod_count][mod1, mod2, ...][key_count][key1, key2, ...]
+    async def send_keypress(self, modifiers: list[int], keys: list[int]) -> None:
+        cmd = struct.pack("<B", 0x30)
+        cmd += struct.pack("<B", len(modifiers)) + bytes(modifiers)
+        cmd += struct.pack("<B", len(keys)) + bytes(keys)
+        await self.send(cmd)
 
-    async def send_conpress(self, cons):
-        await self.send(f"conpress:{cons}")
+    # Consumer press: [0x40][count][con1, con2, ...]
+    async def send_conpress(self, cons: list[int]) -> None:
+        cmd = struct.pack("<BB", 0x40, len(cons)) + bytes(cons)
+        await self.send(cmd)
 
+    # Sync keyboard request: [0x50], expects json response
     async def sync_keyboard(self) -> dict:
-        response = await self.send(f"sync:keyboard", waitResponse=True)
+        response = await self.send(b'\x50', wait_response=True)
         data = json.loads(response)
         return {
             "modifiers": data.get("modifiers", []),
@@ -50,7 +67,7 @@ class WebSocketClient:
             "scrolllock": bool(data.get("scrolllock", False)),
         }
 
-    async def send(self, cmd, waitResponse=False):
+    async def send(self, cmd: bytes, wait_response: bool = False) -> bytes | None:
         """Send a command with safe (re)connection."""
         try:
             if not self.websocket:
@@ -69,7 +86,7 @@ class WebSocketClient:
             _LOGGER.error(f"Unexpected WebSocket error: {e}")
             await self.disconnect()
 
-    async def recover_and_retry(self, cmd):
+    async def recover_and_retry(self, cmd: bytes) -> None:
         """Handle recovery logic and retry sending a command."""
         await self.disconnect()
         await asyncio.sleep(1)  # Optional backoff
@@ -78,11 +95,11 @@ class WebSocketClient:
             if self.websocket and not self.websocket.closed:
                 try:
                     await self.websocket.send(cmd)
-                    _LOGGER.info("Retried move command successfully.")
+                    _LOGGER.info("Retried command successfully.")
                 except Exception as e:
                     _LOGGER.error(f"Retry failed: {e}")
 
-    async def connect(self):
+    async def connect(self) -> None:
         """Establish a new WebSocket connection safely."""
         async with self._lock:
             if self.websocket and not self.websocket.closed:
@@ -100,7 +117,7 @@ class WebSocketClient:
                 _LOGGER.error(f"Failed to connect to WebSocket: {e}")
                 self.websocket = None
 
-    async def disconnect(self):
+    async def disconnect(self) -> None:
         """Cleanly close WebSocket connection."""
         async with self._lock:
             if self.websocket:

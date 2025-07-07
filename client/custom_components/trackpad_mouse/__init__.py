@@ -96,17 +96,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_scroll(call: ServiceCall) -> None:
         x = call.data.get("x")
         y = call.data.get("y")
-        _LOGGER.debug(f"handle_scroll.call.data.x: {x}")
-        _LOGGER.debug(f"handle_scroll.call.data.y: {y}")
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"handle_scroll.call.data.x: {x}")
+            _LOGGER.debug(f"handle_scroll.call.data.y: {y}")
 
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_scroll(x, y)
-            _LOGGER.debug(f"ws_client.send_scroll(x, y): {x},{y}")
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(f"ws_client.send_scroll(x, y): {x},{y}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_scroll: {e}")
 
@@ -115,28 +113,22 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_move(call: ServiceCall) -> None:
         x = call.data.get("x")
         y = call.data.get("y")
-        _LOGGER.debug(f"handle_move.call.data.x: {x}")
-        _LOGGER.debug(f"handle_move.call.data.y: {y}")
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"handle_move.call.data.x: {x}")
+            _LOGGER.debug(f"handle_move.call.data.y: {y}")
 
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_move(x, y)
-            _LOGGER.debug(f"ws_client.send_move(x, y): {x},{y}")
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(f"ws_client.send_move(x, y): {x},{y}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_move: {e}")
 
     """Handle pressing left mouse button."""
     @callback
     async def handle_clickleft(call: ServiceCall) -> None:
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_clickleft()
             _LOGGER.debug("ws_client.send_clickleft")
@@ -146,11 +138,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle pressing middle mouse button."""
     @callback
     async def handle_clickmiddle(call: ServiceCall) -> None:
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_clickmiddle()
             _LOGGER.debug("ws_client.send_clickmiddle")
@@ -160,11 +148,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle pressing right mouse button."""
     @callback
     async def handle_clickright(call: ServiceCall) -> None:
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_clickright()
             _LOGGER.debug("ws_client.send_clickright")
@@ -174,11 +158,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle releasing all mouse buttons."""
     @callback
     async def handle_clickrelease(call: ServiceCall) -> None:
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_clickrelease()
             _LOGGER.debug("ws_client.send_clickrelease")
@@ -189,13 +169,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     @callback
     async def handle_chartap(call: ServiceCall) -> None:
         chars = call.data.get("sendChars")
-        _LOGGER.debug(f"handle_chartap.call.data.sendChars: {chars}")
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"handle_chartap.call.data.sendChars: {chars}")
 
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_chartap(chars)
             _LOGGER.debug(f"ws_client.send_chartap(chars): {chars}")
@@ -207,14 +184,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_keypress(call: ServiceCall) -> None:
         modifiers = call.data.get("sendModifiers")
         keys = call.data.get("sendKeys")
-        _LOGGER.debug(f"handle_keypress.call.data.sendModifiers: {modifiers}")
-        _LOGGER.debug(f"handle_keypress.call.data.sendKeys: {keys}")
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"handle_keypress.call.data.sendModifiers: {modifiers}")
+            _LOGGER.debug(f"handle_keypress.call.data.sendKeys: {keys}")
 
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_keypress(modifiers, keys)
             _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
@@ -225,13 +199,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     @callback
     async def handle_conpress(call: ServiceCall) -> None:
         cons = call.data.get("sendCons")
-        _LOGGER.debug(f"handle_conpress.call.data.sendCons: {cons}")
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"handle_conpress.call.data.sendCons: {cons}")
 
-        # Use shared client
         ws_client = hass.data[DOMAIN]
-        _LOGGER.debug("ws_client retrieved")
-
-        # Send command to RPI HID
         try:
             await ws_client.send_conpress(cons)
             _LOGGER.debug(f"ws_client.send_conpress(cons): {cons}")
@@ -245,17 +216,23 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         logs = call.data.get("logs")
         fmt = "[CLIENT][%s]" + (" %s" * len(logs))
         if level == "TRA":
-            _LOGGER.debug(fmt, level, *logs)
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(fmt, level, *logs)
         elif level == "DBG":
-            _LOGGER.debug(fmt, level, *logs)
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(fmt, level, *logs)
         elif level == "INF":
-            _LOGGER.info(fmt, level, *logs)
+            if logger.getEffectiveLevel() == logging.INFO:
+                _LOGGER.info(fmt, level, *logs)
         elif level == "WRN":
-            _LOGGER.warning(fmt, level, *logs)
+            if logger.getEffectiveLevel() == logging.WARNING:
+                _LOGGER.warning(fmt, level, *logs)
         elif level == "ERR":
-            _LOGGER.error(fmt, level, *logs)
+            if logger.getEffectiveLevel() == logging.ERROR:
+                _LOGGER.error(fmt, level, *logs)
         else:
-            _LOGGER.critical(fmt, level, *logs)
+            if logger.getEffectiveLevel() == logging.CRITICAL:
+                _LOGGER.critical(fmt, level, *logs)
 
 
     # Register our services with Home Assistant.

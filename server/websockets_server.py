@@ -1,10 +1,10 @@
 import asyncio
 import websockets
-import ast
 import json
 import logging
 import logging.config
 import ssl
+import struct
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger(__name__)
 
@@ -40,115 +40,84 @@ def safe_eval(s):
             s, ValueError, SyntaxError)
         return []
 
-async def handle_client(websocket):
+async def handle_client(websocket: WebSocketServerProtocol) -> None:
     logger.info("Client connected")
     try:
         async for message in websocket:
-            logger.debug("Received: '%s'", message)
+            if isinstance(message, str):
+                logger.warning("Expected binary message, received text.")
+                continue
 
+            cmd = message[0]
             if logger.getEffectiveLevel() == logging.DEBUG:
-                bytes = message.encode('utf-8')
-                bytesStr = " ".join(["0x%02x" % byte for byte in bytes])
-                logger.debug("Hex representation: '%s'", bytesStr)
+                logger.debug("Received binary command: 0x%02X", cmd)
+                logger.debug("Raw bytes: %s", " ".join(f"0x{b:02X}" for b in message))
 
-            if message.startswith("move:"):
-                dx, dy = map(int, message.replace("move:", "").split(","))
-                logger.debug("Mouse move in progress: %s %s", dx, dy)
-                mouse.move(dx, dy)
-                logger.debug("Mouse move end: %s %s", dx, dy)
+            if cmd == 0x01 and len(message) == 3:  # scroll
+                _, x, y = struct.unpack("<Bbb", message)
+                logger.debug("Scroll: x=%d, y=%d", x, y)
+                if x:
+                    mouse.scroll_x(x)
+                if y:
+                    mouse.scroll_y(y)
 
-            elif message.startswith("scroll:"):
-                dx, dy = map(int, message.replace("scroll:", "").split(","))
-                logger.debug("Mouse scroll in progress: %s %s", dx, dy)
-                if dx != 0:
-                  mouse.scroll_x(dx)
-                if dy != 0:
-                  mouse.scroll_y(dy)
-                logger.debug("Mouse scroll end: %s %s", dx, dy)
+            elif cmd == 0x02 and len(message) == 3:  # move
+                _, x, y = struct.unpack("<Bbb", message)
+                logger.debug("Move: x=%d, y=%d", x, y)
+                mouse.move(x, y)
 
-            elif message == "click:left":
-                mouse.left_click(release=False)
+            elif cmd in (0x10, 0x11, 0x12):  # clicks
+                if cmd == 0x10:
+                    logger.debug("Click left")
+                    mouse.left_click(release=False)
+                elif cmd == 0x11:
+                    logger.debug("Click middle")
+                    mouse.middle_click(release=False)
+                elif cmd == 0x12:
+                    logger.debug("Click right")
+                    mouse.right_click(release=False)
 
-            elif message == "click:right":
-                mouse.right_click(release=False)
-
-            elif message == "click:middle":
-                mouse.middle_click(release=False)
-
-            elif message == "click:release":
+            elif cmd == 0x13:
+                logger.debug("Click release")
                 mouse.release()
 
-            elif message.startswith("keypress:"):
-                modifiers, keys = map(safe_eval, message.replace("keypress:", "").split(":"))
-
-                # Separate known modifiers and unknown codes
-                modifierCodes = []
-                unknown_modifiers = []
-                for mod in modifiers:
-                    code = key_codes_map.get(mod)
-                    if code is not None:
-                        modifierCodes.append(code)
-                    else:
-                        unknown_modifiers.append(mod)
-                if unknown_modifiers:
-                    logger.warning("Unable to find modifiers: '%s'", unknown_modifiers)
-
-                # Separate known keycodes, consumer codes and unknown codes
-                keyCodes = []
-                unknown_keys = []
-                for key in keys:
-                    code = key_codes_map.get(key)
-                    if code is not None:
-                        keyCodes.append(code)
-                    else:
-                        unknown_keys.append(key)
-                if unknown_keys:
-                    logger.warning("Unable to find keys: '%s'", unknown_keys)
-
-                if not unknown_modifiers and not unknown_keys:
-                    # All modifiers and keys are known
-
-                    # Press the keyboard 0..N modifiers and/or 0..1 key (0 means no key)
-                    keyboard.press(modifierCodes, keyCodes, release=False)
-
-                    # Update keyboard states for later synchronization calls
-                    keyboard_state["modifiers"] = modifiers
-                    keyboard_state["keys"] = [keys[0]] if keys else []
-                    for keyCode in keyCodes:
-                        if keyCode == KeyCodes["KEY_NUMLOCK"]:
-                            keyboard_state["numlock"] = not keyboard_state["numlock"]
-                        elif keyCode == KeyCodes["KEY_CAPSLOCK"]:
-                            keyboard_state["capslock"] = not keyboard_state["capslock"]
-                        elif keyCode == KeyCodes["KEY_SCROLLLOCK"]:
-                            keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
-
-            elif message.startswith("chartap:"):
-                chars = message.replace("chartap:", "")
-
-                # Press the keyboard 0..N modifiers and/or 0..1 key (0 means no key)
+            elif cmd == 0x20 and len(message) >= 2:  # chartap
+                length = message[1]
+                chars = message[2:2 + length].decode('utf-8', errors='ignore')
+                logger.debug("Chartap: %s", chars)
                 keyboard.type(chars)
 
-            elif message.startswith("conpress:"):
-                consumers = safe_eval(message.replace("conpress:", ""))
+            elif cmd == 0x30 and len(message) >= 3:  # keypress
+                mod_count = message[1]
+                mods = list(message[2:2 + mod_count])
+                key_count_index = 2 + mod_count
+                key_count = message[key_count_index]
+                keys = list(message[key_count_index + 1:key_count_index + 1 + key_count])
 
-                # Separate known keycodes, consumer codes and unknown codes
-                consumerCodes = []
-                unknown_consumers = []
-                for con in consumers:
-                    code = consumer_codes_map.get(con)
-                    if code is not None:
-                        consumerCodes.append(code)
-                    else:
-                        unknown_consumers.append(con)
-                if unknown_consumers:
-                    logger.warning("Unable to find consumers: '%s'", unknown_consumers)
+                logger.debug("Keypress: modifiers=%s keys=%s", mods, keys)
 
-                if not unknown_consumers:
-                    # All consumers keys are known
-                    consumer.press(consumerCodes, release=False)
+                # Directly use raw codes
+                keyboard.press(mods, keys, release=False)
 
-            elif message == "sync:keyboard":
-                # Send sync state
+                # Update keyboard state
+                keyboard_state["modifiers"] = mods
+                keyboard_state["keys"] = keys[:1] if keys else []
+                for k in keys:
+                    if k == KeyCodes["KEY_NUMLOCK"]:
+                        keyboard_state["numlock"] = not keyboard_state["numlock"]
+                    elif k == KeyCodes["KEY_CAPSLOCK"]:
+                        keyboard_state["capslock"] = not keyboard_state["capslock"]
+                    elif k == KeyCodes["KEY_SCROLLLOCK"]:
+                        keyboard_state["scrolllock"] = not keyboard_state["scrolllock"]
+
+            elif cmd == 0x40 and len(message) >= 2:  # conpress
+                count = message[1]
+                cons = list(message[2:2 + count])
+                logger.debug("Conpress: %s", cons)
+                consumer.press(cons, release=False)
+
+            elif cmd == 0x50:  # sync:keyboard
+                logger.debug("Sync keyboard requested")
                 response_data = {
                     "modifiers": keyboard_state["modifiers"],
                     "keys": keyboard_state["keys"],
@@ -156,9 +125,11 @@ async def handle_client(websocket):
                     "capslock": keyboard_state["capslock"],
                     "scrolllock": keyboard_state["scrolllock"],
                 }
-                response_str = json.dumps(response_data)
-                await websocket.send(response_str)
-                logger.debug("sync:keyboard: response_data='%s'", response_data)
+                await websocket.send(json.dumps(response_data).encode('utf-8'))
+                logger.debug("Sync response: %s", response_data)
+
+            else:
+                logger.warning("Unknown or malformed command: 0x%02X", cmd)
 
     except websockets.ConnectionClosed:
         logger.info("Client disconnected")
