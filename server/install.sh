@@ -25,6 +25,8 @@ check_root() {
 }
 
 create_cert() {
+    CURRENT_DIR="$(pwd)"
+    
     # === Clean up previous files (optional) ===
     rm -f "$KEY_FILE" "$CERT_FILE" "$PEM_FILE" "$OPENSSL_CONFIG_FILE"
     
@@ -62,9 +64,9 @@ EOF
     rm -f "$OPENSSL_CONFIG_FILE"
     
     echo "Self-signed certificate, key, and PEM generated:"
-    echo " - $KEY_FILE"
-    echo " - $CERT_FILE"
-    echo " - $PEM_FILE"
+    echo " - ${CURRENT_DIR}/${KEY_FILE}"
+    echo " - ${CURRENT_DIR}/${$CERT_FILE}"
+    echo " - ${CURRENT_DIR}/${$PEM_FILE}"
 }
 
 install() {
@@ -166,10 +168,10 @@ EOF
     #   server.crt – self-signed certificate
     #   server.pem – combined certificate + key (sometimes used)
     create_cert
-    cp "$CERT_FILE" /opt/ha_zero_hid/
-    cp "$KEY_FILE" /opt/ha_zero_hid/
-    chown -R ha_zero_hid:ha_zero_hid /opt/ha_zero_hid/"$CERT_FILE" 
-    chown -R ha_zero_hid:ha_zero_hid /opt/ha_zero_hid/"$KEY_FILE"
+    cp "${CERT_FILE}" /opt/ha_zero_hid/
+    cp "${KEY_FILE}" /opt/ha_zero_hid/
+    chown -R ha_zero_hid:ha_zero_hid /opt/ha_zero_hid/"${CERT_FILE}" 
+    chown -R ha_zero_hid:ha_zero_hid /opt/ha_zero_hid/"${KEY_FILE}"
 
     # Configure systemd unit
     cp websockets_server.service /etc/systemd/system/
