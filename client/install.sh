@@ -35,43 +35,57 @@ cleanup() {
     rm /config/www/android-remote-card.js >/dev/null 2>&1 || true
 }
 
-extract_keycodes_to_json() {
-    local INPUT_PYTHON="$1"
-    local OUTPUT_JSON="$2"
+extract_keycodes_to_js_class() {
+    local INPUT_PYTHON_FILE="$1"
+    local OUTPUT_JS_FILE="$2"
+    local OUTPUT_JS_CLASS="$3"
 
-    if [[ ! -f "${INPUT_PYTHON}" ]]; then
-        echo "Input file not found: ${INPUT_PYTHON}"
+    if [[ ! -f "${INPUT_PYTHON_FILE}" ]]; then
+        echo "Input file not found: ${INPUT_PYTHON_FILE}"
         return 1
     fi
 
-    # Start JSON output
-    echo "{" > "${OUTPUT_JSON}"
-    
-    # Process each constant line
-    grep -E '^\s*[A-Z0-9_]+\s*=\s*(0x[0-9a-fA-F]+|\d+)' "${INPUT_PYTHON}" | while read -r line; do
-        # Extract the key and value
+    # Start the JS class
+    {
+        echo "export class ${OUTPUT_JS_CLASS} {"
+        echo "  constructor() {"
+        echo "    this._mapping = {"
+    } > "${OUTPUT_JS_FILE}"
+
+    # Append mapping from Python constants
+    grep -E '^\s*[A-Z0-9_]+\s*=\s*(0x[0-9a-fA-F]+|\d+)' "${INPUT_PYTHON_FILE}" | while read -r line; do
         key=$(echo "$line" | cut -d '=' -f 1 | tr -d ' ')
         val=$(echo "$line" | cut -d '=' -f 2 | cut -d '#' -f 1 | tr -d ' ')
-    
-        # Convert hex to decimal if necessary
+
+        # Convert hex to decimal if needed
         if [[ "$val" =~ ^0x ]]; then
             val=$(( val ))
         fi
-    
-        # Write to JSON file
-        echo "  \"$key\": $val," >> "${OUTPUT_JSON}"
-    done
-    
-    # Remove trailing comma
-    sed -i '' -e '$ s/,$//' "${OUTPUT_JSON}" 2>/dev/null || sed -i '$ s/,$//' "${OUTPUT_JSON}"
-    
-    # End JSON
-    echo "}" >> "${OUTPUT_JSON}"
 
-    echo "Python mapping ${INPUT_PYTHON} converted to JSON mapping at ${OUTPUT_JSON}"
+        echo "      \"$key\": $val," >> "${OUTPUT_JS_FILE}"
+    done
+
+    # Remove trailing comma
+    sed -i '' -e '$ s/,$//' "${OUTPUT_JS_FILE}" 2>/dev/null || sed -i '$ s/,$//' "${OUTPUT_JS_FILE}"
+
+    # Close class and add getMapping()
+    {
+        echo "    };"
+        echo "  }"
+        echo ""
+        echo "  getMapping() {"
+        echo "    return this._mapping;"
+        echo "  }"
+        echo "}"
+    } >> "${OUTPUT_JS_FILE}"
+
+    echo "Python constants from ${INPUT_PYTHON_FILE} converted to JS class ${OUTPUT_JS_CLASS} in ${OUTPUT_JS_FILE}"
 }
 
+
 install() {
+    CURRENT_DIR="$(pwd)"
+    
     # Create HA client integration
     (rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true) && cp -R custom_components /config
     
@@ -168,10 +182,10 @@ EOF
     (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "${ZERO_HID_BRANCH}" "${ZERO_HID_REPO}"
     
     echo "Creating key codes mapping..."
-    extract_keycodes_to_json "./zero-hid/zero_hid/hid/keycodes.py" "./www/keycodes.json"
+    extract_keycodes_to_js_class "${CURRENT_DIR}/zero-hid/zero_hid/hid/keycodes.py" "${CURRENT_DIR}/www/utils/keycodes.js" "KeyCodes"
     
     echo "Creating consummer codes mapping..."
-    extract_keycodes_to_json "./zero-hid/zero_hid/hid/consumercodes.py" "./www/consumercodes.json"
+    extract_keycodes_to_js_class "${CURRENT_DIR}/zero-hid/zero_hid/hid/consumercodes.py" "${CURRENT_DIR}/www/utils/consumercodes.js" "ConsumerCodes"
     
     # Copy all updated configured files to install client components
     echo "Installing trackpad_mouse newly configured component..."
