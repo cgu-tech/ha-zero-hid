@@ -1,9 +1,15 @@
 #!/bin/bash
 # Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
 
+# === Parameters ===
+ZERO_HID_BRANCH="${1:-main}"
+
+# === Configurations ===
+ZERO_HID_REPO="https://github.com/cgu-tech/zero-hid.git"
 CONFIG_FILE="/config/trackpad_mouse.config"
 MODULE_FILE="/config/custom_components/trackpad_mouse/__init__.py"
 
+# === Functions ===
 cleanup() {
     # Cleanup existing client elements when needed
     rm /config/www/utils/logger.js >/dev/null 2>&1 || true
@@ -27,6 +33,42 @@ cleanup() {
     rm /config/www/carrousel.js >/dev/null 2>&1 || true
     
     rm /config/www/android-remote-card.js >/dev/null 2>&1 || true
+}
+
+extract_keycodes_to_json() {
+    local INPUT_PYTHON="$1"
+    local OUTPUT_JSON="$2"
+
+    if [[ ! -f "${INPUT_PYTHON}" ]]; then
+        echo "Input file not found: ${INPUT_PYTHON}"
+        return 1
+    fi
+
+    # Start JSON output
+    echo "{" > "${OUTPUT_JSON}"
+    
+    # Process each constant line
+    grep -E '^\s*[A-Z0-9_]+\s*=\s*(0x[0-9a-fA-F]+|\d+)' "${INPUT_PYTHON}" | while read -r line; do
+        # Extract the key and value
+        key=$(echo "$line" | cut -d '=' -f 1 | tr -d ' ')
+        val=$(echo "$line" | cut -d '=' -f 2 | cut -d '#' -f 1 | tr -d ' ')
+    
+        # Convert hex to decimal if necessary
+        if [[ "$val" =~ ^0x ]]; then
+            val=$(( val ))
+        fi
+    
+        # Write to JSON file
+        echo "  \"$key\": $val," >> "${OUTPUT_JSON}"
+    done
+    
+    # Remove trailing comma
+    sed -i '' -e '$ s/,$//' "${OUTPUT_JSON}" 2>/dev/null || sed -i '$ s/,$//' "${OUTPUT_JSON}"
+    
+    # End JSON
+    echo "}" >> "${OUTPUT_JSON}"
+
+    echo "Python mapping ${INPUT_PYTHON} converted to JSON mapping at ${OUTPUT_JSON}"
 }
 
 install() {
@@ -121,6 +163,16 @@ EOF
     echo "Cleaning trackpad_mouse old component files..."
     cleanup
     
+    # Create key codes and consummer codes mappings from zero-hid
+    echo "Cloning zero-hid dependency using branch ${ZERO_HID_BRANCH}..."
+    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "${ZERO_HID_BRANCH}" "${ZERO_HID_REPO}"
+    
+    echo "Creating key codes mapping..."
+    extract_keycodes_to_json "./zero-hid/zero_hid/hid/keycodes.py" "./www/keycodes.json"
+    
+    echo "Creating consummer codes mapping..."
+    extract_keycodes_to_json "./zero-hid/zero_hid/hid/consumercodes.py" "./www/consumercodes.json"
+    
     # Copy all updated configured files to install client components
     echo "Installing trackpad_mouse newly configured component..."
     cp -R www /config
@@ -144,7 +196,7 @@ uninstall () {
                 ;;
         esac
     fi
-        
+    
     # Disabling component into HA configuration
     sed -i '/^trackpad_mouse:$/d' /config/configuration.yaml
     

@@ -1,20 +1,21 @@
 #!/bin/bash
 # Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
 
-# Makes this script:
-# -e (exit on error) Fail-fast on errors
-# -u (unset variable is an error) Avoid silent bugs from typos or partial failures
-# -o pipefail Safer and more predictable in production or automation
-#set -euo pipefail
-
-# === Configuration ===
-KEY_FILE="server.key"
-CERT_FILE="server.crt"
-PEM_FILE="server.pem"
-CONFIG_FILE="openssl.cnf"
+# === Parameters ===
 ZERO_HID_BRANCH="${1:-main}"
 SKIP_UPDATE="${2:-}"
 
+# === Configurations ===
+KEY_FILE="server.key"
+CERT_FILE="server.crt"
+PEM_FILE="server.pem"
+OPENSSL_CONFIG_FILE="openssl.cnf"
+ZERO_HID_REPO="https://github.com/cgu-tech/zero-hid.git"
+HA_ZERO_HID_HOME="/home/ha_zero_hid"
+CONFIG_FILE="${HA_ZERO_HID_HOME}/trackpad_mouse.config"
+MODULE_FILE="/opt/ha_zero_hid/websockets_server.py"
+
+# === Functions ===
 check_root() {
     ROOTUID="0"
     if [ "$(id -u)" -ne "$ROOTUID" ] ; then
@@ -25,10 +26,10 @@ check_root() {
 
 create_cert() {
     # === Clean up previous files (optional) ===
-    rm -f "$KEY_FILE" "$CERT_FILE" "$PEM_FILE" "$CONFIG_FILE"
+    rm -f "$KEY_FILE" "$CERT_FILE" "$PEM_FILE" "$OPENSSL_CONFIG_FILE"
     
     # === Create a minimal OpenSSL config file ===
-    cat > "$CONFIG_FILE" <<EOF
+    cat > "$OPENSSL_CONFIG_FILE" <<EOF
     [ req ]
     default_bits       = 1024
     prompt             = no
@@ -48,7 +49,7 @@ EOF
     openssl genrsa -out "$KEY_FILE" 2048
     
     # === Generate self-signed certificate that expires in 100 years ===
-    openssl req -new -x509 -key "$KEY_FILE" -out "$CERT_FILE" -days 365000 -config "$CONFIG_FILE"
+    openssl req -new -x509 -key "$KEY_FILE" -out "$CERT_FILE" -days 365000 -config "$OPENSSL_CONFIG_FILE"
     
     # === Combine into PEM file ===
     cat "$CERT_FILE" "$KEY_FILE" > "$PEM_FILE"
@@ -58,7 +59,7 @@ EOF
     chmod 644 "$CERT_FILE" "$PEM_FILE"
     
     # === Cleanup config file ===
-    rm -f "$CONFIG_FILE"
+    rm -f "$OPENSSL_CONFIG_FILE"
     
     echo "Self-signed certificate, key, and PEM generated:"
     echo " - $KEY_FILE"
@@ -90,7 +91,7 @@ install() {
     # TODO: install official dependency using "pip install zero_hid", 
     #       once PR is merged to official code-base: https://github.com/thewh1teagle/zero-hid/pull/39
     echo "Cloning zero-hid dependency using branch ${ZERO_HID_BRANCH}..."
-    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "${ZERO_HID_BRANCH}" https://github.com/cgu-tech/zero-hid.git
+    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "${ZERO_HID_BRANCH}" "${ZERO_HID_REPO}"
     mv zero-hid /opt/ha_zero_hid/
     pip install --editable /opt/ha_zero_hid/zero-hid
     
@@ -98,7 +99,62 @@ install() {
     pip install websockets
     
     # Security: create user+group dedicated to service
-    (useradd --system --no-create-home ha_zero_hid >/dev/null 2>&1 || true)
+    (useradd --system -m -d "${HA_ZERO_HID_HOME}" ha_zero_hid >/dev/null 2>&1 || true)
+    
+    # Config server parameters
+    websocket_server_port=""
+    
+    # Config flags
+    conf_websocket_server_port=false
+    
+    # Automatic setup : try loading config file
+    if [ -f "${CONFIG_FILE}" ]; then
+        
+        # Automatic setup of "websocket_server_port"
+        websocket_server_port=$(grep "^websocket_server_port:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
+        if [ -n "${websocket_server_port}" ]; then
+            conf_websocket_server_port=true
+            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${CONFIG_FILE}"
+        else
+            echo "Key 'websocket_server_port' not found or has no value in ${CONFIG_FILE}"
+        fi
+      
+    else
+        # Automatic setup : no config file or config file not accessible
+        echo "Config file not found: ${CONFIG_FILE}"
+    fi
+
+    # Manual setup of "websocket_server_port":
+    if [ "${conf_websocket_server_port}" != "true" ]; then
+        regex='^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$'
+        while true; do
+            read -p "Enter this USB gadget server port (default: 8765): " websocket_server_port </dev/tty
+            websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
+            if [ -z "${websocket_server_port}" ]; then
+                websocket_server_port="8765"
+                echo "Using default 8765 server port"
+                break
+            elif [[ ${websocket_server_port} =~ ${regex} ]]; then
+                break
+            else
+                echo "Please answer a well-formed server port (vvvvv expected, where 1 <= vvvvv <= 65535)"
+            fi
+        done
+    fi
+
+    # Write updated config file
+    echo "Writing config file ${CONFIG_FILE}..."
+    cat <<EOF > "${CONFIG_FILE}"
+websocket_server_port: ${websocket_server_port}
+EOF
+
+    # Configure using new configurations
+    echo "Configuring trackpad_mouse server..."
+    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${MODULE_FILE}"
+    echo "This USB gadget server will be running at 0.0.0.0:${websocket_server_port}"
+    
+    
     chown -R :ha_zero_hid /opt/ha_zero_hid
     chmod -R g+w /opt/ha_zero_hid
 
@@ -122,6 +178,24 @@ install() {
 }
 
 uninstall () {
+    if [ -f "${CONFIG_FILE}" ]; then
+    read -rp "Keep server config? (y/n) " confirm </dev/tty
+        case "$confirm" in
+            [Yy]* )
+                echo "Config file not deleted (${CONFIG_FILE})"
+                ;;
+            [Nn]* )
+                # Cleaning up server custom config file
+                rm "${CONFIG_FILE}" >/dev/null 2>&1 || true
+                echo "Config file deleted (${CONFIG_FILE})"
+                ;;
+            * )
+                echo "Please answer y or n."
+                exit 1
+                ;;
+        esac
+    fi
+    
     # Stop service
     systemctl stop websockets_server.service
     

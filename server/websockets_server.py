@@ -101,7 +101,7 @@ async def handle_client(websocket: WebSocketServerProtocol) -> None:
 
                 # Update keyboard state
                 keyboard_state["modifiers"] = mods
-                keyboard_state["keys"] = keys[:1] if keys else []
+                keyboard_state["keys"] = keys
                 for k in keys:
                     if k == KeyCodes["KEY_NUMLOCK"]:
                         keyboard_state["numlock"] = not keyboard_state["numlock"]
@@ -136,8 +136,8 @@ async def handle_client(websocket: WebSocketServerProtocol) -> None:
 
 async def main():
     # Start websockets server infinite loop
-    async with websockets.serve(handle_client, "0.0.0.0", 8765, ssl=ssl_context):
-        logger.info("WebSocket server running at wss://0.0.0.0:8765")
+    async with websockets.serve(handle_client, "0.0.0.0", <websocket_server_port>, ssl=ssl_context):
+        logger.info("WebSocket server running at wss://0.0.0.0:<websocket_server_port>")
         await asyncio.Future()  # Run forever
 
 asyncio.run(main())
