@@ -1,4 +1,6 @@
 import { Logger } from './utils/logger.js';
+import { KeyCodes } from './utils/keycodes.js';
+import { ConsummerCodes } from './utils/consummercodes.js';
 
 console.info("Loading Android Keyboard Card");
 
@@ -6,6 +8,9 @@ class AndroidKeyboardCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" }); // Create shadow root
+
+    this._keycodes = new KeyCodes().getMapping();
+    this._consummercodes = new ConsummerCodes().getMapping();
 
     this._hass = null;
     this._uiBuilt = false;
@@ -907,12 +912,13 @@ class AndroidKeyboardCard extends HTMLElement {
   appendKeyCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
     if (code) {
+      const intCode = this._keycodes[code];
       if (this.isVirtualModifier(code)) {
         // Modifier key pressed
-        this.pressedModifiers.add(code);
+        this.pressedModifiers.add(intCode);
       } else {
         // Standard key pressed
-        this.pressedKeys.add(code);
+        this.pressedKeys.add(intCode);
       }
     }
     this.sendKeyboardUpdate(hass);
@@ -921,7 +927,8 @@ class AndroidKeyboardCard extends HTMLElement {
   appendConsumerCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer pressed:", code));
     if (code) {
-      this.pressedConsumers.add(code);
+      const intCode = this._consummercodes[code];
+      this.pressedConsumers.add(intCode);
     }
     this.sendConsumerUpdate(hass);
   }
@@ -941,12 +948,13 @@ class AndroidKeyboardCard extends HTMLElement {
   removeKeyCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
     if (code) {
+      const intCode = this._keycodes[code];
       if (this.isVirtualModifier(code)) {
         // Modifier key released
-        this.pressedModifiers.delete(code);
+        this.pressedModifiers.delete(intCode);
       } else {
         // Standard key released
-        this.pressedKeys.delete(code);
+        this.pressedKeys.delete(intCode);
       }
     }
     this.sendKeyboardUpdate(hass);
@@ -955,7 +963,8 @@ class AndroidKeyboardCard extends HTMLElement {
   removeConsumerCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer released:", code));
     if (code) {
-      this.pressedConsumers.delete(code);
+      const intCode = this._consummercodes[code];
+      this.pressedConsumers.delete(intCode);
     }
     this.sendConsumerUpdate(hass);
   }
