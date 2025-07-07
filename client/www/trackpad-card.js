@@ -13,7 +13,7 @@ class TrackpadCard extends HTMLElement {
     
     // Configs
     this.config = null;
-    this.loglevel = 'trace';
+    this.loglevel = 'warn';
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.haptic = false;
