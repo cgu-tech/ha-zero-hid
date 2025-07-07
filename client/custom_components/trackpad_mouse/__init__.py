@@ -96,14 +96,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_scroll(call: ServiceCall) -> None:
         x = call.data.get("x")
         y = call.data.get("y")
-        if logger.getEffectiveLevel() == logging.DEBUG:
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"handle_scroll.call.data.x: {x}")
             _LOGGER.debug(f"handle_scroll.call.data.y: {y}")
 
         ws_client = hass.data[DOMAIN]
         try:
             await ws_client.send_scroll(x, y)
-            if logger.getEffectiveLevel() == logging.DEBUG:
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_scroll(x, y): {x},{y}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_scroll: {e}")
@@ -113,14 +113,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_move(call: ServiceCall) -> None:
         x = call.data.get("x")
         y = call.data.get("y")
-        if logger.getEffectiveLevel() == logging.DEBUG:
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"handle_move.call.data.x: {x}")
             _LOGGER.debug(f"handle_move.call.data.y: {y}")
 
         ws_client = hass.data[DOMAIN]
         try:
             await ws_client.send_move(x, y)
-            if logger.getEffectiveLevel() == logging.DEBUG:
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_move(x, y): {x},{y}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_move: {e}")
@@ -169,7 +169,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     @callback
     async def handle_chartap(call: ServiceCall) -> None:
         chars = call.data.get("sendChars")
-        if logger.getEffectiveLevel() == logging.DEBUG:
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"handle_chartap.call.data.sendChars: {chars}")
 
         ws_client = hass.data[DOMAIN]
@@ -184,7 +184,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def handle_keypress(call: ServiceCall) -> None:
         modifiers = call.data.get("sendModifiers")
         keys = call.data.get("sendKeys")
-        if logger.getEffectiveLevel() == logging.DEBUG:
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"handle_keypress.call.data.sendModifiers: {modifiers}")
             _LOGGER.debug(f"handle_keypress.call.data.sendKeys: {keys}")
 
@@ -199,7 +199,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     @callback
     async def handle_conpress(call: ServiceCall) -> None:
         cons = call.data.get("sendCons")
-        if logger.getEffectiveLevel() == logging.DEBUG:
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"handle_conpress.call.data.sendCons: {cons}")
 
         ws_client = hass.data[DOMAIN]
@@ -216,22 +216,22 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         logs = call.data.get("logs")
         fmt = "[CLIENT][%s]" + (" %s" * len(logs))
         if level == "TRA":
-            if logger.getEffectiveLevel() == logging.DEBUG:
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(fmt, level, *logs)
         elif level == "DBG":
-            if logger.getEffectiveLevel() == logging.DEBUG:
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(fmt, level, *logs)
         elif level == "INF":
-            if logger.getEffectiveLevel() == logging.INFO:
+            if _LOGGER.getEffectiveLevel() == logging.INFO:
                 _LOGGER.info(fmt, level, *logs)
         elif level == "WRN":
-            if logger.getEffectiveLevel() == logging.WARNING:
+            if _LOGGER.getEffectiveLevel() == logging.WARNING:
                 _LOGGER.warning(fmt, level, *logs)
         elif level == "ERR":
-            if logger.getEffectiveLevel() == logging.ERROR:
+            if _LOGGER.getEffectiveLevel() == logging.ERROR:
                 _LOGGER.error(fmt, level, *logs)
         else:
-            if logger.getEffectiveLevel() == logging.CRITICAL:
+            if _LOGGER.getEffectiveLevel() == logging.CRITICAL:
                 _LOGGER.critical(fmt, level, *logs)
 
 
