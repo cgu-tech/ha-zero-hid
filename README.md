@@ -193,16 +193,87 @@ cells:
 ```
 
 #### Android remote control card
+
+Minimal recommended version:
+```yaml
+type: custom:android-remote-card
+keyboard:
+  layout: US-remote
+  font_scale: 1.4
+mouse:
+  haptic: true
+  buttons: hidden
+```
+
+Extended version with haptic feedback enabled, four activities, volume buttons overrides:
 ```yaml
 type: custom:android-remote-card
 haptic: true
+buttons-override:
+  remote-volume-down-button:
+    tap_action:
+      action: toggle
+    entity: script.tv-volume-down
+  remote-volume-up-button:
+    tap_action:
+      action: toggle
+    entity: script.tv-volume-up
 keyboard:
-  layout: FR-remote
+  layout: US-remote
   haptic: true
   font_scale: 1.4
 mouse:
   haptic: true
   buttons: hidden
+  haptic: true
+activities:
+  cell_width: 80px
+  cell_height: 60px
+  cells:
+    netflix-activity:
+      name: Netflix
+      icon-url: https://upload.wikimedia.org/wikipedia/commons/7/75/Netflix_icon.svg
+      action:
+        tap_action:
+          action: perform-action
+          perform_action: remote.turn_on
+          target:
+            entity_id: remote.android_tv
+          data:
+            activity: com.netflix.ninja
+    disney-activity:
+      name: Disney+
+      icon-url: https://upload.wikimedia.org/wikipedia/commons/f/fa/Disney_plus_icon.png
+      action:
+        tap_action:
+          action: perform-action
+          perform_action: remote.turn_on
+          target:
+            entity_id: remote.android_tv
+          data:
+            activity: com.disney.disneyplus
+    youtube-activity:
+      name: Youtube
+      icon-url: https://upload.wikimedia.org/wikipedia/commons/7/72/YouTube_social_white_square_%282017%29.svg
+      action:
+        tap_action:
+          action: perform-action
+          perform_action: remote.turn_on
+          target:
+            entity_id: remote.android_tv
+          data:
+            activity: app.revanced.android.youtube
+    prime-activity:
+      name: Amazon
+      icon-url: https://upload.wikimedia.org/wikipedia/commons/c/ca/Amazon_Prime_Video_logo_%282024%29.svg
+      action:
+        tap_action:
+          action: perform-action
+          perform_action: remote.turn_on
+          target:
+            entity_id: remote.android_tv
+          data:
+            activity: https://app.primevideo.com
 ```
 
 ## F.A.Q
