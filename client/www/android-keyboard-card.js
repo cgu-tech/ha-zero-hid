@@ -1,6 +1,6 @@
 import { Logger } from './utils/logger.js';
 import { KeyCodes } from './utils/keycodes.js';
-import { ConsummerCodes } from './utils/consumercodes.js';
+import { ConsumerCodes } from './utils/consumercodes.js';
 
 console.info("Loading Android Keyboard Card");
 
@@ -10,7 +10,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.attachShadow({ mode: "open" }); // Create shadow root
 
     this._keycodes = new KeyCodes().getMapping();
-    this._consummercodes = new ConsummerCodes().getMapping();
+    this._consumercodes = new ConsumerCodes().getMapping();
 
     this._hass = null;
     this._uiBuilt = false;
@@ -927,7 +927,7 @@ class AndroidKeyboardCard extends HTMLElement {
   appendConsumerCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer pressed:", code));
     if (code) {
-      const intCode = this._consummercodes[code];
+      const intCode = this._consumercodes[code];
       this.pressedConsumers.add(intCode);
     }
     this.sendConsumerUpdate(hass);
@@ -963,7 +963,7 @@ class AndroidKeyboardCard extends HTMLElement {
   removeConsumerCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer released:", code));
     if (code) {
-      const intCode = this._consummercodes[code];
+      const intCode = this._consumercodes[code];
       this.pressedConsumers.delete(intCode);
     }
     this.sendConsumerUpdate(hass);
