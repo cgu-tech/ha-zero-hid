@@ -1,6 +1,6 @@
 import { Logger } from './utils/logger.js';
 import { KeyCodes } from './utils/keycodes.js';
-import { ConsummerCodes } from './utils/consummercodes.js';
+import { ConsummerCodes } from './utils/consumercodes.js';
 
 console.info("Loading Android Keyboard Card");
 
