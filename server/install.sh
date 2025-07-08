@@ -28,10 +28,10 @@ create_cert() {
     CURRENT_DIR="$(pwd)"
     
     # === Clean up previous files (optional) ===
-    rm -f "$KEY_FILE" "$CERT_FILE" "$PEM_FILE" "$OPENSSL_CONFIG_FILE"
+    rm -f "${KEY_FILE}" "${CERT_FILE}" "${PEM_FILE}" "${OPENSSL_CONFIG_FILE}"
     
     # === Create a minimal OpenSSL config file ===
-    cat > "$OPENSSL_CONFIG_FILE" <<EOF
+    cat > "${OPENSSL_CONFIG_FILE}" <<EOF
     [ req ]
     default_bits       = 1024
     prompt             = no
@@ -48,25 +48,25 @@ create_cert() {
 EOF
     
     # === Generate private key ===
-    openssl genrsa -out "$KEY_FILE" 2048
+    openssl genrsa -out "${KEY_FILE}" 2048
     
     # === Generate self-signed certificate that expires in 100 years ===
-    openssl req -new -x509 -key "$KEY_FILE" -out "$CERT_FILE" -days 365000 -config "$OPENSSL_CONFIG_FILE"
+    openssl req -new -x509 -key "${KEY_FILE}" -out "${CERT_FILE}" -days 365000 -config "${OPENSSL_CONFIG_FILE}"
     
     # === Combine into PEM file ===
-    cat "$CERT_FILE" "$KEY_FILE" > "$PEM_FILE"
+    cat "${CERT_FILE}" "${KEY_FILE}" > "${PEM_FILE}"
     
     # === Set file permissions ===
-    chmod 600 "$KEY_FILE"
-    chmod 644 "$CERT_FILE" "$PEM_FILE"
+    chmod 600 "${KEY_FILE}"
+    chmod 644 "${CERT_FILE}" "${PEM_FILE}"
     
     # === Cleanup config file ===
-    rm -f "$OPENSSL_CONFIG_FILE"
+    rm -f "${OPENSSL_CONFIG_FILE}"
     
     echo "Self-signed certificate, key, and PEM generated:"
     echo " - ${CURRENT_DIR}/${KEY_FILE}"
-    echo " - ${CURRENT_DIR}/${$CERT_FILE}"
-    echo " - ${CURRENT_DIR}/${$PEM_FILE}"
+    echo " - ${CURRENT_DIR}/${CERT_FILE}"
+    echo " - ${CURRENT_DIR}/${PEM_FILE}"
 }
 
 install() {
@@ -78,7 +78,7 @@ install() {
     chmod +x /opt/ha_zero_hid/websockets_server_run.sh
     
     # Create python venv for server and install dependencies
-    if [ -z "$SKIP_UPDATE" ]; then
+    if [ -z "${SKIP_UPDATE}" ]; then
         echo "Updating apt and installing required packages..."
         apt-get update
         apt-get install -y git python3-pip python3-venv git
