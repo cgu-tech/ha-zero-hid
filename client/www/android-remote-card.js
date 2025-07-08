@@ -45,11 +45,11 @@ class AndroidRemoteCard extends HTMLElement {
                  <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
                </svg>`
       },
-      { id: "remote-arrow-up-button",       code: "KEY_UP"                 , html: "" },
-      { id: "remote-arrow-right-button",    code: "KEY_RIGHT"              , html: "" },
-      { id: "remote-arrow-down-button",     code: "KEY_DOWN"               , html: "" },
-      { id: "remote-arrow-left-button",     code: "KEY_LEFT"               , html: "" },
-      { id: "remote-ok-button",             code: "KEY_ENTER"              , html: "" },
+      { id: "remote-arrow-up-button",       code: "KEY_UP" },
+      { id: "remote-arrow-right-button",    code: "KEY_RIGHT" },
+      { id: "remote-arrow-down-button",     code: "KEY_DOWN" },
+      { id: "remote-arrow-left-button",     code: "KEY_LEFT" },
+      { id: "remote-ok-button",             code: "KEY_ENTER" },
       { id: "remote-return-button",         code: "CON_AC_BACK",
         html: `<svg viewBox="-14 0 78 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
                  <!-- Top horizontal line -->
@@ -632,7 +632,7 @@ class AndroidRemoteCard extends HTMLElement {
 
         } else if (keyId.endsWith("-button")) {
 
-          this.createRemoteButton(keyId);
+          this.createRemoteButton(keyId, key);
 
         } else if (keyId === "dpad")) {
 
@@ -719,30 +719,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     this.setupDpad();
     this.setupFoldables();
-
-    // Init all interractions
-    this.remoteButtons.forEach((remoteButton) => {
-      const btn = this.content.querySelector(`#${remoteButton.id}`);
-      btn._keyData = { code: remoteButton.code };
-      
-      // Add pointer Down events:
-      this.addPointerDownListener(btn, (e) => {
-        this.handlePointerDown(e, hass, btn);
-      });
-
-      // Add pointer Up events:
-      this.addPointerUpListener(btn, (e) => {
-        this.handlePointerUp(e, hass, btn);
-      });
-      
-      this.addPointerCancelListener(btn, (e) => {
-        this.handlePointerUp(e, hass, btn);
-      });
-    });
-
   }
   
-  createRemoteButton(keyId) {
+  createRemoteButton(keyId, key = null) {
 
     // Create button
     const btn = document.createElement("button");
@@ -782,21 +761,27 @@ class AndroidRemoteCard extends HTMLElement {
       // Other buttons
       btn.className = "circle-button";
     }
+    this.setDataAndEvents(btn);
+
+    return btn;
+  }
+  
+  setDataAndEvents(btn) {
 
     // Retrieve button data and content if default keys
-    const keyData = this.remoteButtons.find(remoteButton => remoteButton.id === keyId);
+    const keyData = this.remoteButtons.find(remoteButton => remoteButton.id === btn.id);
 
     // Set button data and content
+    btn.innerHTML = "";
     if (keyData) {
       btn._keyData = { code: keyData.code };
-      btn.innerHTML = keyData.html;
+      if (keyData.html) btn.innerHTML = keyData.html;
     } else {
       btn._keyData = {};
-      btn.innerHTML = "";
     }
 
     // Override button HTML content when required
-    if (key.html) {
+    if (key && key.html) {
       btn.innerHTML = key.html;
     }
 
@@ -812,8 +797,6 @@ class AndroidRemoteCard extends HTMLElement {
     this.addPointerCancelListener(btn, (e) => {
       this.handlePointerUp(e, hass, btn);
     });
-    
-    return btn;
   }
 
   setupDpad() {
@@ -887,8 +870,9 @@ class AndroidRemoteCard extends HTMLElement {
       btn.setAttribute("clip-path", `url(#${clipId})`);
       btn.setAttribute("class", "quarter");
       btn.setAttribute("id", keyId);
+      this.setDataAndEvents(btn);
       svg.appendChild(btn);
-
+      
       const angle = (angleStart + 45) % 360;
       const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
       const text = document.createElementNS(ns, "text");
@@ -914,6 +898,7 @@ class AndroidRemoteCard extends HTMLElement {
     centerButton.setAttribute("fill", "#3a3a3a");
     centerButton.setAttribute("class", "quarter");
     centerButton.setAttribute("id", "remote-ok-button");
+    this.setDataAndEvents(centerButton);
     svg.appendChild(centerButton);
 
     const centerLabel = document.createElementNS(ns, "text");
