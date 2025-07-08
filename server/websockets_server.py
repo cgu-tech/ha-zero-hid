@@ -31,15 +31,6 @@ key_codes_map = KeyCodes.as_dict()
 consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
 
-def safe_eval(s):
-    try:
-        return ast.literal_eval(s)
-    except (ValueError, SyntaxError):
-        logger.warning(
-            "Ignored value %s: error occurred while trying to convert it as list. ValueError: '%s'; SyntaxError: '%s';", 
-            s, ValueError, SyntaxError)
-        return []
-
 async def handle_client(websocket) -> None:
     logger.info("Client connected")
     try:
@@ -112,7 +103,12 @@ async def handle_client(websocket) -> None:
 
             elif cmd == 0x40 and len(message) >= 2:  # conpress
                 count = message[1]
-                cons = list(message[2:2 + count])
+                expected_length = 2 + count * 2  # 2 header bytes + 2 bytes per item
+                if len(message) < expected_length:
+                    logger.warning("Malformed conpress command length: expected %d, got %d", expected_length, len(message))
+                    return
+
+                cons = list(struct.unpack(f"<{count}H", message[2:2 + count * 2]))
                 logger.debug("Conpress: %s", cons)
                 consumer.press(cons, release=False)
 

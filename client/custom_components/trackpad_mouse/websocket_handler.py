@@ -50,9 +50,11 @@ class WebSocketClient:
         cmd += struct.pack("<B", len(keys)) + bytes(keys)
         await self.send(cmd)
 
-    # Consumer press: [0x40][count][con1, con2, ...]
+    # Consumer press: [0x40][count][con1_lo][con1_hi][con2_lo][con2_hi]...
     async def send_conpress(self, cons: list[int]) -> None:
-        cmd = struct.pack("<BB", 0x40, len(cons)) + bytes(cons)
+        count = len(cons)
+        cons_bytes = b''.join(c.to_bytes(2, byteorder='little', signed=False) for c in cons)
+        cmd = struct.pack("<BB", 0x40, count) + cons_bytes
         await self.send(cmd)
 
     # Sync keyboard request: [0x50], expects json response
