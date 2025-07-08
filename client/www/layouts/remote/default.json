@@ -1,0 +1,35 @@
+{
+    "Name": "default",
+    "Description": "Contains default remote buttons dispositions for android remote",
+    "keys": [
+      [
+        { "id": "remote-power-button",          "space": 1 },
+        { "id": "remote-power-filler",          "space": 4 }
+      ],
+      [
+        { "id": "remote-dpad-filler",           "space": 1 },
+        { "id": "dpad",                         "space": 3 },
+        { "id": "remote-dpad-filler",           "space": 1 }
+      ],
+      [
+        { "id": "remote-dpad-filler",           "space": 1 },
+        { "id": "bottom-buttons",               "space": 3 },
+        { "id": "remote-dpad-filler",           "space": 1 }
+      ],
+      [
+        { "id": "remote-backspace-button",      "space": 1 },
+        { "id": "ts-toggle-threeStateToggle",   "space": 3 },
+        { "id": "remote-settings-button",       "space": 1 },
+      ],
+      [
+        { "id": "foldable-container",           "space": 5 }
+      ],
+      [
+        { "id": "remote-volume-down-button",    "space": 1 },
+        { "id": "remote-previous-track-button", "space": 1 },
+        { "id": "remote-play-pause-button",     "space": 1 },
+        { "id": "remote-next-track-button",     "space": 1 },
+        { "id": "remote-volume-up-button",      "space": 1 }
+      ]
+    ]
+}

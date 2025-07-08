@@ -22,26 +22,100 @@ class AndroidRemoteCard extends HTMLElement {
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.haptic = false;
+    this.layout = 'default';
+    this.layoutUrl = `/local/layouts/remote/${this.layout}.json`;
     this.keyboardConfig = {};
     this.mouseConfig = {};
     this.activitiesConfig = {};
 
+    // Layout loading flags
+    this._layoutReady = false;
+    this._layoutLoaded = {};
+
     this.remoteButtons = [
-      { id: "remote-power-button",          code: "CON_POWER"               },
-      { id: "remote-arrow-up-button",       code: "KEY_UP"                  },
-      { id: "remote-arrow-right-button",    code: "KEY_RIGHT"               },
-      { id: "remote-arrow-down-button",     code: "KEY_DOWN"                },
-      { id: "remote-arrow-left-button",     code: "KEY_LEFT"                },
-      { id: "remote-ok-button",             code: "KEY_ENTER"               },
-      { id: "remote-return-button",         code: "CON_AC_BACK"             },
-      { id: "remote-home-button",           code: "CON_AC_HOME"             },
-      { id: "remote-backspace-button",      code: "KEY_BACKSPACE"           },
-      { id: "remote-settings-button",       code: "KEY_COMPOSE"             },
-      { id: "remote-volume-down-button",    code: "CON_VOLUME_DECREMENT"    },
-      { id: "remote-previous-track-button", code: "CON_SCAN_PREVIOUS_TRACK" },
-      { id: "remote-play-pause-button",     code: "CON_PLAY_PAUSE"          },
-      { id: "remote-next-track-button",     code: "CON_SCAN_NEXT_TRACK"     },
-      { id: "remote-volume-up-button",      code: "CON_VOLUME_INCREMENT"    }
+      { id: "remote-power-button",          code: "CON_POWER",
+        html: `<svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+                 <!-- Left arc -->
+                 <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
+                 <!-- Right arc -->
+                 <path d="M 40 8 A 26 26 0 0 1 58 34" stroke-width="4" />
+                 <!-- Bottom arc -->
+                 <path d="M 58 34 A 26 26 0 0 1 6 34" stroke-width="4" />
+                 <!-- Vertical bar -->
+                 <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
+               </svg>`
+      },
+      { id: "remote-arrow-up-button",       code: "KEY_UP"                 , html: "" },
+      { id: "remote-arrow-right-button",    code: "KEY_RIGHT"              , html: "" },
+      { id: "remote-arrow-down-button",     code: "KEY_DOWN"               , html: "" },
+      { id: "remote-arrow-left-button",     code: "KEY_LEFT"               , html: "" },
+      { id: "remote-ok-button",             code: "KEY_ENTER"              , html: "" },
+      { id: "remote-return-button",         code: "CON_AC_BACK",
+        html: `<svg viewBox="-14 0 78 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+                 <!-- Top horizontal line -->
+                 <line x1="8" y1="17" x2="48" y2="17" />
+                 <!-- Bottom horizontal line -->
+                 <line x1="8" y1="47" x2="48" y2="47" />
+                 <!-- Vertically flipped arc from bottom right to top right -->
+                 <path d="M48 47 A15 15 0 0 0 48 17" />
+                 <!-- Left-pointing isosceles triangle with reduced width -->
+                 <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
+               </svg>`
+      },
+      { id: "remote-home-button",           code: "CON_AC_HOME",
+        html: `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+                <!-- Roof (triangle) -->
+                <path d="M 12 32 L 32 12 L 52 32" />
+                
+                <!-- House base without top line -->
+                <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
+                <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
+                <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
+              </svg>`
+      },
+      { id: "remote-backspace-button",      code: "KEY_BACKSPACE",
+        html: `<svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                 <!-- Backspace key outline (trapezoid-like shape) -->
+                 <path d="M8 24 L20 8 H56 V40 H20 Z" />
+               
+                 <!-- 'X' inside the key (representing delete action) -->
+                 <line x1="28" y1="18" x2="44" y2="30" />
+                 <line x1="44" y1="18" x2="28" y2="30" />
+               </svg>`
+      },
+      { id: "remote-settings-button",       code: "KEY_COMPOSE",
+        html: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Top line -->
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <!-- Middle line -->
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <!-- Bottom line -->
+                <line x1="4" y1="18" x2="20" y2="18" />
+              </svg>`
+      },
+      { id: "remote-volume-down-button",    code: "CON_VOLUME_DECREMENT",
+        html: `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                 <!-- Speaker body (filled) -->
+                 <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
+               
+                 <!-- Small volume arc -->
+                 <path d="M42 26 A6 6 0 0 1 42 38" />
+               </svg>`
+      },
+      { id: "remote-previous-track-button", code: "CON_SCAN_PREVIOUS_TRACK", html: `<div class="track-triangle">|◀◀</div>` },
+      { id: "remote-play-pause-button",     code: "CON_PLAY_PAUSE"         , html: `<div class="track-triangle">▶| |</div>` },
+      { id: "remote-next-track-button",     code: "CON_SCAN_NEXT_TRACK"    , html: `<div class="track-triangle">▶▶|</div>` },
+      { id: "remote-volume-up-button",      code: "CON_VOLUME_INCREMENT"   , 
+        html: `<svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                 <!-- Speaker body with fill -->
+                 <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
+               
+                 <!-- Volume arcs (wire view) -->
+                 <path d="M38 26 A6 6 0 0 1 38 38" />
+                 <path d="M42 22 A10 10 0 0 1 42 42" />
+                 <path d="M46 18 A14 14 0 0 1 46 46" />
+               </svg>`
+      }
     ]
 
     // To track pressed modifiers and keys
@@ -80,6 +154,18 @@ class AndroidRemoteCard extends HTMLElement {
       this.haptic = config['haptic'];
     }
 
+    // Set layout
+    if (config['layout']) {
+      this.layout = config['layout'];
+    }
+
+    // Set layout URL
+    if (config['layout_url']) {
+      this.layoutUrl = config['layout_url'];
+    } else {
+      this.layoutUrl = `/local/layouts/remote/${this.layout}.json`;
+    }
+
     // Set keyboard configs
     if (config['keyboard']) {
       this.keyboardConfig = config['keyboard'];
@@ -103,16 +189,40 @@ class AndroidRemoteCard extends HTMLElement {
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
 
+    // Check if layout needs loading
+    if (!this._layoutLoaded.layoutUrl || this._layoutLoaded.layoutUrl !== this.layoutUrl) {
+      this._layoutReady = false;
+
+      // Load layout
+      await this.loadLayout(this.layoutUrl);
+
+      // Update loaded layout
+      this._layoutLoaded.layoutUrl = this.layoutUrl;
+      this._layoutReady = true;
+    }
+
     // Only build UI if hass is already set
     if (this._hass) {
       this.buildUi(this._hass);
     }
   }
 
+  async loadLayout(layoutUrl) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(layoutUrl):", layoutUrl));
+    try {
+      const response = await fetch(layoutUrl);
+      const layout = await response.json();
+      this.keys = layout.keys;
+    } catch (e) {
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load remote layout ${layoutUrl}`, e));
+      this.keys = {};
+    }
+  }
+
   set hass(hass) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
     this._hass = hass;
-    if (!this._uiBuilt) {
+    if (this._layoutReady && !this._uiBuilt) {
       this.buildUi(this._hass);
     }
   }
@@ -480,136 +590,126 @@ class AndroidRemoteCard extends HTMLElement {
 
     const wrapper = document.createElement("div");
     wrapper.className = "circular-buttons-wrapper";
-    wrapper.innerHTML = `
-      <div class="circular-buttons small-padding-bottom">
-        <button class="circle-button left space-left" id="remote-power-button">
-          <svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Left arc -->
-            <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
-            <!-- Right arc -->
-            <path d="M 40 8 A 26 26 0 0 1 58 34" stroke-width="4" />
-            <!-- Bottom arc -->
-            <path d="M 58 34 A 26 26 0 0 1 6 34" stroke-width="4" />
-            <!-- Vertical bar -->
-            <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
-          </svg>
-        </button>
-        <div id="remote-power-filler"></div>
-      </div>
-      <div class="circular-buttons no-padding-top">
-        <div class="remote-dpad-filler"></div>
-        <svg id="dpad"></svg>
-        <div class="remote-dpad-filler"></div>
-      </div>
-      <div class="circular-buttons-center">
-        <div class="remote-dpad-filler"></div>
-        <div class="bottom-buttons">
-          <button class="side-button left" id="remote-return-button">
-           <svg viewBox="-14 0 78 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-             <!-- Top horizontal line -->
-             <line x1="8" y1="17" x2="48" y2="17" />
-             <!-- Bottom horizontal line -->
-             <line x1="8" y1="47" x2="48" y2="47" />
-             <!-- Vertically flipped arc from bottom right to top right -->
-             <path d="M48 47 A15 15 0 0 0 48 17" />
-             <!-- Left-pointing isosceles triangle with reduced width -->
-             <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
-           </svg>
-          </button>
-          <button class="side-button right" id="remote-home-button">
-            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-              <!-- Roof (triangle) -->
-              <path d="M 12 32 L 32 12 L 52 32" />
-              
-              <!-- House base without top line -->
-              <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
-              <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
-              <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
-            </svg>
-          </button>
-        </div>
-        <div class="remote-dpad-filler"></div>
-      </div>
-      <div class="circular-buttons">
-        <button class="circle-button left space-left" id="remote-backspace-button">
-         <svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-           <!-- Backspace key outline (trapezoid-like shape) -->
-           <path d="M8 24 L20 8 H56 V40 H20 Z" />
-         
-           <!-- 'X' inside the key (representing delete action) -->
-           <line x1="28" y1="18" x2="44" y2="30" />
-           <line x1="44" y1="18" x2="28" y2="30" />
-         </svg>
-        </button>
-        <div id="ts-toggle-threeStateToggle" class="ts-toggle-container center" data-state="1">
-          <div class="ts-toggle-indicator"></div>
-          <div class="ts-toggle-option active"><div class="ts-toggle-kb">⌨︎</div></div>
-          <div class="ts-toggle-option">●</div>
-          <div class="ts-toggle-option" id="ts-toggle-mouse">
-            <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-              <!-- Mouse body with rounded top and slightly rounded bottom corners -->
-              <path d="
-                M 20 30 
-                Q 20 10, 50 10 
-                Q 80 10, 80 30
-                L 80 115
-                Q 80 125, 70 125
-                L 30 125
-                Q 20 125, 20 115
-                Z
-              " />
-              
-              <!-- Vertical center line (split buttons) -->
-              <line x1="50" y1="10" x2="50" y2="70" />
-            
-              <!-- Larger scroll wheel, moved near the top -->
-              <line x1="50" y1="30" x2="50" y2="50" stroke-width="8" stroke-linecap="round" />
-            
-              <!-- Cable (wire) -->
-              <path d="M50 130 C 50 140, 60 145, 70 150" />
-            </svg>
-          </div>
-        </div>
-        <button class="circle-button right space-right" id="remote-settings-button">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Top line -->
-            <line x1="4" y1="6" x2="20" y2="6" />
-            <!-- Middle line -->
-            <line x1="4" y1="12" x2="20" y2="12" />
-            <!-- Bottom line -->
-            <line x1="4" y1="18" x2="20" y2="18" />
-          </svg>
-        </button>
-      </div>
+
+    this.keys.forEach((row, rowIndex) => {
       
-      <div id="foldable-container" style="margin-top:10px;"></div>
+      // Create row
+      const row = document.createElement("div");
       
-      <div class="circular-buttons">
-        <button class="circle-button left space-left"   id="remote-volume-down-button">
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Speaker body (filled) -->
-            <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
+      // First row has small padding at bottom
+      if (rowIndex === 0) row.className = "circular-buttons small-padding-bottom";
+
+      // Second row has no padding at top
+      if (rowIndex === 1) row.className = "circular-buttons no-padding-top";
+
+      // Third row has special centered class
+      if (rowIndex === 2) row.className = "circular-buttons-center";
+
+      // Fourth row has special class
+      if (rowIndex === 3) row.className = "circular-buttons";
+
+      // Fith row has special class
+      if (rowIndex === 4) row.className = "circular-buttons";
+
+      // Create and add row keys
+      row.forEach((key, keyIndex) => {
+
+        const keyId = key.id;
+        let keyElt;
+        if (keyId.endsWith("-filler")) {
+        
+          // Create filler
+          keyElt = document.createElement("div");
           
-            <!-- Small volume arc -->
-            <path d="M42 26 A6 6 0 0 1 42 38" />
-          </svg>
-        </button>
-        <button class="circle-button left"   id="remote-previous-track-button"><div class="track-triangle">|◀◀</div></button>
-        <button class="circle-button center" id="remote-play-pause-button"><div class="track-triangle">▶| |</div></button>
-        <button class="circle-button right"  id="remote-next-track-button"><div class="track-triangle">▶▶|</div></button>
-        <button class="circle-button right space-right"  id="remote-volume-up-button">
-          <svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Speaker body with fill -->
-            <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
-          
-            <!-- Volume arcs (wire view) -->
-            <path d="M38 26 A6 6 0 0 1 38 38" />
-            <path d="M42 22 A10 10 0 0 1 42 42" />
-            <path d="M46 18 A14 14 0 0 1 46 46" />
-          </svg>
-        </button>
-      </div>
-    `;
+          if (keyId === "remote-power-filler") {
+            // Remote power filer uses an id to style
+            keyElt.id = keyId;
+          } else {
+            
+            // Other filler use a class to style
+            keyElt.className = keyId;
+          }
+
+        } else if (keyId.endsWith("-button")) {
+
+          this.createRemoteButton(keyId);
+
+        } else if (keyId === "dpad")) {
+
+          // Create DPAD
+          keyElt = document.createElement("svg");
+          keyElt.id = keyId;
+
+        } else if (keyId === "bottom-buttons") {
+
+          // Create bottom-buttons
+          keyElt = document.createElement("div");
+          keyElt.className = keyId;
+
+          const leftBtn = this.createRemoteButton("remote-return-button");
+          const rightBtn = this.createRemoteButton("remote-home-button");
+
+          keyElt.appendChild(leftBtn);
+          keyElt.appendChild(rightBtn);
+
+        } else if (keyId === "ts-toggle-threeStateToggle") {
+
+          // Create ts-toggle-threeStateToggle
+          keyElt = document.createElement("div");
+          keyElt.id = keyId;
+          keyElt.className = "ts-toggle-container center";
+          keyElt["data-state"] = 1;
+          keyElt.innerHTML = `
+            <div class="ts-toggle-indicator"></div>
+            <div class="ts-toggle-option active"><div class="ts-toggle-kb">⌨︎</div></div>
+            <div class="ts-toggle-option">●</div>
+            <div class="ts-toggle-option" id="ts-toggle-mouse">
+              <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Mouse body with rounded top and slightly rounded bottom corners -->
+                <path d="
+                  M 20 30 
+                  Q 20 10, 50 10 
+                  Q 80 10, 80 30
+                  L 80 115
+                  Q 80 125, 70 125
+                  L 30 125
+                  Q 20 125, 20 115
+                  Z
+                " />
+                
+                <!-- Vertical center line (split buttons) -->
+                <line x1="50" y1="10" x2="50" y2="70" />
+              
+                <!-- Larger scroll wheel, moved near the top -->
+                <line x1="50" y1="30" x2="50" y2="50" stroke-width="8" stroke-linecap="round" />
+              
+                <!-- Cable (wire) -->
+                <path d="M50 130 C 50 140, 60 145, 70 150" />
+              </svg>
+            </div>
+          `;
+
+        } else if (keyId === "foldable-container") {
+
+          // Create foldable-container
+          keyElt = document.createElement("div");
+          keyElt.id = keyId;
+          keyElt.style = "margin-top:10px;";
+
+        } else {
+
+          // Unknown row key element
+          if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Unknwon key element type for id ${keyId} at row ${rowIndex}, element ${keyIndex}`));
+        }
+        
+        // Add key element into row
+        if (keyElt) row.appendChild(keyElt);
+      });
+      
+      // Add row into wrapper
+      wrapper.appendChild(row);
+    });
+    
     container.appendChild(wrapper);
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
@@ -640,6 +740,80 @@ class AndroidRemoteCard extends HTMLElement {
       });
     });
 
+  }
+  
+  createRemoteButton(keyId) {
+
+    // Create button
+    const btn = document.createElement("button");
+    btn.id = keyId;
+    
+    if (keyId === "remote-power-button") {
+      btn.className = "circle-button left space-left";
+
+    } else if (keyId === "remote-return-button") {
+      btn.className = "side-button left";
+
+    } else if (keyId === "remote-home-button") {
+      btn.className = "side-button right";
+
+    } else if (keyId === "remote-backspace-button") {
+      btn.className = "circle-button left space-left";
+
+    } else if (keyId === "remote-settings-button") {
+      btn.className = "circle-button right space-right";
+
+    } else if (keyId === "remote-volume-down-button") {
+      btn.className = "circle-button left space-left";
+
+    } else if (keyId === "remote-previous-track-button") {
+      btn.className = "circle-button left";
+
+    } else if (keyId === "remote-play-pause-button") {
+      btn.className = "circle-button center";
+
+    } else if (keyId === "remote-next-track-button") {
+      btn.className = "circle-button right";       
+
+    } else if (keyId === "remote-volume-up-button") {
+      btn.className = "circle-button right space-right";  
+
+    } else {
+      // Other buttons
+      btn.className = "circle-button";
+    }
+
+    // Retrieve button data and content if default keys
+    const keyData = this.remoteButtons.find(remoteButton => remoteButton.id === keyId);
+
+    // Set button data and content
+    if (keyData) {
+      btn._keyData = { code: keyData.code };
+      btn.innerHTML = keyData.html;
+    } else {
+      btn._keyData = {};
+      btn.innerHTML = "";
+    }
+
+    // Override button HTML content when required
+    if (key.html) {
+      btn.innerHTML = key.html;
+    }
+
+    // Add pointer Down events:
+    this.addPointerDownListener(btn, (e) => {
+      this.handlePointerDown(e, hass, btn);
+    });
+
+    // Add pointer Up events:
+    this.addPointerUpListener(btn, (e) => {
+      this.handlePointerUp(e, hass, btn);
+    });
+    this.addPointerCancelListener(btn, (e) => {
+      this.handlePointerUp(e, hass, btn);
+    });
+    
+    return btn;
   }
 
   setupDpad() {
