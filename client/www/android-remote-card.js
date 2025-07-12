@@ -33,88 +33,124 @@ class AndroidRemoteCard extends HTMLElement {
     this._layoutLoaded = {};
 
     this.remoteButtons = [
-      { id: "remote-power-button",          code: "CON_POWER",
-        html: `<svg viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-                 <!-- Left arc -->
-                 <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
-                 <!-- Right arc -->
-                 <path d="M 40 8 A 26 26 0 0 1 58 34" stroke-width="4" />
-                 <!-- Bottom arc -->
-                 <path d="M 58 34 A 26 26 0 0 1 6 34" stroke-width="4" />
-                 <!-- Vertical bar -->
-                 <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
-               </svg>`
+      { id: "remote-button-power",          code: "CON_POWER", html: 
+        `
+        <svg id="power-icon" viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Left arc -->20
+          <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
+          <!-- Right arc -->
+          <path d="M 40 8 A 26 26 0 0 1 58 34" stroke-width="4" />
+          <!-- Bottom arc -->
+          <path d="M 58 34 A 26 26 0 0 1 6 34" stroke-width="4" />
+          <!-- Vertical bar -->
+          <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
+        </svg>
+        `
       },
-      { id: "remote-arrow-up-button",       code: "KEY_UP" },
-      { id: "remote-arrow-right-button",    code: "KEY_RIGHT" },
-      { id: "remote-arrow-down-button",     code: "KEY_DOWN" },
-      { id: "remote-arrow-left-button",     code: "KEY_LEFT" },
-      { id: "remote-ok-button",             code: "KEY_ENTER" },
-      { id: "remote-return-button",         code: "CON_AC_BACK",
-        html: `<svg viewBox="-14 0 78 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-                 <!-- Top horizontal line -->
-                 <line x1="8" y1="17" x2="48" y2="17" />
-                 <!-- Bottom horizontal line -->
-                 <line x1="8" y1="47" x2="48" y2="47" />
-                 <!-- Vertically flipped arc from bottom right to top right -->
-                 <path d="M48 47 A15 15 0 0 0 48 17" />
-                 <!-- Left-pointing isosceles triangle with reduced width -->
-                 <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
-               </svg>`
+      { id: "remote-button-power-tv",        html: 
+        `
+        <svg id="tv-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Screen + body -->
+          <rect x="64" y="96" width="384" height="256" rx="32" ry="32"/>
+          <!-- Stand -->
+          <line x1="160" y1="384" x2="352" y2="384"/>
+          <!-- Antenna -->
+          <line x1="192" y1="96" x2="128" y2="32"/>
+          <line x1="320" y1="96" x2="384" y2="32"/>
+        </svg>
+        `
       },
-      { id: "remote-home-button",           code: "CON_AC_HOME",
-        html: `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-                <!-- Roof (triangle) -->
-                <path d="M 12 32 L 32 12 L 52 32" />
-                
-                <!-- House base without top line -->
-                <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
-                <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
-                <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
-              </svg>`
+      { id: "remote-button-power-device",     html: 
+        `
+        <svg id="device-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf" stroke="#bfbfbf" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <g>
+            <path class="primary-path" d="M11 15H6L13 1V9H18L11 23V15Z" />
+          </g>
+        </svg>
+        `
       },
-      { id: "remote-backspace-button",      code: "KEY_BACKSPACE",
-        html: `<svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-                 <!-- Backspace key outline (trapezoid-like shape) -->
-                 <path d="M8 24 L20 8 H56 V40 H20 Z" />
-               
-                 <!-- 'X' inside the key (representing delete action) -->
-                 <line x1="28" y1="18" x2="44" y2="30" />
-                 <line x1="44" y1="18" x2="28" y2="30" />
-               </svg>`
+      { id: "remote-button-settings",         code: "KEY_COMPOSE", html: 
+        `
+        <svg id="settings-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Top line -->
+          <line x1="4" y1="6" x2="20" y2="6" />
+          <!-- Middle line -->
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <!-- Bottom line -->
+          <line x1="4" y1="18" x2="20" y2="18" />
+        </svg>
+        `
       },
-      { id: "remote-settings-button",       code: "KEY_COMPOSE",
-        html: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <!-- Top line -->
-                <line x1="4" y1="6" x2="20" y2="6" />
-                <!-- Middle line -->
-                <line x1="4" y1="12" x2="20" y2="12" />
-                <!-- Bottom line -->
-                <line x1="4" y1="18" x2="20" y2="18" />
-              </svg>`
+      { id: "remote-button-arrow-up",       code: "KEY_UP" },
+      { id: "remote-button-arrow-right",    code: "KEY_RIGHT" },
+      { id: "remote-button-arrow-down",     code: "KEY_DOWN" },
+      { id: "remote-button-arrow-left",     code: "KEY_LEFT" },
+      { id: "remote-button-center",         code: "KEY_ENTER" },
+      { id: "remote-button-return",         code: "CON_AC_BACK", html: 
+        `
+        <svg id="return-icon" viewBox="-14 0 80 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+          <!-- Top horizontal line -->
+          <line x1="8" y1="17" x2="48" y2="17" />
+          <!-- Bottom horizontal line -->
+          <line x1="8" y1="47" x2="48" y2="47" />
+          <!-- Vertically flipped arc from bottom right to top right -->
+          <path d="M48 47 A15 15 0 0 0 48 17" />
+          <!-- Left-pointing isosceles triangle with reduced width -->
+          <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
+        </svg>
+        `
       },
-      { id: "remote-volume-down-button",    code: "CON_VOLUME_DECREMENT",
-        html: `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                 <!-- Speaker body (filled) -->
-                 <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
-               
-                 <!-- Small volume arc -->
-                 <path d="M42 26 A6 6 0 0 1 42 38" />
-               </svg>`
+      { id: "remote-button-home",           code: "CON_AC_HOME", html: 
+        `
+        <svg id="home-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+          <!-- Roof (triangle) -->
+          <path d="M 12 32 L 32 12 L 52 32" />
+          
+          <!-- House base without top line -->
+          <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
+          <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
+          <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
+        </svg>
+        `
       },
-      { id: "remote-previous-track-button", code: "CON_SCAN_PREVIOUS_TRACK", html: `<div class="track-triangle">|◀◀</div>` },
-      { id: "remote-play-pause-button",     code: "CON_PLAY_PAUSE"         , html: `<div class="track-triangle">▶| |</div>` },
-      { id: "remote-next-track-button",     code: "CON_SCAN_NEXT_TRACK"    , html: `<div class="track-triangle">▶▶|</div>` },
-      { id: "remote-volume-up-button",      code: "CON_VOLUME_INCREMENT"   , 
-        html: `<svg viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                 <!-- Speaker body with fill -->
-                 <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
-               
-                 <!-- Volume arcs (wire view) -->
-                 <path d="M38 26 A6 6 0 0 1 38 38" />
-                 <path d="M42 22 A10 10 0 0 1 42 42" />
-                 <path d="M46 18 A14 14 0 0 1 46 46" />
-               </svg>`
+      { id: "remote-button-backspace",      code: "KEY_BACKSPACE", html: 
+        `
+        <svg id="backspace-icon" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Backspace key outline (trapezoid-like shape) -->
+          <path d="M8 24 L20 8 H56 V40 H20 Z" />
+        
+          <!-- 'X' inside the key (representing delete action) -->
+          <line x1="28" y1="18" x2="44" y2="30" />
+          <line x1="44" y1="18" x2="28" y2="30" />
+        </svg>
+        `
+      },
+      { id: "remote-button-track-previous", code: "CON_SCAN_PREVIOUS_TRACK", html: `|◀◀` },
+      { id: "remote-button-play-pause",     code: "CON_PLAY_PAUSE"         , html: `▶| |` },
+      { id: "remote-button-track-next",     code: "CON_SCAN_NEXT_TRACK"    , html: `▶▶|` },
+      { id: "remote-button-volume-down",    code: "CON_VOLUME_DECREMENT"   , html: 
+        `
+        <svg id="volumedown-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Speaker body (filled) -->
+          <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
+        
+          <!-- Small volume arc -->
+          <path d="M42 26 A6 6 0 0 1 42 38" />
+        </svg>
+        `
+      },
+      { id: "remote-button-volume-up",      code: "CON_VOLUME_INCREMENT", html: 
+        `
+        <svg id="volumeup-icon" viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Speaker body with fill -->
+          <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
+        
+          <!-- Volume arcs (wire view) -->
+          <path d="M38 26 A6 6 0 0 1 38 38" />
+          <path d="M42 22 A10 10 0 0 1 42 42" />
+          <path d="M46 18 A14 14 0 0 1 46 46" />
+        </svg>
+        `
       }
     ]
 
@@ -122,6 +158,8 @@ class AndroidRemoteCard extends HTMLElement {
     this.pressedModifiers = new Set();
     this.pressedKeys = new Set();
     this.pressedConsumers = new Set();
+
+    this.dynamicStyles = new Map();
 
     // Handle out of bounds mouse releases
     this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
@@ -252,75 +290,40 @@ class AndroidRemoteCard extends HTMLElement {
         width: 100%;
         box-sizing: border-box;
       }
+
+      body {
+        --base-font-size: 1rem; /* base scaling unit */
+        font-size: var(--base-font-size);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+      }
       
-      .remote-container {
+      .wrapper {
         display: flex;
         flex-direction: column;
-        gap: 0px;              /* adds spacing between children */
-        padding: 0px;          /* adds space around the group of children */
-        box-sizing: border-box; /* prevents overflow due to padding */
-      }
-      .remote-container > * {
-        flex: 1 1 0;            /* ensures children shrink to fit */
-        min-width: 0;           /* allows children to shrink properly */
       }
       
-      /* Flex containers */
-      .circular-buttons, .circular-buttons-center {
+      .row {
         display: flex;
-        align-items: stretch;    /* stretch children vertically */
-        justify-content: center;
-        gap: 0.5rem;
-        width: 100%;
-        padding-top: 10px;
-        padding-bottom: 10px;
+        flex-direction: row;
+      }
+      .row.gap-top {
+        margin-top: 1vw;
+      }
+      .row.gap-bottom {
+        margin-bottom: 1vw;
       }
       
-      .bottom-buttons {
-        flex: 5;
-        display: flex;
-        align-items: stretch;    /* stretch children vertically */
-        justify-content: center;
-        gap: 0.5rem;
-        width: 100%;
-        padding-top: 10px;
-        padding-bottom: 10px;
+      .cell {
+        padding: 1vw;
+      }
+      .cell.no-gap {
+        padding: 0;
       }
       
-      .no-padding-bottom {
-        padding-bottom: 0px;
-      }
-      
-      .no-padding-top {
-        padding-top: 0px;
-      }
-      
-      .small-padding-bottom {
-        padding-bottom: 5px;
-      }
-      
-      .sides-spaces {
-        padding-left: 10px;
-        padding-right: 10px;
-      }
-
-      .space-left {
-        margin-left: 10px;
-      }
-
-      .space-right {
-        margin-right: 10px;
-      }
-
-      /* D‑pad SVG scales as square */
-      .circular-buttons-center svg {
-        flex: 1 1 0;
-        aspect-ratio: 1 / 1;
-        max-width: 100%;
-      }
-
-      /* Circle buttons scale proportionally */
       .circle-button {
+        height: 100%;
+        width: 100%;  /* maintain aspect ratio */
         flex: 1 1 0;
         aspect-ratio: 1 / 1;
         background-color: #3a3a3a;
@@ -329,89 +332,31 @@ class AndroidRemoteCard extends HTMLElement {
         outline: none;
         cursor: pointer;
         font-family: sans-serif;
+        font-size: 4vw;
         transition: background-color 0.2s ease;
-        display: flex;
         align-items: center;
         justify-content: center;
+        display: flex;
         border-radius: 50%;   /* This makes the button circular */
       }
       .circle-button:hover { background-color: #4a4a4a; }
       .circle-button:active,
       .circle-button.pressed { transform: scale(0.95); }
-
-      #remote-power-button {
-        flex: 1;          /* 1/5 of space */
-        min-width: 0;
-        text-align: center;
-      }
       
-      #remote-power-button svg {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.4, 0.4);
-      }
-            
-      #remote-power-filler {
-        flex: 4;          /* 4/5 of space */
-        height: 100%;     /* fill vertically */
-        /* optionally background-color: transparent; */
-      }
-      
-      .remote-dpad-filler {
-        flex: 0.5;          /* 1/10 of space */
-        height: 100%;     /* fill vertically */
-        /* optionally background-color: transparent; */
-      }
-      
-      .kb {
-        transform: scale(1.3, 1.3);
-      }
-      
-      .speaker {
-        transform: scale(1.0, 1.3);
-      }
-      
-      .volume-low {
-        transform: scale(1.0, 0.4);
-      }
-      
-      .volume-medium {
-        transform: scale(1.0, 0.7);
-      }
-      
-      .volume-high {
-        transform: scale(1.0, 1.0);
-      }
-      
-      .track-triangle {
-        transform: scale(1.0, 1.0);
-      }
-      
-      .mouse-triangle {
-        display: inline-block; /* keep it inline for better control */
-        transform: rotate(315deg) scale(1.0, 1.5) translate(4px, -5px);
-      }
-      
-      .mouse-power {
-        display: inline-block; /* keep it inline for better control */
-        transform: translate(-4px, 8px) rotate(315deg) scale(1.0, 1.0);
-      }
-      
-      /* Side buttons scale with flex-ratio ~200 width vs 70px baseline */
       .side-button {
-        flex: 20 1 0;
-        aspect-ratio: 200 / 60;
+        aspect-ratio: 3 / 1;
+        width: 100%;  /* maintain aspect ratio */
+        flex: 1 1 0;
         background-color: #3a3a3a;
-        cursor: pointer;
-        transition: background-color 0.2s ease, transform 0.1s ease;
-        border: none;
-        font-family: sans-serif;
         color: #bfbfbf;
-        display: flex;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        font-family: sans-serif;
+        transition: background-color 0.2s ease;
         align-items: center;
         justify-content: center;
-        user-select: none;
+        display: flex;
       }
       .side-button.left {
         border-top-left-radius: 999px;
@@ -424,19 +369,11 @@ class AndroidRemoteCard extends HTMLElement {
       .side-button:hover { background-color: #4a4a4a; }
       .side-button:active,
       .side-button.pressed { transform: scale(0.95); }
-
-      #ts-toggle-threeStateToggle {
-        flex: 3.4;          /* 3/5 of space */
+      
+      .ts-toggle-container {
         min-width: 0;
         text-align: center;
-        height: 100%;          /* Fill parent's height */
-        display: flex;         /* If you want inner content to align well */
-        align-items: center;
-      }
-
-      .ts-toggle-container {
         flex: 1 1 0;
-        aspect-ratio: 3 / 1;
         background-color: #3a3a3a;
         outline: none;
         cursor: pointer;
@@ -450,14 +387,13 @@ class AndroidRemoteCard extends HTMLElement {
         user-select: none;
         position: relative; /* Needed for absolute children */
       }
-            
       .ts-toggle-option {
         flex: 1 1 0;
         aspect-ratio: 1 / 1;
         max-width: 100%;
         position: relative;
         z-index: 1;
-        font-size: 20px;
+        font-size: 5vw;
         color: #bfbfbf;
         border-radius: 999px;
         user-select: none;
@@ -466,7 +402,6 @@ class AndroidRemoteCard extends HTMLElement {
         align-items: center;   /* vertical alignment */
         justify-content: center; /* horizontal alignment */
       }
-      
       .ts-toggle-indicator {
         position: absolute;
         top: 0;
@@ -478,110 +413,100 @@ class AndroidRemoteCard extends HTMLElement {
         border-radius: 999px;
         transition: left 0.3s ease;
       }
-      
       .ts-toggle-option:hover {
         background-color: rgba(0, 0, 0, 0.05);
       }
-      
       .ts-toggle-option.active {
         color: #bfbfbf;
         font-weight: bold;
       }
-            
-      .ts-toggle-kb {
-        transform: scale(1.3);
-        display: inline-block;
-        pointer-events: none; /* so clicks bubble up */
-      }
       
-      .ts-toggle-mouse-triangle {
-        overflow: visible;
-        transform-origin: center;
-        display: inline-block;
-        transform: translate(2px, calc(-1 * var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.5);
-        pointer-events: none; /* so clicks bubble up */
-      }
-      
-      .ts-toggle-mouse-power {
-        display: inline-block;
-        transform: translate(0px, calc(var(--ts-button-height) * 0.1)) rotate(315deg) scale(1.0, 1.0);
-        pointer-events: none; /* so clicks bubble up */
-      }
-
-      #remote-home-button svg {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.7, 0.7);
-      }
-      
-      #remote-return-button svg {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.7, 0.7);
-      }
-
-      #remote-backspace-button svg {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.4, 0.4);
-      }
-
-      #ts-toggle-mouse svg {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.4, 0.4) rotate(315deg);
-      }
-
-      #remote-settings-button svg {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.4, 0.4);
-      }
-      
-      #remote-volume-down-button svg {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.4, 0.4);
-      }
-      
-      #remote-volume-up-button svg {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.4, 0.4);
-      }
-
-      /* SVG styling */
-      svg {
-        display: block;
-      }
       .quarter {
         cursor: pointer;
         transition: opacity 0.2s;
       }
       .quarter:hover { opacity: 0.0; }
-      .gap {
-        fill: currentColor;
-        pointer-events: none !important;
-      }
       text {
         font-family: sans-serif;
         fill: #bfbfbf;
         pointer-events: none;
         user-select: none;
       }
-
+      
       #foldable-container {
         width: 100%;
         display: none;
       }
       
+      #power-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4);
+      }
+      
+      #tv-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      
+      #device-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      
+      #return-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.6, 0.6);
+      }
+      
+      #home-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.6, 0.6);
+      }
+      
+      #backspace-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4);
+      }
+      
+      #mouse-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4) rotate(315deg);
+      }
+      
+      #settings-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4);
+      }
+      
+      #volumedown-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      
+      #volumeup-icon {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.5, 0.5);
+      }
     `;
     this.shadowRoot.appendChild(style);
 
@@ -721,6 +646,27 @@ class AndroidRemoteCard extends HTMLElement {
     this.setupFoldables();
   }
   
+  addStyleSpan(style, flex) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("addStyleSpan(style, flex):", style, flex));
+    const styleName = this.getStyleSpanName(flex);
+    let dynamicStyle = this.dynamicStyles.get(styleName);
+    if (!dynamicStyle) {
+      dynamicStyle = `
+        ${styleName} {
+          flex: ${flex};
+        }`;
+      style += dynamicStyle;
+      this.dynamicStyles.set(styleName, dynamicStyle);
+    }
+  }
+
+  getStyleSpanName(flex) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("getStyleSpanName(flex):", flex));
+    const flexStr = String(flex);
+    const styleId = flexStr.replace(/\./g, '-');
+    return `.span-${styleId}`;
+  }
+
   createRemoteButton(keyId, key = null) {
 
     // Create button
