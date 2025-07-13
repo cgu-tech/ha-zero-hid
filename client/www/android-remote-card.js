@@ -317,7 +317,9 @@ class AndroidRemoteCard extends HTMLElement {
   set hass(hass) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
     this._hass = hass;
+    this.updateSensors(this._hass);
     if (this._layoutReady && !this._uiBuilt) {
+      // Render UI
       this.buildUi(this._hass);
     }
   }
@@ -645,6 +647,37 @@ class AndroidRemoteCard extends HTMLElement {
 
     this.setupDpad(hass);
     this.setupFoldables();
+  }
+
+  updateSensors(hass) {
+    if (!this.content) return; // Content is not already initialized: skip
+
+    // Override section configured
+    if (this.config && this.config['buttons-override']) {
+      const buttonsOverride = this.config['buttons-override'];
+      
+      // Iterate over all override configurations
+      Object.keys(buttonsOverride).forEach((btnId) => {
+          
+        // Search if current override configuration does have a declared sensor
+        const btnOverrideConfig = buttonsOverride[btnId];
+        const btnOverrideSensor = btnOverrideConfig['sensor'];
+        if (btnOverrideSensor) {
+          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Button-override config ${btnOverrideSensor} detected`));
+
+          // Search if current override configuration matches an element from DOM
+          const btn = this.content.querySelector(`#${btnId}`);
+          if (btn) {
+            
+            // The current override configuration does have a declared sensor and matches an element from DOM
+            
+            // Update sensor state
+            btn._sensorState = hass.states[btnOverrideSensor];
+            if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Sensor state of ${btnOverrideSensor} updated to ${btn._sensorState} for element ${btnId}`));
+          }
+        }
+      });
+    }
   }
 
   addStyleSpan(style, flex) {
@@ -1010,21 +1043,45 @@ class AndroidRemoteCard extends HTMLElement {
     }
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-released:", code));
 
-    const btnId = btn.id;
-    if (btnId && this.config['buttons-override'] && this.config['buttons-override'][btnId]) {
+    if (this.hasOverrideAction(btn)) {
       // Override detected: do override action
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("override detected for button-up:", btnId, this.config['buttons-override'][btnId]));
-      const override = this.config['buttons-override'][btnId];
-      this.fireEvent(btn, "hass-action", {
-        config: override,
-        action: "tap",
-      });
+      this.executeOverrideAction(btn);
     } else {
       // Default action
 
       // Release HID key
       this.removeCode(hass, code);
     }
+  }
+  
+  hasOverrideAction(btn) {
+    const btnId = btn.id;
+    const buttonsOverride = this.config['buttons-override'];
+    return (btnId && buttonsOverride && buttonsOverride[btnId]);
+  }
+  
+  executeOverrideAction(btn) {
+    const btnId = btn.id;
+    const buttonOverrideConfig = this.config['buttons-override'][btnId];
+    
+    // Select override action
+    let overrideAction;
+    if (buttonOverrideConfig['sensor']) {
+      if (btn._sensorState && btn._sensorState === "On") {
+        overrideAction = buttonOverrideConfig['action-when-on'];
+      } else {
+        overrideAction = buttonOverrideConfig['action-when-off'];
+      }
+    } else {
+      overrideAction = buttonOverrideConfig['action'];
+    }
+    
+    // Fire override action
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("override detected for button-up:", btnId, overrideAction));
+    this.fireEvent(btn, "hass-action", {
+      config: overrideAction,
+      action: "tap",
+    });
   }
 
   appendCode(hass, code) {
