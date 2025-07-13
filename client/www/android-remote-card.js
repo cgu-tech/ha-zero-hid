@@ -885,10 +885,10 @@ class AndroidRemoteCard extends HTMLElement {
   handleGlobalPointerUp(evt) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp(evt):", evt));
     if (this.content && this._hass) {
-      this.cellContents.forEach((remoteButton) => {
-        const btn = this.content.querySelector(`#${remoteButton.id}`);
-        if (btn.classList.contains("active")) {
-          this.handleKeyRelease(this._hass, btn);
+      Object.keys(this.cellContents).forEach((cellConfig) => {
+        const cell = this.content.querySelector(`#${cellConfig.id}`);
+        if (cell && cell.tagName === 'BUTTON' && cell.classList.contains("active")) {
+          this.handleKeyRelease(this._hass, cell);
         }
       });
     }
