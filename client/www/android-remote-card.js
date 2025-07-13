@@ -345,7 +345,6 @@ class AndroidRemoteCard extends HTMLElement {
         display: block;
         box-sizing: border-box;
         max-width: 100%;
-        padding: 1em;
         background: var(--card-background-color, white);
         border-radius: 0.5em;
         overflow: hidden; /* prevent overflow outside card */
@@ -377,30 +376,6 @@ class AndroidRemoteCard extends HTMLElement {
     }
     .row.gap-bottom {
       margin-bottom: clamp(1px, 1vw, 6px);
-    }
-
-    .span-0-5 {
-      flex: 0.5;
-    }
-
-    .span-1 {
-      flex: 1;
-    }
-    
-    .span-2 {
-      flex: 2;
-    }
-    
-    .span-3 {
-      flex: 3;
-    }
-        
-    .span-4 {
-      flex: 4;
-    }
-    
-    .span-5 {
-      flex: 5;
     }
 
     .cell {
@@ -630,21 +605,6 @@ class AndroidRemoteCard extends HTMLElement {
     
     const wrapper = document.createElement('div');
     wrapper.className = "wrapper";
-//    wrapper.innerHTML = 
-//    `
-//  <!-- Bottom DPAD row -->
-//  <div class="row gap-top">
-//    <div class="cell span-0-5">
-//    </div>
-//    <div class="cell span-4">
-//      <svg id="dpad">
-//      </svg>
-//    </div>
-//    <div class="cell span-0-5">
-//    </div>
-//  </div>
-//  <!-- END OF DPAD row -->
-//  `
     
     this.rows.forEach((rowConfig, rowIndex) => {
       
