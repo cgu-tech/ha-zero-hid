@@ -617,7 +617,7 @@ class AndroidRemoteCard extends HTMLElement {
     let dynamicStyle = this.dynamicStyles.get(styleName);
     if (!dynamicStyle) {
       dynamicStyle = `
-        ${styleName} {
+        .${styleName} {
           flex: ${flex};
         }`;
       style.textContent += dynamicStyle;
@@ -630,7 +630,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("getStyleSpanName(flex):", flex));
     const flexStr = String(flex);
     const styleId = flexStr.replace(/\./g, '-');
-    return `.span-${styleId}`;
+    return `span-${styleId}`;
   }
 
   createCellContent(cellConfig) {
