@@ -348,18 +348,23 @@ class AndroidRemoteCard extends HTMLElement {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         display: block;
-        width: 100%;
+        overflow: hidden;
+        max-width: 100%;
         box-sizing: border-box;
       }
 
       .wrapper {
         display: flex;
         flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
       }
       
       .row {
         display: flex;
         flex-direction: row;
+        width: 100%;
+        box-sizing: border-box;
       }
       .row.gap-top {
         margin-top: 1vw;
@@ -392,6 +397,7 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: center;
         display: flex;
         border-radius: 50%;   /* This makes the button circular */
+        box-sizing: border-box;
       }
       .circle-button:hover { background-color: #4a4a4a; }
       .circle-button:active,
@@ -411,6 +417,7 @@ class AndroidRemoteCard extends HTMLElement {
         align-items: center;
         justify-content: center;
         display: flex;
+        box-sizing: border-box;
       }
       .side-button.left {
         border-top-left-radius: 999px;
@@ -440,6 +447,7 @@ class AndroidRemoteCard extends HTMLElement {
         padding: 0;
         user-select: none;
         position: relative; /* Needed for absolute children */
+        box-sizing: border-box;
       }
       .ts-toggle-option {
         flex: 1 1 0;
@@ -490,6 +498,7 @@ class AndroidRemoteCard extends HTMLElement {
       #foldable-container {
         width: 100%;
         display: none;
+        box-sizing: border-box;
       }
       
       #power-icon {
