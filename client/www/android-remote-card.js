@@ -808,7 +808,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setupFoldables() {
-    const toggle = this.content.querySelector("#ts-toggle-threeStateToggle");
+    const toggle = this.content.querySelector("#ts-toggle-container");
     const indicator = toggle.querySelector(".ts-toggle-indicator");
     const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
     const foldable = this.content.querySelector("#foldable-container");
