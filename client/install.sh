@@ -35,6 +35,8 @@ cleanup() {
     rm /config/www/carrousel.js >/dev/null 2>&1 || true
     
     rm /config/www/android-remote-card.js >/dev/null 2>&1 || true
+    rm /config/www/layouts/remote/classic.json >/dev/null 2>&1 || true
+    rm /config/www/layouts/remote/default.json >/dev/null 2>&1 || true
 }
 
 extract_keycodes_to_js_class() {
