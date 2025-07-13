@@ -343,18 +343,12 @@ class AndroidRemoteCard extends HTMLElement {
     const style = document.createElement("style");
     style.textContent = `
       :host {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      body {
         --base-font-size: 1rem; /* base scaling unit */
         font-size: var(--base-font-size);
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
       }
-      
+
       .wrapper {
         display: flex;
         flex-direction: column;
