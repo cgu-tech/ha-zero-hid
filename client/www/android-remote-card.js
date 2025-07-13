@@ -584,7 +584,7 @@ class AndroidRemoteCard extends HTMLElement {
         if (rowConfig["no-gap"]) cell.classList.add('no-gap');
         
         // Create cell content
-        const cellContent = this.createCellContent(cellConfig);
+        const cellContent = this.createCellContent(hass, cellConfig);
         
         // Add key element into row
         if (cellContent) cell.appendChild(cellContent);
@@ -627,7 +627,7 @@ class AndroidRemoteCard extends HTMLElement {
     return `span-${styleId}`;
   }
 
-  createCellContent(cellConfig) {
+  createCellContent(hass, cellConfig) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createCellContent(cellConfig):", cellConfig));
 
     // Create element inside cell, according to its name
@@ -664,13 +664,13 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
 
     // Add cell content data and event (button tag only)
-    if (cellContentTag === "button") this.setDataAndEvents(cellContent);
+    if (cellContentTag === "button") this.setDataAndEvents(hass, cellContent);
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("created cellContent:", cellContent));
 
     return cellContent;
   }
   
-  setDataAndEvents(btn) {
+  setDataAndEvents(hass, btn) {
 
     // Retrieve known default config for cell content (when available)
     const knownConfig = this.cellContents[btn.id];
@@ -696,7 +696,7 @@ class AndroidRemoteCard extends HTMLElement {
     });
   }
 
-  setupDpad() {
+  setupDpad(hass) {
     const svg = this.content.querySelector("#dpad");
     const padRadius = 100;
     const padPadding = 56;
@@ -767,7 +767,7 @@ class AndroidRemoteCard extends HTMLElement {
       btn.setAttribute("clip-path", `url(#${clipId})`);
       btn.setAttribute("class", "quarter");
       btn.setAttribute("id", keyId);
-      this.setDataAndEvents(btn);
+      this.setDataAndEvents(hass, btn);
       svg.appendChild(btn);
       
       const angle = (angleStart + 45) % 360;
@@ -795,7 +795,7 @@ class AndroidRemoteCard extends HTMLElement {
     centerButton.setAttribute("fill", "#3a3a3a");
     centerButton.setAttribute("class", "quarter");
     centerButton.setAttribute("id", "remote-button-center");
-    this.setDataAndEvents(centerButton);
+    this.setDataAndEvents(hass, centerButton);
     svg.appendChild(centerButton);
 
     const centerLabel = document.createElementNS(ns, "text");
