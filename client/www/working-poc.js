@@ -632,6 +632,61 @@ class AndroidRemoteCard extends HTMLElement {
     wrapper.className = "wrapper";
     wrapper.innerHTML = 
     `
+  <!-- Power button row -->
+  <div class="row">
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-power">
+        <svg id="power-icon" viewBox="0 0 64 68" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Left arc -->20
+          <path d="M 6 34 A 26 26 0 0 1 24 8" stroke-width="4" />
+          <!-- Right arc -->
+          <path d="M 40 8 A 26 26 0 0 1 58 34" stroke-width="4" />
+          <!-- Bottom arc -->
+          <path d="M 58 34 A 26 26 0 0 1 6 34" stroke-width="4" />
+          <!-- Vertical bar -->
+          <line x1="32" y1="4" x2="32" y2="32" stroke-width="6" />
+        </svg>
+      </button>
+    </div>
+    <div class="cell span-1">
+    </div>
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-power-tv">
+        <svg id="tv-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Screen + body -->
+          <rect x="64" y="96" width="384" height="256" rx="32" ry="32"/>
+          <!-- Stand -->
+          <line x1="160" y1="384" x2="352" y2="384"/>
+          <!-- Antenna -->
+          <line x1="192" y1="96" x2="128" y2="32"/>
+          <line x1="320" y1="96" x2="384" y2="32"/>
+        </svg>
+      </button>
+    </div>
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-power-device">
+        <svg id="device-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf" stroke="#bfbfbf" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <g>
+            <path class="primary-path" d="M11 15H6L13 1V9H18L11 23V15Z" />
+          </g>
+        </svg>
+      </button>
+    </div>
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-settings">
+        <svg id="settings-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Top line -->
+          <line x1="4" y1="6" x2="20" y2="6" />
+          <!-- Middle line -->
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <!-- Bottom line -->
+          <line x1="4" y1="18" x2="20" y2="18" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <!-- END OF Power button row -->
+
   <!-- Bottom DPAD row -->
   <div class="row gap-top">
     <div class="cell span-0-5">
@@ -644,444 +699,259 @@ class AndroidRemoteCard extends HTMLElement {
     </div>
   </div>
   <!-- END OF DPAD row -->
-  `
-//    
-//  <!-- Foldable content row -->
-//  <div class="row">
-//    <div class="cell span-5 no-gap">
-//      <div id="foldable-container">
-//      </div>
-//    </div>
-//  </div>
-//  <!-- END OF Foldable content row -->
-//    `
-    
-    this.rows.forEach((rowConfig, rowIndex) => {
-      
-      // Create a row
-      const row = document.createElement("div");
-      row.classList.add('row');
-      if (rowConfig["filler-top"]) row.classList.add('gap-top');
-      if (rowConfig["filler-top"]) row.classList.add('gap-bottom');
-      
-      // Add cells to row
-      rowConfig.cells.forEach((cellConfig, cellIndex) => {
 
-        // Create cell
-        const cell = document.createElement("div");
-        cell.classList.add('cell');
-        cell.classList.add(this.addStyleSpan(style, cellConfig.weight));
+  <!-- Bottom buttons row -->
+  <div class="row gap-top gap-bottom">
+    <div class="cell span-0-5">
+    </div>
+    <div class="cell span-2">
+      <button class="side-button left" id="remote-button-return">
+        <svg id="return-icon" viewBox="-14 0 80 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+          <!-- Top horizontal line -->
+          <line x1="8" y1="17" x2="48" y2="17" />
+          <!-- Bottom horizontal line -->
+          <line x1="8" y1="47" x2="48" y2="47" />
+          <!-- Vertically flipped arc from bottom right to top right -->
+          <path d="M48 47 A15 15 0 0 0 48 17" />
+          <!-- Left-pointing isosceles triangle with reduced width -->
+          <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
+        </svg>
+      </button>
+    </div>
+    <div class="cell span-2">
+      <button class="side-button right" id="remote-button-home">
+        <svg id="home-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+          <!-- Roof (triangle) -->
+          <path d="M 12 32 L 32 12 L 52 32" />
+          
+          <!-- House base without top line -->
+          <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
+          <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
+          <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
+        </svg>
+      </button>
+    </div>
+    <div class="cell span-0-5">
+    </div>
+  </div>
+  
+  <!-- Foldable selector row -->
+  <div class="row gap-top gap-bottom">
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-backspace">
+        <svg id="backspace-icon" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Backspace key outline (trapezoid-like shape) -->
+          <path d="M8 24 L20 8 H56 V40 H20 Z" />
+        
+          <!-- 'X' inside the key (representing delete action) -->
+          <line x1="28" y1="18" x2="44" y2="30" />
+          <line x1="44" y1="18" x2="28" y2="30" />
+        </svg>
+      </button>
+    </div>
+    <div class="cell span-3">
+      <div class="ts-toggle-container">
+        <div class="ts-toggle-indicator"></div>
+        <div class="ts-toggle-option active">⌨︎</div>
+        <div class="ts-toggle-option">●</div>
+        <div class="ts-toggle-option">
+          <svg id="mouse-icon" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Mouse body with rounded top and slightly rounded bottom corners -->
+            <path d="
+              M 20 30 
+              Q 20 10, 50 10 
+              Q 80 10, 80 30
+              L 80 115
+              Q 80 125, 70 125
+              L 30 125
+              Q 20 125, 20 115
+              Z
+            " />
+            
+            <!-- Vertical center line (split buttons) -->
+            <line x1="50" y1="10" x2="50" y2="70" />
+          
+            <!-- Larger scroll wheel, moved near the top -->
+            <line x1="50" y1="30" x2="50" y2="50" stroke-width="8" stroke-linecap="round" />
+          
+            <!-- Cable (wire) -->
+            <path d="M50 130 C 50 140, 60 145, 70 150" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="cell span-1">
+    </div>
+  </div>
+  <!-- END OF Foldable selector row -->
+  
+  <!-- Foldable content row -->
+  <div class="row">
+    <div class="cell span-5 no-gap">
+      <div id="foldable-container">
+      </div>
+    </div>
+  </div>
+  <!-- END OF Foldable content row -->
 
-        // Remove internal padding on cell when required by the row
-        if (rowConfig["no-gap"]) cell.classList.add('no-gap');
+  <!-- Media row -->
+  <div class="row">
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-track-previous">
+      |◀◀
+      </button>
+    </div>
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-play-pause">
+      ▶| |
+      </button>
+    </div>
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-track-next">
+      ▶▶|
+      </button>
+    </div>
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-volume-down">
+        <svg id="volumedown-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Speaker body (filled) -->
+          <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
         
-        // Create cell content
-        const cellContent = this.createCellContent(hass, cellConfig);
+          <!-- Small volume arc -->
+          <path d="M42 26 A6 6 0 0 1 42 38" />
+        </svg>
+      </button>
+    </div>
+    <div class="cell span-1">
+      <button class="circle-button" id="remote-button-volume-up">
+        <svg id="volumeup-icon" viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Speaker body with fill -->
+          <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
         
-        // Add key element into row
-        if (cellContent) cell.appendChild(cellContent);
-        row.appendChild(cell);
-      });
-      
-      // Add row into container
-      wrapper.appendChild(row);
-    });
-    
+          <!-- Volume arcs (wire view) -->
+          <path d="M38 26 A6 6 0 0 1 38 38" />
+          <path d="M42 22 A10 10 0 0 1 42 42" />
+          <path d="M46 18 A14 14 0 0 1 46 46" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <!-- END OF Media row -->
+    `
     container.appendChild(wrapper);
     this.shadowRoot.appendChild(container);
-
-    this.card = container;
-    this.content = container;
-
-    this.setupDpad(hass);
-    this.setupFoldables();
-      //// This runs once the DOM is fully loaded
-      //const svg = container.querySelector("#dpad");
-      //const padRadius = 100;
-      //const padPadding = 56;
-      //const padLineThick = 5;
-      //const center = padRadius;
-      //const rOuter = padRadius;
-      //const rInner = padRadius - padPadding;
-      //const centerRadius = padRadius - padPadding - padLineThick;
-      //const svgSize = padRadius * 2;
-      //
-      //svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
-      //svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-      //svg.style.width = "100%";
-      //svg.style.height = "auto";
-      //svg.style.flex = "4";
-      //svg.style["aspect-ratio"] = "1 / 1";
-      //
-      //const ns = "http://www.w3.org/2000/svg";
-      //const defs = document.createElementNS(ns, "defs");
-      //svg.appendChild(defs);
-      //
-      //const degToRad = (deg) => (deg * Math.PI) / 180;
-      //const pointOnCircle = (cx, cy, r, deg) => {
-      //  const rad = degToRad(deg);
-      //  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-      //};
-      //
-      //const createQuarterPath = (angleStart) => {
-      //  const angleEnd = (angleStart + 90) % 360;
-      //  const p1 = pointOnCircle(center, center, rOuter, angleStart);
-      //  const p2 = pointOnCircle(center, center, rOuter, angleEnd);
-      //  const p3 = pointOnCircle(center, center, rInner, angleEnd);
-      //  const p4 = pointOnCircle(center, center, rInner, angleStart);
-      //
-      //  return `M ${p1.x} ${p1.y}
-      //          A ${rOuter} ${rOuter} 0 0 1 ${p2.x} ${p2.y}
-      //          L ${p3.x} ${p3.y}
-      //          A ${rInner} ${rInner} 0 0 0 ${p4.x} ${p4.y}
-      //          Z`;
-      //};
-      //
-      //const quarters = [
-      //  { id: 1, angleStart: 225, keyId: "remote-button-arrow-up", label: "▲" },
-      //  { id: 2, angleStart: 315, keyId: "remote-button-arrow-right", label: "▶" },
-      //  { id: 3, angleStart: 45,  keyId: "remote-button-arrow-down", label: "▼" },
-      //  { id: 4, angleStart: 135, keyId: "remote-button-arrow-left", label: "◀" }
-      //];
-      //
-      //quarters.forEach(({ id, keyId, angleStart, label }) => {
-      //  const quarterPath = createQuarterPath(angleStart);
-      //  const clipId = `clip-quarter-${id}`;
-      //  const clip = document.createElementNS(ns, "clipPath");
-      //  clip.setAttribute("id", clipId);
-      //  const clipShape = document.createElementNS(ns, "path");
-      //  clipShape.setAttribute("d", quarterPath);
-      //  clip.appendChild(clipShape);
-      //  defs.appendChild(clip);
-      //
-      //  const bg = document.createElementNS(ns, "path");
-      //  bg.setAttribute("d", quarterPath);
-      //  bg.setAttribute("fill", "#4a4a4a");
-      //  bg.setAttribute("clip-path", `url(#${clipId})`);
-      //  svg.appendChild(bg);
-      //
-      //  const btn = document.createElementNS(ns, "path");
-      //  btn.setAttribute("d", quarterPath);
-      //  btn.setAttribute("fill", "#3a3a3a");
-      //  btn.setAttribute("clip-path", `url(#${clipId})`);
-      //  btn.setAttribute("class", "quarter");
-      //  btn.setAttribute("id", keyId);
-      //  // this.setDataAndEvents(btn);
-      //  svg.appendChild(btn);
-      //  
-      //  const angle = (angleStart + 45) % 360;
-      //  const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
-      //  const text = document.createElementNS(ns, "text");
-      //  text.setAttribute("x", labelPos.x);
-      //  text.setAttribute("y", labelPos.y);
-      //  text.setAttribute("text-anchor", "middle");
-      //  text.setAttribute("dominant-baseline", "middle");
-      //  text.textContent = label;
-      //  svg.appendChild(text);
-      //});
-      //
-      //const centerCircle = document.createElementNS(ns, "circle");
-      //centerCircle.setAttribute("cx", center);
-      //centerCircle.setAttribute("cy", center);
-      //centerCircle.setAttribute("r", centerRadius);
-      //centerCircle.setAttribute("fill", "#4a4a4a");
-      //svg.appendChild(centerCircle);
-      //
-      //const centerButton = document.createElementNS(ns, "circle");
-      //centerButton.setAttribute("cx", center);
-      //centerButton.setAttribute("cy", center);
-      //centerButton.setAttribute("r", centerRadius);
-      //centerButton.setAttribute("fill", "#3a3a3a");
-      //centerButton.setAttribute("class", "quarter");
-      //centerButton.setAttribute("id", "remote-button-center");
-      //// this.setDataAndEvents(centerButton);
-      //svg.appendChild(centerButton);
-      //
-      //const centerLabel = document.createElementNS(ns, "text");
-      //centerLabel.setAttribute("x", center);
-      //centerLabel.setAttribute("y", center);
-      //centerLabel.setAttribute("text-anchor", "middle");
-      //centerLabel.setAttribute("dominant-baseline", "middle");
-      //centerLabel.textContent = "OK";
-      //svg.appendChild(centerLabel);
     
-  }
-
-  addStyleSpan(style, flex) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("addStyleSpan(style, flex):", style, flex));
-    const styleName = this.getStyleSpanName(flex);
-    let dynamicStyle = this.dynamicStyles.get(styleName);
-    if (!dynamicStyle) {
-      dynamicStyle = `
-        .${styleName} {
-          flex: ${flex};
-        }`;
-      style.textContent += dynamicStyle;
-      this.dynamicStyles.set(styleName, dynamicStyle);
-    }
-    return styleName;
-  }
-
-  getStyleSpanName(flex) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("getStyleSpanName(flex):", flex));
-    const flexStr = String(flex);
-    const styleId = flexStr.replace(/\./g, '-');
-    return `span-${styleId}`;
-  }
-
-  createCellContent(hass, cellConfig) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createCellContent(cellConfig):", cellConfig));
-
-    // Create element inside cell, according to its name
-    const cellName = cellConfig.name;
-    if (cellName === "filler") return null; // No content for filler cell
-
-    // Retrieve known default config for cell content (when available)
-    const knownConfig = this.cellContents[cellName];
-
-    // Retrieve cell content tag
-    let cellContentTag = null;
-    if (knownConfig && knownConfig.tag) cellContentTag = knownConfig.tag; // Known config
-    if (cellConfig.tag) cellContentTag = cellConfig.tag; // User config override
-    if (!cellContentTag) cellContentTag = "button"; // Default tag fallback
-
-    // Retrieve cell content style
-    let cellContentStyle = null;
-    if (knownConfig && knownConfig.style) cellContentStyle = knownConfig.style; // Known config
-    if (cellConfig.style) cellContentStyle = cellConfig.style; // User config override
-    if (!cellContentStyle && cellContentTag === "button") {
-      cellContentStyle = "circle-button"; // Default style fallback (button tag only)
-    }
-
-    // Retrieve cell content html
-    let cellContentHtml = null;
-    if (knownConfig && knownConfig.html) cellContentHtml = knownConfig.html; // Known config
-    if (cellConfig.html) cellContentHtml = cellConfig.html; // User config override
-    // No default html fallback
-
-    // Build cell content
-    const cellContent = document.createElement(cellContentTag);
-    cellContent.id = cellName;
-    if (cellContentStyle) cellContent.className = cellContentStyle;
-    if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
-
-    // Add cell content data and event (button tag only)
-    if (cellContentTag === "button") this.setDataAndEvents(hass, cellContent);
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("created cellContent:", cellContent));
-
-    return cellContent;
-  }
-
-  setDataAndEvents(hass, btn) {
-
-    // Retrieve known default config for cell content (when available)
-    const knownConfig = this.cellContents[btn.id];
-
-    // Set cell content data
-    if (knownConfig && knownConfig.code) {
-      btn._keyData = { code: knownConfig.code };
-    } else {
-      btn._keyData = {};
-    }
-
-    // Add pointer Down events:
-    this.addPointerDownListener(btn, (e) => {
-      this.handlePointerDown(e, hass, btn);
-    });
-
-    // Add pointer Up events:
-    this.addPointerUpListener(btn, (e) => {
-      this.handlePointerUp(e, hass, btn);
-    });
-    this.addPointerCancelListener(btn, (e) => {
-      this.handlePointerUp(e, hass, btn);
-    });
-  }
-
-  setupDpad(hass) {
-    const svg = this.content.querySelector("#dpad");
-    const padRadius = 100;
-    const padPadding = 56;
-    const padLineThick = 5;
-    const center = padRadius;
-    const rOuter = padRadius;
-    const rInner = padRadius - padPadding;
-    const centerRadius = padRadius - padPadding - padLineThick;
-    const svgSize = padRadius * 2;
     
-    svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    svg.style.width = "100%";
-    svg.style.height = "auto";
-    svg.style.flex = "4";
-    svg.style["aspect-ratio"] = "1 / 1";
-
-    const ns = "http://www.w3.org/2000/svg";
-    const defs = document.createElementNS(ns, "defs");
-    svg.appendChild(defs);
-
-    const degToRad = (deg) => (deg * Math.PI) / 180;
-    const pointOnCircle = (cx, cy, r, deg) => {
-      const rad = degToRad(deg);
-      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-    };
-
-    const createQuarterPath = (angleStart) => {
-      const angleEnd = (angleStart + 90) % 360;
-      const p1 = pointOnCircle(center, center, rOuter, angleStart);
-      const p2 = pointOnCircle(center, center, rOuter, angleEnd);
-      const p3 = pointOnCircle(center, center, rInner, angleEnd);
-      const p4 = pointOnCircle(center, center, rInner, angleStart);
-
-      return `M ${p1.x} ${p1.y}
-              A ${rOuter} ${rOuter} 0 0 1 ${p2.x} ${p2.y}
-              L ${p3.x} ${p3.y}
-              A ${rInner} ${rInner} 0 0 0 ${p4.x} ${p4.y}
-              Z`;
-    };
-
-    const quarters = [
-      { id: 1, angleStart: 225, keyId: "remote-button-arrow-up", label: "▲" },
-      { id: 2, angleStart: 315, keyId: "remote-button-arrow-right", label: "▶" },
-      { id: 3, angleStart: 45,  keyId: "remote-button-arrow-down", label: "▼" },
-      { id: 4, angleStart: 135, keyId: "remote-button-arrow-left", label: "◀" }
-    ];
-
-    quarters.forEach(({ id, keyId, angleStart, label }) => {
-      const quarterPath = createQuarterPath(angleStart);
-      const clipId = `clip-quarter-${id}`;
-      const clip = document.createElementNS(ns, "clipPath");
-      clip.setAttribute("id", clipId);
-      const clipShape = document.createElementNS(ns, "path");
-      clipShape.setAttribute("d", quarterPath);
-      clip.appendChild(clipShape);
-      defs.appendChild(clip);
-
-      const bg = document.createElementNS(ns, "path");
-      bg.setAttribute("d", quarterPath);
-      bg.setAttribute("fill", "#4a4a4a");
-      bg.setAttribute("clip-path", `url(#${clipId})`);
-      svg.appendChild(bg);
-
-      const btn = document.createElementNS(ns, "path");
-      btn.setAttribute("d", quarterPath);
-      btn.setAttribute("fill", "#3a3a3a");
-      btn.setAttribute("clip-path", `url(#${clipId})`);
-      btn.setAttribute("class", "quarter");
-      btn.setAttribute("id", keyId);
-      this.setDataAndEvents(hass, btn);
-      svg.appendChild(btn);
+      // This runs once the DOM is fully loaded
+      const svg = container.querySelector("#dpad");
+      const padRadius = 100;
+      const padPadding = 56;
+      const padLineThick = 5;
+      const center = padRadius;
+      const rOuter = padRadius;
+      const rInner = padRadius - padPadding;
+      const centerRadius = padRadius - padPadding - padLineThick;
+      const svgSize = padRadius * 2;
       
-      const angle = (angleStart + 45) % 360;
-      const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
-      const text = document.createElementNS(ns, "text");
-      text.setAttribute("x", labelPos.x);
-      text.setAttribute("y", labelPos.y);
-      text.setAttribute("text-anchor", "middle");
-      text.setAttribute("dominant-baseline", "middle");
-      text.textContent = label;
-      svg.appendChild(text);
-    });
-
-    const centerCircle = document.createElementNS(ns, "circle");
-    centerCircle.setAttribute("cx", center);
-    centerCircle.setAttribute("cy", center);
-    centerCircle.setAttribute("r", centerRadius);
-    centerCircle.setAttribute("fill", "#4a4a4a");
-    svg.appendChild(centerCircle);
-
-    const centerButton = document.createElementNS(ns, "circle");
-    centerButton.setAttribute("cx", center);
-    centerButton.setAttribute("cy", center);
-    centerButton.setAttribute("r", centerRadius);
-    centerButton.setAttribute("fill", "#3a3a3a");
-    centerButton.setAttribute("class", "quarter");
-    centerButton.setAttribute("id", "remote-button-center");
-    this.setDataAndEvents(hass, centerButton);
-    svg.appendChild(centerButton);
-
-    const centerLabel = document.createElementNS(ns, "text");
-    centerLabel.setAttribute("x", center);
-    centerLabel.setAttribute("y", center);
-    centerLabel.setAttribute("text-anchor", "middle");
-    centerLabel.setAttribute("dominant-baseline", "middle");
-    centerLabel.textContent = "OK";
-    svg.appendChild(centerLabel);
-  }
-
-  setupFoldables() {
-    const toggle = this.content.querySelector("#ts-toggle-container");
-    const indicator = toggle.querySelector(".ts-toggle-indicator");
-    const options = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
-    const foldable = this.content.querySelector("#foldable-container");
-    const foldableKeyboardName = "android-keyboard-card";
-    const foldableActivitiesName = "carrousel-card";
-    const foldableMouseName = "trackpad-card";
-    let foldableKeyboard;
-    let foldableActivites;
-    let foldableMouse;
-
-    let state = 1;
-    
-    const updateFoldable = () => {
-      foldable.innerHTML = "";  
-      foldable.style.display = "block";
-      let foldableContentName;
-      if (state === 0) {
-        foldableContentName = foldableKeyboardName;
-      } else if (state === 1) {
-        foldableContentName = foldableActivitiesName;
-      } else if (state === 2) {
-        foldableContentName = foldableMouseName;
-      }
+      svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      svg.style.width = "100%";
+      svg.style.height = "auto";
+      svg.style.flex = "4";
+      svg.style["aspect-ratio"] = "1 / 1";
       
-      if (foldableContentName) {
-        customElements.whenDefined(foldableContentName).then(() => {
-          let foldableContent;
-          let foldableContentConfig;
-          if (foldableContentName === foldableKeyboardName) {
-            if (!foldableKeyboard) foldableKeyboard = document.createElement(foldableKeyboardName); // Safe init of imported component
-            foldableContent = foldableKeyboard;
-            foldableContentConfig = this.keyboardConfig;
-          } else if (foldableContentName === foldableActivitiesName) {
-            if (!foldableActivites) foldableActivites = document.createElement(foldableActivitiesName); // Safe init of imported component
-            foldableContent = foldableActivites;
-            foldableContentConfig = this.activitiesConfig;
-          } else if (foldableContentName === foldableMouseName) {
-            if (!foldableMouse) foldableMouse = document.createElement(foldableMouseName); // Safe init of imported component
-            foldableContent = foldableMouse;
-            foldableContentConfig = this.mouseConfig;
-          } else {
-            throw new Error(`Unkwnon foldable component ${foldableContentName}`);
-          }
-          foldableContent.setAttribute("style", "width: 100%;");
-          foldableContent.setConfig(foldableContentConfig);
-          foldableContent.hass = this._hass;
-          foldable.appendChild(foldableContent);
-        });
-      }
-    };
-
-    const updateFoldableUI = () => {
-      const leftPercentages = ["0%", "33.33%", "66.66%"];
-      indicator.style.left = leftPercentages[state];
-    
-      options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
-      updateFoldable();
-    };
-
-
-    options.forEach((option, index) => {
-      this.addPointerClickListener(option, () => {
-        if (state !== index) {
-          state = index;
-          updateFoldableUI();
-          this.hapticFeedback();
-        }
+      const ns = "http://www.w3.org/2000/svg";
+      const defs = document.createElementNS(ns, "defs");
+      svg.appendChild(defs);
+      
+      const degToRad = (deg) => (deg * Math.PI) / 180;
+      const pointOnCircle = (cx, cy, r, deg) => {
+        const rad = degToRad(deg);
+        return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+      };
+      
+      const createQuarterPath = (angleStart) => {
+        const angleEnd = (angleStart + 90) % 360;
+        const p1 = pointOnCircle(center, center, rOuter, angleStart);
+        const p2 = pointOnCircle(center, center, rOuter, angleEnd);
+        const p3 = pointOnCircle(center, center, rInner, angleEnd);
+        const p4 = pointOnCircle(center, center, rInner, angleStart);
+      
+        return `M ${p1.x} ${p1.y}
+                A ${rOuter} ${rOuter} 0 0 1 ${p2.x} ${p2.y}
+                L ${p3.x} ${p3.y}
+                A ${rInner} ${rInner} 0 0 0 ${p4.x} ${p4.y}
+                Z`;
+      };
+      
+      const quarters = [
+        { id: 1, angleStart: 225, keyId: "remote-button-arrow-up", label: "▲" },
+        { id: 2, angleStart: 315, keyId: "remote-button-arrow-right", label: "▶" },
+        { id: 3, angleStart: 45,  keyId: "remote-button-arrow-down", label: "▼" },
+        { id: 4, angleStart: 135, keyId: "remote-button-arrow-left", label: "◀" }
+      ];
+      
+      quarters.forEach(({ id, keyId, angleStart, label }) => {
+        const quarterPath = createQuarterPath(angleStart);
+        const clipId = `clip-quarter-${id}`;
+        const clip = document.createElementNS(ns, "clipPath");
+        clip.setAttribute("id", clipId);
+        const clipShape = document.createElementNS(ns, "path");
+        clipShape.setAttribute("d", quarterPath);
+        clip.appendChild(clipShape);
+        defs.appendChild(clip);
+      
+        const bg = document.createElementNS(ns, "path");
+        bg.setAttribute("d", quarterPath);
+        bg.setAttribute("fill", "#4a4a4a");
+        bg.setAttribute("clip-path", `url(#${clipId})`);
+        svg.appendChild(bg);
+      
+        const btn = document.createElementNS(ns, "path");
+        btn.setAttribute("d", quarterPath);
+        btn.setAttribute("fill", "#3a3a3a");
+        btn.setAttribute("clip-path", `url(#${clipId})`);
+        btn.setAttribute("class", "quarter");
+        btn.setAttribute("id", keyId);
+        // this.setDataAndEvents(btn);
+        svg.appendChild(btn);
+        
+        const angle = (angleStart + 45) % 360;
+        const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
+        const text = document.createElementNS(ns, "text");
+        text.setAttribute("x", labelPos.x);
+        text.setAttribute("y", labelPos.y);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        text.textContent = label;
+        svg.appendChild(text);
       });
-    });
-  
-    updateFoldableUI();
+      
+      const centerCircle = document.createElementNS(ns, "circle");
+      centerCircle.setAttribute("cx", center);
+      centerCircle.setAttribute("cy", center);
+      centerCircle.setAttribute("r", centerRadius);
+      centerCircle.setAttribute("fill", "#4a4a4a");
+      svg.appendChild(centerCircle);
+      
+      const centerButton = document.createElementNS(ns, "circle");
+      centerButton.setAttribute("cx", center);
+      centerButton.setAttribute("cy", center);
+      centerButton.setAttribute("r", centerRadius);
+      centerButton.setAttribute("fill", "#3a3a3a");
+      centerButton.setAttribute("class", "quarter");
+      centerButton.setAttribute("id", "remote-button-center");
+      // this.setDataAndEvents(centerButton);
+      svg.appendChild(centerButton);
+      
+      const centerLabel = document.createElementNS(ns, "text");
+      centerLabel.setAttribute("x", center);
+      centerLabel.setAttribute("y", center);
+      centerLabel.setAttribute("text-anchor", "middle");
+      centerLabel.setAttribute("dominant-baseline", "middle");
+      centerLabel.textContent = "OK";
+      svg.appendChild(centerLabel);
+    
   }
 
   handleGlobalPointerUp(evt) {
