@@ -568,10 +568,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.shadowRoot.appendChild(style);
 
     const container = document.createElement("div");
-    container.className = "remote-container";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "wrapper";
+    container.className = "wrapper";
 
     this.rows.forEach((rowConfig, rowIndex) => {
       
@@ -600,11 +597,10 @@ class AndroidRemoteCard extends HTMLElement {
         row.appendChild(cell);
       });
       
-      // Add row into wrapper
-      wrapper.appendChild(row);
+      // Add row into container
+      container.appendChild(row);
     });
     
-    container.appendChild(wrapper);
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
 
