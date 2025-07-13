@@ -58,10 +58,10 @@ class AndroidRemoteCard extends HTMLElement {
           <line x1="192" y1="96" x2="128" y2="32"/>
           <line x1="320" y1="96" x2="384" y2="32"/>
         </svg>`
-      },
+      },      
       "remote-button-power-device": {
         html: 
-        `<svg id="device-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf" stroke="#bfbfbf" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+        `<svg id="device-icon" class="standard-grey" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
           <g>
             <path class="primary-path" d="M11 15H6L13 1V9H18L11 23V15Z" />
           </g>
@@ -412,7 +412,16 @@ class AndroidRemoteCard extends HTMLElement {
     .cell.no-gap {
       padding: 0;
     }
-    
+
+    .standard-grey {
+      fill: #bfbfbf;
+      stroke: #bfbfbf;
+    }
+    .highlight-yellow {
+      fill: #ffc107;
+      stroke: #ffc107;
+    }
+
     .circle-button {
       height: 100%;
       width: 100%;  /* maintain aspect ratio */
@@ -647,6 +656,8 @@ class AndroidRemoteCard extends HTMLElement {
 
     this.setupDpad(hass);
     this.setupFoldables();
+
+    this.updateSensors(this._hass);
   }
 
   updateSensors(hass) {
@@ -673,7 +684,21 @@ class AndroidRemoteCard extends HTMLElement {
             
             // Update sensor state
             btn._sensorState = hass.states[btnOverrideSensor];
-            if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Sensor state of ${btnOverrideSensor} updated to ${btn._sensorState} for element ${btnId}`));
+            
+            // Update children states
+            const children = btn.children;
+            if (children) {
+              const isOn = btn._sensorState && btn._sensorState.toLowerCase() === 'on';
+              children.forEach(child => {
+                if (isOn) {
+                  child.classList.add("highlight-yellow");
+                } else {
+                  child.classList.remove("highlight-yellow");
+                }
+              });
+            }
+            
+            if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Sensor state of ${btnOverrideSensor} updated for element ${btnId}:`, ${btn._sensorState}));
           }
         }
       });
@@ -1067,7 +1092,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Select override action
     let overrideAction;
     if (buttonOverrideConfig['sensor']) {
-      if (btn._sensorState && btn._sensorState === "On") {
+      if (btn._sensorState && btn._sensorState.toLowerCase() === "on") {
         overrideAction = buttonOverrideConfig['action-when-on'];
       } else {
         overrideAction = buttonOverrideConfig['action-when-off'];
