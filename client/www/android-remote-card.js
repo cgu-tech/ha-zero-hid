@@ -624,7 +624,7 @@ class AndroidRemoteCard extends HTMLElement {
         ${styleName} {
           flex: ${flex};
         }`;
-      style += dynamicStyle;
+      style.textContent += dynamicStyle;
       this.dynamicStyles.set(styleName, dynamicStyle);
     }
     return styleName;
