@@ -23,7 +23,7 @@
           { "name": "filler"              ,         "weight": 0.5 },
           { "name": "remote-button-return",         "weight": 2   },
           { "name": "remote-button-home"  ,         "weight": 2   },
-          { "name": "filler"              ,         "weight": 0.5 },
+          { "name": "filler"              ,         "weight": 0.5 }
         ]
       },
       {
@@ -32,7 +32,7 @@
         "cells": [
           { "name": "remote-button-backspace",      "weight": 1 },
           { "name": "ts-toggle-threeStateToggle",   "weight": 3 },
-          { "name": "remote-button-settings",       "weight": 1 },
+          { "name": "remote-button-settings",       "weight": 1 }
         ]
       },
       {
