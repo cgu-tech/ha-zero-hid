@@ -1007,10 +1007,9 @@ class AndroidRemoteCard extends HTMLElement {
     const code = keyData.code;
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-pressed:", code));
 
-    const btnId = btn.id;
-    if (btnId && this.config['buttons-override'] && this.config['buttons-override'][btnId]) {
+    if (this.hasOverrideAction(btn)) {
       // Override detected: do nothing (override action will be executed on button up)
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("override detected for button-down:", btnId));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Override detected on key press (suppressed):", btn.id));
     } else {
       // Default action
 
@@ -1045,6 +1044,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     if (this.hasOverrideAction(btn)) {
       // Override detected: do override action
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Override detected on key release:", btn.id));
       this.executeOverrideAction(btn);
     } else {
       // Default action
@@ -1063,7 +1063,7 @@ class AndroidRemoteCard extends HTMLElement {
   executeOverrideAction(btn) {
     const btnId = btn.id;
     const buttonOverrideConfig = this.config['buttons-override'][btnId];
-    
+
     // Select override action
     let overrideAction;
     if (buttonOverrideConfig['sensor']) {
@@ -1075,9 +1075,9 @@ class AndroidRemoteCard extends HTMLElement {
     } else {
       overrideAction = buttonOverrideConfig['action'];
     }
-    
+
     // Fire override action
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("override detected for button-up:", btnId, overrideAction));
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Firing override action for:", btnId, overrideAction));
     this.fireEvent(btn, "hass-action", {
       config: overrideAction,
       action: "tap",
