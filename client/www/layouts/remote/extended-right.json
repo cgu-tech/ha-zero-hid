@@ -1,11 +1,14 @@
 {
-    "Name": "classic",
-    "Description": "Contains classic default layout for android remote buttons",
+    "Name": "extended-right",
+    "Description": "Contains extended right-handed layout for android remote buttons",
     "rows": [
       {
         "cells": [
           { "name": "remote-button-power",          "weight": 1 },
-          { "name": "filler",                       "weight": 4 }
+          { "name": "filler",                       "weight": 1 },
+          { "name": "remote-button-power-tv",       "weight": 1 },
+          { "name": "remote-button-power-device",   "weight": 1 },
+          { "name": "remote-button-settings",       "weight": 1 }
         ]
       },
       {
@@ -32,7 +35,7 @@
         "cells": [
           { "name": "remote-button-backspace",      "weight": 1 },
           { "name": "ts-toggle-container",          "weight": 3 },
-          { "name": "remote-button-settings",       "weight": 1 }
+          { "name": "filler",                       "weight": 1 }
         ]
       },
       {
@@ -43,10 +46,10 @@
       },
       {
         "cells": [
-          { "name": "remote-button-volume-down",    "weight": 1 },
           { "name": "remote-button-track-previous", "weight": 1 },
           { "name": "remote-button-play-pause",     "weight": 1 },
           { "name": "remote-button-track-next",     "weight": 1 },
+          { "name": "remote-button-volume-down",    "weight": 1 },
           { "name": "remote-button-volume-up",      "weight": 1 }
         ]
       }
