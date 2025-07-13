@@ -630,31 +630,21 @@ class AndroidRemoteCard extends HTMLElement {
     
     const wrapper = document.createElement('div');
     wrapper.className = "wrapper";
-    wrapper.innerHTML = 
-    `
-  <!-- Bottom DPAD row -->
-  <div class="row gap-top">
-    <div class="cell span-0-5">
-    </div>
-    <div class="cell span-4">
-      <svg id="dpad">
-      </svg>
-    </div>
-    <div class="cell span-0-5">
-    </div>
-  </div>
-  <!-- END OF DPAD row -->
-  `
-//    
-//  <!-- Foldable content row -->
-//  <div class="row">
-//    <div class="cell span-5 no-gap">
-//      <div id="foldable-container">
-//      </div>
+//    wrapper.innerHTML = 
+//    `
+//  <!-- Bottom DPAD row -->
+//  <div class="row gap-top">
+//    <div class="cell span-0-5">
+//    </div>
+//    <div class="cell span-4">
+//      <svg id="dpad">
+//      </svg>
+//    </div>
+//    <div class="cell span-0-5">
 //    </div>
 //  </div>
-//  <!-- END OF Foldable content row -->
-//    `
+//  <!-- END OF DPAD row -->
+//  `
     
     this.rows.forEach((rowConfig, rowIndex) => {
       
@@ -662,7 +652,7 @@ class AndroidRemoteCard extends HTMLElement {
       const row = document.createElement("div");
       row.classList.add('row');
       if (rowConfig["filler-top"]) row.classList.add('gap-top');
-      if (rowConfig["filler-top"]) row.classList.add('gap-bottom');
+      if (rowConfig["filler-bottom"]) row.classList.add('gap-bottom');
       
       // Add cells to row
       rowConfig.cells.forEach((cellConfig, cellIndex) => {
@@ -695,116 +685,6 @@ class AndroidRemoteCard extends HTMLElement {
 
     this.setupDpad(hass);
     this.setupFoldables();
-      //// This runs once the DOM is fully loaded
-      //const svg = container.querySelector("#dpad");
-      //const padRadius = 100;
-      //const padPadding = 56;
-      //const padLineThick = 5;
-      //const center = padRadius;
-      //const rOuter = padRadius;
-      //const rInner = padRadius - padPadding;
-      //const centerRadius = padRadius - padPadding - padLineThick;
-      //const svgSize = padRadius * 2;
-      //
-      //svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
-      //svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-      //svg.style.width = "100%";
-      //svg.style.height = "auto";
-      //svg.style.flex = "4";
-      //svg.style["aspect-ratio"] = "1 / 1";
-      //
-      //const ns = "http://www.w3.org/2000/svg";
-      //const defs = document.createElementNS(ns, "defs");
-      //svg.appendChild(defs);
-      //
-      //const degToRad = (deg) => (deg * Math.PI) / 180;
-      //const pointOnCircle = (cx, cy, r, deg) => {
-      //  const rad = degToRad(deg);
-      //  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-      //};
-      //
-      //const createQuarterPath = (angleStart) => {
-      //  const angleEnd = (angleStart + 90) % 360;
-      //  const p1 = pointOnCircle(center, center, rOuter, angleStart);
-      //  const p2 = pointOnCircle(center, center, rOuter, angleEnd);
-      //  const p3 = pointOnCircle(center, center, rInner, angleEnd);
-      //  const p4 = pointOnCircle(center, center, rInner, angleStart);
-      //
-      //  return `M ${p1.x} ${p1.y}
-      //          A ${rOuter} ${rOuter} 0 0 1 ${p2.x} ${p2.y}
-      //          L ${p3.x} ${p3.y}
-      //          A ${rInner} ${rInner} 0 0 0 ${p4.x} ${p4.y}
-      //          Z`;
-      //};
-      //
-      //const quarters = [
-      //  { id: 1, angleStart: 225, keyId: "remote-button-arrow-up", label: "▲" },
-      //  { id: 2, angleStart: 315, keyId: "remote-button-arrow-right", label: "▶" },
-      //  { id: 3, angleStart: 45,  keyId: "remote-button-arrow-down", label: "▼" },
-      //  { id: 4, angleStart: 135, keyId: "remote-button-arrow-left", label: "◀" }
-      //];
-      //
-      //quarters.forEach(({ id, keyId, angleStart, label }) => {
-      //  const quarterPath = createQuarterPath(angleStart);
-      //  const clipId = `clip-quarter-${id}`;
-      //  const clip = document.createElementNS(ns, "clipPath");
-      //  clip.setAttribute("id", clipId);
-      //  const clipShape = document.createElementNS(ns, "path");
-      //  clipShape.setAttribute("d", quarterPath);
-      //  clip.appendChild(clipShape);
-      //  defs.appendChild(clip);
-      //
-      //  const bg = document.createElementNS(ns, "path");
-      //  bg.setAttribute("d", quarterPath);
-      //  bg.setAttribute("fill", "#4a4a4a");
-      //  bg.setAttribute("clip-path", `url(#${clipId})`);
-      //  svg.appendChild(bg);
-      //
-      //  const btn = document.createElementNS(ns, "path");
-      //  btn.setAttribute("d", quarterPath);
-      //  btn.setAttribute("fill", "#3a3a3a");
-      //  btn.setAttribute("clip-path", `url(#${clipId})`);
-      //  btn.setAttribute("class", "quarter");
-      //  btn.setAttribute("id", keyId);
-      //  // this.setDataAndEvents(btn);
-      //  svg.appendChild(btn);
-      //  
-      //  const angle = (angleStart + 45) % 360;
-      //  const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
-      //  const text = document.createElementNS(ns, "text");
-      //  text.setAttribute("x", labelPos.x);
-      //  text.setAttribute("y", labelPos.y);
-      //  text.setAttribute("text-anchor", "middle");
-      //  text.setAttribute("dominant-baseline", "middle");
-      //  text.textContent = label;
-      //  svg.appendChild(text);
-      //});
-      //
-      //const centerCircle = document.createElementNS(ns, "circle");
-      //centerCircle.setAttribute("cx", center);
-      //centerCircle.setAttribute("cy", center);
-      //centerCircle.setAttribute("r", centerRadius);
-      //centerCircle.setAttribute("fill", "#4a4a4a");
-      //svg.appendChild(centerCircle);
-      //
-      //const centerButton = document.createElementNS(ns, "circle");
-      //centerButton.setAttribute("cx", center);
-      //centerButton.setAttribute("cy", center);
-      //centerButton.setAttribute("r", centerRadius);
-      //centerButton.setAttribute("fill", "#3a3a3a");
-      //centerButton.setAttribute("class", "quarter");
-      //centerButton.setAttribute("id", "remote-button-center");
-      //// this.setDataAndEvents(centerButton);
-      //svg.appendChild(centerButton);
-      //
-      //const centerLabel = document.createElementNS(ns, "text");
-      //centerLabel.setAttribute("x", center);
-      //centerLabel.setAttribute("y", center);
-      //centerLabel.setAttribute("text-anchor", "middle");
-      //centerLabel.setAttribute("dominant-baseline", "middle");
-      //centerLabel.textContent = "OK";
-      //svg.appendChild(centerLabel);
-    
   }
 
   addStyleSpan(style, flex) {
@@ -860,7 +740,12 @@ class AndroidRemoteCard extends HTMLElement {
     // No default html fallback
 
     // Build cell content
-    const cellContent = document.createElement(cellContentTag);
+    let cellContent;
+    if (cellContentTag === "svg") {
+      cellContent = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    } else {
+      cellContent = document.createElement(cellContentTag);
+    }
     cellContent.id = cellName;
     if (cellContentStyle) cellContent.className = cellContentStyle;
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
