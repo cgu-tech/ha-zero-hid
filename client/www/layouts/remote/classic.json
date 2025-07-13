@@ -31,7 +31,7 @@
         "filler-bottom": 1,
         "cells": [
           { "name": "remote-button-backspace",      "weight": 1 },
-          { "name": "ts-toggle-threeStateToggle",   "weight": 3 },
+          { "name": "ts-toggle-container",          "weight": 3 },
           { "name": "remote-button-settings",       "weight": 1 }
         ]
       },
