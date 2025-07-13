@@ -80,7 +80,7 @@ class AndroidRemoteCard extends HTMLElement {
         </svg>`
       },
       "dpad": { 
-        tag="svg"
+        tag: "svg"
       },
       "remote-button-arrow-up": {
         code: "KEY_UP"
@@ -99,7 +99,7 @@ class AndroidRemoteCard extends HTMLElement {
       },
       "remote-button-return": {
         code: "CON_AC_BACK", 
-        style="side-button left", 
+        style: "side-button left", 
         html: 
         `<svg id="return-icon" viewBox="-14 0 80 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
           <!-- Top horizontal line -->
@@ -114,7 +114,7 @@ class AndroidRemoteCard extends HTMLElement {
       },
       "remote-button-home": {
         code: "CON_AC_HOME", 
-        style="side-button right", 
+        style: "side-button right", 
         html: 
         `<svg id="home-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
           <!-- Roof (triangle) -->
@@ -127,8 +127,8 @@ class AndroidRemoteCard extends HTMLElement {
         </svg>`
       },
       "ts-toggle-container": {
-        tag="div",
-        style="ts-toggle-container", 
+        tag: "div",
+        style: "ts-toggle-container", 
         html: 
         `<div class="ts-toggle-indicator"></div>
         <div class="ts-toggle-option active">⌨︎</div>
@@ -171,7 +171,7 @@ class AndroidRemoteCard extends HTMLElement {
         </svg>`
       },
       "foldable-container": {
-        tag="div"
+        tag: "div"
       },
       "remote-button-track-previous": {
         code: "CON_SCAN_PREVIOUS_TRACK", 
