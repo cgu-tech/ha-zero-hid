@@ -188,7 +188,7 @@ class AndroidRemoteCard extends HTMLElement {
       "remote-button-volume-mute": {
         code: "CON_MUTE",
         html: 
-        `<svg id="mute-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        `<svg id="volumemute-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <!-- Speaker body (filled) -->
           <path d="M20 24 L28 24 L36 16 V48 L28 40 L20 40 Z" fill="#bfbfbf" />
         
@@ -604,6 +604,13 @@ class AndroidRemoteCard extends HTMLElement {
       width: auto;
       display: block;
       transform: scale(0.4, 0.4);
+    }
+    
+    #volumemute-icon {
+      height: 100%;
+      width: auto;  /* maintain aspect ratio */
+      display: block; /* removes any inline space */
+      transform: scale(0.5, 0.5);
     }
     
     #volumedown-icon {
