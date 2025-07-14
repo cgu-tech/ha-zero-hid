@@ -28,9 +28,12 @@ class TrackpadCard extends HTMLElement {
     this.pointersStart = new Map();
     this.pointersEnd = new Map();
 
-    this.triggerDeltaX = 2;
-    this.triggerDeltaY = 2;
+    this.triggerMoveDeltaX = 2;
+    this.triggerMoveDeltaY = 2;
     this.triggerLongClick = 500;
+    this.triggerScroll = 150;
+    this.triggerScrollMin = -1;
+    this.triggerScrollMax = 1;
     
     this.buttonsLayouts = [
       { mode: 'hidden'           , layout: [] },
@@ -79,6 +82,36 @@ class TrackpadCard extends HTMLElement {
       // Set layout buttons
       if (config['buttons']) {
         this.buttonsMode = config['buttons'];
+      }
+
+      // Set real pointer minimal move delta on X-axis to trigger a virtual pointer move (in px)
+      if (config['trigger-move-delta-x']) {
+        this.triggerMoveDeltaX = config['trigger-move-delta-x'];
+      }
+
+      // Set real pointer minimal move delta on Y-axis to trigger a virtual pointer move (in px)
+      if (config['trigger-move-delta-y']) {
+        this.triggerMoveDeltaY = config['trigger-move-delta-y'];
+      }
+
+      // Set scroll long click duration (in ms)
+      if (config['trigger-long-click']) {
+        this.triggerLongClick = config['trigger-long-click'];
+      }
+
+      // Set scroll trigger duration (in ms)
+      if (config['trigger-scroll']) {
+        this.triggerScroll = config['trigger-scroll'];
+      }
+
+      // Set scroll min per triggered scroll event (in unit)
+      if (config['trigger-scroll-min']) {
+        this.triggerScrollMin = config['trigger-scroll-min'];
+      }
+
+      // Set scroll max per triggered scroll event (in unit)
+      if (config['trigger-scroll-max']) {
+        this.triggerScrollMax = config['trigger-scroll-max'];
       }
     }
   }
@@ -337,7 +370,7 @@ class TrackpadCard extends HTMLElement {
         // check if pointer moved enough this time to trigger move-detection
         const { dx, dy } = this.getPointerDelta(clickEntry["event"], e);
 
-        if (Math.abs(dx) > this.triggerDeltaX || Math.abs(dy) > this.triggerDeltaY) {
+        if (Math.abs(dx) > this.triggerMoveDeltaX || Math.abs(dy) > this.triggerMoveDeltaY) {
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Move detected for pointer:", e));
           clickEntry["move-detected"] = true;
         }
@@ -346,15 +379,16 @@ class TrackpadCard extends HTMLElement {
       if (this.pointersStart.has(e.pointerId)) {
         this.pointersEnd.set(e.pointerId, e);
 
+        let updateStartPoint = true;
         if (this.pointersStart.size === 1) {
           // Single touch: mouse move
-          this.handleSinglePointerMove(e);
+          updateStartPoint = this.handleSinglePointerMove(e);
         } else if (this.pointersStart.size === 2 && this.pointersEnd.size === 2) {
           // Double-touch: mouse scroll
-          this.handleDoublePointersMove(e);
+          updateStartPoint = this.handleDoublePointersMove(e);
         }
 
-        this.pointersStart.set(e.pointerId, e);
+        if (updateStartPoint) this.pointersStart.set(e.pointerId, e);
       }
     });
     container.appendChild(trackpad);
@@ -458,6 +492,7 @@ class TrackpadCard extends HTMLElement {
 
   handleSinglePointerMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerMove(e):", e));
+    const updateStartPoint = true;
     const startEvent = this.pointersStart.get(e.pointerId);
     const endEvent = this.pointersEnd.get(e.pointerId);
     const { dx, dy } = this.getPointerDelta(startEvent, endEvent);
@@ -466,16 +501,37 @@ class TrackpadCard extends HTMLElement {
       this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
       this.moveHapticFeedback();
     }
+    return updateStartPoint;
   }
 
   handleDoublePointersMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleDoublePointersMove(e):", e));
-    const { dx, dy } = this.getDoublePointerDelta(this.pointersStart, this.pointersEnd);
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for two pointers:`, dx, dy));
-    if (dx !== 0 || dy !== 0) {
-      this._hass.callService("trackpad_mouse", "scroll", { x: dx, y: dy, });
-      this.moveHapticFeedback();
+    const duration = this.getDoublePointerTimeDelta(this.pointersStart, this.pointersEnd);
+    const updateStartPoint = (duration >= this.triggerScroll);
+    if (updateStartPoint) {
+      // Duration is greater than trigger time for one scroll
+      // so scroll
+      const { dx, dy } = this.getDoublePointerDelta(this.pointersStart, this.pointersEnd);
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for two pointers:`, dx, dy));
+      if (dx !== 0 || dy !== 0) {
+
+        let dxAdjusted = dx;
+        let dyAdjusted = dy;
+
+        // Trim axis where movement was minor than other axis
+        if (Math.abs(dy) >= Math.abs(dx)) {
+          dxAdjusted = 0;
+          dyAdjusted = Math.max(this.triggerScrollMin, Math.min(this.triggerScrollMax, dyAdjusted));
+        } else {
+          dxAdjusted = Math.max(this.triggerScrollMin, Math.min(this.triggerScrollMax, dxAdjusted));
+          dyAdjusted = 0;
+        }
+
+        this._hass.callService("trackpad_mouse", "scroll", { x: dxAdjusted, y: dyAdjusted, });
+        this.moveHapticFeedback();
+      }
     }
+    return updateStartPoint;
   }
 
   // vibrate the device like an haptic feedback
@@ -502,6 +558,19 @@ class TrackpadCard extends HTMLElement {
     const dxRound = Math.round(dx);
     const dyRound = Math.round(dy);
     return { dx: dxRound, dy: dyRound };
+  }
+
+  getDoublePointerTimeDelta(startMap, endMap) {
+    let startTime = null;
+    let endTime = null;
+    for (const [id, start] of startMap.entries()) {
+      const end = endMap.get(id);
+      if (end) {
+        if (!startTime || (startTime && start.timeStamp > startTime)) startTime = start.timeStamp;
+        if (!endTime || (endTime && end.timeStamp > endTime)) endTime = end.timeStamp;
+      }
+    }
+    return endTime - startTime;
   }
 
   getDoublePointerDelta(startMap, endMap) {
