@@ -688,7 +688,7 @@ class AndroidRemoteCard extends HTMLElement {
             // Update children states
             if (btn.children) {
               const children = Array.from(btn.children);
-              const isOn = btn._sensorState && btn._sensorState.toLowerCase() === 'on';
+              const isOn = btn._sensorState && btn._sensorState === 'on';
               children.forEach(child => {
                 if (isOn) {
                   child.classList.add("highlight-yellow");
