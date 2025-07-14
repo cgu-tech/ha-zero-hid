@@ -46,9 +46,9 @@
       },
       {
         "cells": [
-          { "name": "remote-button-track-previous", "weight": 1 },
           { "name": "remote-button-play-pause",     "weight": 1 },
-          { "name": "remote-button-track-next",     "weight": 1 },
+          { "name": "filler",                       "weight": 1 },
+          { "name": "remote-button-volume-mute",    "weight": 1 },
           { "name": "remote-button-volume-down",    "weight": 1 },
           { "name": "remote-button-volume-up",      "weight": 1 }
         ]
