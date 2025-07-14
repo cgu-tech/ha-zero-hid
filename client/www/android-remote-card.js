@@ -686,8 +686,8 @@ class AndroidRemoteCard extends HTMLElement {
             btn._sensorState = hass.states[btnOverrideSensor];
             
             // Update children states
-            const children = btn.children;
-            if (children) {
+            if (btn.children) {
+              const children = Array.from(btn.children);
               const isOn = btn._sensorState && btn._sensorState.toLowerCase() === 'on';
               children.forEach(child => {
                 if (isOn) {
@@ -697,8 +697,7 @@ class AndroidRemoteCard extends HTMLElement {
                 }
               });
             }
-            
-            if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Sensor state of ${btnOverrideSensor} updated for element ${btnId}:`, ${btn._sensorState}));
+            if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Sensor state of ${btnOverrideSensor} updated for element ${btnId}:`, btn._sensorState));
           }
         }
       });
