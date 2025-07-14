@@ -492,20 +492,36 @@ class TrackpadCard extends HTMLElement {
 
   handleSinglePointerMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerMove(e):", e));
-    const updateStartPoint = true;
-    const startEvent = this.pointersStart.get(e.pointerId);
-    const endEvent = this.pointersEnd.get(e.pointerId);
-    const { dx, dy } = this.getPointerDelta(startEvent, endEvent);
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
-    if (dx !== 0 || dy !== 0) {
-      this._hass.callService("trackpad_mouse", this.getTrackpadMode(), { x: dx, y: dy, });
-      this.moveHapticFeedback();
+    let updateStartPoint = true;
+    if (this.getTrackpadMode() === "move") {
+      updateStartPoint = this.handleMouseMove(e);
+    } else if (this.getTrackpadMode() === "scroll") {
+      updateStartPoint = this.handleMouseScroll(e);
     }
     return updateStartPoint;
   }
 
   handleDoublePointersMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleDoublePointersMove(e):", e));
+    return this.handleMouseScroll(e);
+  }
+
+  handleMouseMove(e) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleMouseMove(e):", e));
+    const updateStartPoint = true;
+    const startEvent = this.pointersStart.get(e.pointerId);
+    const endEvent = this.pointersEnd.get(e.pointerId);
+    const { dx, dy } = this.getPointerDelta(startEvent, endEvent);
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
+    if (dx !== 0 || dy !== 0) {
+      this._hass.callService("trackpad_mouse", "move", { x: dx, y: dy, });
+      this.moveHapticFeedback();
+    }
+    return updateStartPoint;
+  }
+
+  handleMouseScroll(e) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleMouseScroll(e):", e));
 
     const { dx, dy } = this.getDoublePointerDelta(this.pointersStart, this.pointersEnd);
     const dxAbs = Math.abs(dx);
