@@ -683,9 +683,13 @@ class AndroidRemoteCard extends HTMLElement {
             // The current override configuration does have a declared sensor and matches an element from DOM
             
             // Update sensor state
-            btn._sensorState = hass.states[btnOverrideSensor];
-            
-            // Update children states
+            if (hass.states[btnOverrideSensor]) {
+              btn._sensorState = hass.states[btnOverrideSensor].state;
+            } else {
+              btn._sensorState = hass.states[btnOverrideSensor];
+            }
+
+            // Update children UI states
             if (btn.children) {
               const children = Array.from(btn.children);
               const isOn = btn._sensorState && btn._sensorState === 'on';
