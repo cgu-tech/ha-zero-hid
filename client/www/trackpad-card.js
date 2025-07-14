@@ -31,7 +31,7 @@ class TrackpadCard extends HTMLElement {
     this.triggerMoveDeltaX = 2;
     this.triggerMoveDeltaY = 2;
     this.triggerLongClick = 500;
-    this.triggerScroll = 150;
+    this.triggerScroll = 10;
     this.triggerScrollMin = -1;
     this.triggerScrollMax = 1;
     
@@ -99,7 +99,7 @@ class TrackpadCard extends HTMLElement {
         this.triggerLongClick = config['trigger-long-click'];
       }
 
-      // Set scroll trigger duration (in ms)
+      // Set scroll trigger event (in real px)
       if (config['trigger-scroll']) {
         this.triggerScroll = config['trigger-scroll'];
       }
@@ -506,30 +506,29 @@ class TrackpadCard extends HTMLElement {
 
   handleDoublePointersMove(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleDoublePointersMove(e):", e));
-    const duration = this.getDoublePointerTimeDelta(this.pointersStart, this.pointersEnd);
-    const updateStartPoint = (duration >= this.triggerScroll);
+
+    const { dx, dy } = this.getDoublePointerDelta(this.pointersStart, this.pointersEnd);
+    const dxAbs = Math.abs(dx);
+    const dyAbs = Math.abs(dy);
+    const updateStartPoint = (dxAbs >= this.triggerScroll || dyAbs >= this.triggerScroll);
     if (updateStartPoint) {
-      // Duration is greater than trigger time for one scroll
-      // so scroll
-      const { dx, dy } = this.getDoublePointerDelta(this.pointersStart, this.pointersEnd);
+      // Scroll trigger reached
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for two pointers:`, dx, dy));
-      if (dx !== 0 || dy !== 0) {
 
-        let dxAdjusted = dx;
-        let dyAdjusted = dy;
+      let dxAdjusted = dx;
+      let dyAdjusted = dy;
 
-        // Trim axis where movement was minor than other axis
-        if (Math.abs(dy) >= Math.abs(dx)) {
-          dxAdjusted = 0;
-          dyAdjusted = Math.max(this.triggerScrollMin, Math.min(this.triggerScrollMax, dyAdjusted));
-        } else {
-          dxAdjusted = Math.max(this.triggerScrollMin, Math.min(this.triggerScrollMax, dxAdjusted));
-          dyAdjusted = 0;
-        }
-
-        this._hass.callService("trackpad_mouse", "scroll", { x: dxAdjusted, y: dyAdjusted, });
-        this.moveHapticFeedback();
+      // Trim axis where movement was minor than other axis
+      if (dyAbs >= dxAbs) {
+        dxAdjusted = 0;
+        dyAdjusted = Math.max(this.triggerScrollMin, Math.min(this.triggerScrollMax, dyAdjusted)) * Math.round(dyAbs / this.triggerScroll);
+      } else {
+        dxAdjusted = Math.max(this.triggerScrollMin, Math.min(this.triggerScrollMax, dxAdjusted)) * Math.round(dxAbs / this.triggerScroll);
+        dyAdjusted = 0;
       }
+
+      this._hass.callService("trackpad_mouse", "scroll", { x: dxAdjusted, y: dyAdjusted, });
+      this.moveHapticFeedback();
     }
     return updateStartPoint;
   }
