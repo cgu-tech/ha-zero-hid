@@ -99,10 +99,12 @@ install() {
     # Config parameters
     websocket_server_ip=""
     websocket_server_port=""
+    websocket_authorized_users_ids=""
     
     # Config flags
     conf_websocket_server_ip=false
     conf_websocket_server_port=false
+    conf_websocket_authorized_users_ids=false
     
     # Automatic setup : try loading config file
     if [ -f "${CONFIG_FILE}" ]; then
@@ -126,12 +128,22 @@ install() {
         else
             echo "Key 'websocket_server_port' not found or has no value in ${CONFIG_FILE}"
         fi
+
+        # Automatic setup of "websocket_server_port"
+        websocket_authorized_users_ids=$(grep "^websocket_authorized_users_ids:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
+        if [ -n "${websocket_authorized_users_ids}" ]; then
+            conf_websocket_authorized_users_ids=true
+            echo "Using pre-configured 'websocket_authorized_users_ids' value ${websocket_authorized_users_ids} from ${CONFIG_FILE}"
+        else
+            echo "Key 'websocket_authorized_users_ids' not found or has no value in ${CONFIG_FILE}"
+        fi
       
     else
         # Automatic setup : no config file or config file not accessible
         echo "Config file not found: ${CONFIG_FILE}"
     fi
-    
+
     # Manual setup of "websocket_server_ip":
     if [ "${conf_websocket_server_ip}" != "true" ]; then
         regex='^((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\.){3}(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))$'
@@ -163,12 +175,31 @@ install() {
             fi
         done
     fi
-    
+
+    # Manual setup of "websocket_authorized_users_ids":
+    if [ "${conf_websocket_authorized_users_ids}" != "true" ]; then
+        regex='^ *"[^"]*" *(, *"[^"]*" *)* *$'
+        while true; do
+
+            # Display existing Home Assistant users with their ID to help script executing person to find correct users IDs
+            /bin/bash user_activity_report.sh
+
+            read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_server_port </dev/tty
+            websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
+            if [[ ${websocket_authorized_users_ids} =~ ${regex} ]]; then
+                break
+            else
+                echo "Please answer a well-formed list of authorized users id (\"userid_1\",..,\"userid_n\" expected)"
+            fi
+        done
+    fi
+
     # Write updated config file
     echo "Writing config file ${CONFIG_FILE}..."
     cat <<EOF > "${CONFIG_FILE}"
 websocket_server_ip: ${websocket_server_ip}
 websocket_server_port: ${websocket_server_port}
+websocket_authorized_users_ids: '${websocket_authorized_users_ids}'
 EOF
 
     # Configure using new configurations
@@ -176,21 +207,25 @@ EOF
     sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${MODULE_FILE}"
     sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${MODULE_FILE}"
     echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}:${websocket_server_port}"
-    
+
+    escaped_websocket_authorized_users_ids=$(printf '%s' "$websocket_authorized_users_ids" | sed 's/"/\\"/g')
+    sed -i "s|<websocket_authorized_users_ids>|${escaped_websocket_authorized_users_ids}|g" "${MODULE_FILE}"
+    echo "USB gadget server access authorization set to users with IDs ${websocket_authorized_users_ids}"
+
     # Remove residual files when needed
     echo "Cleaning trackpad_mouse old component files..."
     cleanup
-    
+
     # Create key codes and consummer codes mappings from zero-hid
     echo "Cloning zero-hid dependency using branch ${ZERO_HID_BRANCH}..."
     (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "${ZERO_HID_BRANCH}" "${ZERO_HID_REPO}"
-    
+
     echo "Creating key codes mapping..."
     extract_keycodes_to_js_class "${CURRENT_DIR}/zero-hid/zero_hid/hid/keycodes.py" "${CURRENT_DIR}/www/utils/keycodes.js" "KeyCodes"
-    
+
     echo "Creating consummer codes mapping..."
     extract_keycodes_to_js_class "${CURRENT_DIR}/zero-hid/zero_hid/hid/consumercodes.py" "${CURRENT_DIR}/www/utils/consumercodes.js" "ConsumerCodes"
-    
+
     # Copy all updated configured files to install client components
     echo "Installing trackpad_mouse newly configured component..."
     cp -R www /config
