@@ -184,7 +184,7 @@ install() {
             # Display existing Home Assistant users with their ID to help script executing person to find correct users IDs
             /bin/bash user_activity_report.sh
 
-            read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_server_port </dev/tty
+            read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_authorized_users_ids </dev/tty
             websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
             if [[ ${websocket_authorized_users_ids} =~ ${regex} ]]; then
                 break
