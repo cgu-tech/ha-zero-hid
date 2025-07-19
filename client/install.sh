@@ -180,13 +180,17 @@ install() {
     if [ "${conf_websocket_authorized_users_ids}" != "true" ]; then
         regex='^ *"[^"]*" *(, *"[^"]*" *)* *$'
         while true; do
-
-            # Display existing Home Assistant users with their ID to help script executing person to find correct users IDs
+    
+            # Display existing users
             /bin/bash user_activity_report.sh
-
+    
             read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_authorized_users_ids </dev/tty
-            websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
-            if [[ "${websocket_authorized_users_ids}" =~ ${regex} ]]; then
+            websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # trim whitespace
+    
+            echo "DEBUG: input after trimming: [$websocket_authorized_users_ids]"
+    
+            if [[ "$websocket_authorized_users_ids" =~ $regex ]]; then
+                echo "DEBUG: input matches regex"
                 break
             else
                 echo "Please answer a well-formed list of authorized users id (\"userid_1\",..,\"userid_n\" expected)"
