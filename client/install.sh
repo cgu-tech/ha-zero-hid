@@ -185,8 +185,11 @@ install() {
             /bin/bash user_activity_report.sh
     
             read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_authorized_users_ids </dev/tty
-            websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # trim whitespace
-    
+
+            # trim whitespace and preserve double-quotes
+            websocket_authorized_users_ids="${websocket_authorized_users_ids#"${websocket_authorized_users_ids%%[![:space:]]*}"}"
+            websocket_authorized_users_ids="${websocket_authorized_users_ids%"${websocket_authorized_users_ids##*[![:space:]]}"}"
+
             echo "DEBUG: input after trimming: [$websocket_authorized_users_ids]"
     
             if [[ "$websocket_authorized_users_ids" =~ $regex ]]; then
