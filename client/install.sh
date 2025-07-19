@@ -186,7 +186,7 @@ install() {
 
             read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_authorized_users_ids </dev/tty
             websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
-            if [[ ${websocket_authorized_users_ids} =~ ${regex} ]]; then
+            if [[ "${websocket_authorized_users_ids}" =~ ${regex} ]]; then
                 break
             else
                 echo "Please answer a well-formed list of authorized users id (\"userid_1\",..,\"userid_n\" expected)"
