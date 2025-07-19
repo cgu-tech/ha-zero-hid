@@ -190,10 +190,7 @@ install() {
             websocket_authorized_users_ids="${websocket_authorized_users_ids#"${websocket_authorized_users_ids%%[![:space:]]*}"}"
             websocket_authorized_users_ids="${websocket_authorized_users_ids%"${websocket_authorized_users_ids##*[![:space:]]}"}"
 
-            echo "DEBUG: input after trimming: [$websocket_authorized_users_ids]"
-    
             if [[ "$websocket_authorized_users_ids" =~ $regex ]]; then
-                echo "DEBUG: input matches regex"
                 break
             else
                 echo "Please answer a well-formed list of authorized users id (\"userid_1\",..,\"userid_n\" expected)"
