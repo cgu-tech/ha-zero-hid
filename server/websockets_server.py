@@ -9,7 +9,6 @@ import struct
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger(__name__)
 
-from aiohttp import ClientSession
 from typing import Set
 from websockets.server import serve, WebSocketServerProtocol
 from zero_hid import Device
