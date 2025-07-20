@@ -70,7 +70,7 @@ class SecureWebSocketProtocol(WebSocketServerProtocol):
             logger.warning(f"Rejected secret: {secret}")
             return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: secret does not match"
 
-        logger.info(f"Authorized: IP={client_ip}, user_id={user_id}")
+        logger.info(f"Authorized: IP={client_ip}")
         return None  # Allow handshake
 
 async def handle_client(websocket) -> None:
@@ -173,9 +173,15 @@ async def handle_client(websocket) -> None:
         logger.info("Client disconnected")
 
 async def main():
-    # Start websockets server infinite loop
-    async with websockets.serve(handle_client, SERVER_HOST, SERVER_PORT, ssl=ssl_context, create_protocol=SecureWebSocketProtocol):
-        logger.info(f"WebSocket server running at wss://{SERVER_HOST}:{SERVER_PORT}")
-        await asyncio.Future()  # Run forever
+    # Start the WebSocket server
+    server = await websockets.serve(
+        handle_client,
+        SERVER_HOST,
+        SERVER_PORT,
+        ssl=ssl_context,
+        create_protocol=SecureWebSocketProtocol,
+    )
+    logger.info(f"WebSocket server running at wss://{SERVER_HOST}:{SERVER_PORT}")
+    await server.wait_closed()  # Run forever
 
 asyncio.run(main())
