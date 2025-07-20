@@ -141,7 +141,10 @@ install() {
 
         # Automatic setup of "websocket_authorized_clients_ips"
         websocket_authorized_clients_ips=$(grep "^websocket_authorized_clients_ips:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
-        websocket_authorized_clients_ips=$(echo "$websocket_authorized_clients_ips" | xargs) # Trims whitespace
+
+        websocket_authorized_clients_ips="${websocket_authorized_clients_ips#"${websocket_authorized_clients_ips%%[![:space:]]*}"}"
+        websocket_authorized_clients_ips="${websocket_authorized_clients_ips%"${websocket_authorized_clients_ips##*[![:space:]]}"}"
+
         if [ -n "${websocket_authorized_clients_ips}" ]; then
             conf_websocket_authorized_clients_ips=true
             echo "Using pre-configured 'websocket_authorized_clients_ips' value ${websocket_authorized_clients_ips} from ${CONFIG_FILE}"
