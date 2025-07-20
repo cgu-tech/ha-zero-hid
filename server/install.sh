@@ -219,7 +219,7 @@ install() {
     cat <<EOF > "${CONFIG_FILE}"
 websocket_server_port: ${websocket_server_port}
 websocket_server_secret: '${websocket_server_secret}'
-websocket_authorized_clients_ips: ${websocket_authorized_clients_ips}
+websocket_authorized_clients_ips: '${websocket_authorized_clients_ips}'
 EOF
 
     # Configure using new configurations
