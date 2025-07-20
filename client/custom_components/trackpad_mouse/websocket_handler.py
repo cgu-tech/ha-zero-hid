@@ -4,14 +4,17 @@ import logging
 import ssl
 import struct
 import websockets
+
+from homeassistant.util.ssl import client_context
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 _LOGGER = logging.getLogger(__name__)
 
 class WebSocketClient:
-    def __init__(self, url: str):
+    def __init__(self, url: str, secret: str):
         self.url = url
         self.websocket = None
+        self.secret = secret
         self._lock = asyncio.Lock()  # Prevent race conditions
 
     # Send scroll as 2 signed bytes: [0x01][x][y]
@@ -71,62 +74,65 @@ class WebSocketClient:
 
     async def send(self, cmd: bytes, wait_response: bool = False) -> bytes | None:
         """Send a command with safe (re)connection."""
-        try:
-            if not self.websocket:
-                _LOGGER.warning("WebSocket not connected. Reconnecting...")
-                await self.connect()
+        async with self._lock:
+            try:
+                if not self.websocket:
+                    _LOGGER.warning("WebSocket not connected. Reconnecting...")
+                    await self.connect()
 
-            async with self._lock:
                 await self.websocket.send(cmd)
                 if wait_response:
                     response = await self.websocket.recv()
                     return response
-        except ConnectionClosedOK as e:
-            _LOGGER.warning(f"WebSocket closed cleanly: {e}. Reconnecting...")
-            await self.recover_and_retry(cmd)
-        except Exception as e:
-            _LOGGER.error(f"Unexpected WebSocket error: {e}")
-            await self.disconnect()
+            except ConnectionClosedOK as e:
+                _LOGGER.warning(f"WebSocket closed cleanly: {e}. Reconnecting...")
+                await self.recover_and_retry(cmd)
+            except Exception as e:
+                _LOGGER.error(f"Unexpected WebSocket error: {e}")
+                await self.disconnect()
 
     async def recover_and_retry(self, cmd: bytes) -> None:
         """Handle recovery logic and retry sending a command."""
         await self.disconnect()
         await asyncio.sleep(1)  # Optional backoff
         await self.connect()
-        async with self._lock:
-            if self.websocket and not self.websocket.closed:
-                try:
-                    await self.websocket.send(cmd)
-                    _LOGGER.info("Retried command successfully.")
-                except Exception as e:
-                    _LOGGER.error(f"Retry failed: {e}")
+        if self.websocket and not self.websocket.closed:
+            try:
+                await self.websocket.send(cmd)
+                _LOGGER.info("Retried command successfully.")
+            except Exception as e:
+                _LOGGER.error(f"Retry failed: {e}")
 
     async def connect(self) -> None:
         """Establish a new WebSocket connection safely."""
-        async with self._lock:
-            if self.websocket and not self.websocket.closed:
-                _LOGGER.debug("WebSocket already connected.")
-                return
+        if self.websocket and not self.websocket.closed:
+            _LOGGER.debug("WebSocket already connected.")
+            return
 
-            try:
-                ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-                ssl_context.check_hostname = False
-                ssl_context.verify_mode = ssl.CERT_NONE  # Accept self-signed certs (insecure but OK for testing)
+        try:
+            ssl_context = client_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE  # Accept self-signed certs (insecure but OK for testing)
 
-                self.websocket = await websockets.connect(self.url, ssl=ssl_context)
-                _LOGGER.info("WebSocket connection established.")
-            except Exception as e:
-                _LOGGER.error(f"Failed to connect to WebSocket: {e}")
-                self.websocket = None
+            # Authentication headers
+            extra_headers = {
+                "X-Secret": self.secret,
+            }
+
+            # Try to connect to remote websockets server
+            self.websocket = await websockets.connect(self.url, ssl=ssl_context, extra_headers=extra_headers)
+            _LOGGER.info("WebSocket connection established.")
+        except Exception as e:
+            _LOGGER.error(f"Failed to connect to WebSocket: {e}")
+            self.websocket = None
 
     async def disconnect(self) -> None:
         """Cleanly close WebSocket connection."""
-        async with self._lock:
-            if self.websocket:
-                try:
-                    await self.websocket.close()
-                    _LOGGER.info("WebSocket connection closed.")
-                except Exception as e:
-                    _LOGGER.warning(f"Error while closing WebSocket: {e}")
-                finally:
-                    self.websocket = None
+        if self.websocket:
+            try:
+                await self.websocket.close()
+                _LOGGER.info("WebSocket connection closed.")
+            except Exception as e:
+                _LOGGER.warning(f"Error while closing WebSocket: {e}")
+            finally:
+                self.websocket = None

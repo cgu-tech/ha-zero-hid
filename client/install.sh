@@ -99,11 +99,13 @@ install() {
     # Config parameters
     websocket_server_ip=""
     websocket_server_port=""
+    websocket_server_secret=""
     websocket_authorized_users_ids=""
     
     # Config flags
     conf_websocket_server_ip=false
     conf_websocket_server_port=false
+    conf_websocket_server_secret=false
     conf_websocket_authorized_users_ids=false
     
     # Automatic setup : try loading config file
@@ -129,7 +131,17 @@ install() {
             echo "Key 'websocket_server_port' not found or has no value in ${CONFIG_FILE}"
         fi
 
-        # Automatic setup of "websocket_server_port"
+        # Automatic setup of "websocket_server_secret"
+        websocket_server_secret=$(grep "^websocket_server_secret:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
+        if [ -n "${websocket_server_secret}" ]; then
+            conf_websocket_server_secret=true
+            echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${CONFIG_FILE}"
+        else
+            echo "Key 'websocket_server_secret' not found or has no value in ${CONFIG_FILE}"
+        fi
+
+        # Automatic setup of "websocket_authorized_users_ids"
         websocket_authorized_users_ids=$(grep "^websocket_authorized_users_ids:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
         if [ -n "${websocket_authorized_users_ids}" ]; then
@@ -138,7 +150,7 @@ install() {
         else
             echo "Key 'websocket_authorized_users_ids' not found or has no value in ${CONFIG_FILE}"
         fi
-      
+
     else
         # Automatic setup : no config file or config file not accessible
         echo "Config file not found: ${CONFIG_FILE}"
@@ -157,7 +169,7 @@ install() {
             fi
         done
     fi
-    
+
     # Manual setup of "websocket_server_port":
     if [ "${conf_websocket_server_port}" != "true" ]; then
         regex='^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$'
@@ -176,14 +188,35 @@ install() {
         done
     fi
 
+    # Manual setup of "websocket_server_secret":
+    if [ "${conf_websocket_server_secret}" != "true" ]; then
+        regex='^.+$'
+        while true; do
+            read -p "Enter your server secret (ex: myServerSecret): " websocket_server_secret </dev/tty
+
+            # trim whitespace and preserve double-quotes
+            websocket_server_secret="${websocket_server_secret#"${websocket_server_secret%%[![:space:]]*}"}"
+            websocket_server_secret="${websocket_server_secret%"${websocket_server_secret##*[![:space:]]}"}"
+
+            # Escape single-quotes
+            websocket_server_secret="${websocket_server_secret//\'/\'\\\'\'}"
+
+            if [[ "$websocket_server_secret" =~ $regex ]]; then
+                break
+            else
+                echo "Please answer a well-formed secret (non-empty and non-whitespaces-only secret expected)"
+            fi
+        done
+    fi
+
     # Manual setup of "websocket_authorized_users_ids":
     if [ "${conf_websocket_authorized_users_ids}" != "true" ]; then
         regex='^ *"[^"]*" *(, *"[^"]*" *)* *$'
         while true; do
-    
+
             # Display existing users
             /bin/bash user_activity_report.sh
-    
+
             read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_authorized_users_ids </dev/tty
 
             # trim whitespace and preserve double-quotes
@@ -203,6 +236,7 @@ install() {
     cat <<EOF > "${CONFIG_FILE}"
 websocket_server_ip: ${websocket_server_ip}
 websocket_server_port: ${websocket_server_port}
+websocket_server_secret: '${websocket_server_secret}'
 websocket_authorized_users_ids: '${websocket_authorized_users_ids}'
 EOF
 
@@ -211,6 +245,9 @@ EOF
     sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${MODULE_FILE}"
     sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${MODULE_FILE}"
     echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}:${websocket_server_port}"
+
+    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${MODULE_FILE}"
+    echo "USB gadget server secret set to ${websocket_server_secret}"
 
     escaped_websocket_authorized_users_ids=$(printf '%s' "$websocket_authorized_users_ids" | sed 's/"/\\"/g')
     sed -i "s|<websocket_authorized_users_ids>|${escaped_websocket_authorized_users_ids}|g" "${MODULE_FILE}"

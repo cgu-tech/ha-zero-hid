@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+import http
 import json
 import logging
 import logging.config
@@ -8,10 +9,21 @@ import struct
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger(__name__)
 
+from aiohttp import ClientSession
+from typing import Set
+from websockets.server import serve, WebSocketServerProtocol
 from zero_hid import Device
 from zero_hid import Mouse
 from zero_hid import Keyboard, KeyCodes
 from zero_hid import Consumer, ConsumerCodes
+
+# Clients IPs whitelist
+AUTHORIZED_IPS: Set[str] = {<websocket_authorized_clients_ips>}
+
+# Server config
+SERVER_HOST = "0.0.0.0"
+SERVER_PORT = <websocket_server_port>
+SERVER_SECRET = "<websocket_server_secret>"
 
 # SSL Context
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -31,8 +43,39 @@ key_codes_map = KeyCodes.as_dict()
 consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
 
+class SecureWebSocketProtocol(WebSocketServerProtocol):
+    async def process_request(self, path, request_headers):
+        # Get client IP from transport
+        peername = self.transport.get_extra_info("peername")
+        if peername:
+            client_ip, _ = peername
+            logger.info(f"Handshake from IP: {client_ip}")
+        else:
+            logger.warning("Could not determine client IP")
+            return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: Unknown IP"
+
+        # IP check
+        if client_ip not in AUTHORIZED_IPS:
+            logger.warning(f"Rejected IP: {client_ip}")
+            return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: IP not allowed"
+
+        # Read headers
+        secret = request_headers.get("X-Secret")
+
+        if not secret:
+            logger.warning("Missing X-Secret header")
+            return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: Missing secret"
+
+        # Secret check
+        if secret != SERVER_SECRET:
+            logger.warning(f"Rejected secret: {secret}")
+            return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: secret does not match"
+
+        logger.info(f"Authorized: IP={client_ip}, user_id={user_id}")
+        return None  # Allow handshake
+
 async def handle_client(websocket) -> None:
-    logger.info("Client connected")
+
     try:
         async for message in websocket:
             if isinstance(message, str):
@@ -132,8 +175,8 @@ async def handle_client(websocket) -> None:
 
 async def main():
     # Start websockets server infinite loop
-    async with websockets.serve(handle_client, "0.0.0.0", <websocket_server_port>, ssl=ssl_context):
-        logger.info("WebSocket server running at wss://0.0.0.0:<websocket_server_port>")
+    async with websockets.serve(handle_client, SERVER_HOST, SERVER_PORT, ssl=ssl_context, create_protocol=SecureWebSocketProtocol):
+        logger.info(f"WebSocket server running at wss://{SERVER_HOST}:{SERVER_PORT}")
         await asyncio.Future()  # Run forever
 
 asyncio.run(main())

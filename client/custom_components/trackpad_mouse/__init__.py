@@ -20,7 +20,13 @@ from .const import DOMAIN, MIN_RANGE, MAX_RANGE
 
 _LOGGER = logging.getLogger(__name__)
 
+# Frontend user_ids whitelist
 AUTHORIZED_USERS: Set[str] = {<websocket_authorized_users_ids>}
+
+# Backend server config
+SERVER_HOST = "<websocket_server_ip>"
+SERVER_PORT = <websocket_server_port>
+SERVER_SECRET = "<websocket_server_secret>"
 
 # Use empty_config_schema because the component does not have any config options
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
@@ -133,7 +139,7 @@ async def websocket_sync_keyboard(hass: HomeAssistant, connection: ActiveConnect
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websocket global client."""
-    ws_client = WebSocketClient("wss://<websocket_server_ip>:<websocket_server_port>")
+    ws_client = WebSocketClient(f"wss://{SERVER_HOST}:{SERVER_PORT}", SERVER_SECRET)
     hass.data[DOMAIN] = {
         "ws_client": ws_client,
         "authorized_users": AUTHORIZED_USERS,
