@@ -9,7 +9,7 @@ import ssl
 import struct
 
 from typing import Set
-from websockets.server import WebSocketServerProtocol
+from websockets.server import Request
 from zero_hid import Device, Mouse, Keyboard, KeyCodes, Consumer, ConsumerCodes
 
 logging.config.fileConfig('logging.conf')
@@ -41,11 +41,11 @@ key_codes_map = KeyCodes.as_dict()
 consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
 
-async def process_request(self, path, request_headers):
+async def process_request(request: Request):
     # Get client IP from transport
-    peername = self.transport.get_extra_info("peername")
+    peername = request.remote    
     if peername:
-        client_ip, _ = peername
+        client_ip = peername[0] if peername else "unknown"
         logger.info(f"Handshake from IP: {client_ip}")
     else:
         logger.warning("Could not determine client IP")
@@ -57,7 +57,7 @@ async def process_request(self, path, request_headers):
         return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: IP not allowed"
 
     # Read headers
-    secret = request_headers.get("X-Secret")
+    secret = request.headers.get("X-Secret")
 
     if not secret:
         logger.warning("Missing X-Secret header")
