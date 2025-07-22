@@ -42,7 +42,7 @@ key_codes_map = KeyCodes.as_dict()
 consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
 
-async def process_request(request: Request):
+async def process_request(connection, request: Request):
     # Get client IP from transport
     peername = request.remote    
     if peername:
