@@ -1,4 +1,5 @@
 import asyncio
+import signal
 import websockets
 import http
 import json
@@ -6,15 +7,13 @@ import logging
 import logging.config
 import ssl
 import struct
-logging.config.fileConfig('logging.conf')
-logger = logging.getLogger(__name__)
 
 from typing import Set
-from websockets.server import serve, WebSocketServerProtocol
-from zero_hid import Device
-from zero_hid import Mouse
-from zero_hid import Keyboard, KeyCodes
-from zero_hid import Consumer, ConsumerCodes
+from websockets.server import WebSocketServerProtocol
+from zero_hid import Device, Mouse, Keyboard, KeyCodes, Consumer, ConsumerCodes
+
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger(__name__)
 
 # Clients IPs whitelist
 AUTHORIZED_IPS: Set[str] = {<websocket_authorized_clients_ips>}
@@ -173,6 +172,16 @@ async def handle_client(websocket) -> None:
         logger.info("Client disconnected")
 
 async def main():
+    stop_event = asyncio.Event()
+
+    async def shutdown():
+        logger.info("Shutting down WebSocket server...")
+        stop_event.set()
+
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown()))
+
     # Start the WebSocket server
     server = await websockets.serve(
         handle_client,
@@ -181,7 +190,13 @@ async def main():
         ssl=ssl_context,
         create_protocol=SecureWebSocketProtocol,
     )
-    logger.info(f"WebSocket server running at wss://{SERVER_HOST}:{SERVER_PORT}")
-    await server.wait_closed()  # Run forever
+    logger.info(f"WebSocket server started at wss://{SERVER_HOST}:{SERVER_PORT}")
 
-asyncio.run(main())
+    await stop_event.wait_closed() # Wait forever until interrupted
+    server.close() # Close server whenever interrupted
+    await server.wait_closed()  # Wait forever until server closed
+
+    logger.info(f"WebSocket server stopped at wss://{SERVER_HOST}:{SERVER_PORT}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
