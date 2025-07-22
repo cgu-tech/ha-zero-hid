@@ -191,7 +191,7 @@ async def main():
     )
     logger.info(f"WebSocket server started at wss://{SERVER_HOST}:{SERVER_PORT}")
 
-    await stop_event.wait_closed() # Wait forever until interrupted
+    await stop_event.wait() # Wait forever until interrupted
     server.close() # Close server whenever interrupted
     await server.wait_closed()  # Wait forever until server closed
 
