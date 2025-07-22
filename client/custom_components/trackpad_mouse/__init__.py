@@ -21,7 +21,7 @@ from .const import DOMAIN, MIN_RANGE, MAX_RANGE
 _LOGGER = logging.getLogger(__name__)
 
 # Frontend user_ids whitelist
-AUTHORIZED_USERS: Set[str] = {<websocket_authorized_users_ids>}
+AUTHORIZED_USERS: Set[str] = set(ip.strip() for ip in "<websocket_authorized_users_ids>".split(","))
 
 # Backend server config
 SERVER_HOST = "<websocket_server_ip>"

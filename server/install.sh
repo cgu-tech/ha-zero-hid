@@ -132,6 +132,9 @@ install() {
         # Automatic setup of "websocket_server_secret"
         websocket_server_secret=$(grep "^websocket_server_secret:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
+        # Remove surrounding single quotes, if any:
+        websocket_server_secret="${websocket_server_secret#\'}"
+        websocket_server_secret="${websocket_server_secret%\'}"
         if [ -n "${websocket_server_secret}" ]; then
             conf_websocket_server_secret=true
             echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${CONFIG_FILE}"
@@ -141,10 +144,7 @@ install() {
 
         # Automatic setup of "websocket_authorized_clients_ips"
         websocket_authorized_clients_ips=$(grep "^websocket_authorized_clients_ips:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
-
-        websocket_authorized_clients_ips="${websocket_authorized_clients_ips#"${websocket_authorized_clients_ips%%[![:space:]]*}"}"
-        websocket_authorized_clients_ips="${websocket_authorized_clients_ips%"${websocket_authorized_clients_ips##*[![:space:]]}"}"
-
+        websocket_authorized_clients_ips=$(echo "$websocket_authorized_clients_ips" | xargs) # Trims whitespace
         if [ -n "${websocket_authorized_clients_ips}" ]; then
             conf_websocket_authorized_clients_ips=true
             echo "Using pre-configured 'websocket_authorized_clients_ips' value ${websocket_authorized_clients_ips} from ${CONFIG_FILE}"
@@ -180,14 +180,7 @@ install() {
         regex='^.+$'
         while true; do
             read -p "Enter this USB gadget server secret (ex: myServerSecret): " websocket_server_secret </dev/tty
-
-            # trim whitespace and preserve double-quotes
-            websocket_server_secret="${websocket_server_secret#"${websocket_server_secret%%[![:space:]]*}"}"
-            websocket_server_secret="${websocket_server_secret%"${websocket_server_secret##*[![:space:]]}"}"
-
-            # Escape single-quotes
-            websocket_server_secret="${websocket_server_secret//\'/\'\\\'\'}"
-
+            websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
             if [[ "$websocket_server_secret" =~ $regex ]]; then
                 break
             else
@@ -198,18 +191,14 @@ install() {
 
     # Manual setup of "websocket_authorized_clients_ips":
     if [ "${conf_websocket_authorized_clients_ips}" != "true" ]; then
-        regex='^"([0-9]{1,3}\.){3}[0-9]{1,3}"([[:space:]]*,[[:space:]]*"([0-9]{1,3}\.){3}[0-9]{1,3}")*$'
+        regex='^([0-9]{1,3}\.){3}[0-9]{1,3}([[:space:]]*,[[:space:]]*([0-9]{1,3}\.){3}[0-9]{1,3})*$'
         while true; do
-            read -p "Enter your USB gadget authorized clients IPv4 addresses (ex: \"192.168.1.15\",..,\"127.0.0.1\"): " websocket_authorized_clients_ips </dev/tty
-
-            # trim whitespace and preserve double-quotes
-            websocket_authorized_clients_ips="${websocket_authorized_clients_ips#"${websocket_authorized_clients_ips%%[![:space:]]*}"}"
-            websocket_authorized_clients_ips="${websocket_authorized_clients_ips%"${websocket_authorized_clients_ips##*[![:space:]]}"}"
-
+            read -p "Enter your USB gadget authorized clients IPv4 addresses (ex: 192.168.1.15,..,127.0.0.1): " websocket_authorized_clients_ips </dev/tty
+            websocket_authorized_clients_ips=$(echo "$websocket_authorized_clients_ips" | xargs) # Trims whitespace
             if [[ ${websocket_authorized_clients_ips} =~ ${regex} ]]; then
                 break
             else
-                echo "Please answer a well-formed list of authorized clients IPv4 addresses (ex: \"192.168.1.15\",..,\"127.0.0.1\" expected)"
+                echo "Please answer a well-formed list of authorized clients IPv4 addresses (ex: 192.168.1.15,..,127.0.0.1 expected)"
             fi
         done
     fi
@@ -219,7 +208,7 @@ install() {
     cat <<EOF > "${CONFIG_FILE}"
 websocket_server_port: ${websocket_server_port}
 websocket_server_secret: '${websocket_server_secret}'
-websocket_authorized_clients_ips: '${websocket_authorized_clients_ips}'
+websocket_authorized_clients_ips: ${websocket_authorized_clients_ips}
 EOF
 
     # Configure using new configurations
@@ -230,8 +219,7 @@ EOF
     sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${MODULE_FILE}"
     echo "This USB gadget server secret set to ${websocket_server_secret}"
 
-    escaped_websocket_authorized_clients_ips=$(printf '%s' "$websocket_authorized_clients_ips" | sed 's/"/\\"/g')
-    sed -i "s|<websocket_authorized_clients_ips>|${escaped_websocket_authorized_clients_ips}|g" "${MODULE_FILE}"
+    sed -i "s|<websocket_authorized_clients_ips>|${websocket_authorized_clients_ips}|g" "${MODULE_FILE}"
     echo "This USB gadget server access authorization set to IPs ${websocket_authorized_clients_ips}"
 
     chown -R :ha_zero_hid /opt/ha_zero_hid

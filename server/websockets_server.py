@@ -16,7 +16,8 @@ logging.config.fileConfig('logging.conf')
 logger = logging.getLogger(__name__)
 
 # Clients IPs whitelist
-AUTHORIZED_IPS: Set[str] = {<websocket_authorized_clients_ips>}
+AUTHORIZED_IPS: Set[str] = set(ip.strip() for ip in "<websocket_authorized_clients_ips>".split(","))
+
 
 # Server config
 SERVER_HOST = "0.0.0.0"

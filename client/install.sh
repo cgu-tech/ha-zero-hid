@@ -134,6 +134,9 @@ install() {
         # Automatic setup of "websocket_server_secret"
         websocket_server_secret=$(grep "^websocket_server_secret:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
+        # Remove surrounding single quotes, if any:
+        websocket_server_secret="${websocket_server_secret#\'}"
+        websocket_server_secret="${websocket_server_secret%\'}"
         if [ -n "${websocket_server_secret}" ]; then
             conf_websocket_server_secret=true
             echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${CONFIG_FILE}"
@@ -193,14 +196,7 @@ install() {
         regex='^.+$'
         while true; do
             read -p "Enter your server secret (ex: myServerSecret): " websocket_server_secret </dev/tty
-
-            # trim whitespace and preserve double-quotes
-            websocket_server_secret="${websocket_server_secret#"${websocket_server_secret%%[![:space:]]*}"}"
-            websocket_server_secret="${websocket_server_secret%"${websocket_server_secret##*[![:space:]]}"}"
-
-            # Escape single-quotes
-            websocket_server_secret="${websocket_server_secret//\'/\'\\\'\'}"
-
+            websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
             if [[ "$websocket_server_secret" =~ $regex ]]; then
                 break
             else
@@ -211,18 +207,14 @@ install() {
 
     # Manual setup of "websocket_authorized_users_ids":
     if [ "${conf_websocket_authorized_users_ids}" != "true" ]; then
-        regex='^ *"[^"]*" *(, *"[^"]*" *)* *$'
+        regex='^ *[^ ]* *(, *[^ ]* *)* *$'
         while true; do
 
             # Display existing users
             /bin/bash user_activity_report.sh
 
             read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_authorized_users_ids </dev/tty
-
-            # trim whitespace and preserve double-quotes
-            websocket_authorized_users_ids="${websocket_authorized_users_ids#"${websocket_authorized_users_ids%%[![:space:]]*}"}"
-            websocket_authorized_users_ids="${websocket_authorized_users_ids%"${websocket_authorized_users_ids##*[![:space:]]}"}"
-
+            websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
             if [[ "$websocket_authorized_users_ids" =~ $regex ]]; then
                 break
             else
@@ -237,7 +229,7 @@ install() {
 websocket_server_ip: ${websocket_server_ip}
 websocket_server_port: ${websocket_server_port}
 websocket_server_secret: '${websocket_server_secret}'
-websocket_authorized_users_ids: '${websocket_authorized_users_ids}'
+websocket_authorized_users_ids: ${websocket_authorized_users_ids}
 EOF
 
     # Configure using new configurations
@@ -249,8 +241,7 @@ EOF
     sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${MODULE_FILE}"
     echo "USB gadget server secret set to ${websocket_server_secret}"
 
-    escaped_websocket_authorized_users_ids=$(printf '%s' "$websocket_authorized_users_ids" | sed 's/"/\\"/g')
-    sed -i "s|<websocket_authorized_users_ids>|${escaped_websocket_authorized_users_ids}|g" "${MODULE_FILE}"
+    sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${MODULE_FILE}"
     echo "USB gadget server access authorization set to users with IDs ${websocket_authorized_users_ids}"
 
     # Remove residual files when needed
