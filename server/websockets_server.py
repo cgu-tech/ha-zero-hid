@@ -44,13 +44,13 @@ consumer_codes_map = ConsumerCodes.as_dict()
 
 async def process_request(connection, request: Request):
     # Get client IP from transport
-    peername = request.remote    
-    if peername:
-        client_ip = peername[0] if peername else "unknown"
+    remote = connection.remote_address  # a tuple (host, port)
+    if remote:
+        client_ip = remote[0] if remote else "unknown"
         logger.info(f"Handshake from IP: {client_ip}")
     else:
         logger.warning("Could not determine client IP")
-        return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: Unknown IP"
+        return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: unknown IP"
 
     # IP check
     if client_ip not in AUTHORIZED_IPS:
@@ -58,11 +58,11 @@ async def process_request(connection, request: Request):
         return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: IP not allowed"
 
     # Read headers
-    secret = request.headers.get("X-Secret")
+    secret = request.headers["X-Secret"]
 
     if not secret:
         logger.warning("Missing X-Secret header")
-        return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: Missing secret"
+        return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: missing secret"
 
     # Secret check
     if secret != SERVER_SECRET:
