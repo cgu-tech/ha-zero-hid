@@ -15,25 +15,25 @@ cleanup() {
     rm /config/www/utils/logger.js >/dev/null 2>&1 || true
     rm /config/www/utils/keycodes.js >/dev/null 2>&1 || true
     rm /config/www/utils/consumercodes.js >/dev/null 2>&1 || true
-    
+
     rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
-    
+
     rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
     rm /config/www/layouts/windows/US.json >/dev/null 2>&1 || true
-    
+
     rm /config/www/android-keyboard-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
     rm /config/www/layouts/android/FR-remote.json >/dev/null 2>&1 || true
     rm /config/www/layouts/android/US.json >/dev/null 2>&1 || true
     rm /config/www/layouts/android/US-remote.json >/dev/null 2>&1 || true
     rm /config/www/icon_opened_apps.svg >/dev/null 2>&1 || true
-    
+
     rm /config/www/arrowpad-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/arrowpad/common.json >/dev/null 2>&1 || true
-    
+
     rm /config/www/carrousel.js >/dev/null 2>&1 || true
-    
+
     rm /config/www/android-remote-card.js >/dev/null 2>&1 || true
     rm /config/www/layouts/remote/classic.json >/dev/null 2>&1 || true
     rm /config/www/layouts/remote/extended-right.json >/dev/null 2>&1 || true
@@ -213,12 +213,12 @@ install() {
             # Display existing users
             /bin/bash user_activity_report.sh
 
-            read -p "Enter list of authorized users ids (ex: \"userid_1\",..,\"userid_n\"): " websocket_authorized_users_ids </dev/tty
+            read -p "Enter list of authorized users ids (ex: userid_1,..,userid_n): " websocket_authorized_users_ids </dev/tty
             websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
             if [[ "$websocket_authorized_users_ids" =~ $regex ]]; then
                 break
             else
-                echo "Please answer a well-formed list of authorized users id (\"userid_1\",..,\"userid_n\" expected)"
+                echo "Please answer a well-formed list of authorized users id (userid_1,..,userid_n expected)"
             fi
         done
     fi
