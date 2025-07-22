@@ -41,36 +41,35 @@ key_codes_map = KeyCodes.as_dict()
 consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
 
-class SecureWebSocketProtocol(WebSocketServerProtocol):
-    async def process_request(self, path, request_headers):
-        # Get client IP from transport
-        peername = self.transport.get_extra_info("peername")
-        if peername:
-            client_ip, _ = peername
-            logger.info(f"Handshake from IP: {client_ip}")
-        else:
-            logger.warning("Could not determine client IP")
-            return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: Unknown IP"
+async def process_request(self, path, request_headers):
+    # Get client IP from transport
+    peername = self.transport.get_extra_info("peername")
+    if peername:
+        client_ip, _ = peername
+        logger.info(f"Handshake from IP: {client_ip}")
+    else:
+        logger.warning("Could not determine client IP")
+        return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: Unknown IP"
 
-        # IP check
-        if client_ip not in AUTHORIZED_IPS:
-            logger.warning(f"Rejected IP: {client_ip}")
-            return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: IP not allowed"
+    # IP check
+    if client_ip not in AUTHORIZED_IPS:
+        logger.warning(f"Rejected IP: {client_ip}")
+        return http.HTTPStatus.FORBIDDEN, [], b"Forbidden: IP not allowed"
 
-        # Read headers
-        secret = request_headers.get("X-Secret")
+    # Read headers
+    secret = request_headers.get("X-Secret")
 
-        if not secret:
-            logger.warning("Missing X-Secret header")
-            return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: Missing secret"
+    if not secret:
+        logger.warning("Missing X-Secret header")
+        return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: Missing secret"
 
-        # Secret check
-        if secret != SERVER_SECRET:
-            logger.warning(f"Rejected secret: {secret}")
-            return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: secret does not match"
+    # Secret check
+    if secret != SERVER_SECRET:
+        logger.warning(f"Rejected secret: {secret}")
+        return http.HTTPStatus.UNAUTHORIZED, [], b"Unauthorized: secret does not match"
 
-        logger.info(f"Authorized: IP={client_ip}")
-        return None  # Allow handshake
+    logger.info(f"Authorized: IP={client_ip}")
+    return None  # Allow handshake
 
 async def handle_client(websocket) -> None:
 
@@ -188,7 +187,7 @@ async def main():
         SERVER_HOST,
         SERVER_PORT,
         ssl=ssl_context,
-        create_protocol=SecureWebSocketProtocol,
+        process_request=process_request,
     )
     logger.info(f"WebSocket server started at wss://{SERVER_HOST}:{SERVER_PORT}")
 
