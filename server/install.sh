@@ -14,6 +14,7 @@ ZERO_HID_REPO="https://github.com/cgu-tech/zero-hid.git"
 HA_ZERO_HID_HOME="/home/ha_zero_hid"
 CONFIG_FILE="${HA_ZERO_HID_HOME}/trackpad_mouse.config"
 MODULE_FILE="/opt/ha_zero_hid/websockets_server.py"
+LOGGER_FILE="/opt/ha_zero_hid/logging.conf"
 
 # === Functions ===
 check_root() {
@@ -107,18 +108,30 @@ install() {
     chmod 750 /home/ha_zero_hid
     
     # Config server parameters
+    websocket_server_log_level=""
     websocket_server_port=""
     websocket_server_secret=""
     websocket_authorized_clients_ips=""
     
     # Config flags
+    conf_websocket_server_log_level=false
     conf_websocket_server_port=false
     conf_websocket_server_secret=false
     conf_websocket_authorized_clients_ips=false
     
     # Automatic setup : try loading config file
     if [ -f "${CONFIG_FILE}" ]; then
-        
+
+        # Automatic setup of "websocket_server_log_level"
+        websocket_server_log_level=$(grep "^websocket_server_log_level:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_log_level=$(echo "$websocket_server_log_level" | xargs) # Trims whitespace
+        if [ -n "${websocket_server_log_level}" ]; then
+            conf_websocket_server_log_level=true
+            echo "Using pre-configured 'websocket_server_log_level' value ${websocket_server_log_level} from ${CONFIG_FILE}"
+        else
+            echo "Key 'websocket_server_log_level' not found or has no value in ${CONFIG_FILE}"
+        fi
+
         # Automatic setup of "websocket_server_port"
         websocket_server_port=$(grep "^websocket_server_port:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
@@ -155,6 +168,24 @@ install() {
     else
         # Automatic setup : no config file or config file not accessible
         echo "Config file not found: ${CONFIG_FILE}"
+    fi
+
+    # Manual setup of "websocket_server_log_level":
+    if [ "${conf_websocket_server_log_level}" != "true" ]; then
+        regex='^(CRITICAL|ERROR|WARNING|INFO|DEBUG)$'
+        while true; do
+            read -p "Enter this USB gadget server logger level (default: WARNING, available: CRITICAL,ERROR,WARNING,INFO,DEBUG): " websocket_server_log_level </dev/tty
+            websocket_server_log_level=$(echo "$websocket_server_log_level" | xargs) # Trims whitespace
+            if [ -z "${websocket_server_log_level}" ]; then
+                websocket_server_log_level="WARNING"
+                echo "Using default WARNING server port"
+                break
+            elif [[ ${websocket_server_log_level} =~ ${regex} ]]; then
+                break
+            else
+                echo "Please answer one of the following logger level: CRITICAL,ERROR,WARNING,INFO,DEBUG"
+            fi
+        done
     fi
 
     # Manual setup of "websocket_server_port":
@@ -206,6 +237,7 @@ install() {
     # Write updated config file
     echo "Writing config file ${CONFIG_FILE}..."
     cat <<EOF > "${CONFIG_FILE}"
+websocket_server_log_level: ${websocket_server_log_level}
 websocket_server_port: ${websocket_server_port}
 websocket_server_secret: '${websocket_server_secret}'
 websocket_authorized_clients_ips: ${websocket_authorized_clients_ips}
@@ -213,6 +245,10 @@ EOF
 
     # Configure using new configurations
     echo "Configuring trackpad_mouse server..."
+    sed -i "s|<websocket_server_log_level>|${websocket_server_log_level}|g" "${LOGGER_FILE}"
+    echo "This USB gadget server will be using logger level set to ${websocket_server_log_level}"
+    echo "Use this command to setup logger level after installation: sed -i \"s|${websocket_server_log_level}|<new_log_level>|g\" \"${LOGGER_FILE}\""
+
     sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${MODULE_FILE}"
     echo "This USB gadget server will be running at 0.0.0.0:${websocket_server_port}"
 
