@@ -23,6 +23,7 @@ class TrackpadCard extends HTMLElement {
     this._layoutReady = false;
     this._layoutLoaded = {};
     
+    this.isToggleClick = false;
     this.isToggledOn = false;
     this.pointersClick = new Map();
     this.pointersStart = new Map();
@@ -302,25 +303,38 @@ class TrackpadCard extends HTMLElement {
         fill="none" stroke="currentColor" stroke-width="2" />
     `;
     
-    this.addPointerClickListener(scrollIcon, e => {
-      e.stopPropagation();
-      this.isToggledOn = !this.isToggledOn;
-      scrollIcon.classList.toggle("toggled-on", this.isToggledOn);
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll mode toggle on:", this.isToggledOn));
+    // Track scrollIcon toggle
+    this.addPointerDownListener(scrollIcon, (e) => {
+      e.stopPropagation(); // Prevents underneath trackpad click
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scrollIcon pointerDown(e):", e));
+      this.isToggleClick = true;
+    });
+
+    this.addPointerUpListener(scrollIcon, (e) => {
+      e.stopPropagation(); // Prevents underneath trackpad click
+      if (this.isToggleClick) {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scrollIcon pointerUp(e):", e));
+        this.isToggledOn = !this.isToggledOn;
+        scrollIcon.classList.toggle("toggled-on", this.isToggledOn);
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll mode toggle on:", this.isToggledOn));
+      }
+      this.isToggleClick = false;
     });
 
     trackpad.appendChild(scrollIcon);
 
     // Track touches
     this.addPointerDownListener(trackpad, (e) => {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerDown(e):", e));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("touches pointerDown(e):", e));
+      this.isToggleClick = false;
       this.pointersClick.set(e.pointerId, { "move-detected": false, "event": e , "long-click-timeout": this.addLongClickTimeout(e) } );
       this.pointersStart.set(e.pointerId, e);
       this.pointersEnd.set(e.pointerId);
     });
 
     this.addPointerUpListener(trackpad, (e) => {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerUp(e):", e));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("touches pointerUp(e):", e));
+      this.isToggleClick = false;
       const clickEntry = this.pointersClick.get(e.pointerId);
 
       this.clearLongClickTimeout(e);
