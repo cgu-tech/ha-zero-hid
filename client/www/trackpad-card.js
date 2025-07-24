@@ -265,12 +265,16 @@ class TrackpadCard extends HTMLElement {
       }
       
       .scroll-zones .zone {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         position: absolute;
         background-color: rgba(255, 255, 255, 0.05);
-        pointer-events: auto; /* buttons are interactive */
+        pointer-events: auto;
         border: 1px solid rgba(255, 255, 255, 0.2);
         box-sizing: border-box;
         transition: background-color 0.2s ease;
+        color: white; /* for currentColor */
       }
       
       .scroll-zones .zone:hover {
@@ -497,6 +501,10 @@ class TrackpadCard extends HTMLElement {
         const el = document.createElement("div");
         el.classList.add("zone", zone);
         el.addEventListener("pointerdown", (e) => this.handleZoneClick(e, zone));
+        
+        const scrollArrowIcon = this.createArrowSvg(zone);
+        el.appendChild(scrollArrowIcon);
+        
         zoneContainer.appendChild(el);
       }
 
@@ -544,6 +552,53 @@ class TrackpadCard extends HTMLElement {
         });
       }
     }
+  }
+
+  createArrowSvg(direction) {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "24");
+    svg.setAttribute("height", "24");
+    svg.setAttribute("fill", "none");
+  
+    const line = document.createElementNS(svgNS, "line");
+    const arrow1 = document.createElementNS(svgNS, "polyline");
+    const arrow2 = document.createElementNS(svgNS, "polyline");
+  
+    line.setAttribute("stroke", "currentColor");
+    line.setAttribute("stroke-width", "2");
+  
+    arrow1.setAttribute("stroke", "currentColor");
+    arrow1.setAttribute("stroke-width", "2");
+    arrow1.setAttribute("fill", "none");
+  
+    arrow2.setAttribute("stroke", "currentColor");
+    arrow2.setAttribute("stroke-width", "2");
+    arrow2.setAttribute("fill", "none");
+  
+    // Coordinates: vertical arrow default
+    if (direction === "top") {
+      line.setAttribute("x1", "12"); line.setAttribute("y1", "4");
+      line.setAttribute("x2", "12"); line.setAttribute("y2", "20");
+      arrow1.setAttribute("points", "8,8 12,4 16,8");
+    } else if (direction === "bottom") {
+      line.setAttribute("x1", "12"); line.setAttribute("y1", "4");
+      line.setAttribute("x2", "12"); line.setAttribute("y2", "20");
+      arrow1.setAttribute("points", "8,16 12,20 16,16");
+    } else if (direction === "left") {
+      line.setAttribute("x1", "4"); line.setAttribute("y1", "12");
+      line.setAttribute("x2", "20"); line.setAttribute("y2", "12");
+      arrow1.setAttribute("points", "8,8 4,12 8,16");
+    } else if (direction === "right") {
+      line.setAttribute("x1", "4"); line.setAttribute("y1", "12");
+      line.setAttribute("x2", "20"); line.setAttribute("y2", "12");
+      arrow1.setAttribute("points", "16,8 20,12 16,16");
+    }
+  
+    svg.appendChild(line);
+    svg.appendChild(arrow1);
+    return svg;
   }
 
   handleZoneClick(e, zone) {
