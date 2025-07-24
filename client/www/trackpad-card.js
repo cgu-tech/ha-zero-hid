@@ -257,6 +257,25 @@ class TrackpadCard extends HTMLElement {
         fill: #44739e !important;
         color: #44739e !important;
       }
+      .scroll-zones {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        pointer-events: none; /* base layer is non-interactive */
+      }
+      
+      .scroll-zones .zone {
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.05);
+        pointer-events: auto; /* buttons are interactive */
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-sizing: border-box;
+        transition: background-color 0.2s ease;
+      }
+      
+      .scroll-zones .zone:hover {
+        background-color: rgba(255, 255, 255, 0.12);
+      }
     `;
     this.shadowRoot.appendChild(style);
 
@@ -319,6 +338,8 @@ class TrackpadCard extends HTMLElement {
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll mode toggle on:", this.isToggledOn));
       }
       this.isToggleClick = false;
+      
+      this.updateScrollZones(trackpad);
     });
 
     trackpad.appendChild(scrollIcon);
@@ -466,6 +487,83 @@ class TrackpadCard extends HTMLElement {
     this.card = card;
     this.content = container;
   }
+  
+  updateScrollZones(trackpad) {
+    if (this.isToggledOn) {
+      const zoneContainer = document.createElement("div");
+      zoneContainer.classList.add("scroll-zones");
+    
+      for (const zone of ["top", "bottom", "left", "right"]) {
+        const el = document.createElement("div");
+        el.classList.add("zone", zone);
+        el.addEventListener("pointerdown", (e) => this.handleZoneClick(e, zone));
+        zoneContainer.appendChild(el);
+      }
+
+      trackpad.appendChild(zoneContainer);
+
+      const { width, height } = trackpad.getBoundingClientRect();
+      
+      const zoneStyles = {
+        left: {
+          left: 0,
+          top: 0,
+          width: width / 6,
+          height,
+        },
+        right: {
+          right: 0,
+          top: 0,
+          width: width / 6,
+          height,
+        },
+        top: {
+          left: width / 6,
+          top: 0,
+          width: (4 / 6) * width,
+          height: height / 2,
+        },
+        bottom: {
+          left: width / 6,
+          bottom: 0,
+          width: (4 / 6) * width,
+          height: height / 2,
+        },
+      };
+      
+      for (const [zoneName, style] of Object.entries(zoneStyles)) {
+        const zoneEl = zoneContainer.querySelector(`.zone.${zoneName}`);
+        if (!zoneEl) continue;
+        Object.assign(zoneEl.style, {
+          left: style.left !== undefined ? `${style.left}px` : '',
+          right: style.right !== undefined ? `${style.right}px` : '',
+          top: style.top !== undefined ? `${style.top}px` : '',
+          bottom: style.bottom !== undefined ? `${style.bottom}px` : '',
+          width: `${style.width}px`,
+          height: `${style.height}px`,
+        });
+      }
+    }
+  }
+
+  handleZoneClick(e, zone) {
+    e.stopImmediatePropagation();
+    switch (zone) {
+      case "top":
+        this._hass.callService("trackpad_mouse", "scroll", { x: 0, y: 1 });
+        break;
+      case "bottom":
+        this._hass.callService("trackpad_mouse", "scroll", { x: 0, y: -1 });
+        break;
+      case "left":
+        this._hass.callService("trackpad_mouse", "scroll", { x: -1, y: 0 });
+        break;
+      case "right":
+        this._hass.callService("trackpad_mouse", "scroll", { x: 1, y: 0 });
+        break;
+    }
+    this.moveHapticFeedback(); // Optional vibration
+  }
 
   addLongClickTimeout(e) {
     return setTimeout(() => {
@@ -556,6 +654,9 @@ class TrackpadCard extends HTMLElement {
         dxAdjusted = Math.max(this.triggerScrollMin, Math.min(this.triggerScrollMax, dxAdjusted)) * Math.round(dxAbs / this.triggerScroll);
         dyAdjusted = 0;
       }
+      
+      // Revert dy to get human natural gesture order
+      dyAdjusted = -dyAdjusted;
 
       this._hass.callService("trackpad_mouse", "scroll", { x: dxAdjusted, y: dyAdjusted, });
       this.moveHapticFeedback();
