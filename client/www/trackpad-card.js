@@ -35,6 +35,7 @@ class TrackpadCard extends HTMLElement {
     this.triggerScroll = 10;
     this.triggerScrollMin = -1;
     this.triggerScrollMax = 1;
+    this.scrollContainer = null;
     
     this.buttonsLayouts = [
       { mode: 'hidden'           , layout: [] },
@@ -235,6 +236,7 @@ class TrackpadCard extends HTMLElement {
         right: 8px;
         width: 42px;
         height: 42px;
+        z-index: 2;
         pointer-events: auto;
         opacity: 0.7;
         fill: #eee;
@@ -260,7 +262,7 @@ class TrackpadCard extends HTMLElement {
       .scroll-zones {
         position: absolute;
         inset: 0;
-        z-index: 10;
+        z-index: 1;
         pointer-events: none; /* base layer is non-interactive */
       }
       
@@ -325,7 +327,7 @@ class TrackpadCard extends HTMLElement {
         points="52.5,36.75 57.75,42 52.5,47.25"
         fill="none" stroke="currentColor" stroke-width="2" />
     `;
-    
+        
     // Track scrollIcon toggle
     this.addPointerDownListener(scrollIcon, (e) => {
       e.stopPropagation(); // Prevents underneath trackpad click
@@ -494,22 +496,24 @@ class TrackpadCard extends HTMLElement {
   
   updateScrollZones(trackpad) {
     if (this.isToggledOn) {
-      const zoneContainer = document.createElement("div");
-      zoneContainer.classList.add("scroll-zones");
-    
-      for (const zone of ["top", "bottom", "left", "right"]) {
-        const el = document.createElement("div");
-        el.classList.add("zone", zone);
-        el.addEventListener("pointerdown", (e) => this.handleZoneClick(e, zone));
+      
+      if (!this.scrollContainer) {
+        this.scrollContainer = document.createElement("div");
+        this.scrollContainer.classList.add("scroll-zones");
         
-        const scrollArrowIcon = this.createArrowSvg(zone);
-        el.appendChild(scrollArrowIcon);
-        
-        zoneContainer.appendChild(el);
+        for (const zone of ["top", "bottom", "left", "right"]) {
+          const el = document.createElement("div");
+          el.classList.add("zone", zone);
+          el.addEventListener("pointerdown", (e) => this.handleZoneClick(e, zone));
+          
+          const scrollArrowIcon = this.createArrowSvg(zone);
+          el.appendChild(scrollArrowIcon);
+          
+          this.scrollContainer.appendChild(el);
+        }
       }
-
-      trackpad.appendChild(zoneContainer);
-
+      
+      trackpad.appendChild(this.scrollContainer);
       const { width, height } = trackpad.getBoundingClientRect();
       
       const zoneStyles = {
@@ -540,7 +544,7 @@ class TrackpadCard extends HTMLElement {
       };
       
       for (const [zoneName, style] of Object.entries(zoneStyles)) {
-        const zoneEl = zoneContainer.querySelector(`.zone.${zoneName}`);
+        const zoneEl = this.scrollContainer.querySelector(`.zone.${zoneName}`);
         if (!zoneEl) continue;
         Object.assign(zoneEl.style, {
           left: style.left !== undefined ? `${style.left}px` : '',
@@ -550,6 +554,11 @@ class TrackpadCard extends HTMLElement {
           width: `${style.width}px`,
           height: `${style.height}px`,
         });
+      }
+    
+    } else {
+      if (this.scrollContainer) {
+        trackpad.removeChild(this.scrollContainer);
       }
     }
   }
@@ -602,6 +611,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   handleZoneClick(e, zone) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleZoneClick:", zone));
     e.stopImmediatePropagation();
     switch (zone) {
       case "top":
