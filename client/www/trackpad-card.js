@@ -36,6 +36,10 @@ class TrackpadCard extends HTMLElement {
     this.triggerScrollMin = -1;
     this.triggerScrollMax = 1;
     this.scrollContainer = null;
+    this.scrollsClick = new Map();
+    this.triggerLongScroll = 350;
+    this.triggerLongScrollInterval = 25;
+    this.triggerLongScrollMin = 75;
     
     this.buttonsLayouts = [
       { mode: 'hidden'           , layout: [] },
@@ -114,6 +118,21 @@ class TrackpadCard extends HTMLElement {
       // Set scroll max per triggered scroll event (in unit)
       if (config['trigger-scroll-max']) {
         this.triggerScrollMax = config['trigger-scroll-max'];
+      }
+      
+      // Set initial long-press duration that trigger scroll event (in ms)
+      if (config['trigger-long-scroll']) {
+        this.triggerLongScroll = config['trigger-long-scroll'];
+      }
+      
+      // Set long-press duration interval to decrease between each scroll event (in ms)
+      if (config['trigger-long-scroll-interval']) {
+        this.triggerLongScrollInterval = config['trigger-long-scroll-interval'];
+      }
+      
+      // Set long-press duration that could not be decreased further between each scroll event (in ms)
+      if (config['trigger-long-scroll-min']) {
+        this.triggerLongScrollMin = config['trigger-long-scroll-min'];
       }
     }
   }
@@ -232,10 +251,14 @@ class TrackpadCard extends HTMLElement {
       }
       .scroll-icon {
         position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 42px;
-        height: 42px;
+        top: 0px;
+        right: 0px;
+        padding-top: 2%;
+        padding-bottom: 3%;
+        padding-left: 3%;
+        padding-right: 3%;
+        width: auto;
+        height: 22.5%;
         z-index: 2;
         pointer-events: auto;
         opacity: 0.7;
@@ -296,44 +319,105 @@ class TrackpadCard extends HTMLElement {
     const trackpad = document.createElement("div");
     trackpad.className = "trackpad-area";
 
+    // Scroll icon dimensions calculations
+    const strokeWidth = 2;
+    const halfStroke = strokeWidth / 2;
+
+    // Scroll icon bounding Box of Inner Content
+    const bbox = {
+      x: 21,
+      y: 15.75,
+      width: 42,
+      height: 52.5
+    };
+
+    // Scroll icon ViewBox with padding for Stroke
+    const viewBoxX = bbox.x - halfStroke;
+    const viewBoxY = bbox.y - halfStroke;
+    const viewBoxWidth = bbox.width + strokeWidth;
+    const viewBoxHeight = bbox.height + strokeWidth;
+
+    // Create scroll icon element
     const svgNS = "http://www.w3.org/2000/svg";
     const scrollIcon = document.createElementNS(svgNS, "svg");
-    scrollIcon.setAttribute("viewBox", "0 0 84 84");
     scrollIcon.setAttribute("class", "scroll-icon");
+    scrollIcon.setAttribute("viewBox", `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
     scrollIcon.innerHTML = `
       <rect 
-        x="21" y="15.75"
-        width="42" height="52.5"
+        x="${bbox.x}" y="${bbox.y}"
+        width="${bbox.width}" height="${bbox.height}"
         rx="15.75" ry="15.75"
-        stroke="currentColor" stroke-width="2" fill="none" />
+        stroke="currentColor" stroke-width="${strokeWidth}" fill="none" />
       <line 
         x1="42" y1="26.25"
         x2="42" y2="57.75"
-        stroke="currentColor" stroke-width="2" />
+        stroke="currentColor" stroke-width="${strokeWidth}" />
       <polyline 
         points="36.75,31.5 42,26.25 47.25,31.5"
-        fill="none" stroke="currentColor" stroke-width="2" />
+        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
       <polyline 
         points="36.75,52.5 42,57.75 47.25,52.5"
-        fill="none" stroke="currentColor" stroke-width="2" />
+        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
       <line 
         x1="26.25" y1="42"
         x2="57.75" y2="42"
-        stroke="currentColor" stroke-width="2" />
+        stroke="currentColor" stroke-width="${strokeWidth}" />
       <polyline 
         points="31.5,36.75 26.25,42 31.5,47.25"
-        fill="none" stroke="currentColor" stroke-width="2" />
+        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
       <polyline 
         points="52.5,36.75 57.75,42 52.5,47.25"
-        fill="none" stroke="currentColor" stroke-width="2" />
+        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
     `;
-        
+
+ 
     // Track scrollIcon toggle
     this.addPointerDownListener(scrollIcon, (e) => {
       e.stopPropagation(); // Prevents underneath trackpad click
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scrollIcon pointerDown(e):", e));
       this.isToggleClick = true;
     });
+
+    this.scrollContainer = document.createElement("div");
+    this.scrollContainer.classList.add("scroll-zones");
+    
+    for (const zone of ["top", "bottom", "left", "right"]) {
+      const el = document.createElement("div");
+      el.classList.add("zone", zone);
+      el.dataset.zone = zone;
+
+      this.addPointerDownListener(el, (e) => {
+        e.stopImmediatePropagation();
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll pointerDown(e):", e));
+
+        // Scroll once
+        const zone = e.currentTarget.dataset.zone;
+        this.scrollZone(zone);
+
+        // Setup repeated scrolls for long-press of scroll button
+        this.scrollsClick.set(e.pointerId, { "event": e , "long-scroll-timeout": this.addLongScrollTimeout(zone, e, this.triggerLongScroll) } );
+      });
+      this.addPointerUpListener(el, (e) => {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll pointerUp(e):", e));
+        this.clearLongScrollTimeout(e);
+        this.scrollsClick.delete(e.pointerId);
+      });
+      this.addPointerCancelListener(el, (e) => {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll Cancel(e):", e));
+        this.clearLongScrollTimeout(e);
+        this.scrollsClick.delete(e.pointerId);
+      });
+      this.addPointerLeaveListener(el, (e) => {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll Leave(e):", e));
+        this.clearLongScrollTimeout(e);
+        this.scrollsClick.delete(e.pointerId);
+      });
+      
+      const scrollArrowIcon = this.createArrowSvg(zone);
+      el.appendChild(scrollArrowIcon);
+      
+      this.scrollContainer.appendChild(el);
+    }
 
     this.addPointerUpListener(scrollIcon, (e) => {
       e.stopPropagation(); // Prevents underneath trackpad click
@@ -447,10 +531,10 @@ class TrackpadCard extends HTMLElement {
         const btn = document.createElement("button");
         btn.className = `trackpad-btn ${className}`;
         this.addPointerDownListener(btn, () => {
-          hass.callService("trackpad_mouse", serviceCall, {});
+          this.sendMouse(serviceCall, {});
         });
         this.addPointerUpListener(btn, () => {
-          hass.callService("trackpad_mouse", "clickrelease", {});
+          this.sendMouseClickRelease();
         });
         return btn;
       };
@@ -495,24 +579,7 @@ class TrackpadCard extends HTMLElement {
   }
   
   updateScrollZones(trackpad) {
-    if (this.isToggledOn) {
-      
-      if (!this.scrollContainer) {
-        this.scrollContainer = document.createElement("div");
-        this.scrollContainer.classList.add("scroll-zones");
-        
-        for (const zone of ["top", "bottom", "left", "right"]) {
-          const el = document.createElement("div");
-          el.classList.add("zone", zone);
-          el.addEventListener("pointerdown", (e) => this.handleZoneClick(e, zone));
-          
-          const scrollArrowIcon = this.createArrowSvg(zone);
-          el.appendChild(scrollArrowIcon);
-          
-          this.scrollContainer.appendChild(el);
-        }
-      }
-      
+    if (this.isToggledOn) {      
       trackpad.appendChild(this.scrollContainer);
       const { width, height } = trackpad.getBoundingClientRect();
       
@@ -571,63 +638,88 @@ class TrackpadCard extends HTMLElement {
     svg.setAttribute("height", "24");
     svg.setAttribute("fill", "none");
   
-    const line = document.createElementNS(svgNS, "line");
     const arrow1 = document.createElementNS(svgNS, "polyline");
     const arrow2 = document.createElementNS(svgNS, "polyline");
   
-    line.setAttribute("stroke", "currentColor");
-    line.setAttribute("stroke-width", "2");
+    [arrow1, arrow2].forEach(arrow => {
+      arrow.setAttribute("stroke", "currentColor");
+      arrow.setAttribute("stroke-width", "2.25");
+      arrow.setAttribute("stroke-linecap", "round");
+      arrow.setAttribute("stroke-linejoin", "round");
+      arrow.setAttribute("fill", "none");
+    });
   
-    arrow1.setAttribute("stroke", "currentColor");
-    arrow1.setAttribute("stroke-width", "2");
-    arrow1.setAttribute("fill", "none");
-  
-    arrow2.setAttribute("stroke", "currentColor");
-    arrow2.setAttribute("stroke-width", "2");
-    arrow2.setAttribute("fill", "none");
-  
-    // Coordinates: vertical arrow default
-    if (direction === "top") {
-      line.setAttribute("x1", "12"); line.setAttribute("y1", "4");
-      line.setAttribute("x2", "12"); line.setAttribute("y2", "20");
-      arrow1.setAttribute("points", "8,8 12,4 16,8");
-    } else if (direction === "bottom") {
-      line.setAttribute("x1", "12"); line.setAttribute("y1", "4");
-      line.setAttribute("x2", "12"); line.setAttribute("y2", "20");
-      arrow1.setAttribute("points", "8,16 12,20 16,16");
-    } else if (direction === "left") {
-      line.setAttribute("x1", "4"); line.setAttribute("y1", "12");
-      line.setAttribute("x2", "20"); line.setAttribute("y2", "12");
-      arrow1.setAttribute("points", "8,8 4,12 8,16");
+    if (direction === "left") {
+      // Stylized << arrows
+      arrow1.setAttribute("points", "14,6 8,12 14,18");
+      arrow2.setAttribute("points", "20,6 14,12 20,18");
     } else if (direction === "right") {
-      line.setAttribute("x1", "4"); line.setAttribute("y1", "12");
-      line.setAttribute("x2", "20"); line.setAttribute("y2", "12");
-      arrow1.setAttribute("points", "16,8 20,12 16,16");
+      // Stylized >> arrows
+      arrow1.setAttribute("points", "10,6 16,12 10,18");
+      arrow2.setAttribute("points", "4,6 10,12 4,18");
+    } else if (direction === "top") {
+      // Stylized ^^ arrows stacked vertically
+      arrow1.setAttribute("points", "6,14 12,8 18,14");
+      arrow2.setAttribute("points", "6,20 12,14 18,20");
+    } else if (direction === "bottom") {
+      // Stylized vv arrows stacked vertically
+      arrow1.setAttribute("points", "6,4 12,10 18,4");
+      arrow2.setAttribute("points", "6,10 12,16 18,10");
     }
   
-    svg.appendChild(line);
     svg.appendChild(arrow1);
+    svg.appendChild(arrow2);
     return svg;
   }
 
-  handleZoneClick(e, zone) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleZoneClick:", zone));
-    e.stopImmediatePropagation();
+  scrollZone(zone) {
     switch (zone) {
       case "top":
-        this._hass.callService("trackpad_mouse", "scroll", { x: 0, y: 1 });
+        this.sendMouseScroll(0, 1);
+        this.moveHapticFeedback();
         break;
       case "bottom":
-        this._hass.callService("trackpad_mouse", "scroll", { x: 0, y: -1 });
+        this.sendMouseScroll(0, -1);
+        this.moveHapticFeedback();
         break;
       case "left":
-        this._hass.callService("trackpad_mouse", "scroll", { x: -1, y: 0 });
+        this.sendMouseScroll(-1, 0);
+        this.moveHapticFeedback();
         break;
       case "right":
-        this._hass.callService("trackpad_mouse", "scroll", { x: 1, y: 0 });
+        this.sendMouseScroll(1, 0);
+        this.moveHapticFeedback();
         break;
     }
-    this.moveHapticFeedback(); // Optional vibration
+  }
+
+  addLongScrollTimeout(zone, e, thisTriggerLongScroll) {
+    return setTimeout(() => {
+      const clickEntry = this.scrollsClick.get(e.pointerId);
+      if (clickEntry) {
+        const startTime = clickEntry["event"].timeStamp;
+        const endTime = e.timeStamp;
+        const duration = endTime - startTime; // current long-scroll duration
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`startTime:${startTime}, endTime:${endTime}, duration:${duration}`));
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Long-scroll of ${duration}ms detected for:`, e));
+        
+        // Scroll current direction
+        this.scrollZone(zone);
+        
+        // Compute next trigger time
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`this.triggerLongScrollMin:${this.triggerLongScrollMin}, thisTriggerLongScroll:${thisTriggerLongScroll}, this.triggerLongScrollInterval:${this.triggerLongScrollInterval}`));
+        const nextTriggerLongScroll = Math.max(this.triggerLongScrollMin, thisTriggerLongScroll - this.triggerLongScrollInterval)
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`nextTriggerLongScroll:${nextTriggerLongScroll}`));
+        
+        // Add next scroll event
+        this.scrollsClick.set(e.pointerId, { "event": e , "long-scroll-timeout": this.addLongScrollTimeout(zone, e, nextTriggerLongScroll) } );
+      }
+    }, thisTriggerLongScroll); // next long-scroll duration
+  }
+
+  clearLongScrollTimeout(e) {
+    const clickEntry = this.scrollsClick.get(e.pointerId);
+    if (clickEntry && clickEntry["long-scroll-timeout"]) clearTimeout(clickEntry["long-scroll-timeout"]);
   }
 
   addLongClickTimeout(e) {
@@ -653,17 +745,17 @@ class TrackpadCard extends HTMLElement {
 
   handleSinglePointerLeftClick(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerLeftClick(e):", e));
-    this._hass.callService("trackpad_mouse", "clickleft", {});
-    this._hass.callService("trackpad_mouse", "clickrelease", {});
+    this.sendMouseClickLeft();
+    this.sendMouseClickRelease();
     this.hapticFeedback();
   }
   
   handleSinglePointerLeftDblClick(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerLeftDblClick(e):", e));
-    this._hass.callService("trackpad_mouse", "clickleft", {});
-    this._hass.callService("trackpad_mouse", "clickrelease", {});
-    this._hass.callService("trackpad_mouse", "clickleft", {});
-    this._hass.callService("trackpad_mouse", "clickrelease", {});
+    this.sendMouseClickLeft();
+    this.sendMouseClickRelease();
+    this.sendMouseClickLeft();
+    this.sendMouseClickRelease();
     this.longClickHapticFeedback();
   }
 
@@ -691,7 +783,7 @@ class TrackpadCard extends HTMLElement {
     const { dx, dy } = this.getPointerDelta(startEvent, endEvent);
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
-      this._hass.callService("trackpad_mouse", "move", { x: dx, y: dy, });
+      this.sendMouseMove(dx, dy);
       this.moveHapticFeedback();
     }
     return updateStartPoint;
@@ -723,10 +815,30 @@ class TrackpadCard extends HTMLElement {
       // Revert dy to get human natural gesture order
       dyAdjusted = -dyAdjusted;
 
-      this._hass.callService("trackpad_mouse", "scroll", { x: dxAdjusted, y: dyAdjusted, });
+      this.sendMouseScroll(dxAdjusted, dyAdjusted);
       this.moveHapticFeedback();
     }
     return updateStartPoint;
+  }
+  
+  sendMouseClickLeft() {
+    this.sendMouse("clickleft", {});
+  }
+  
+  sendMouseClickRelease() {
+    this.sendMouse("clickrelease", {});
+  }
+  
+  sendMouseMove(dx, dy) {
+    this.sendMouse("move", { "x": dx, "y": dy, });
+  }
+  
+  sendMouseScroll(dx, dy) {
+    this.sendMouse("scroll", { "x": dx, "y": dy, });
+  }
+  
+  sendMouse(service, args) {
+    this._hass.callService("trackpad_mouse", service, args);
   }
 
   // vibrate the device like an haptic feedback
