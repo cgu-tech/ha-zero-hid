@@ -1,0 +1,57 @@
+{
+    "Name": "extended-right",
+    "Description": "Contains extended right-handed layout for android remote buttons",
+    "rows": [
+      {
+        "cells": [
+          { "name": "remote-button-power-tv",       "weight": 1, "html": "<svg viewBox=\"0 0 512 512\" width=\"100\" height=\"120\" xmlns=\"http://www.w3.org/2000/svg\">\n  <defs>\n    <!-- Mask to subtract power icon inside TV -->\n    <mask id=\"powerMask\">\n      <!-- Full visible area -->\n      <rect x=\"0\" y=\"0\" width=\"512\" height=\"512\" fill=\"white\" />\n\n      <!-- Power icon (black shapes will cut out from TV) -->\n        <g transform=\"translate(160, 130) scale(3.0)\">\n          <!-- Left arc -->\n          <path d=\"M 6 34 A 26 26 0 0 1 24 8\" stroke=\"black\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n          <!-- Right arc -->\n          <path d=\"M 40 8 A 26 26 0 0 1 58 34\" stroke=\"black\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n          <!-- Bottom arc -->\n          <path d=\"M 58 34 A 26 26 0 0 1 6 34\" stroke=\"black\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n          <!-- Vertical bar -->\n          <line x1=\"32\" y1=\"0\" x2=\"32\" y2=\"32\" stroke=\"black\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n        </g>\n    </mask>\n  </defs>\n\n  <!-- Outer TV shape (stroke only) -->\n  <rect \n    x=\"64\" y=\"96\" width=\"384\" height=\"256\" rx=\"32\" ry=\"32\" \n    fill=\"none\" stroke=\"#bfbfbf\" stroke-width=\"8\" />\n\n  <!-- Inner TV screen fill with gap, masked -->\n  <rect \n    x=\"72\" y=\"104\" width=\"368\" height=\"240\" rx=\"28\" ry=\"28\" \n    fill=\"#bfbfbf\" mask=\"url(#powerMask)\" />\n\n  <!-- Stand -->\n  <line x1=\"160\" y1=\"384\" x2=\"352\" y2=\"384\" stroke=\"#bfbfbf\" stroke-width=\"28\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n\n  <!-- Antenna -->\n  <line x1=\"192\" y1=\"90\" x2=\"128\" y2=\"22\" stroke=\"#bfbfbf\" stroke-width=\"24\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n  <line x1=\"320\" y1=\"90\" x2=\"384\" y2=\"22\" stroke=\"#bfbfbf\" stroke-width=\"24\" stroke-linecap=\"round\" stroke-linejoin=\"round\" />\n</svg>" },
+          { "name": "filler",                       "weight": 1 },
+          { "name": "remote-button-power",          "weight": 1, "html": "<svg viewBox=\"0 0 100 120\" width=\"100\" height=\"120\" xmlns=\"http://www.w3.org/2000/svg\">\n  <defs>\n    <!-- Mask to subtract eyes and power icon -->\n    <mask id=\"cutoutMask\">\n      <!-- Start fully visible -->\n      <rect x=\"0\" y=\"0\" width=\"100\" height=\"120\" fill=\"white\" />\n\n      <!-- Eyes (subtracted via black circles) -->\n      <circle cx=\"37\" cy=\"34\" r=\"2.5\" fill=\"black\" />\n      <circle cx=\"63\" cy=\"34\" r=\"2.5\" fill=\"black\" />\n\n      <!-- Power icon (centered horizontally and vertically) -->\n      <g transform=\"translate(33.5,49.975) scale(0.5)\">\n        <g transform=\"translate(1.5, 0)\">\n          <!-- Left arc -->\n          <path d=\"M 6 34 A 26 26 0 0 1 24 8\" stroke=\"black\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n          <!-- Right arc -->\n          <path d=\"M 40 8 A 26 26 0 0 1 58 34\" stroke=\"black\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n          <!-- Bottom arc -->\n          <path d=\"M 58 34 A 26 26 0 0 1 6 34\" stroke=\"black\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n          <!-- Vertical bar (height increased) -->\n          <line x1=\"32\" y1=\"0\" x2=\"32\" y2=\"32\" stroke=\"black\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n        </g>\n      </g>\n    </mask>\n  </defs>\n\n  <!-- Head -->\n  <path\n    d=\"M25,45 A25,25 0 0 1 75,45 Z\"\n    fill=\"#bfbfbf\"\n    mask=\"url(#cutoutMask)\"\n  />\n\n  <!-- Antennae -->\n  <line x1=\"37\" y1=\"23.646\" x2=\"31\" y2=\"13.646\" stroke=\"#bfbfbf\" stroke-width=\"3\" />\n  <line x1=\"63\" y1=\"23.646\" x2=\"69\" y2=\"13.646\" stroke=\"#bfbfbf\" stroke-width=\"3\" />\n\n  <!-- Torso -->\n  <path\n    d=\"\n      M25,47.5\n      H75\n      V81.45\n      A5,5 0 0 1 70,86.45\n      H30\n      A5,5 0 0 1 25,81.45\n      Z\n    \"\n    fill=\"#bfbfbf\"\n    mask=\"url(#cutoutMask)\"\n  />\n\n  <!-- Arms -->\n  <rect x=\"13\" y=\"47.5\" width=\"10\" height=\"28.75\" rx=\"5\" fill=\"#bfbfbf\" />\n  <rect x=\"77\" y=\"47.5\" width=\"10\" height=\"28.75\" rx=\"5\" fill=\"#bfbfbf\" />\n\n  <!-- Legs (top moved down by 5 units, height reduced accordingly) -->\n  <path d=\"M36,82.5 h10 v14.345 a5,5 0 0 1 -10,0 z\" fill=\"#bfbfbf\" />\n  <path d=\"M54,82.5 h10 v14.345 a5,5 0 0 1 -10,0 z\" fill=\"#bfbfbf\" />\n</svg>" },
+          { "name": "remote-button-power-device",   "weight": 1 },
+          { "name": "remote-button-settings",       "weight": 1 }
+        ]
+      },
+      {
+        "filler-top": 1,
+        "cells": [
+          { "name": "filler",                       "weight": 0.5 },
+          { "name": "dpad",                         "weight": 4 },
+          { "name": "filler",                       "weight": 0.5 }
+        ]
+      },
+      {
+        "filler-top": 1,
+        "filler-bottom": 1,
+        "cells": [
+          { "name": "filler"              ,         "weight": 0.5 },
+          { "name": "remote-button-return",         "weight": 2   },
+          { "name": "remote-button-home"  ,         "weight": 2   },
+          { "name": "filler"              ,         "weight": 0.5 }
+        ]
+      },
+      {
+        "filler-top": 1,
+        "filler-bottom": 1,
+        "cells": [
+          { "name": "remote-button-backspace",      "weight": 1 },
+          { "name": "ts-toggle-container",          "weight": 3 },
+          { "name": "filler",                       "weight": 1 }
+        ]
+      },
+      {
+        "no-gap": true,
+        "cells": [
+          { "name": "foldable-container",           "weight": 5 }
+        ]
+      },
+      {
+        "cells": [
+          { "name": "remote-button-play-pause",     "weight": 1 },
+          { "name": "filler",                       "weight": 1 },
+          { "name": "remote-button-volume-mute",    "weight": 1 },
+          { "name": "remote-button-volume-down",    "weight": 1 },
+          { "name": "remote-button-volume-up",      "weight": 1 }
+        ]
+      }
+    ]
+}
