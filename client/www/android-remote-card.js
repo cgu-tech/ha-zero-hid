@@ -789,7 +789,7 @@ class AndroidRemoteCard extends HTMLElement {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.4, 0.4) rotate(315deg);
+      transform: scale(0.2, 0.2);
     }
 
     #mouse-icon {
@@ -813,7 +813,7 @@ class AndroidRemoteCard extends HTMLElement {
       transform: scale(0.5, 0.5);
     }
 
-    #play-pause-track-icon {
+    #play-pause-icon {
       height: 100%;
       width: auto;
       display: block;
