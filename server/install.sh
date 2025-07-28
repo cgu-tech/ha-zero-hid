@@ -23,10 +23,10 @@ HA_ZERO_HID_SERVER_VENV_DIR="${HA_ZERO_HID_SERVER_DIR}/venv"
 HA_ZERO_HID_SERVER_START_FILE="${HA_ZERO_HID_SERVER_DIR}/websockets_server_run.sh"
 HA_ZERO_HID_SERVER_INIT_FILE="${HA_ZERO_HID_SERVER_DIR}/websockets_server.py"
 HA_ZERO_HID_SERVER_LOG_CONFIG_FILE="${HA_ZERO_HID_SERVER_DIR}/logging.conf"
-HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE="${CURRENT_DIR}/server.key"
-HA_ZERO_HID_SERVER_CERT_FILE="${CURRENT_DIR}/server.crt"
+HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE="${HA_ZERO_HID_SERVER_DIR}/server.key"
+HA_ZERO_HID_SERVER_SSL_CONFIG_FILE="${HA_ZERO_HID_SERVER_DIR}/openssl.cnf"
 HA_ZERO_HID_SERVER_CERT_DAYS=365000
-HA_ZERO_HID_SERVER_SSL_CONFIG_FILE="openssl.cnf"
+HA_ZERO_HID_SERVER_CERT_FILE="${HA_ZERO_HID_SERVER_DIR}/server.crt"
 
 HA_ZERO_HID_SERVICE_NAME="websockets_server"
 HA_ZERO_HID_SERVICE_FILE_NAME="${HA_ZERO_HID_SERVICE_NAME}.service"
@@ -144,6 +144,11 @@ install() {
     echo "Installing ${HA_ZERO_HID_SERVER_NAME} server service..."
     mkdir -p "${OS_SERVICE_DIR}"
     cp -R "${HA_ZERO_HID_REPO_SERVICE_DIR}" "${OS_SERVICE_DIR}"
+
+    # Security: create server self-signed certificate
+    #   server.key – private key
+    #   server.crt – self-signed certificate
+    create_cert
 
     echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${ZERO_HID_REPO_BRANCH}..."
     git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
@@ -349,18 +354,9 @@ EOF
     echo "Templating ${HA_ZERO_HID_SERVER_NAME} server authorized clients IPs to ${websocket_authorized_clients_ips} into ${HA_ZERO_HID_SERVER_INIT_FILE}..."
     sed -i "s|<websocket_authorized_clients_ips>|${websocket_authorized_clients_ips}|g" "${HA_ZERO_HID_SERVER_INIT_FILE}"
 
-    # Security: create self-signed certificate
-    #   server.key – private key
-    #   server.crt – self-signed certificate
-    #   server.pem – combined certificate + key (sometimes used)
-    create_cert
-    cp "${HA_ZERO_HID_SERVER_CERT_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
-    cp "${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
-    chown -R "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}/${HA_ZERO_HID_SERVER_CERT_FILE}" 
-    chown -R "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}/${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}"
-    
+    # Setup OS service user rights on server files
     echo "Give ${OS_SERVICE_USER} user's group ownership and rights to ${HA_ZERO_HID_SERVER_DIR} server directory..."
-    chown -R :"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}"
+    chown -R "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}"
     chmod -R g+w "${HA_ZERO_HID_SERVER_DIR}"
 
     echo "Give execution rights for all users to ${HA_ZERO_HID_SERVER_START_FILE} server start script..."
