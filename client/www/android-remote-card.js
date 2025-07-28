@@ -1093,7 +1093,7 @@ class AndroidRemoteCard extends HTMLElement {
     ];
 
     const arrowColor = "#bfbfbf";  // ← dynamic color
-    const arrowScale = 1;          // ← 1 = normal size, <1 = smaller, >1 = larger
+    const arrowScale = 0.6;          // ← 1 = normal size, <1 = smaller, >1 = larger
 
     quarters.forEach(({ id, keyId, angleStart }) => {
       const quarterPath = createQuarterPath(angleStart);
