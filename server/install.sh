@@ -13,6 +13,9 @@ OS_SERVICE_USER_DIR="/home/${OS_SERVICE_USER}"
 ZERO_HID_REPO_URL="https://github.com/cgu-tech/zero-hid.git"
 ZERO_HID_REPO_DIR="${CURRENT_DIR}/zero-hid"
 
+HA_ZERO_HID_REPO_SERVER_DIR="${CURRENT_DIR}/component"
+HA_ZERO_HID_REPO_SERVICE_DIR="${CURRENT_DIR}/service"
+
 HA_ZERO_HID_SERVER_NAME="${OS_SERVICE_USER}"
 
 HA_ZERO_HID_SERVER_DIR="/opt/${HA_ZERO_HID_SERVER_NAME}"
@@ -32,10 +35,9 @@ HA_ZERO_HID_SERVICE_FILE="${OS_SERVICE_DIR}/${HA_ZERO_HID_SERVICE_FILE_NAME}"
 HA_ZERO_HID_CONFIG_FILE="${OS_SERVICE_USER_DIR}/${HA_ZERO_HID_SERVER_NAME}.config"
 
 # Clean-up:
-# - component from HAOS config (yaml)
-# - component resources (py, ...)
-# - web resources (js, html, css, svg, ...)
-# - component dedicated config (config)
+# - systemctl service stop, remove, reload (service)
+# - server resources (sh, py, key, crt, ...)
+# - server dedicated config (config)
 # - dependencies (zero-hid repository)
 cleanup() {
     local should_delete_config="$1"
@@ -129,55 +131,80 @@ EOF
 }
 
 install() {
-    # Create server
+    # ------------------
+    # Installing raw components files
+    # ------------------
+
+    # Installing raw server files
+    echo "Installing ${HA_ZERO_HID_SERVER_NAME} server..."
     mkdir -p "${HA_ZERO_HID_SERVER_DIR}"
-    cp logging.conf "${HA_ZERO_HID_SERVER_DIR}/"
-    cp "${HA_ZERO_HID_SERVER_START_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
-    cp "${HA_ZERO_HID_SERVER_INIT_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
-    chmod +x "${HA_ZERO_HID_SERVER_START_FILE}"
-    
-    # Create python venv for server and install dependencies
+    cp -R "${HA_ZERO_HID_REPO_SERVER_DIR}" "${HA_ZERO_HID_SERVER_DIR}"
+
+    # Installing raw server service files
+    echo "Installing ${HA_ZERO_HID_SERVER_NAME} server service..."
+    mkdir -p "${OS_SERVICE_DIR}"
+    cp -R "${HA_ZERO_HID_REPO_SERVICE_DIR}" "${OS_SERVICE_DIR}"
+
+    echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${ZERO_HID_REPO_BRANCH}..."
+    git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
+
+    # Update system and install dependencies
+    echo "Skip policy: ${OS_SKIP_UPDATE}"
     if [ -z "${OS_SKIP_UPDATE}" ]; then
-        echo "Updating apt and installing required packages..."
+        echo "Updating system..."
         apt-get update
-        apt-get install -y git python3-pip python3-venv git
+
+        echo "Installing system required packages (git, python3-pip, python3-venv)..."
+        apt-get install -y git python3-pip python3-venv
     else
-        echo "Skipping apt-get update and install as requested (OS_SKIP_UPDATE is set)."
+        echo "System update skipped"
+        echo "System required packages install skipped (git, python3-pip, python3-venv)"
     fi
 
+    # Create python venv for server
     echo "Creating python venv..."
     python3 -m venv "${HA_ZERO_HID_SERVER_VENV_DIR}"
     source "${HA_ZERO_HID_SERVER_VENV_DIR}/bin/activate"
 
-    # Install Python dependency "zero_hid" (custom)
-    # TODO: install official dependency using "pip install zero_hid", 
-    #       once PR is merged to official code-base: https://github.com/thewh1teagle/zero-hid/pull/39
-    echo "Cloning zero-hid dependency using branch ${ZERO_HID_REPO_BRANCH}..."
-    git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
-    mv zero-hid "${HA_ZERO_HID_SERVER_DIR}/"
-    pip install --editable "${HA_ZERO_HID_SERVER_DIR}/zero-hid"
-    
     # Install Python dependency "websockets" (official)
+    echo "Installing python websockets dependency..."
     pip install websockets
-    
-    # Security: create user+group dedicated to service
+
+    # Install Python dependency "zero-hid" (custom)
+    # TODO: incorporate sources directly instead of building a development python dependency
+    echo "Installing python zero-hid dependency..."
+    cp "${ZERO_HID_REPO_DIR}" "${HA_ZERO_HID_SERVER_DIR}"
+    pip install --editable "${HA_ZERO_HID_SERVER_DIR}/zero-hid"
+
+    # Create server dedicated OS user
+    echo "Creating server user ${OS_SERVICE_USER}..."
     (useradd --system -m -d "${OS_SERVICE_USER_DIR}" "${OS_SERVICE_USER}" >/dev/null 2>&1 || true)
+
+    echo "Creating home ${OS_SERVICE_USER_DIR} for server user ${OS_SERVICE_USER}..."
     mkdir -p "${OS_SERVICE_USER_DIR}"
+
+    echo "Giving ownership for server user ${OS_SERVICE_USER} to its home ${OS_SERVICE_USER_DIR}..."
     chown "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${OS_SERVICE_USER_DIR}"
-    chmod 750 "${OS_SERVICE_USER_DIR}"
     
+    echo "Giving rights for server user ${OS_SERVICE_USER} to its home ${OS_SERVICE_USER_DIR}..."
+    chmod 750 "${OS_SERVICE_USER_DIR}"
+
+    # ------------------
+    # Retrieving configs
+    # ------------------
+
     # Config server parameters
     websocket_server_log_level=""
     websocket_server_port=""
     websocket_server_secret=""
     websocket_authorized_clients_ips=""
-    
+
     # Config flags
     conf_websocket_server_log_level=false
     conf_websocket_server_port=false
     conf_websocket_server_secret=false
     conf_websocket_authorized_clients_ips=false
-    
+
     # Automatic setup : try loading config file
     if [ -f "${HA_ZERO_HID_CONFIG_FILE}" ]; then
 
@@ -302,23 +329,25 @@ websocket_server_secret: '${websocket_server_secret}'
 websocket_authorized_clients_ips: ${websocket_authorized_clients_ips}
 EOF
 
-    # Configure using new configurations
-    echo "Configuring ha_zero_hid server..."
+    # ------------------
+    # Templating raw component files
+    # ------------------
+
+    # Templating client component raw files with configurations
+    echo "Configuring ${HA_ZERO_HID_SERVER_NAME} server..."
+
+    echo "Templating ${HA_ZERO_HID_SERVER_NAME} server log level to ${websocket_server_log_level} into ${HA_ZERO_HID_SERVER_LOG_CONFIG_FILE}..."
     sed -i "s|<websocket_server_log_level>|${websocket_server_log_level}|g" "${HA_ZERO_HID_SERVER_LOG_CONFIG_FILE}"
-    echo "This USB gadget server will be using logger level set to ${websocket_server_log_level}"
     echo "Use this command to setup logger level after installation: sed -i \"s|${websocket_server_log_level}|<new_log_level>|g\" \"${HA_ZERO_HID_SERVER_LOG_CONFIG_FILE}\""
 
+    echo "Templating ${HA_ZERO_HID_SERVER_NAME} server LAN address to 0.0.0.0:${websocket_server_port} into ${HA_ZERO_HID_SERVER_INIT_FILE}..."
     sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_ZERO_HID_SERVER_INIT_FILE}"
-    echo "This USB gadget server will be running at 0.0.0.0:${websocket_server_port}"
 
+    echo "Templating ${HA_ZERO_HID_SERVER_NAME} server secret to ${websocket_server_secret} into ${HA_ZERO_HID_SERVER_INIT_FILE}..."
     sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_ZERO_HID_SERVER_INIT_FILE}"
-    echo "This USB gadget server secret set to ${websocket_server_secret}"
 
+    echo "Templating ${HA_ZERO_HID_SERVER_NAME} server authorized clients IPs to ${websocket_authorized_clients_ips} into ${HA_ZERO_HID_SERVER_INIT_FILE}..."
     sed -i "s|<websocket_authorized_clients_ips>|${websocket_authorized_clients_ips}|g" "${HA_ZERO_HID_SERVER_INIT_FILE}"
-    echo "This USB gadget server access authorization set to IPs ${websocket_authorized_clients_ips}"
-
-    chown -R :"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}"
-    chmod -R g+w "${HA_ZERO_HID_SERVER_DIR}"
 
     # Security: create self-signed certificate
     #   server.key – private key
@@ -329,13 +358,23 @@ EOF
     cp "${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
     chown -R "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}/${HA_ZERO_HID_SERVER_CERT_FILE}" 
     chown -R "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}/${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}"
+    
+    echo "Give ${OS_SERVICE_USER} user's group ownership and rights to ${HA_ZERO_HID_SERVER_DIR} server directory..."
+    chown -R :"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}"
+    chmod -R g+w "${HA_ZERO_HID_SERVER_DIR}"
+
+    echo "Give execution rights for all users to ${HA_ZERO_HID_SERVER_START_FILE} server start script..."
+    chmod +x "${HA_ZERO_HID_SERVER_START_FILE}"
 
     # Configure systemd unit
-    cp "${HA_ZERO_HID_SERVICE_FILE_NAME}" "${OS_SERVICE_DIR}/"
+    echo "Reloading systemctl to apply changes..."
     systemctl daemon-reload
+
+    echo "Adding ${HA_ZERO_HID_SERVER_NAME} service ${HA_ZERO_HID_SERVICE_FILE_NAME} to systemctl config (${HA_ZERO_HID_SERVICE_FILE})..."
     systemctl enable "${HA_ZERO_HID_SERVICE_FILE_NAME}"
     
     # Start service
+    echo "Starting ${HA_ZERO_HID_SERVER_NAME} service ${HA_ZERO_HID_SERVICE_FILE_NAME}..."
     systemctl start "${HA_ZERO_HID_SERVICE_FILE_NAME}"
 }
 

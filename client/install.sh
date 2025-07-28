@@ -13,8 +13,8 @@ HAOS_CONFIG_FILE="${HAOS_CONFIG_DIR}/configuration.yaml"
 ZERO_HID_REPO_URL="https://github.com/cgu-tech/zero-hid.git"
 ZERO_HID_REPO_DIR="${CURRENT_DIR}/zero-hid"
 
-HA_ZERO_HID_REPO_COMPONENT_DIR="${CURRENT_DIR}/custom_components"
-HA_ZERO_HID_REPO_RESOURCES_DIR="${CURRENT_DIR}/www"
+HA_ZERO_HID_REPO_COMPONENT_DIR="${CURRENT_DIR}/component"
+HA_ZERO_HID_REPO_RESOURCES_DIR="${CURRENT_DIR}/web"
 
 HA_ZERO_HID_CLIENT_COMPONENT_NAME="ha_zero_hid"
 HA_ZERO_HID_CLIENT_COMPONENT_LABEL="HA zero HID"
@@ -118,12 +118,12 @@ install() {
     # ------------------
     
     # Installing raw client component files
-    echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component..."
+    echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client component..."
     mkdir -p "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}"
     cp -R "${HA_ZERO_HID_REPO_COMPONENT_DIR}" "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}"
 
     # Installing raw client web resources
-    echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} web resources..."
+    echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
     mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
     cp -R "${HA_ZERO_HID_REPO_RESOURCES_DIR}" "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
 
@@ -281,30 +281,30 @@ EOF
     # ------------------
 
     # Templating client component raw files with configurations
-    echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component..."
+    echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client component..."
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} name into component global Python constants ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
-    sed -i "s|<HA_ZERO_HID_CLIENT_COMPONENT_NAME>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component name into component global Python constants ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
+    sed -i "s|<ha_component_name>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} name and ${HA_ZERO_HID_CLIENT_COMPONENT_LABEL} label into component manifest ${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}..."
-    sed -i "s|<HA_ZERO_HID_CLIENT_COMPONENT_NAME>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
-    sed -i "s|<HA_ZERO_HID_CLIENT_COMPONENT_LABEL>|${HA_ZERO_HID_CLIENT_COMPONENT_LABEL}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component name and ${HA_ZERO_HID_CLIENT_COMPONENT_LABEL} component label into component manifest ${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}..."
+    sed -i "s|<ha_component_name>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
+    sed -i "s|<ha_component_label>|${HA_ZERO_HID_CLIENT_COMPONENT_LABEL}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server LAN address to ${websocket_server_ip}:${websocket_server_port} into ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server LAN address to ${websocket_server_ip}:${websocket_server_port} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
     sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
     sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server secret to ${websocket_server_secret} into ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server secret to ${websocket_server_secret} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
     sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server authorized users ids to ${websocket_authorized_users_ids} into ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component authorized users ids to ${websocket_authorized_users_ids} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
     sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
     # Templating client component raw files with configurations
-    echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} web resources..."
+    echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
 
     echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} name into ${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}..."
-    sed -i "s|<HA_ZERO_HID_CLIENT_COMPONENT_NAME>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
+    sed -i "s|<ha_component_name>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
 
     # Register client component into HAOS config to enable it
     grep -qxF "${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:" "${HAOS_CONFIG_FILE}" || echo "${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:" >> "${HAOS_CONFIG_FILE}"
