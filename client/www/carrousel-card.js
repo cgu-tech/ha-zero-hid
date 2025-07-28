@@ -1,3 +1,4 @@
+import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 
 console.info("Loading Carrousel Card");
@@ -104,10 +105,19 @@ class CarrouselCard extends HTMLElement {
   async loadLayout() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout():"));
     if (this.cells) {
-      for (const [id, cell] of Object.entries(this.cells)) {
+      const allCells = Object.entries(this.cells);
+      for (const [id, cell] of allCells) {
         const cellIconUrl = cell["icon-url"];
         if (cellIconUrl) {
-          if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found image URL:${cellIconUrl}`, id));
+          if (this.isValidUrl(cellIconUrl)) {
+            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found image URL:${cellIconUrl}`, id));
+          } else {
+            // Local image requested: create the relative URL dynamically
+            const iconName = cellIconUrl;
+            const newIconUrl = `${Globals.DIR_ICONS}/${iconName}`;
+            this.cells[id]["icon-url"] = newIconUrl;
+            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found local image:${iconName}, will set it to relative URL:${newIconUrl}`, id));
+          }
         }
       }
     }
@@ -152,7 +162,8 @@ class CarrouselCard extends HTMLElement {
         align-items: center;
         width: ${this.cellsWidth};
         height: ${this.cellsHeight};
-        margin-right: 8px;
+        margin-left: 4px;
+        margin-right: 4px;
         background: #2c2c2c;
         border-radius: 8px;
         overflow: hidden;
@@ -164,8 +175,8 @@ class CarrouselCard extends HTMLElement {
       }
 
       .carrousel-cell img {
-        width: 70%;
-        height: 70%;
+        width: 90%;
+        height: 90%;
         object-fit: contain;
       }
 
@@ -224,6 +235,15 @@ class CarrouselCard extends HTMLElement {
     }
     
     this.hapticFeedback();
+  }
+
+  isValidUrl(str) {
+    try {
+      new URL(str);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   arraysEqual(a, b) {

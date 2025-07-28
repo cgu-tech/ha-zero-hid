@@ -1,3 +1,5 @@
+import { Globals } from './utils/globals.js';
+
 console.info("Loading Windows Keyboard Card");
 
 class WindowsKeyboardCard extends HTMLElement {
@@ -10,7 +12,7 @@ class WindowsKeyboardCard extends HTMLElement {
     this._uiBuilt = false;
     this.card = null;
 
-    this.layoutUrl = '/local/layouts/windows/FR.json'; // Default keyboard layout when not user configured
+    this.layoutUrl = `${Globals.DIR_LAYOUTS}/windows/FR.json`; // Default keyboard layout when not user configured
     this._layoutLoaded = null;
 
     this.capsLock = false;

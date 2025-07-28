@@ -1,3 +1,4 @@
+import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
@@ -23,7 +24,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.haptic = false;
     this.layout = 'classic';
-    this.layoutUrl = `/local/layouts/remote/${this.layout}.json`;
+    this.layoutUrl = `${Globals.DIR_LAYOUTS}/remote/${this.layout}.json`;
     this.keyboardConfig = {};
     this.mouseConfig = {};
     this.activitiesConfig = {};
@@ -417,7 +418,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (config['layout_url']) {
       this.layoutUrl = config['layout_url'];
     } else {
-      this.layoutUrl = `/local/layouts/remote/${this.layout}.json`;
+      this.layoutUrl = `${Globals.DIR_LAYOUTS}/remote/${this.layout}.json`;
     }
 
     // Set keyboard configs

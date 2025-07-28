@@ -1,3 +1,5 @@
+import { Globals } from './utils/globals.js';
+
 console.info("Loading Arrow Pad Card");
 
 class ArrowPadCard extends HTMLElement {
@@ -7,7 +9,7 @@ class ArrowPadCard extends HTMLElement {
     this._hass = null;
     this._layoutReady = false;
     this._uiBuilt = false;
-    this.layoutUrl = '/local/layouts/arrowpad/common.json'; // Default keyboard layout when not user configured
+    this.layoutUrl = `${Globals.DIR_LAYOUTS}/arrowpad/common.json`; // Default keyboard layout when not user configured
 
     // To track pressed modifiers and keys
     this.pressedModifiers = new Set();

@@ -1,3 +1,4 @@
+import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 
 console.info("Loading Trackpad Card");

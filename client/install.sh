@@ -1,42 +1,60 @@
 #!/bin/bash
 # Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
+CURRENT_DIR="$(pwd)"
 
-# === Parameters ===
+# Parameters
 ZERO_HID_BRANCH="${1:-main}"
 
-# === Configurations ===
-ZERO_HID_REPO="https://github.com/cgu-tech/zero-hid.git"
-CONFIG_FILE="/config/trackpad_mouse.config"
-MODULE_FILE="/config/custom_components/trackpad_mouse/__init__.py"
+# Configurations
+HA_COMPONENT_SRC_COMPONENT_DIR="${CURRENT_DIR}/custom_components"
+HA_COMPONENT_SRC_RESOURCES_DIR="${CURRENT_DIR}/www"
 
-# === Functions ===
+HA_COMPONENT_NAME="trackpad_mouse"
+HA_COMPONENT_LABEL="Trackpad Mouse"
+
+HA_COMPONENT_DST_COMPONENT_DIR="/config/custom_components/${HA_COMPONENT_NAME}"
+HA_COMPONENT_DST_INIT_FILE="${HA_COMPONENT_DST_COMPONENT_DIR}/__init__.py"
+HA_COMPONENT_DST_CONST_FILE="${HA_COMPONENT_DST_COMPONENT_DIR}/const.py"
+HA_COMPONENT_DST_MANIFEST_FILE="${HA_COMPONENT_DST_COMPONENT_DIR}/manifest.json"
+
+HA_COMPONENT_DST_RESOURCES_DIR="/config/www/ha-zero-hid"
+HA_COMPONENT_DST_RESOURCES_UTILS_DIR="${HA_COMPONENT_DST_RESOURCES_DIR}/utils"
+HA_COMPONENT_DST_CONFIG_FILE="/config/${HA_COMPONENT_NAME}.config"
+
+HA_OS_CONFIG_FILE="/config/configuration.yaml"
+
+ZERO_HID_REPOSITORY="https://github.com/cgu-tech/zero-hid.git"
+ZERO_HID_SRC_DIR="${CURRENT_DIR}/zero-hid"
+
+# Clean-up:
+# - component from HAOS config (yaml)
+# - component resources (py, ...)
+# - web resources (js, html, css, svg, ...)
+# - component dedicated config (config)
+# - dependencies (zero-hid repository)
 cleanup() {
-    # Cleanup existing client elements when needed
-    rm /config/www/utils/logger.js >/dev/null 2>&1 || true
-    rm /config/www/utils/keycodes.js >/dev/null 2>&1 || true
-    rm /config/www/utils/consumercodes.js >/dev/null 2>&1 || true
+    local should_delete_config="$1"
+    
+    # Unregister component from HAOS configuration to disable it
+    sed -i "/^${HA_COMPONENT_NAME}:$/d" "${HA_OS_CONFIG_FILE}"
+    
+    # Cleaning up component python resources (py)
+    echo "Cleaning ${HA_COMPONENT_NAME} component files (${HA_COMPONENT_DST_COMPONENT_DIR})..."
+    rm -rf "${HA_COMPONENT_DST_COMPONENT_DIR}" >/dev/null 2>&1 || true
 
-    rm /config/www/trackpad-card.js >/dev/null 2>&1 || true
+    # Cleaning existing web resources when existing
+    echo "Cleaning ${HA_COMPONENT_NAME} web resources files (${HA_COMPONENT_DST_RESOURCES_DIR})..."
+    rm -rf "${HA_COMPONENT_DST_RESOURCES_DIR}" >/dev/null 2>&1 || true
 
-    rm /config/www/windows-keyboard-card.js >/dev/null 2>&1 || true
-    rm /config/www/layouts/windows/FR.json >/dev/null 2>&1 || true
-    rm /config/www/layouts/windows/US.json >/dev/null 2>&1 || true
+    # Cleaning up component custom config file when explicitely required
+    if [ "${should_delete_config}" != "true" ]; then
+      echo "Cleaning ${HA_COMPONENT_NAME} config file (${HA_COMPONENT_DST_CONFIG_FILE})..."
+      rm "${HA_COMPONENT_DST_CONFIG_FILE}" >/dev/null 2>&1 || true
+    fi
 
-    rm /config/www/android-keyboard-card.js >/dev/null 2>&1 || true
-    rm /config/www/layouts/android/FR.json >/dev/null 2>&1 || true
-    rm /config/www/layouts/android/FR-remote.json >/dev/null 2>&1 || true
-    rm /config/www/layouts/android/US.json >/dev/null 2>&1 || true
-    rm /config/www/layouts/android/US-remote.json >/dev/null 2>&1 || true
-
-    rm /config/www/arrowpad-card.js >/dev/null 2>&1 || true
-    rm /config/www/layouts/arrowpad/common.json >/dev/null 2>&1 || true
-
-    rm /config/www/carrousel.js >/dev/null 2>&1 || true
-
-    rm /config/www/android-remote-card.js >/dev/null 2>&1 || true
-    rm /config/www/layouts/remote/classic.json >/dev/null 2>&1 || true
-    rm /config/www/layouts/remote/extended-right.json >/dev/null 2>&1 || true
-    rm /config/www/layouts/remote/extended-right-alt.json >/dev/null 2>&1 || true
+    # Cleaning up component dependencies
+    echo "Cleaning ${HA_COMPONENT_NAME} zero-hid dependency (${ZERO_HID_SRC_DIR})..."
+    rm -rf "${ZERO_HID_SRC_DIR}" >/dev/null 2>&1 || true
 }
 
 extract_keycodes_to_js_class() {
@@ -88,75 +106,94 @@ extract_keycodes_to_js_class() {
 
 
 install() {
-    CURRENT_DIR="$(pwd)"
+    # ------------------
+    # Installing raw components files
+    # ------------------
     
-    # Create HA client integration
-    (rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true) && cp -R custom_components /config
-    
-    # Enable HA client integration
-    grep -qxF "trackpad_mouse:" /config/configuration.yaml || echo "trackpad_mouse:" >> /config/configuration.yaml
-    
+    # Installing raw client component files
+    echo "Installing ${HA_COMPONENT_NAME} component..."
+    mkdir -p "${HA_COMPONENT_DST_COMPONENT_DIR}"
+    cp -R "${HA_COMPONENT_SRC_COMPONENT_DIR}" "${HA_COMPONENT_DST_COMPONENT_DIR}"
+
+    # Installing raw client web resources
+    echo "Installing ${HA_COMPONENT_NAME} web resources..."
+    mkdir -p "${HA_COMPONENT_DST_RESOURCES_DIR}"
+    cp -R "${HA_COMPONENT_SRC_RESOURCES_DIR}" "${HA_COMPONENT_DST_RESOURCES_DIR}"
+
+    echo "Cloning zero-hid repository at ${ZERO_HID_REPOSITORY}, on branch ${ZERO_HID_BRANCH}..."
+    git clone -b "${ZERO_HID_BRANCH}" "${ZERO_HID_REPOSITORY}"
+
+    echo "Installing web keyboard codes mapping at ${HA_COMPONENT_DST_RESOURCES_UTILS_DIR}/keycodes.js..."
+    extract_keycodes_to_js_class "${ZERO_HID_SRC_DIR}/zero_hid/hid/keycodes.py" "${HA_COMPONENT_DST_RESOURCES_UTILS_DIR}/keycodes.js" "KeyCodes"
+
+    echo "Installing web consumer codes mapping at ${HA_COMPONENT_DST_RESOURCES_UTILS_DIR}/consumercodes.js..."
+    extract_keycodes_to_js_class "${ZERO_HID_SRC_DIR}/zero_hid/hid/consumercodes.py" "${HA_COMPONENT_DST_RESOURCES_UTILS_DIR}/consumercodes.js" "ConsumerCodes"
+
+    # ------------------
+    # Retrieving configs
+    # ------------------
+
     # Config parameters
     websocket_server_ip=""
     websocket_server_port=""
     websocket_server_secret=""
     websocket_authorized_users_ids=""
-    
+
     # Config flags
     conf_websocket_server_ip=false
     conf_websocket_server_port=false
     conf_websocket_server_secret=false
     conf_websocket_authorized_users_ids=false
-    
+
     # Automatic setup : try loading config file
-    if [ -f "${CONFIG_FILE}" ]; then
+    if [ -f "${HA_COMPONENT_DST_CONFIG_FILE}" ]; then
     
         # Automatic setup of "websocket_server_ip"
-        websocket_server_ip=$(grep "^websocket_server_ip:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_ip=$(grep "^websocket_server_ip:" "${HA_COMPONENT_DST_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_ip=$(echo "$websocket_server_ip" | xargs) # Trims whitespace
         if [ -n "${websocket_server_ip}" ]; then
             conf_websocket_server_ip=true
-            echo "Using pre-configured 'websocket_server_ip' value ${websocket_server_ip} from ${CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_ip' value ${websocket_server_ip} from ${HA_COMPONENT_DST_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_ip' not found or has no value in ${CONFIG_FILE}"
+            echo "Key 'websocket_server_ip' not found or has no value in ${HA_COMPONENT_DST_CONFIG_FILE}"
         fi
         
         # Automatic setup of "websocket_server_port"
-        websocket_server_port=$(grep "^websocket_server_port:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_port=$(grep "^websocket_server_port:" "${HA_COMPONENT_DST_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
         if [ -n "${websocket_server_port}" ]; then
             conf_websocket_server_port=true
-            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${HA_COMPONENT_DST_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_port' not found or has no value in ${CONFIG_FILE}"
+            echo "Key 'websocket_server_port' not found or has no value in ${HA_COMPONENT_DST_CONFIG_FILE}"
         fi
 
         # Automatic setup of "websocket_server_secret"
-        websocket_server_secret=$(grep "^websocket_server_secret:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_secret=$(grep "^websocket_server_secret:" "${HA_COMPONENT_DST_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
         # Remove surrounding single quotes, if any:
         websocket_server_secret="${websocket_server_secret#\'}"
         websocket_server_secret="${websocket_server_secret%\'}"
         if [ -n "${websocket_server_secret}" ]; then
             conf_websocket_server_secret=true
-            echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${HA_COMPONENT_DST_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_secret' not found or has no value in ${CONFIG_FILE}"
+            echo "Key 'websocket_server_secret' not found or has no value in ${HA_COMPONENT_DST_CONFIG_FILE}"
         fi
 
         # Automatic setup of "websocket_authorized_users_ids"
-        websocket_authorized_users_ids=$(grep "^websocket_authorized_users_ids:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_authorized_users_ids=$(grep "^websocket_authorized_users_ids:" "${HA_COMPONENT_DST_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
         if [ -n "${websocket_authorized_users_ids}" ]; then
             conf_websocket_authorized_users_ids=true
-            echo "Using pre-configured 'websocket_authorized_users_ids' value ${websocket_authorized_users_ids} from ${CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_authorized_users_ids' value ${websocket_authorized_users_ids} from ${HA_COMPONENT_DST_CONFIG_FILE}"
         else
-            echo "Key 'websocket_authorized_users_ids' not found or has no value in ${CONFIG_FILE}"
+            echo "Key 'websocket_authorized_users_ids' not found or has no value in ${HA_COMPONENT_DST_CONFIG_FILE}"
         fi
 
     else
         # Automatic setup : no config file or config file not accessible
-        echo "Config file not found: ${CONFIG_FILE}"
+        echo "Config file not found: ${HA_COMPONENT_DST_CONFIG_FILE}"
     fi
 
     # Manual setup of "websocket_server_ip":
@@ -224,56 +261,66 @@ install() {
     fi
 
     # Write updated config file
-    echo "Writing config file ${CONFIG_FILE}..."
-    cat <<EOF > "${CONFIG_FILE}"
+    echo "Writing config file ${HA_COMPONENT_DST_CONFIG_FILE}..."
+    cat <<EOF > "${HA_COMPONENT_DST_CONFIG_FILE}"
 websocket_server_ip: ${websocket_server_ip}
 websocket_server_port: ${websocket_server_port}
 websocket_server_secret: '${websocket_server_secret}'
 websocket_authorized_users_ids: ${websocket_authorized_users_ids}
 EOF
 
-    # Configure using new configurations
-    echo "Configuring trackpad_mouse component..."
-    sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${MODULE_FILE}"
-    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${MODULE_FILE}"
-    echo "USB gadget server IP v4 LAN address set to ${websocket_server_ip}:${websocket_server_port}"
+    # ------------------
+    # Templating raw component files
+    # ------------------
 
-    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${MODULE_FILE}"
-    echo "USB gadget server secret set to ${websocket_server_secret}"
+    # Templating client component raw files with configurations
+    echo "Configuring ${HA_COMPONENT_NAME} component..."
 
-    sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${MODULE_FILE}"
-    echo "USB gadget server access authorization set to users with IDs ${websocket_authorized_users_ids}"
+    echo "Templating ${HA_COMPONENT_NAME} name into component global Python constants ${HA_COMPONENT_DST_CONST_FILE}..."
+    sed -i "s|<ha_component_name>|${HA_COMPONENT_NAME}|g" "${HA_COMPONENT_DST_CONST_FILE}"
 
-    # Remove residual files when needed
-    echo "Cleaning trackpad_mouse old component files..."
-    cleanup
+    echo "Templating ${HA_COMPONENT_NAME} name and ${HA_COMPONENT_LABEL} label into component manifest ${HA_COMPONENT_DST_MANIFEST_FILE}..."
+    sed -i "s|<ha_component_name>|${HA_COMPONENT_NAME}|g" "${HA_COMPONENT_DST_MANIFEST_FILE}"
+    sed -i "s|<ha_component_label>|${HA_COMPONENT_LABEL}|g" "${HA_COMPONENT_DST_MANIFEST_FILE}"
 
-    # Create key codes and consummer codes mappings from zero-hid
-    echo "Cloning zero-hid dependency using branch ${ZERO_HID_BRANCH}..."
-    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "${ZERO_HID_BRANCH}" "${ZERO_HID_REPO}"
+    echo "Templating ${HA_COMPONENT_NAME} server LAN address to ${websocket_server_ip}:${websocket_server_port} into ${HA_COMPONENT_DST_INIT_FILE}..."
+    sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_COMPONENT_DST_INIT_FILE}"
 
-    echo "Creating key codes mapping..."
-    extract_keycodes_to_js_class "${CURRENT_DIR}/zero-hid/zero_hid/hid/keycodes.py" "${CURRENT_DIR}/www/utils/keycodes.js" "KeyCodes"
+    echo "Templating ${HA_COMPONENT_NAME} server secret to ${websocket_server_secret} into ${HA_COMPONENT_DST_INIT_FILE}..."
+    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_COMPONENT_DST_INIT_FILE}"
 
-    echo "Creating consummer codes mapping..."
-    extract_keycodes_to_js_class "${CURRENT_DIR}/zero-hid/zero_hid/hid/consumercodes.py" "${CURRENT_DIR}/www/utils/consumercodes.js" "ConsumerCodes"
+    echo "Templating ${HA_COMPONENT_NAME} server authorized users ids to ${websocket_authorized_users_ids} into ${HA_COMPONENT_DST_INIT_FILE}..."
+    sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_COMPONENT_DST_INIT_FILE}"
 
-    # Copy all updated configured files to install client components
-    echo "Installing trackpad_mouse newly configured component..."
-    cp -R www /config
+    # Templating client component raw files with configurations
+    echo "Configuring ${HA_COMPONENT_NAME} web resources..."
+
+    echo "Templating ${HA_COMPONENT_NAME} server LAN address to ${websocket_server_ip}:${websocket_server_port} into ${HA_COMPONENT_DST_INIT_FILE}..."
+    sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+
+    echo "Templating ${HA_COMPONENT_NAME} server secret to ${websocket_server_secret} into ${HA_COMPONENT_DST_INIT_FILE}..."
+    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+
+    echo "Templating ${HA_COMPONENT_NAME} server authorized users ids to ${websocket_authorized_users_ids} into ${HA_COMPONENT_DST_INIT_FILE}..."
+    sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+
+    # Register client component into HAOS config to enable it
+    grep -qxF "${HA_COMPONENT_NAME}:" "${HA_OS_CONFIG_FILE}" || echo "${HA_COMPONENT_NAME}:" >> "${HA_OS_CONFIG_FILE}"
 }
 
 uninstall () {
-    if [ -f "${CONFIG_FILE}" ]; then
+    delete_component_conf_file=false
+    if [ -f "${HA_COMPONENT_DST_CONFIG_FILE}" ]; then
         read -rp "Keep integration config? (y/n) " confirm </dev/tty
         case "$confirm" in
             [Yy]* )
-                echo "Config file not deleted (${CONFIG_FILE})"
+                echo "Config file will not be deleted (${HA_COMPONENT_DST_CONFIG_FILE})"
                 ;;
             [Nn]* )
-                # Cleaning up component custom config file
-                rm "${CONFIG_FILE}" >/dev/null 2>&1 || true
-                echo "Config file deleted (${CONFIG_FILE})"
+                echo "Config file will be deleted (${HA_COMPONENT_DST_CONFIG_FILE})"
+                delete_component_conf_file=true
                 ;;
             * )
                 echo "Please answer y or n."
@@ -281,18 +328,12 @@ uninstall () {
                 ;;
         esac
     fi
-    
-    # Disabling component into HA configuration
-    sed -i '/^trackpad_mouse:$/d' /config/configuration.yaml
-    
-    # Cleaning up component python resources (py)
-    rm -rf /config/custom_components/trackpad_mouse >/dev/null 2>&1 || true
-    
-    # Cleaning up component web resources (js, html, css, svg, ...)
-    cleanup
+
+    # Effective removal
+    cleanup "${delete_component_conf_file}"
 }
 
-if [ -d "/config/custom_components/trackpad_mouse" ]; then
+if [ -d "${HA_COMPONENT_DST_COMPONENT_DIR}" ]; then
     echo "Looks like HA zero-hid client integration is already installed"
     echo "Please choose an option:"
     echo "  1) Reinstall or update"

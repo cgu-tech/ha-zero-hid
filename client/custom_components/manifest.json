@@ -1,6 +1,6 @@
 {
-  "domain": "trackpad_mouse",
-  "name": "Trackpad Mouse",
+  "domain": "<ha_component_name>",
+  "name": "<ha_component_label>",
   "version": "1.0",
   "integration_type": "service",
   "documentation": "https://github.com/cgu-tech/ha-zero-hid",

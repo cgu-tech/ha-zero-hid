@@ -1,3 +1,4 @@
+import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
@@ -23,7 +24,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.haptic = false;
     this.layout = 'US';
-    this.layoutUrl = `/local/layouts/android/${this.layout}.json`;
+    this.layoutUrl = `${Globals.DIR_LAYOUTS}/android/${this.layout}.json`;
     this.fontscale = 1.0;
 
     // Layout loading flags
@@ -97,7 +98,7 @@ class AndroidKeyboardCard extends HTMLElement {
     if (config['layout_url']) {
       this.layoutUrl = config['layout_url'];
     } else {
-      this.layoutUrl = `/local/layouts/android/${this.layout}.json`;
+      this.layoutUrl = `${Globals.DIR_LAYOUTS}/android/${this.layout}.json`;
     }
 
     // Set font scale
