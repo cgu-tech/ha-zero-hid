@@ -1118,7 +1118,7 @@ class AndroidRemoteCard extends HTMLElement {
       svg.appendChild(btn);
 
       // Retrieve arrow content from default config
-      const knownConfig = this.cellContents[cellName];
+      const knownConfig = this.cellContents[keyId];
       const arrowContentHtml = knownConfig.html;
       const parser = new DOMParser();
       const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
