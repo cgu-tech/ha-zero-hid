@@ -220,7 +220,7 @@ class AndroidRemoteCard extends HTMLElement {
         html: 
         `<div class="ts-toggle-indicator"></div>
         <div class="ts-toggle-option active">
-          <svg id="keyboard-icon" viewBox="0 0 66 46" width="134" height="98" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg id="keyboard-icon" viewBox="0 0 66 46" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <!-- Outer keyboard body with transparent background and stroke color #bfbfbf -->
             <rect x="1" y="1" width="64" height="44" rx="4" ry="4" fill="none" stroke="#bfbfbf" />
 
