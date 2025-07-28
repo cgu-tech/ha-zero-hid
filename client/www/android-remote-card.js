@@ -744,28 +744,24 @@ class AndroidRemoteCard extends HTMLElement {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.2, 0.2);
     }
 
     #arrow-right-icon {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.2, 0.2);
     }
 
     #arrow-down-icon {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.2, 0.2);
     }
 
     #arrow-left-icon {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.2, 0.2);
     }
 
     #return-icon {
@@ -1128,14 +1124,36 @@ class AndroidRemoteCard extends HTMLElement {
       const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
 
       // Setup the arrow position
+      const arrowSvg = doc.documentElement;
+      const vb = arrowSvg.getAttribute("viewBox").split(" ").map(parseFloat);
+      const [vbX, vbY, vbWidth, vbHeight] = vb;
+      
+      // Create a group to wrap and position the arrow
+      const iconGroup = document.createElementNS(ns, "g");
+      
+      // Desired on-screen size (in your SVG coordinate system)
+      const iconSize = 20; // adjust to your taste
+      
+      // Centered position in D-Pad arc
       const angle = (angleStart + 45) % 360;
       const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
-      const arrow = doc.documentElement;
-      arrow.setAttribute("x", labelPos.x);
-      arrow.setAttribute("y", labelPos.y);
-
-      // Add the arrow into trackpad
-      svg.appendChild(arrow);
+      
+      // Scale to fit iconSize in both dimensions
+      const scaleX = iconSize / vbWidth;
+      const scaleY = iconSize / vbHeight;
+      
+      // Position and center the viewBox origin
+      iconGroup.setAttribute(
+        "transform",
+        `translate(${labelPos.x}, ${labelPos.y}) scale(${scaleX}, ${scaleY}) translate(${-vbX - vbWidth / 2}, ${-vbY - vbHeight / 2})`
+      );
+      
+      // Move all children of the parsed SVG into the group
+      while (arrowSvg.firstChild) {
+        iconGroup.appendChild(arrowSvg.firstChild);
+      }
+      
+      svg.appendChild(iconGroup);
     });
 
     const centerCircle = document.createElementNS(ns, "circle");
