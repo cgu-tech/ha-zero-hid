@@ -1086,13 +1086,13 @@ class AndroidRemoteCard extends HTMLElement {
     };
 
     const quarters = [
-      { id: 1, angleStart: 225, keyId: "remote-button-arrow-up", label: "▲" },
-      { id: 2, angleStart: 315, keyId: "remote-button-arrow-right", label: "▶" },
-      { id: 3, angleStart: 45,  keyId: "remote-button-arrow-down", label: "▼" },
-      { id: 4, angleStart: 135, keyId: "remote-button-arrow-left", label: "◀" }
+      { id: 1, angleStart: 225, keyId: "remote-button-arrow-up" },
+      { id: 2, angleStart: 315, keyId: "remote-button-arrow-right" },
+      { id: 3, angleStart: 45,  keyId: "remote-button-arrow-down" },
+      { id: 4, angleStart: 135, keyId: "remote-button-arrow-left" }
     ];
 
-    quarters.forEach(({ id, keyId, angleStart, label }) => {
+    quarters.forEach(({ id, keyId, angleStart }) => {
       const quarterPath = createQuarterPath(angleStart);
       const clipId = `clip-quarter-${id}`;
       const clip = document.createElementNS(ns, "clipPath");
@@ -1116,16 +1116,22 @@ class AndroidRemoteCard extends HTMLElement {
       btn.setAttribute("id", keyId);
       this.setDataAndEvents(hass, btn);
       svg.appendChild(btn);
-      
+
+      // Retrieve arrow content from default config
+      const knownConfig = this.cellContents[cellName];
+      const arrowContentHtml = knownConfig.html;
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
+
+      // Setup the arrow position
       const angle = (angleStart + 45) % 360;
       const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
-      const text = document.createElementNS(ns, "text");
-      text.setAttribute("x", labelPos.x);
-      text.setAttribute("y", labelPos.y);
-      text.setAttribute("text-anchor", "middle");
-      text.setAttribute("dominant-baseline", "middle");
-      text.textContent = label;
-      svg.appendChild(text);
+      const arrow = doc.documentElement;
+      arrow.setAttribute("x", labelPos.x);
+      arrow.setAttribute("y", labelPos.y);
+
+      // Add the arrow into trackpad
+      svg.appendChild(arrow);
     });
 
     const centerCircle = document.createElementNS(ns, "circle");
