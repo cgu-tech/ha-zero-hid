@@ -709,21 +709,21 @@ class AndroidRemoteCard extends HTMLElement {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.5, 0.5);
+      transform: scale(0.6, 0.6);
     }
 
     #shield-tv-icon-2 {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.5, 0.5);
+      transform: scale(0.6, 0.6);
     }
 
     #tv-icon {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.5, 0.5);
+      transform: scale(0.6, 0.6);
     }
 
     #old-tv-icon {
