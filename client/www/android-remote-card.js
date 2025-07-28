@@ -1092,6 +1092,9 @@ class AndroidRemoteCard extends HTMLElement {
       { id: 4, angleStart: 135, keyId: "remote-button-arrow-left" }
     ];
 
+    const arrowColor = "#bfbfbf";  // ← dynamic color
+    const arrowScale = 1;          // ← 1 = normal size, <1 = smaller, >1 = larger
+
     quarters.forEach(({ id, keyId, angleStart }) => {
       const quarterPath = createQuarterPath(angleStart);
       const clipId = `clip-quarter-${id}`;
@@ -1122,37 +1125,45 @@ class AndroidRemoteCard extends HTMLElement {
       const arrowContentHtml = knownConfig.html;
       const parser = new DOMParser();
       const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
-
-      // Setup the arrow position
       const arrowSvg = doc.documentElement;
+
+      // Clean ID to avoid duplicate IDs in document
+      arrowSvg.removeAttribute("id");
+
+      // Set fill color on inner shapes
+      const shapes = arrowSvg.querySelectorAll("path, polygon, circle, rect");
+      shapes.forEach(shape => shape.setAttribute("fill", arrowColor));
+
+      // Get the original viewBox
       const vb = arrowSvg.getAttribute("viewBox").split(" ").map(parseFloat);
       const [vbX, vbY, vbWidth, vbHeight] = vb;
       
-      // Create a group to wrap and position the arrow
-      const iconGroup = document.createElementNS(ns, "g");
-      
+
       // Desired on-screen size (in your SVG coordinate system)
       const iconSize = 20; // adjust to your taste
-      
+
+      // Scale to fit iconSize in both dimensions
+      const scaleX = (baseSize / vbWidth) * arrowScale;
+      const scaleY = (baseSize / vbHeight) * arrowScale;
+
+      // Create a group to wrap and position the arrow
+      const iconGroup = document.createElementNS(ns, "g");
+
       // Centered position in D-Pad arc
       const angle = (angleStart + 45) % 360;
       const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
-      
-      // Scale to fit iconSize in both dimensions
-      const scaleX = iconSize / vbWidth;
-      const scaleY = iconSize / vbHeight;
-      
+
       // Position and center the viewBox origin
       iconGroup.setAttribute(
         "transform",
         `translate(${labelPos.x}, ${labelPos.y}) scale(${scaleX}, ${scaleY}) translate(${-vbX - vbWidth / 2}, ${-vbY - vbHeight / 2})`
       );
-      
+
       // Move all children of the parsed SVG into the group
       while (arrowSvg.firstChild) {
         iconGroup.appendChild(arrowSvg.firstChild);
       }
-      
+
       svg.appendChild(iconGroup);
     });
 
