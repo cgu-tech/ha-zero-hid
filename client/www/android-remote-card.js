@@ -310,7 +310,7 @@ class AndroidRemoteCard extends HTMLElement {
       "remote-button-play-pause": {
         code: "CON_PLAY_PAUSE", 
         html: 
-        `<svg id="play-pause-track-icon" viewBox="0 0 32 24" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf">
+        `<svg id="play-pause-icon" viewBox="0 0 32 24" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf">
           <!-- Play triangle -->
           <polygon points="0,4 14,12 0,20" />
 
@@ -704,19 +704,64 @@ class AndroidRemoteCard extends HTMLElement {
       display: block;
       transform: scale(0.4, 0.4);
     }
-    
+
+    #shield-tv-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+      transform: scale(0.5, 0.5);
+    }
+
+    #shield-tv-icon-2 {
+      height: 100%;
+      width: auto;
+      display: block;
+      transform: scale(0.5, 0.5);
+    }
+
     #tv-icon {
       height: 100%;
       width: auto;
       display: block;
       transform: scale(0.5, 0.5);
     }
-    
+
+    #old-tv-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+      transform: scale(0.5, 0.5);
+    }
+
     #device-icon {
       height: 100%;
       width: auto;
       display: block;
       transform: scale(0.5, 0.5);
+    }
+
+    #arrow-up-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+    }
+
+    #arrow-right-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+    }
+
+    #arrow-down-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+    }
+
+    #arrow-left-icon {
+      height: 100%;
+      width: auto;
+      display: block;
     }
 
     #return-icon {
@@ -740,34 +785,62 @@ class AndroidRemoteCard extends HTMLElement {
       transform: scale(0.4, 0.4);
     }
 
+    #keyboard-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+      transform: scale(0.4, 0.4) rotate(315deg);
+    }
+
     #mouse-icon {
       height: 100%;
       width: auto;
       display: block;
       transform: scale(0.4, 0.4) rotate(315deg);
     }
-    
+
     #settings-icon {
       height: 100%;
       width: auto;
       display: block;
       transform: scale(0.4, 0.4);
     }
-    
-    #volumemute-icon {
+
+    #previous-track-icon {
       height: 100%;
-      width: auto;  /* maintain aspect ratio */
-      display: block; /* removes any inline space */
+      width: auto;
+      display: block;
       transform: scale(0.5, 0.5);
     }
-    
+
+    #play-pause-track-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+      transform: scale(0.5, 0.5);
+    }
+
+    #next-track-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+      transform: scale(0.5, 0.5);
+    }
+
+    #volumemute-icon {
+      height: 100%;
+      width: auto;
+      display: block;
+      transform: scale(0.5, 0.5);
+    }
+
     #volumedown-icon {
       height: 100%;
       width: auto;
       display: block;
       transform: scale(0.5, 0.5);
     }
-    
+
     #volumeup-icon {
       height: 100%;
       width: auto;  /* maintain aspect ratio */
