@@ -254,7 +254,7 @@ class AndroidRemoteCard extends HTMLElement {
         </div>
         <div class="ts-toggle-option">●</div>
         <div class="ts-toggle-option">
-          <svg id="mouse-icon" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <svg id="mouse-icon" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
             <!-- Mouse body with rounded top and slightly rounded bottom corners -->
             <path d="
               M 20 30 
@@ -789,7 +789,7 @@ class AndroidRemoteCard extends HTMLElement {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.2, 0.2);
+      transform: scale(0.4, 0.4);
     }
 
     #mouse-icon {
