@@ -744,24 +744,28 @@ class AndroidRemoteCard extends HTMLElement {
       height: 100%;
       width: auto;
       display: block;
+      transform: scale(0.2, 0.2);
     }
 
     #arrow-right-icon {
       height: 100%;
       width: auto;
       display: block;
+      transform: scale(0.2, 0.2);
     }
 
     #arrow-down-icon {
       height: 100%;
       width: auto;
       display: block;
+      transform: scale(0.2, 0.2);
     }
 
     #arrow-left-icon {
       height: 100%;
       width: auto;
       display: block;
+      transform: scale(0.2, 0.2);
     }
 
     #return-icon {
