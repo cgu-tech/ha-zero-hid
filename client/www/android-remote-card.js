@@ -1139,8 +1139,8 @@ class AndroidRemoteCard extends HTMLElement {
       const [vbX, vbY, vbWidth, vbHeight] = vb;
       
 
-      // Desired on-screen size (in your SVG coordinate system)
-      const iconSize = 20; // adjust to your taste
+      // Desired on-screen size (in your SVG coordinate system before scaling)
+      const baseSize = 20; // adjust to your taste
 
       // Scale to fit iconSize in both dimensions
       const scaleX = (baseSize / vbWidth) * arrowScale;
