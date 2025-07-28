@@ -990,14 +990,14 @@ class AndroidKeyboardCard extends HTMLElement {
   // Set the layout used by keyboard server
   // (different from this keyboard client displayed layout)
   setKeyboardLayout(hass) {
-    hass.callService("trackpad_mouse", "setlayout", {
+    hass.callService(Globals.COMPONENT_NAME, "setlayout", {
       sendLayout: this.layout,
     });
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    hass.callService("trackpad_mouse", "keypress", {
+    hass.callService(Globals.COMPONENT_NAME, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
@@ -1005,7 +1005,7 @@ class AndroidKeyboardCard extends HTMLElement {
   
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate(hass) {
-    hass.callService("trackpad_mouse", "conpress", {
+    hass.callService(Globals.COMPONENT_NAME, "conpress", {
       sendCons: Array.from(this.pressedConsumers),
     });
   }
@@ -1013,7 +1013,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // Send clicked char symbols to HID keyboard 
   // and let it handle the right key-press combination using current kb layout
   sendKeyboardClick(hass, charToSend) {
-    hass.callService("trackpad_mouse", "chartap", {
+    hass.callService(Globals.COMPONENT_NAME, "chartap", {
       sendChars: charToSend,
     });
   }

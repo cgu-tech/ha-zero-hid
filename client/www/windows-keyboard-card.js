@@ -523,7 +523,7 @@ class WindowsKeyboardCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    hass.callService("trackpad_mouse", "keypress", {
+    hass.callService(Globals.COMPONENT_NAME, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
@@ -532,7 +532,7 @@ class WindowsKeyboardCard extends HTMLElement {
   // Synchronize with remote keyboard current state through HA websockets API
   syncKeyboard(hass) {
     hass.connection.sendMessagePromise({
-      type: "trackpad_mouse/sync_keyboard"
+      type: `${Globals.COMPONENT_NAME}/sync_keyboard`
     })
     .then((response) => {
       // Success handler

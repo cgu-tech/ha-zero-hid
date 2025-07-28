@@ -1,22 +1,77 @@
 #!/bin/bash
-# Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
+CURRENT_DIR="$(pwd)"
 
-# === Parameters ===
-ZERO_HID_BRANCH="${1:-main}"
-SKIP_UPDATE="${2:-}"
+# Parameters
+ZERO_HID_REPO_BRANCH="${1:-main}"
+OS_SKIP_UPDATE="${2:-}"
 
-# === Configurations ===
-KEY_FILE="server.key"
-CERT_FILE="server.crt"
-PEM_FILE="server.pem"
-OPENSSL_CONFIG_FILE="openssl.cnf"
-ZERO_HID_REPO="https://github.com/cgu-tech/zero-hid.git"
-HA_ZERO_HID_HOME="/home/ha_zero_hid"
-CONFIG_FILE="${HA_ZERO_HID_HOME}/trackpad_mouse.config"
-MODULE_FILE="/opt/ha_zero_hid/websockets_server.py"
-LOGGER_FILE="/opt/ha_zero_hid/logging.conf"
+# Configurations
+OS_SERVICE_DIR="/etc/systemd/system"
+OS_SERVICE_USER="ha_zero_hid"
+OS_SERVICE_USER_DIR="/home/${OS_SERVICE_USER}"
 
-# === Functions ===
+ZERO_HID_REPO_URL="https://github.com/cgu-tech/zero-hid.git"
+ZERO_HID_REPO_DIR="${CURRENT_DIR}/zero-hid"
+
+HA_ZERO_HID_SERVER_NAME="${OS_SERVICE_USER}"
+
+HA_ZERO_HID_SERVER_DIR="/opt/${HA_ZERO_HID_SERVER_NAME}"
+HA_ZERO_HID_SERVER_VENV_DIR="${HA_ZERO_HID_SERVER_DIR}/venv"
+HA_ZERO_HID_SERVER_START_FILE="${HA_ZERO_HID_SERVER_DIR}/websockets_server_run.sh"
+HA_ZERO_HID_SERVER_INIT_FILE="${HA_ZERO_HID_SERVER_DIR}/websockets_server.py"
+HA_ZERO_HID_SERVER_LOG_CONFIG_FILE="${HA_ZERO_HID_SERVER_DIR}/logging.conf"
+HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE="${CURRENT_DIR}/server.key"
+HA_ZERO_HID_SERVER_CERT_FILE="${CURRENT_DIR}/server.crt"
+HA_ZERO_HID_SERVER_CERT_DAYS=365000
+HA_ZERO_HID_SERVER_SSL_CONFIG_FILE="openssl.cnf"
+
+HA_ZERO_HID_SERVICE_NAME="websockets_server"
+HA_ZERO_HID_SERVICE_FILE_NAME="${HA_ZERO_HID_SERVICE_NAME}.service"
+HA_ZERO_HID_SERVICE_FILE="${OS_SERVICE_DIR}/${HA_ZERO_HID_SERVICE_FILE_NAME}"
+
+HA_ZERO_HID_CONFIG_FILE="${OS_SERVICE_USER_DIR}/${HA_ZERO_HID_SERVER_NAME}.config"
+
+# Clean-up:
+# - component from HAOS config (yaml)
+# - component resources (py, ...)
+# - web resources (js, html, css, svg, ...)
+# - component dedicated config (config)
+# - dependencies (zero-hid repository)
+cleanup() {
+    local should_delete_config="$1"
+
+    # Stopping service
+    echo "Stopping ${HA_ZERO_HID_SERVER_NAME} service ${HA_ZERO_HID_SERVICE_FILE_NAME} (${HA_ZERO_HID_SERVICE_FILE})..."
+    systemctl stop "${HA_ZERO_HID_SERVICE_FILE_NAME}"
+
+    # Removing service from systemctl
+    echo "Removing ${HA_ZERO_HID_SERVER_NAME} service ${HA_ZERO_HID_SERVER_NAME} from systemctl config (${HA_ZERO_HID_SERVICE_FILE})..."
+    systemctl disable "${HA_ZERO_HID_SERVICE_FILE_NAME}"
+
+    # Deleting service
+    echo "Cleaning ${HA_ZERO_HID_SERVER_NAME} service file ${HA_ZERO_HID_SERVICE_FILE}..."
+    rm -rf "${HA_ZERO_HID_SERVICE_FILE}" >/dev/null 2>&1 || true
+
+    # Apply changes to systemctl config
+    echo "Reloading systemctl to apply changes..."
+    systemctl daemon-reload
+
+    # Remove server
+    echo "Cleaning ${HA_ZERO_HID_SERVER_NAME} server files ${HA_ZERO_HID_SERVER_DIR}..."
+    rm -rf "${HA_ZERO_HID_SERVER_DIR}"
+
+    # Cleaning up component custom config file when explicitely required
+    if [ "${should_delete_config}" != "true" ]; then
+      echo "Cleaning ${HA_ZERO_HID_SERVER_NAME} config file (${HA_ZERO_HID_CONFIG_FILE})..."
+      rm "${HA_ZERO_HID_CONFIG_FILE}" >/dev/null 2>&1 || true
+    fi
+
+    # Cleaning up component dependencies
+    echo "Cleaning ${HA_ZERO_HID_SERVER_NAME} zero-hid dependency (${ZERO_HID_REPO_DIR})..."
+    rm -rf "${ZERO_HID_REPO_DIR}" >/dev/null 2>&1 || true
+}
+
+# Check if current user is root
 check_root() {
     ROOTUID="0"
     if [ "$(id -u)" -ne "$ROOTUID" ] ; then
@@ -26,13 +81,10 @@ check_root() {
 }
 
 create_cert() {
-    CURRENT_DIR="$(pwd)"
-    
-    # === Clean up previous files (optional) ===
-    rm -f "${KEY_FILE}" "${CERT_FILE}" "${PEM_FILE}" "${OPENSSL_CONFIG_FILE}"
-    
-    # === Create a minimal OpenSSL config file ===
-    cat > "${OPENSSL_CONFIG_FILE}" <<EOF
+
+    # Create temporary ssl config file for self-signed server certificate generation
+    echo "Creating temporary ssl config ${HA_ZERO_HID_SERVER_SSL_CONFIG_FILE}..."
+    cat > "${HA_ZERO_HID_SERVER_SSL_CONFIG_FILE}" <<EOF
     [ req ]
     default_bits       = 1024
     prompt             = no
@@ -48,64 +100,71 @@ create_cert() {
     CN = localhost
 EOF
     
-    # === Generate private key ===
-    openssl genrsa -out "${KEY_FILE}" 2048
+    # Generate private key (no password)
+    echo "Creating private key file ${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}..."
+    openssl genrsa -out "${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}" 2048
     
-    # === Generate self-signed certificate that expires in 100 years ===
-    openssl req -new -x509 -key "${KEY_FILE}" -out "${CERT_FILE}" -days 365000 -config "${OPENSSL_CONFIG_FILE}"
-    
-    # === Combine into PEM file ===
-    cat "${CERT_FILE}" "${KEY_FILE}" > "${PEM_FILE}"
-    
-    # === Set file permissions ===
-    chmod 600 "${KEY_FILE}"
-    chmod 644 "${CERT_FILE}" "${PEM_FILE}"
-    
-    # === Cleanup config file ===
-    rm -f "${OPENSSL_CONFIG_FILE}"
-    
-    echo "Self-signed certificate, key, and PEM generated:"
-    echo " - ${CURRENT_DIR}/${KEY_FILE}"
-    echo " - ${CURRENT_DIR}/${CERT_FILE}"
-    echo " - ${CURRENT_DIR}/${PEM_FILE}"
+    # Generate server self-signed certificate that expires in 100 years (365k days)
+    echo "Creating self-signed certificate file ${HA_ZERO_HID_SERVER_CERT_FILE}: " \
+         "valid for ${HA_ZERO_HID_SERVER_CERT_DAYS} day(s), " \
+         "using private key ${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}, " \
+         "using ssl config ${HA_ZERO_HID_SERVER_SSL_CONFIG_FILE}..."
+    openssl req -new -x509 \
+      -key "${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}" \
+      -out "${HA_ZERO_HID_SERVER_CERT_FILE}" \
+      -days ${HA_ZERO_HID_SERVER_CERT_DAYS} \
+      -config "${HA_ZERO_HID_SERVER_SSL_CONFIG_FILE}"
+
+    # Delete temporary config file
+    echo "Deleting temporary ssl config ${HA_ZERO_HID_SERVER_SSL_CONFIG_FILE}..."
+    rm -f "${HA_ZERO_HID_SERVER_SSL_CONFIG_FILE}"
+
+    # Enforce server private key file rights (writable and readable only by user)
+    echo "Enforcing server private key file rights ${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}..."
+    chmod 600 "${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}"
+
+    # Enforce server certificate file rights (writable and readable only by user, readable by anyone else)
+    echo "Enforcing server certificate file rights ${HA_ZERO_HID_SERVER_CERT_FILE}..."
+    chmod 644 "${HA_ZERO_HID_SERVER_CERT_FILE}"
 }
 
 install() {
     # Create server
-    mkdir -p /opt/ha_zero_hid
-    cp logging.conf /opt/ha_zero_hid/
-    cp websockets_server_run.sh /opt/ha_zero_hid/
-    cp websockets_server.py /opt/ha_zero_hid/
-    chmod +x /opt/ha_zero_hid/websockets_server_run.sh
+    mkdir -p "${HA_ZERO_HID_SERVER_DIR}"
+    cp logging.conf "${HA_ZERO_HID_SERVER_DIR}/"
+    cp "${HA_ZERO_HID_SERVER_START_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
+    cp "${HA_ZERO_HID_SERVER_INIT_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
+    chmod +x "${HA_ZERO_HID_SERVER_START_FILE}"
     
     # Create python venv for server and install dependencies
-    if [ -z "${SKIP_UPDATE}" ]; then
+    if [ -z "${OS_SKIP_UPDATE}" ]; then
         echo "Updating apt and installing required packages..."
         apt-get update
         apt-get install -y git python3-pip python3-venv git
     else
-        echo "Skipping apt-get update and install as requested (SKIP_UPDATE is set)."
+        echo "Skipping apt-get update and install as requested (OS_SKIP_UPDATE is set)."
     fi
+
     echo "Creating python venv..."
-    python3 -m venv /opt/ha_zero_hid/venv
-    source /opt/ha_zero_hid/venv/bin/activate
-    
+    python3 -m venv "${HA_ZERO_HID_SERVER_VENV_DIR}"
+    source "${HA_ZERO_HID_SERVER_VENV_DIR}/bin/activate"
+
     # Install Python dependency "zero_hid" (custom)
     # TODO: install official dependency using "pip install zero_hid", 
     #       once PR is merged to official code-base: https://github.com/thewh1teagle/zero-hid/pull/39
-    echo "Cloning zero-hid dependency using branch ${ZERO_HID_BRANCH}..."
-    (rm -rf zero-hid >/dev/null 2>&1 || true) && git clone -b "${ZERO_HID_BRANCH}" "${ZERO_HID_REPO}"
-    mv zero-hid /opt/ha_zero_hid/
-    pip install --editable /opt/ha_zero_hid/zero-hid
+    echo "Cloning zero-hid dependency using branch ${ZERO_HID_REPO_BRANCH}..."
+    git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
+    mv zero-hid "${HA_ZERO_HID_SERVER_DIR}/"
+    pip install --editable "${HA_ZERO_HID_SERVER_DIR}/zero-hid"
     
     # Install Python dependency "websockets" (official)
     pip install websockets
     
     # Security: create user+group dedicated to service
-    (useradd --system -m -d "${HA_ZERO_HID_HOME}" ha_zero_hid >/dev/null 2>&1 || true)
-    mkdir -p /home/ha_zero_hid
-    chown ha_zero_hid:ha_zero_hid /home/ha_zero_hid
-    chmod 750 /home/ha_zero_hid
+    (useradd --system -m -d "${OS_SERVICE_USER_DIR}" "${OS_SERVICE_USER}" >/dev/null 2>&1 || true)
+    mkdir -p "${OS_SERVICE_USER_DIR}"
+    chown "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${OS_SERVICE_USER_DIR}"
+    chmod 750 "${OS_SERVICE_USER_DIR}"
     
     # Config server parameters
     websocket_server_log_level=""
@@ -120,54 +179,54 @@ install() {
     conf_websocket_authorized_clients_ips=false
     
     # Automatic setup : try loading config file
-    if [ -f "${CONFIG_FILE}" ]; then
+    if [ -f "${HA_ZERO_HID_CONFIG_FILE}" ]; then
 
         # Automatic setup of "websocket_server_log_level"
-        websocket_server_log_level=$(grep "^websocket_server_log_level:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_log_level=$(grep "^websocket_server_log_level:" "${HA_ZERO_HID_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_log_level=$(echo "$websocket_server_log_level" | xargs) # Trims whitespace
         if [ -n "${websocket_server_log_level}" ]; then
             conf_websocket_server_log_level=true
-            echo "Using pre-configured 'websocket_server_log_level' value ${websocket_server_log_level} from ${CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_log_level' value ${websocket_server_log_level} from ${HA_ZERO_HID_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_log_level' not found or has no value in ${CONFIG_FILE}"
+            echo "Key 'websocket_server_log_level' not found or has no value in ${HA_ZERO_HID_CONFIG_FILE}"
         fi
 
         # Automatic setup of "websocket_server_port"
-        websocket_server_port=$(grep "^websocket_server_port:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_port=$(grep "^websocket_server_port:" "${HA_ZERO_HID_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
         if [ -n "${websocket_server_port}" ]; then
             conf_websocket_server_port=true
-            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${HA_ZERO_HID_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_port' not found or has no value in ${CONFIG_FILE}"
+            echo "Key 'websocket_server_port' not found or has no value in ${HA_ZERO_HID_CONFIG_FILE}"
         fi
 
         # Automatic setup of "websocket_server_secret"
-        websocket_server_secret=$(grep "^websocket_server_secret:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_secret=$(grep "^websocket_server_secret:" "${HA_ZERO_HID_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
         # Remove surrounding single quotes, if any:
         websocket_server_secret="${websocket_server_secret#\'}"
         websocket_server_secret="${websocket_server_secret%\'}"
         if [ -n "${websocket_server_secret}" ]; then
             conf_websocket_server_secret=true
-            echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${HA_ZERO_HID_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_secret' not found or has no value in ${CONFIG_FILE}"
+            echo "Key 'websocket_server_secret' not found or has no value in ${HA_ZERO_HID_CONFIG_FILE}"
         fi
 
         # Automatic setup of "websocket_authorized_clients_ips"
-        websocket_authorized_clients_ips=$(grep "^websocket_authorized_clients_ips:" "${CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_authorized_clients_ips=$(grep "^websocket_authorized_clients_ips:" "${HA_ZERO_HID_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_authorized_clients_ips=$(echo "$websocket_authorized_clients_ips" | xargs) # Trims whitespace
         if [ -n "${websocket_authorized_clients_ips}" ]; then
             conf_websocket_authorized_clients_ips=true
-            echo "Using pre-configured 'websocket_authorized_clients_ips' value ${websocket_authorized_clients_ips} from ${CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_authorized_clients_ips' value ${websocket_authorized_clients_ips} from ${HA_ZERO_HID_CONFIG_FILE}"
         else
-            echo "Key 'websocket_authorized_clients_ips' not found or has no value in ${CONFIG_FILE}"
+            echo "Key 'websocket_authorized_clients_ips' not found or has no value in ${HA_ZERO_HID_CONFIG_FILE}"
         fi
 
     else
         # Automatic setup : no config file or config file not accessible
-        echo "Config file not found: ${CONFIG_FILE}"
+        echo "Config file not found: ${HA_ZERO_HID_CONFIG_FILE}"
     fi
 
     # Manual setup of "websocket_server_log_level":
@@ -235,8 +294,8 @@ install() {
     fi
 
     # Write updated config file
-    echo "Writing config file ${CONFIG_FILE}..."
-    cat <<EOF > "${CONFIG_FILE}"
+    echo "Writing config file ${HA_ZERO_HID_CONFIG_FILE}..."
+    cat <<EOF > "${HA_ZERO_HID_CONFIG_FILE}"
 websocket_server_log_level: ${websocket_server_log_level}
 websocket_server_port: ${websocket_server_port}
 websocket_server_secret: '${websocket_server_secret}'
@@ -244,53 +303,53 @@ websocket_authorized_clients_ips: ${websocket_authorized_clients_ips}
 EOF
 
     # Configure using new configurations
-    echo "Configuring trackpad_mouse server..."
-    sed -i "s|<websocket_server_log_level>|${websocket_server_log_level}|g" "${LOGGER_FILE}"
+    echo "Configuring ha_zero_hid server..."
+    sed -i "s|<websocket_server_log_level>|${websocket_server_log_level}|g" "${HA_ZERO_HID_SERVER_LOG_CONFIG_FILE}"
     echo "This USB gadget server will be using logger level set to ${websocket_server_log_level}"
-    echo "Use this command to setup logger level after installation: sed -i \"s|${websocket_server_log_level}|<new_log_level>|g\" \"${LOGGER_FILE}\""
+    echo "Use this command to setup logger level after installation: sed -i \"s|${websocket_server_log_level}|<new_log_level>|g\" \"${HA_ZERO_HID_SERVER_LOG_CONFIG_FILE}\""
 
-    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${MODULE_FILE}"
+    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_ZERO_HID_SERVER_INIT_FILE}"
     echo "This USB gadget server will be running at 0.0.0.0:${websocket_server_port}"
 
-    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${MODULE_FILE}"
+    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_ZERO_HID_SERVER_INIT_FILE}"
     echo "This USB gadget server secret set to ${websocket_server_secret}"
 
-    sed -i "s|<websocket_authorized_clients_ips>|${websocket_authorized_clients_ips}|g" "${MODULE_FILE}"
+    sed -i "s|<websocket_authorized_clients_ips>|${websocket_authorized_clients_ips}|g" "${HA_ZERO_HID_SERVER_INIT_FILE}"
     echo "This USB gadget server access authorization set to IPs ${websocket_authorized_clients_ips}"
 
-    chown -R :ha_zero_hid /opt/ha_zero_hid
-    chmod -R g+w /opt/ha_zero_hid
+    chown -R :"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}"
+    chmod -R g+w "${HA_ZERO_HID_SERVER_DIR}"
 
     # Security: create self-signed certificate
     #   server.key – private key
     #   server.crt – self-signed certificate
     #   server.pem – combined certificate + key (sometimes used)
     create_cert
-    cp "${CERT_FILE}" /opt/ha_zero_hid/
-    cp "${KEY_FILE}" /opt/ha_zero_hid/
-    chown -R ha_zero_hid:ha_zero_hid /opt/ha_zero_hid/"${CERT_FILE}" 
-    chown -R ha_zero_hid:ha_zero_hid /opt/ha_zero_hid/"${KEY_FILE}"
+    cp "${HA_ZERO_HID_SERVER_CERT_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
+    cp "${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}" "${HA_ZERO_HID_SERVER_DIR}/"
+    chown -R "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}/${HA_ZERO_HID_SERVER_CERT_FILE}" 
+    chown -R "${OS_SERVICE_USER}":"${OS_SERVICE_USER}" "${HA_ZERO_HID_SERVER_DIR}/${HA_ZERO_HID_SERVER_PRIVATE_KEY_FILE}"
 
     # Configure systemd unit
-    cp websockets_server.service /etc/systemd/system/
+    cp "${HA_ZERO_HID_SERVICE_FILE_NAME}" "${OS_SERVICE_DIR}/"
     systemctl daemon-reload
-    systemctl enable websockets_server.service
+    systemctl enable "${HA_ZERO_HID_SERVICE_FILE_NAME}"
     
     # Start service
-    systemctl start websockets_server.service
+    systemctl start "${HA_ZERO_HID_SERVICE_FILE_NAME}"
 }
 
 uninstall () {
-    if [ -f "${CONFIG_FILE}" ]; then
+    delete_component_conf_file=false
+    if [ -f "${HA_ZERO_HID_CONFIG_FILE}" ]; then
         read -rp "Keep server config? (y/n) " confirm </dev/tty
         case "$confirm" in
             [Yy]* )
-                echo "Config file not deleted (${CONFIG_FILE})"
+                echo "Config file will not be deleted (${HA_ZERO_HID_CONFIG_FILE})"
                 ;;
             [Nn]* )
-                # Cleaning up server custom config file
-                rm "${CONFIG_FILE}" >/dev/null 2>&1 || true
-                echo "Config file deleted (${CONFIG_FILE})"
+                echo "Config file will be deleted (${HA_ZERO_HID_CONFIG_FILE})"
+                delete_component_conf_file=true
                 ;;
             * )
                 echo "Please answer y or n."
@@ -298,21 +357,13 @@ uninstall () {
                 ;;
         esac
     fi
-    
-    # Stop service
-    systemctl stop websockets_server.service
-    
-    # Remove systemd unit
-    systemctl disable websockets_server.service
-    rm -rf /etc/systemd/system/websockets_server.service
-    systemctl daemon-reload
-    
-    # Remove server
-    rm -rf /opt/ha_zero_hid
+
+    # Effective removal
+    cleanup "${delete_component_conf_file}"
 }
 
 check_root
-if [ -f "/opt/ha_zero_hid/websockets_server_run.sh" ]; then
+if [ -f "${HA_ZERO_HID_SERVER_START_FILE}" ]; then
     echo "HA zero-hid websockets server is already installed."
     echo "Please choose an option:"
     echo "  1) Reinstall or update"

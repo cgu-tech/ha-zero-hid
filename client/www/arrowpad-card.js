@@ -342,7 +342,7 @@ class ArrowPadCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    hass.callService("trackpad_mouse", "keypress", {
+    hass.callService(Globals.COMPONENT_NAME, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });

@@ -839,7 +839,7 @@ class TrackpadCard extends HTMLElement {
   }
   
   sendMouse(service, args) {
-    this._hass.callService("trackpad_mouse", service, args);
+    this._hass.callService(Globals.COMPONENT_NAME, service, args);
   }
 
   // vibrate the device like an haptic feedback

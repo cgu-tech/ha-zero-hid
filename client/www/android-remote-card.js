@@ -1477,7 +1477,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    hass.callService("trackpad_mouse", "keypress", {
+    hass.callService(Globals.COMPONENT_NAME, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
@@ -1485,7 +1485,7 @@ class AndroidRemoteCard extends HTMLElement {
   
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate(hass) {
-    hass.callService("trackpad_mouse", "conpress", {
+    hass.callService(Globals.COMPONENT_NAME, "conpress", {
       sendCons: Array.from(this.pressedConsumers),
     });
   }

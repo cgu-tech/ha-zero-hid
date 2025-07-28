@@ -1,3 +1,5 @@
+import { Globals } from './utils/globals.js';
+
 // Define logger helper class
 export class Logger {
   constructor(level, hass, pushback) {
@@ -17,8 +19,8 @@ export class Logger {
   setPushback(pushback) {
     this._pushback = pushback;
     if (this._hass && this._pushback) {
-      this._hass.callService("logger", "set_level", { "custom_components.trackpad_mouse": 'debug' });
-      console.log(`Log level of custom_components.trackpad_mouse set to debug`);
+      this._hass.callService("logger", "set_level", { `custom_components.${Globals.COMPONENT_NAME}`: 'debug' });
+      console.log(`Log level of custom_components.${Globals.COMPONENT_NAME} set to debug`);
     }
   }
   setHass(hass) {
@@ -38,7 +40,7 @@ export class Logger {
     if (this._hass && this._pushback) {
       const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.deepSerialize(arg, this.objByteLimit, this.objLevelLimit)) : [];
       if (serializedArgs.length > 0) {
-        this._hass.callService("trackpad_mouse", "log", { "level": header, "logs": serializedArgs, });
+        this._hass.callService(Globals.COMPONENT_NAME, "log", { "level": header, "logs": serializedArgs, });
       }
     }
     

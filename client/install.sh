@@ -1,30 +1,36 @@
 #!/bin/bash
-# Inspired from https://github.com/thewh1teagle/zero-hid/blob/main/usb_gadget/installer
 CURRENT_DIR="$(pwd)"
 
 # Parameters
-ZERO_HID_BRANCH="${1:-main}"
+ZERO_HID_REPO_BRANCH="${1:-main}"
 
 # Configurations
-HA_COMPONENT_SRC_COMPONENT_DIR="${CURRENT_DIR}/custom_components"
-HA_COMPONENT_SRC_RESOURCES_DIR="${CURRENT_DIR}/www"
+HAOS_CONFIG_DIR = "/config"
+HAOS_CUSTOM_COMPONENTS_DIR = "${HAOS_CONFIG_DIR}/custom_components"
+HAOS_RESOURCES_DIR = "${HAOS_CONFIG_DIR}/www"
+HAOS_CONFIG_FILE="${HAOS_CONFIG_DIR}/configuration.yaml"
 
-HA_COMPONENT_NAME="trackpad_mouse"
-HA_COMPONENT_LABEL="Trackpad Mouse"
+ZERO_HID_REPO_URL="https://github.com/cgu-tech/zero-hid.git"
+ZERO_HID_REPO_DIR="${CURRENT_DIR}/zero-hid"
 
-HA_COMPONENT_DST_COMPONENT_DIR="/config/custom_components/${HA_COMPONENT_NAME}"
-HA_COMPONENT_DST_INIT_FILE="${HA_COMPONENT_DST_COMPONENT_DIR}/__init__.py"
-HA_COMPONENT_DST_CONST_FILE="${HA_COMPONENT_DST_COMPONENT_DIR}/const.py"
-HA_COMPONENT_DST_MANIFEST_FILE="${HA_COMPONENT_DST_COMPONENT_DIR}/manifest.json"
+HA_ZERO_HID_REPO_COMPONENT_DIR="${CURRENT_DIR}/custom_components"
+HA_ZERO_HID_REPO_RESOURCES_DIR="${CURRENT_DIR}/www"
 
-HA_COMPONENT_DST_RESOURCES_DIR="/config/www/ha-zero-hid"
-HA_COMPONENT_DST_RESOURCES_UTILS_DIR="${HA_COMPONENT_DST_RESOURCES_DIR}/utils"
-HA_COMPONENT_DST_CONFIG_FILE="/config/${HA_COMPONENT_NAME}.config"
+HA_ZERO_HID_CLIENT_COMPONENT_NAME="ha_zero_hid"
+HA_ZERO_HID_CLIENT_COMPONENT_LABEL="HA zero HID"
 
-HA_OS_CONFIG_FILE="/config/configuration.yaml"
+HA_ZERO_HID_CLIENT_CONFIG_FILE="${HAOS_CONFIG_DIR}/${HA_ZERO_HID_CLIENT_COMPONENT_NAME}.config"
 
-ZERO_HID_REPOSITORY="https://github.com/cgu-tech/zero-hid.git"
-ZERO_HID_SRC_DIR="${CURRENT_DIR}/zero-hid"
+HA_ZERO_HID_CLIENT_COMPONENT_DIR="${HAOS_CUSTOM_COMPONENTS_DIR}/${HA_ZERO_HID_CLIENT_COMPONENT_NAME}"
+HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/__init__.py"
+HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/const.py"
+HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/manifest.json"
+
+HA_ZERO_HID_CLIENT_RESOURCES_DIR="${HAOS_RESOURCES_DIR}/ha-zero-hid"
+HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR="${HA_ZERO_HID_CLIENT_RESOURCES_DIR}/utils"
+HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/globals.js"
+HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/keycodes.js"
+HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/consumercodes.js"
 
 # Clean-up:
 # - component from HAOS config (yaml)
@@ -36,25 +42,26 @@ cleanup() {
     local should_delete_config="$1"
     
     # Unregister component from HAOS configuration to disable it
-    sed -i "/^${HA_COMPONENT_NAME}:$/d" "${HA_OS_CONFIG_FILE}"
+    echo "Unregistering ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} from HAOS configuration (${HAOS_CONFIG_FILE})..."
+    sed -i "/^${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:$/d" "${HAOS_CONFIG_FILE}"
     
     # Cleaning up component python resources (py)
-    echo "Cleaning ${HA_COMPONENT_NAME} component files (${HA_COMPONENT_DST_COMPONENT_DIR})..."
-    rm -rf "${HA_COMPONENT_DST_COMPONENT_DIR}" >/dev/null 2>&1 || true
+    echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component files (${HA_ZERO_HID_CLIENT_COMPONENT_DIR})..."
+    rm -rf "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" >/dev/null 2>&1 || true
 
     # Cleaning existing web resources when existing
-    echo "Cleaning ${HA_COMPONENT_NAME} web resources files (${HA_COMPONENT_DST_RESOURCES_DIR})..."
-    rm -rf "${HA_COMPONENT_DST_RESOURCES_DIR}" >/dev/null 2>&1 || true
+    echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} web resources files (${HA_ZERO_HID_CLIENT_RESOURCES_DIR})..."
+    rm -rf "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}" >/dev/null 2>&1 || true
 
     # Cleaning up component custom config file when explicitely required
     if [ "${should_delete_config}" != "true" ]; then
-      echo "Cleaning ${HA_COMPONENT_NAME} config file (${HA_COMPONENT_DST_CONFIG_FILE})..."
-      rm "${HA_COMPONENT_DST_CONFIG_FILE}" >/dev/null 2>&1 || true
+      echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} config file (${HA_ZERO_HID_CLIENT_CONFIG_FILE})..."
+      rm "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" >/dev/null 2>&1 || true
     fi
 
     # Cleaning up component dependencies
-    echo "Cleaning ${HA_COMPONENT_NAME} zero-hid dependency (${ZERO_HID_SRC_DIR})..."
-    rm -rf "${ZERO_HID_SRC_DIR}" >/dev/null 2>&1 || true
+    echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} zero-hid dependency (${ZERO_HID_REPO_DIR})..."
+    rm -rf "${ZERO_HID_REPO_DIR}" >/dev/null 2>&1 || true
 }
 
 extract_keycodes_to_js_class() {
@@ -111,23 +118,23 @@ install() {
     # ------------------
     
     # Installing raw client component files
-    echo "Installing ${HA_COMPONENT_NAME} component..."
-    mkdir -p "${HA_COMPONENT_DST_COMPONENT_DIR}"
-    cp -R "${HA_COMPONENT_SRC_COMPONENT_DIR}" "${HA_COMPONENT_DST_COMPONENT_DIR}"
+    echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component..."
+    mkdir -p "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}"
+    cp -R "${HA_ZERO_HID_REPO_COMPONENT_DIR}" "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}"
 
     # Installing raw client web resources
-    echo "Installing ${HA_COMPONENT_NAME} web resources..."
-    mkdir -p "${HA_COMPONENT_DST_RESOURCES_DIR}"
-    cp -R "${HA_COMPONENT_SRC_RESOURCES_DIR}" "${HA_COMPONENT_DST_RESOURCES_DIR}"
+    echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} web resources..."
+    mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
+    cp -R "${HA_ZERO_HID_REPO_RESOURCES_DIR}" "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
 
-    echo "Cloning zero-hid repository at ${ZERO_HID_REPOSITORY}, on branch ${ZERO_HID_BRANCH}..."
-    git clone -b "${ZERO_HID_BRANCH}" "${ZERO_HID_REPOSITORY}"
+    echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${ZERO_HID_REPO_BRANCH}..."
+    git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
 
-    echo "Installing web keyboard codes mapping at ${HA_COMPONENT_DST_RESOURCES_UTILS_DIR}/keycodes.js..."
-    extract_keycodes_to_js_class "${ZERO_HID_SRC_DIR}/zero_hid/hid/keycodes.py" "${HA_COMPONENT_DST_RESOURCES_UTILS_DIR}/keycodes.js" "KeyCodes"
+    echo "Installing web keyboard codes mapping at ${HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE}..."
+    extract_keycodes_to_js_class "${ZERO_HID_REPO_DIR}/zero_hid/hid/keycodes.py" "${HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE}" "KeyCodes"
 
-    echo "Installing web consumer codes mapping at ${HA_COMPONENT_DST_RESOURCES_UTILS_DIR}/consumercodes.js..."
-    extract_keycodes_to_js_class "${ZERO_HID_SRC_DIR}/zero_hid/hid/consumercodes.py" "${HA_COMPONENT_DST_RESOURCES_UTILS_DIR}/consumercodes.js" "ConsumerCodes"
+    echo "Installing web consumer codes mapping at ${HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE}..."
+    extract_keycodes_to_js_class "${ZERO_HID_REPO_DIR}/zero_hid/hid/consumercodes.py" "${HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE}" "ConsumerCodes"
 
     # ------------------
     # Retrieving configs
@@ -146,54 +153,54 @@ install() {
     conf_websocket_authorized_users_ids=false
 
     # Automatic setup : try loading config file
-    if [ -f "${HA_COMPONENT_DST_CONFIG_FILE}" ]; then
+    if [ -f "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" ]; then
     
         # Automatic setup of "websocket_server_ip"
-        websocket_server_ip=$(grep "^websocket_server_ip:" "${HA_COMPONENT_DST_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_ip=$(grep "^websocket_server_ip:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_ip=$(echo "$websocket_server_ip" | xargs) # Trims whitespace
         if [ -n "${websocket_server_ip}" ]; then
             conf_websocket_server_ip=true
-            echo "Using pre-configured 'websocket_server_ip' value ${websocket_server_ip} from ${HA_COMPONENT_DST_CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_ip' value ${websocket_server_ip} from ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_ip' not found or has no value in ${HA_COMPONENT_DST_CONFIG_FILE}"
+            echo "Key 'websocket_server_ip' not found or has no value in ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
         fi
         
         # Automatic setup of "websocket_server_port"
-        websocket_server_port=$(grep "^websocket_server_port:" "${HA_COMPONENT_DST_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_port=$(grep "^websocket_server_port:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
         if [ -n "${websocket_server_port}" ]; then
             conf_websocket_server_port=true
-            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${HA_COMPONENT_DST_CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_port' not found or has no value in ${HA_COMPONENT_DST_CONFIG_FILE}"
+            echo "Key 'websocket_server_port' not found or has no value in ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
         fi
 
         # Automatic setup of "websocket_server_secret"
-        websocket_server_secret=$(grep "^websocket_server_secret:" "${HA_COMPONENT_DST_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_server_secret=$(grep "^websocket_server_secret:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
         # Remove surrounding single quotes, if any:
         websocket_server_secret="${websocket_server_secret#\'}"
         websocket_server_secret="${websocket_server_secret%\'}"
         if [ -n "${websocket_server_secret}" ]; then
             conf_websocket_server_secret=true
-            echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${HA_COMPONENT_DST_CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
         else
-            echo "Key 'websocket_server_secret' not found or has no value in ${HA_COMPONENT_DST_CONFIG_FILE}"
+            echo "Key 'websocket_server_secret' not found or has no value in ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
         fi
 
         # Automatic setup of "websocket_authorized_users_ids"
-        websocket_authorized_users_ids=$(grep "^websocket_authorized_users_ids:" "${HA_COMPONENT_DST_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
+        websocket_authorized_users_ids=$(grep "^websocket_authorized_users_ids:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
         if [ -n "${websocket_authorized_users_ids}" ]; then
             conf_websocket_authorized_users_ids=true
-            echo "Using pre-configured 'websocket_authorized_users_ids' value ${websocket_authorized_users_ids} from ${HA_COMPONENT_DST_CONFIG_FILE}"
+            echo "Using pre-configured 'websocket_authorized_users_ids' value ${websocket_authorized_users_ids} from ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
         else
-            echo "Key 'websocket_authorized_users_ids' not found or has no value in ${HA_COMPONENT_DST_CONFIG_FILE}"
+            echo "Key 'websocket_authorized_users_ids' not found or has no value in ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
         fi
 
     else
         # Automatic setup : no config file or config file not accessible
-        echo "Config file not found: ${HA_COMPONENT_DST_CONFIG_FILE}"
+        echo "Config file not found: ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
     fi
 
     # Manual setup of "websocket_server_ip":
@@ -261,8 +268,8 @@ install() {
     fi
 
     # Write updated config file
-    echo "Writing config file ${HA_COMPONENT_DST_CONFIG_FILE}..."
-    cat <<EOF > "${HA_COMPONENT_DST_CONFIG_FILE}"
+    echo "Writing config file ${HA_ZERO_HID_CLIENT_CONFIG_FILE}..."
+    cat <<EOF > "${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
 websocket_server_ip: ${websocket_server_ip}
 websocket_server_port: ${websocket_server_port}
 websocket_server_secret: '${websocket_server_secret}'
@@ -274,52 +281,45 @@ EOF
     # ------------------
 
     # Templating client component raw files with configurations
-    echo "Configuring ${HA_COMPONENT_NAME} component..."
+    echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component..."
 
-    echo "Templating ${HA_COMPONENT_NAME} name into component global Python constants ${HA_COMPONENT_DST_CONST_FILE}..."
-    sed -i "s|<ha_component_name>|${HA_COMPONENT_NAME}|g" "${HA_COMPONENT_DST_CONST_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} name into component global Python constants ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
+    sed -i "s|<HA_ZERO_HID_CLIENT_COMPONENT_NAME>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
 
-    echo "Templating ${HA_COMPONENT_NAME} name and ${HA_COMPONENT_LABEL} label into component manifest ${HA_COMPONENT_DST_MANIFEST_FILE}..."
-    sed -i "s|<ha_component_name>|${HA_COMPONENT_NAME}|g" "${HA_COMPONENT_DST_MANIFEST_FILE}"
-    sed -i "s|<ha_component_label>|${HA_COMPONENT_LABEL}|g" "${HA_COMPONENT_DST_MANIFEST_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} name and ${HA_ZERO_HID_CLIENT_COMPONENT_LABEL} label into component manifest ${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}..."
+    sed -i "s|<HA_ZERO_HID_CLIENT_COMPONENT_NAME>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
+    sed -i "s|<HA_ZERO_HID_CLIENT_COMPONENT_LABEL>|${HA_ZERO_HID_CLIENT_COMPONENT_LABEL}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
 
-    echo "Templating ${HA_COMPONENT_NAME} server LAN address to ${websocket_server_ip}:${websocket_server_port} into ${HA_COMPONENT_DST_INIT_FILE}..."
-    sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${HA_COMPONENT_DST_INIT_FILE}"
-    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server LAN address to ${websocket_server_ip}:${websocket_server_port} into ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
+    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
-    echo "Templating ${HA_COMPONENT_NAME} server secret to ${websocket_server_secret} into ${HA_COMPONENT_DST_INIT_FILE}..."
-    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server secret to ${websocket_server_secret} into ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
-    echo "Templating ${HA_COMPONENT_NAME} server authorized users ids to ${websocket_authorized_users_ids} into ${HA_COMPONENT_DST_INIT_FILE}..."
-    sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server authorized users ids to ${websocket_authorized_users_ids} into ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
     # Templating client component raw files with configurations
-    echo "Configuring ${HA_COMPONENT_NAME} web resources..."
+    echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} web resources..."
 
-    echo "Templating ${HA_COMPONENT_NAME} server LAN address to ${websocket_server_ip}:${websocket_server_port} into ${HA_COMPONENT_DST_INIT_FILE}..."
-    sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${HA_COMPONENT_DST_INIT_FILE}"
-    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_COMPONENT_DST_INIT_FILE}"
-
-    echo "Templating ${HA_COMPONENT_NAME} server secret to ${websocket_server_secret} into ${HA_COMPONENT_DST_INIT_FILE}..."
-    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_COMPONENT_DST_INIT_FILE}"
-
-    echo "Templating ${HA_COMPONENT_NAME} server authorized users ids to ${websocket_authorized_users_ids} into ${HA_COMPONENT_DST_INIT_FILE}..."
-    sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_COMPONENT_DST_INIT_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} name into ${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}..."
+    sed -i "s|<HA_ZERO_HID_CLIENT_COMPONENT_NAME>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
 
     # Register client component into HAOS config to enable it
-    grep -qxF "${HA_COMPONENT_NAME}:" "${HA_OS_CONFIG_FILE}" || echo "${HA_COMPONENT_NAME}:" >> "${HA_OS_CONFIG_FILE}"
+    grep -qxF "${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:" "${HAOS_CONFIG_FILE}" || echo "${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:" >> "${HAOS_CONFIG_FILE}"
 }
 
 uninstall () {
     delete_component_conf_file=false
-    if [ -f "${HA_COMPONENT_DST_CONFIG_FILE}" ]; then
+    if [ -f "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" ]; then
         read -rp "Keep integration config? (y/n) " confirm </dev/tty
         case "$confirm" in
             [Yy]* )
-                echo "Config file will not be deleted (${HA_COMPONENT_DST_CONFIG_FILE})"
+                echo "Config file will not be deleted (${HA_ZERO_HID_CLIENT_CONFIG_FILE})"
                 ;;
             [Nn]* )
-                echo "Config file will be deleted (${HA_COMPONENT_DST_CONFIG_FILE})"
+                echo "Config file will be deleted (${HA_ZERO_HID_CLIENT_CONFIG_FILE})"
                 delete_component_conf_file=true
                 ;;
             * )
@@ -333,7 +333,7 @@ uninstall () {
     cleanup "${delete_component_conf_file}"
 }
 
-if [ -d "${HA_COMPONENT_DST_COMPONENT_DIR}" ]; then
+if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
     echo "Looks like HA zero-hid client integration is already installed"
     echo "Please choose an option:"
     echo "  1) Reinstall or update"

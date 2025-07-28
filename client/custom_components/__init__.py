@@ -114,7 +114,7 @@ def is_user_authorized_from_command(hass: HomeAssistant, connection: ActiveConne
     user_id = user.id
     return is_user_authorized(hass, user_id)
 
-@websocket_command({vol.Required("type"): "trackpad_mouse/sync_keyboard"})
+@websocket_command({vol.Required("type"): DOMAIN + "/sync_keyboard"})
 @async_response
 async def websocket_sync_keyboard(hass: HomeAssistant, connection: ActiveConnection, msg):
     authorized = is_user_authorized_from_command(hass, connection)
