@@ -200,7 +200,7 @@ class CarrouselCard extends HTMLElement {
       let cellElement = null;
       if (cellIconUrl) {
         const img = document.createElement("img");
-        const img.className = "carrousel-img";
+        img.className = "carrousel-img";
         const targetCellIconUrl = this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl);
         img.src = targetCellIconUrl;
         img.alt = cell.name || id;
