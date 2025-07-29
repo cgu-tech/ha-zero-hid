@@ -54,7 +54,7 @@ cleanup() {
     rm -rf "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}" >/dev/null 2>&1 || true
 
     # Cleaning up component custom config file when explicitely required
-    if [ "${should_delete_config}" != "true" ]; then
+    if [ "${should_delete_config}" == "true" ]; then
       echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} config file (${HA_ZERO_HID_CLIENT_CONFIG_FILE})..."
       rm "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" >/dev/null 2>&1 || true
     fi

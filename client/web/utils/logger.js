@@ -19,7 +19,7 @@ export class Logger {
   setPushback(pushback) {
     this._pushback = pushback;
     if (this._hass && this._pushback) {
-      this._hass.callService("logger", "set_level", { `custom_components.${Globals.COMPONENT_NAME}`: 'debug' });
+      this._hass.callService("logger", "set_level", { [`custom_components.${Globals.COMPONENT_NAME}`]: 'debug' });
       console.log(`Log level of custom_components.${Globals.COMPONENT_NAME} set to debug`);
     }
   }
