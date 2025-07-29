@@ -64,6 +64,15 @@ cleanup() {
     rm -rf "${ZERO_HID_REPO_DIR}" >/dev/null 2>&1 || true
 }
 
+copy_dir_content() {
+    local SRC_DIR_PATH="${1}"
+    local DST_DIR_PATH="${2}"
+
+    shopt -s dotglob
+    cp -R "${SRC_DIR_PATH}"/* "${DST_DIR_PATH}"
+    shopt -u dotglob
+}
+
 extract_keycodes_to_js_class() {
     local INPUT_PYTHON_FILE="$1"
     local OUTPUT_JS_FILE="$2"
@@ -111,7 +120,6 @@ extract_keycodes_to_js_class() {
     echo "Python constants from ${INPUT_PYTHON_FILE} converted to JS class ${OUTPUT_JS_CLASS} in ${OUTPUT_JS_FILE}"
 }
 
-
 install() {
     # ------------------
     # Installing raw components files
@@ -120,12 +128,12 @@ install() {
     # Installing raw client component files
     echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client component..."
     mkdir -p "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}"
-    cp -R "${HA_ZERO_HID_REPO_COMPONENT_DIR}" "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}"
+    copy_dir_content "${HA_ZERO_HID_REPO_COMPONENT_DIR}" "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}"
 
     # Installing raw client web resources
     echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
     mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
-    cp -R "${HA_ZERO_HID_REPO_RESOURCES_DIR}" "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
+    copy_dir_content "${HA_ZERO_HID_REPO_RESOURCES_DIR}" "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
 
     echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${ZERO_HID_REPO_BRANCH}..."
     git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
