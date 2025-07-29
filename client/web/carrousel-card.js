@@ -223,31 +223,32 @@ class CarrouselCard extends HTMLElement {
 
       // Retrieve cell user configurations
       const cellId = id;
-      const cellName = cell.name;
+      const cellLabel = cell["label"] || cellId;
+      const cellLabelColor = cell["label-color"];
+      const cellLabelSize = cell["label-size"];
       const cellDisplayMode = cell["display-mode"];
       const cellIconUrl = cell["icon-url"];
       const cellBackgroundColor = cell["background-color"];
-      const cellNameSize = cell["name-size"];
-      const targetDisplayMode = this.getDisplayMode(cellDisplayMode);
+      const targetDisplayMode = this.getDisplayMode(cellDisplayMode, cellId);
       
       // Set cell content (image, label)
       if (targetDisplayMode === "image") {
         // Image mode
-        const img = this.createImage(cellId, cellName, cellIconUrl, cellBackgroundColor, cellNameSize);
+        const img = this.createImage(cellId, cellLabel, cellIconUrl, cellBackgroundColor, cellLabelColor, cellLabelSize);
         img.classList.add('img-full');
         cellDiv.appendChild(img);
 
-      } else if (targetDisplayMode === "name") {
+      } else if (targetDisplayMode === "label") {
         // Label mode
-        const label = this.createLabel(cellId, cellName, cellBackgroundColor, cellNameSize);
+        const label = this.createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize);
         label.classList.add('label-full');
         cellDiv.appendChild(label);
 
       } else {
         // Image and label mode
-        const img = this.createImage(cellId, cellName, cellIconUrl, cellBackgroundColor, cellNameSize);
+        const img = this.createImage(cellId, cellLabel, cellIconUrl, cellBackgroundColor, cellLabelColor, cellLabelSize);
         img.classList.add('img-half');
-        const label = this.createLabel(cellId, cellName, cellBackgroundColor, cellNameSize);
+        const label = this.createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize);
         label.classList.add('label-half');
         cellDiv.appendChild(img);
         cellDiv.appendChild(label);
@@ -265,13 +266,14 @@ class CarrouselCard extends HTMLElement {
     this.shadowRoot.appendChild(card);
   }
   
-  createImage(cellId, cellName, cellIconUrl, cellBackgroundColor, cellNameSize) {
+  createImage(cellId, cellLabel, cellIconUrl, cellBackgroundColor, cellLabelColor, cellLabelSize) {
+    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Creating image '${cellIconUrl}' for cell '${cellId}'`));
     const img = document.createElement("img");
     img.className = "carrousel-img";
     const targetCellIconUrl = cellIconUrl ? (this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl)) : "";
     img.addEventListener('error', () => {
       // When image sources fails to load
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL:${targetCellIconUrl} for cell:`, (cellName || cellId)));
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL:${targetCellIconUrl} for cell '${cellId}'`));
     
       // Hide image
       img.style.display = 'none';
@@ -284,7 +286,7 @@ class CarrouselCard extends HTMLElement {
       if (!label) {
     
         // Create a new label inside the cell and display it
-        label = this.createLabel(cellId, cellName, cellBackgroundColor, cellNameSize);
+        label = this.createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize);
         cellDiv.appendChild(label);
       }
       
@@ -293,18 +295,20 @@ class CarrouselCard extends HTMLElement {
       label.classList.add('label-full');
     });
     img.src = targetCellIconUrl;
-    img.alt = cellName || cellId;
+    img.alt = cellLabel;
     
     if (cellBackgroundColor) img.style.backgroundColor = cellBackgroundColor;
     return img;
   }
 
-  createLabel(cellId, cellName, cellBackgroundColor, cellNameSize) {
+  createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize) {
+    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Creating label '${cellLabel}' for cell '${cellId}'`));
     const label = document.createElement("div");
     label.className = "carrousel-label";
-    label.textContent = cellName || cellId;
+    label.textContent = cellLabel;
     if (cellBackgroundColor) label.style.backgroundColor = cellBackgroundColor;
-    if (cellNameSize && this.isFiniteNumber(cellNameSize) && Number(value) > 0) label.style.fontSize = cellNameSize + 'px';
+    if (cellLabelColor) label.style.color = cellLabelColor;
+    if (cellLabelSize && this.isFiniteNumber(cellLabelSize) && Number(value) > 0) label.style.fontSize = cellLabelSize + 'px';
     return label;
   }
 
@@ -326,7 +330,8 @@ class CarrouselCard extends HTMLElement {
     this.hapticFeedback();
   }
 
-  getDisplayMode(cellDisplayMode) {
+  getDisplayMode(cellDisplayMode, cellId) {
+    const defaultDisplayMode = 'image';
     let targetDisplayMode = null;
     if (cellDisplayMode) {
       // Lowerize for equality comparizons
@@ -334,7 +339,7 @@ class CarrouselCard extends HTMLElement {
       if (this.cellImageModes.has(loweredDisplayMode)) {
         targetDisplayMode = "image";
       } else if (this.cellLabelModes.has(loweredDisplayMode)) {
-        targetDisplayMode = "name";
+        targetDisplayMode = "label";
       } else if (this.cellMixedModes.has(loweredDisplayMode)) {
         targetDisplayMode = "mixed";
       } else {
@@ -355,17 +360,19 @@ class CarrouselCard extends HTMLElement {
       }
       
       // Invalid cellDisplayMode specified by user: warn it
-      if (targetDisplayMode) {
-        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown display mode ${cellDisplayMode}: defaulting to 'image'`));
-        targetDisplayMode = "image";
+      if (!targetDisplayMode) {
+        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
+        targetDisplayMode = defaultDisplayMode;
       }
     }
     
     // No cellDisplayMode specified by user: defaulting silently
-    if (targetDisplayMode) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`No display mode provided: defaulting to 'image'`));
-      targetDisplayMode = "image";
+    if (!targetDisplayMode) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`No display mode provided for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
+      targetDisplayMode = defaultDisplayMode;
     }
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Display mode set to '${targetDisplayMode}' for cell '${cellId}' (user configured mode:'${cellDisplayMode}')`));
+    return targetDisplayMode;
   }
 
   isFiniteNumber(value) {
