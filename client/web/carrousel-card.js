@@ -343,8 +343,10 @@ class CarrouselCard extends HTMLElement {
           const displayModeTwo = match[2];
 
           // Both labels matches one then the other display mode: mixed mode
-          if ((this.cellImageModes.has(displayModeOne) && this.cellLabelModes.has(displayModeTwo) ||
-              (this.cellLabelModes.has(displayModeOne) && this.cellImageModes.has(displayModeTwo)) {
+          if (
+              (this.cellImageModes.has(displayModeOne) && this.cellLabelModes.has(displayModeTwo)) ||
+              (this.cellLabelModes.has(displayModeOne) && this.cellImageModes.has(displayModeTwo))
+             ) {
             targetDisplayMode = "mixed";
           }
         }
