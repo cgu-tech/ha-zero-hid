@@ -186,6 +186,9 @@ class CarrouselCard extends HTMLElement {
         width: 90%;
         height: 90%;
         border-radius: 4px;
+        white-space: normal;       /* allows wrapping */
+        word-wrap: break-word;     /* allows breaking long words */
+        overflow-wrap: break-word; /* better support for word breaking */
       }
     `;
     this.shadowRoot.appendChild(style);
