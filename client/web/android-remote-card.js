@@ -28,6 +28,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.keyboardConfig = {};
     this.mouseConfig = {};
     this.activitiesConfig = {};
+    this.autoScroll = true;
 
     // Layout loading flags
     this._layoutReady = false;
@@ -423,6 +424,13 @@ class AndroidRemoteCard extends HTMLElement {
       this.layoutUrl = config['layout_url'];
     } else {
       this.layoutUrl = `${Globals.DIR_LAYOUTS}/remote/${this.layout}.json`;
+    }
+
+    // Set auto-scroll behavior
+    if (config['auto_scroll']) {
+      this.autoScroll = config['auto_scroll'];
+    } else {
+      this.autoScroll = true;
     }
 
     // Set keyboard configs
@@ -1254,6 +1262,13 @@ class AndroidRemoteCard extends HTMLElement {
           foldableContent.setConfig(foldableContentConfig);
           foldableContent.hass = this._hass;
           foldable.appendChild(foldableContent);
+
+          // Automatically scroll-down to the added foldable (if autoscroll enabled)
+          if (this.autoScroll) {
+            setTimeout(() => {
+              foldable.scrollIntoView({ behavior: 'smooth' });
+            }, 0);
+          }
         });
       }
     };
