@@ -222,6 +222,8 @@ class CarrouselCard extends HTMLElement {
       cellDiv._keyData = { config: cell };
 
       // Retrieve cell user configurations
+      const cellId = id;
+      const cellName = cell.name;
       const cellDisplayMode = cell["display-mode"];
       const cellIconUrl = cell["icon-url"];
       const cellBackgroundColor = cell["background-color"];
@@ -231,7 +233,7 @@ class CarrouselCard extends HTMLElement {
       // Set cell content (image, label)
       if (targetDisplayMode === "image") {
         // Image mode
-        const img = this.createImage(id, cell.name, cellIconUrl, cellBackgroundColor, cellNameSize);
+        const img = this.createImage(cellId, cellName, cellIconUrl, cellBackgroundColor, cellNameSize);
         img.classList.add('img-full');
         cellDiv.appendChild(img);
 
@@ -243,7 +245,7 @@ class CarrouselCard extends HTMLElement {
 
       } else {
         // Image and label mode
-        const img = this.createImage(id, cell.name, cellIconUrl, cellBackgroundColor, cellNameSize);
+        const img = this.createImage(cellId, cellName, cellIconUrl, cellBackgroundColor, cellNameSize);
         img.classList.add('img-half');
         const label = this.createLabel(cellId, cellName, cellBackgroundColor, cellNameSize);
         label.classList.add('label-half');
