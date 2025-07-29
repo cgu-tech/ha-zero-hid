@@ -179,7 +179,11 @@ class CarrouselCard extends HTMLElement {
       }
 
       .carrousel-label {
-        padding: 4px;
+        display: flex;
+        justify-content: center; /* Horizontal centering */
+        align-items: center;     /* Vertical centering */
+        width: 90%;
+        height: 90%;
       }
     `;
     this.shadowRoot.appendChild(style);
@@ -193,18 +197,26 @@ class CarrouselCard extends HTMLElement {
       cellDiv.id = id;
 
       const cellIconUrl = cell["icon-url"];
+      let cellElement = null;
       if (cellIconUrl) {
         const img = document.createElement("img");
+        const img.className = "carrousel-img";
         const targetCellIconUrl = this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl);
         img.src = targetCellIconUrl;
         img.alt = cell.name || id;
-        cellDiv.appendChild(img);
+        cellElement = img;
       } else {
         const label = document.createElement("div");
         label.className = "carrousel-label";
         label.textContent = cell.name || id;
-        cellDiv.appendChild(label);
+        cellElement = label;
       }
+      
+      const cellBackgroundColor = cell["background-color"];
+      if (cellBackgroundColor) {
+        cellElement.style.backgroundColor = cellBackgroundColor;
+      }
+      cellDiv.appendChild(cellElement);
       
       cellDiv._keyData = { config: cell };
       
