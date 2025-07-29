@@ -801,7 +801,7 @@ class AndroidRemoteCard extends HTMLElement {
       height: 100%;
       width: auto;
       display: block;
-      transform: scale(0.4, 0.4);
+      transform: scale(0.1, 0.1);
     }
 
     #mouse-icon {
