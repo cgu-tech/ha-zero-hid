@@ -5,9 +5,9 @@ CURRENT_DIR="$(pwd)"
 ZERO_HID_REPO_BRANCH="${1:-main}"
 
 # Configurations
-HAOS_CONFIG_DIR = "/config"
-HAOS_CUSTOM_COMPONENTS_DIR = "${HAOS_CONFIG_DIR}/custom_components"
-HAOS_RESOURCES_DIR = "${HAOS_CONFIG_DIR}/www"
+HAOS_CONFIG_DIR="/config"
+HAOS_CUSTOM_COMPONENTS_DIR="${HAOS_CONFIG_DIR}/custom_components"
+HAOS_RESOURCES_DIR="${HAOS_CONFIG_DIR}/www"
 HAOS_CONFIG_FILE="${HAOS_CONFIG_DIR}/configuration.yaml"
 
 ZERO_HID_REPO_URL="https://github.com/cgu-tech/zero-hid.git"
