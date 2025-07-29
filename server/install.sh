@@ -63,7 +63,7 @@ cleanup() {
     rm -rf "${HA_ZERO_HID_SERVER_DIR}"
 
     # Cleaning up component custom config file when explicitely required
-    if [ "${should_delete_config}" != "true" ]; then
+    if [ "${should_delete_config}" == "true" ]; then
       echo "Cleaning ${HA_ZERO_HID_SERVER_NAME} config file (${HA_ZERO_HID_CONFIG_FILE})..."
       rm "${HA_ZERO_HID_CONFIG_FILE}" >/dev/null 2>&1 || true
     fi
@@ -71,6 +71,15 @@ cleanup() {
     # Cleaning up component dependencies
     echo "Cleaning ${HA_ZERO_HID_SERVER_NAME} zero-hid dependency (${ZERO_HID_REPO_DIR})..."
     rm -rf "${ZERO_HID_REPO_DIR}" >/dev/null 2>&1 || true
+}
+
+copy_dir_content() {
+    local SRC_DIR_PATH="${1}"
+    local DST_DIR_PATH="${2}"
+
+    shopt -s dotglob
+    cp -R "${SRC_DIR_PATH}"/* "${DST_DIR_PATH}"
+    shopt -u dotglob
 }
 
 # Check if current user is root
@@ -138,12 +147,12 @@ install() {
     # Installing raw server files
     echo "Installing ${HA_ZERO_HID_SERVER_NAME} server..."
     mkdir -p "${HA_ZERO_HID_SERVER_DIR}"
-    cp -R "${HA_ZERO_HID_REPO_SERVER_DIR}" "${HA_ZERO_HID_SERVER_DIR}"
+    copy_dir_content "${HA_ZERO_HID_REPO_SERVER_DIR}" "${HA_ZERO_HID_SERVER_DIR}"
 
     # Installing raw server service files
     echo "Installing ${HA_ZERO_HID_SERVER_NAME} server service..."
     mkdir -p "${OS_SERVICE_DIR}"
-    cp -R "${HA_ZERO_HID_REPO_SERVICE_DIR}" "${OS_SERVICE_DIR}"
+    copy_dir_content "${HA_ZERO_HID_REPO_SERVICE_DIR}" "${OS_SERVICE_DIR}"
 
     # Security: create server self-signed certificate
     #   server.key – private key
@@ -154,7 +163,7 @@ install() {
     git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
 
     # Update system and install dependencies
-    echo "Skip policy: ${OS_SKIP_UPDATE}"
+    echo "Skip OS update policy: ${OS_SKIP_UPDATE}"
     if [ -z "${OS_SKIP_UPDATE}" ]; then
         echo "Updating system..."
         apt-get update
@@ -178,7 +187,7 @@ install() {
     # Install Python dependency "zero-hid" (custom)
     # TODO: incorporate sources directly instead of building a development python dependency
     echo "Installing python zero-hid dependency..."
-    cp "${ZERO_HID_REPO_DIR}" "${HA_ZERO_HID_SERVER_DIR}"
+    cp -R "${ZERO_HID_REPO_DIR}" "${HA_ZERO_HID_SERVER_DIR}"
     pip install --editable "${HA_ZERO_HID_SERVER_DIR}/zero-hid"
 
     # Create server dedicated OS user
