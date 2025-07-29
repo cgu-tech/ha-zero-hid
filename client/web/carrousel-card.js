@@ -210,9 +210,13 @@ class CarrouselCard extends HTMLElement {
           // Hide image
           img.style.display = 'none';
 
-          // Show alternative label
-          const label = img.parentElement.querySelector('.carrousel-label');
-          if (label) label.hidden = false;
+          // Create and display alternative label
+          const cellDiv = img.parentElement;
+          const label = document.createElement("div");
+          label.className = "carrousel-label";
+          label.textContent = cell.name || id;
+          if (cellBackgroundColor) label.style.backgroundColor = cellBackgroundColor;
+          cellDiv.appendChild(label);
         });
         img.src = targetCellIconUrl;
         img.alt = cell.name || id;
@@ -220,15 +224,6 @@ class CarrouselCard extends HTMLElement {
         if (cellBackgroundColor) img.style.backgroundColor = cellBackgroundColor;
         cellDiv.appendChild(img);
       }
-      
-      const label = document.createElement("div");
-      label.className = "carrousel-label";
-      label.textContent = cell.name || id;
-      label.hidden = (cellIconUrl) ? true : false;
-
-      if (cellBackgroundColor) label.style.backgroundColor = cellBackgroundColor;
-      cellDiv.appendChild(label);
-      
       cellDiv._keyData = { config: cell };
       
       this.addPointerClickListener(cellDiv, (e) => {
