@@ -166,6 +166,8 @@ class CarrouselCard extends HTMLElement {
         height: ${this.cellsHeight};
         margin-left: 4px;
         margin-right: 4px;
+        margin-top: 4px;
+        margin-bottom: 4px;
         background: #2c2c2c;
         border-radius: 8px;
         overflow: hidden;
@@ -184,10 +186,12 @@ class CarrouselCard extends HTMLElement {
       
       .carrousel-cell img.img-half {
         border-radius: 4px 4px 0 0; /* top-left, top-right, bottom-right, bottom-left */
+        height: 60%;
       }
       
       .carrousel-cell img.img-full {
         border-radius: 4px;
+        height: 90%;
       }
 
       .carrousel-label {
@@ -203,10 +207,12 @@ class CarrouselCard extends HTMLElement {
       
       .carrousel-label.label-half {
         border-radius: 0 0 4px 4px; /* top-left, top-right, bottom-right, bottom-left */
+        height: 30%;
       }
       
       .carrousel-label.label-full {
         border-radius: 4px;
+        height: 90%;
       }
     `;
     this.shadowRoot.appendChild(style);
@@ -267,7 +273,7 @@ class CarrouselCard extends HTMLElement {
   }
   
   createImage(cellId, cellLabel, cellIconUrl, cellBackgroundColor, cellLabelColor, cellLabelSize) {
-    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Creating image '${cellIconUrl}' for cell '${cellId}'`));
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating image '${cellIconUrl}' for cell '${cellId}'`));
     const img = document.createElement("img");
     img.className = "carrousel-img";
     const targetCellIconUrl = cellIconUrl ? (this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl)) : "";
@@ -302,13 +308,13 @@ class CarrouselCard extends HTMLElement {
   }
 
   createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize) {
-    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Creating label '${cellLabel}' for cell '${cellId}'`));
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating label '${cellLabel}' for cell '${cellId}'`));
     const label = document.createElement("div");
     label.className = "carrousel-label";
     label.textContent = cellLabel;
     if (cellBackgroundColor) label.style.backgroundColor = cellBackgroundColor;
     if (cellLabelColor) label.style.color = cellLabelColor;
-    if (cellLabelSize && this.isFiniteNumber(cellLabelSize) && Number(value) > 0) label.style.fontSize = cellLabelSize + 'px';
+    if (cellLabelSize && this.isFiniteNumber(cellLabelSize) && Number(cellLabelSize) > 0) label.style.fontSize = cellLabelSize + 'px';
     return label;
   }
 
