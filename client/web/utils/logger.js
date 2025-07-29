@@ -1,4 +1,4 @@
-import { Globals } from './utils/globals.js';
+import { Globals } from './globals.js';
 
 // Define logger helper class
 export class Logger {
