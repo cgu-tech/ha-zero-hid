@@ -175,6 +175,7 @@ class CarrouselCard extends HTMLElement {
       .carrousel-cell img {
         width: 90%;
         height: 90%;
+        border-radius: 4px;
         object-fit: contain;
       }
 
@@ -184,6 +185,7 @@ class CarrouselCard extends HTMLElement {
         align-items: center;     /* Vertical centering */
         width: 90%;
         height: 90%;
+        border-radius: 4px;
       }
     `;
     this.shadowRoot.appendChild(style);
@@ -196,27 +198,36 @@ class CarrouselCard extends HTMLElement {
       cellDiv.className = "carrousel-cell";
       cellDiv.id = id;
 
+      const cellBackgroundColor = cell["background-color"];
       const cellIconUrl = cell["icon-url"];
-      let cellElement = null;
       if (cellIconUrl) {
         const img = document.createElement("img");
         img.className = "carrousel-img";
         const targetCellIconUrl = this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl);
+        img.addEventListener('error', () => {
+          if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL:${targetCellIconUrl} for cell:`, (cell.name || id)));
+
+          // Hide image
+          img.style.display = 'none';
+
+          // Show alternative label
+          const label = img.parentElement.querySelector('.carrousel-label');
+          if (label) label.hidden = false;
+        });
         img.src = targetCellIconUrl;
         img.alt = cell.name || id;
-        cellElement = img;
-      } else {
-        const label = document.createElement("div");
-        label.className = "carrousel-label";
-        label.textContent = cell.name || id;
-        cellElement = label;
+
+        if (cellBackgroundColor) img.style.backgroundColor = cellBackgroundColor;
+        cellDiv.appendChild(img);
       }
       
-      const cellBackgroundColor = cell["background-color"];
-      if (cellBackgroundColor) {
-        cellElement.style.backgroundColor = cellBackgroundColor;
-      }
-      cellDiv.appendChild(cellElement);
+      const label = document.createElement("div");
+      label.className = "carrousel-label";
+      label.textContent = cell.name || id;
+      label.hidden = (cellIconUrl) ? true : false;
+
+      if (cellBackgroundColor) label.style.backgroundColor = cellBackgroundColor;
+      cellDiv.appendChild(label);
       
       cellDiv._keyData = { config: cell };
       
