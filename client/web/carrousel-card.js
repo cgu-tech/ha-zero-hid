@@ -113,10 +113,8 @@ class CarrouselCard extends HTMLElement {
             if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found image URL:${cellIconUrl}`, id));
           } else {
             // Local image requested: create the relative URL dynamically
-            const iconName = cellIconUrl;
-            const newIconUrl = `${Globals.DIR_ICONS}/${iconName}`;
-            this.cells[id]["icon-url"] = newIconUrl;
-            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found local image:${iconName}, will set it to relative URL:${newIconUrl}`, id));
+            const newIconUrl = this.getLocalIconUrl(cellIconUrl);
+            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found local image:${cellIconUrl}, will set it to relative URL:${newIconUrl}`, id));
           }
         }
       }
@@ -194,9 +192,11 @@ class CarrouselCard extends HTMLElement {
       cellDiv.className = "carrousel-cell";
       cellDiv.id = id;
 
-      if (cell["icon-url"]) {
+      const cellIconUrl = cell["icon-url"];
+      if (cellIconUrl) {
         const img = document.createElement("img");
-        img.src = cell["icon-url"];
+        const targetCellIconUrl = this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl);
+        img.src = targetCellIconUrl;
         img.alt = cell.name || id;
         cellDiv.appendChild(img);
       } else {
@@ -235,6 +235,10 @@ class CarrouselCard extends HTMLElement {
     }
     
     this.hapticFeedback();
+  }
+
+  getLocalIconUrl(str) {
+    return `${Globals.DIR_ICONS}/${str}`;
   }
 
   isValidUrl(str) {
