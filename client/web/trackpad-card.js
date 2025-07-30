@@ -18,8 +18,7 @@ class TrackpadCard extends HTMLElement {
     this.loglevel = 'warn';
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
-    this.haptic = false;
-    this.eventManager = new EventManager(this.logger, this.haptic);
+    this.eventManager = new EventManager(this.logger);
     this.buttonsMode = 'left-middle-right';
     
     // Layout loading flags
@@ -85,7 +84,7 @@ class TrackpadCard extends HTMLElement {
       
       // Set haptic feedback
       if (config['haptic']) {
-        this.haptic = config['haptic'];
+        this.eventManager.setHaptic(config['haptic']);
       }
       
       // Set layout buttons

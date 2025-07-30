@@ -23,8 +23,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.loglevel = 'warn';
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
-    this.haptic = false;
-    this.eventManager = new EventManager(this.logger, this.haptic);
+    this.eventManager = new EventManager(this.logger);
     this.layout = 'US';
     this.layoutUrl = `${Globals.DIR_LAYOUTS}/android/${this.layout}.json`;
     this.fontscale = 1.0;
@@ -88,7 +87,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Set haptic feedback
     if (config['haptic']) {
-      this.haptic = config['haptic'];
+      this.eventManager.setHaptic(config['haptic']);
     }
 
     // Set layout
@@ -769,7 +768,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.handleKeyPressInternal(hass, btn);
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
-    this.hapticFeedback();
+    this.eventManager.hapticFeedback();
   }
 
   handleKeyPressInternal(hass, btn) {
@@ -840,7 +839,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.handleKeyReleaseInternal(hass, btn);
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
-    this.hapticFeedback();
+    this.eventManager.hapticFeedback();
   }
 
   // The effective handleKeyRelease internal logic

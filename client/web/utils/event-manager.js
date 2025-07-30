@@ -3,9 +3,9 @@ import { Logger } from './logger.js';
 
 // Define EventManager helper class
 export class EventManager {
-  constructor(logger, haptic) {
+  constructor(logger) {
     this.setLogger(logger);
-    this.setHaptic(haptic);
+    this.setHaptic(false);
   }
   
   setLogger(logger) {
