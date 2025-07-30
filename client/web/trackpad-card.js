@@ -1,5 +1,6 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
+import { EventManager } from './utils/event-manager.js';
 
 console.info("Loading Trackpad Card");
 
@@ -18,6 +19,7 @@ class TrackpadCard extends HTMLElement {
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.haptic = false;
+    this.eventManager = new EventManager(this.logger, this.haptic);
     this.buttonsMode = 'left-middle-right';
     
     // Layout loading flags
@@ -373,7 +375,7 @@ class TrackpadCard extends HTMLElement {
 
  
     // Track scrollIcon toggle
-    this.addPointerDownListener(scrollIcon, (e) => {
+    this.eventManager.addPointerDownListener(scrollIcon, (e) => {
       e.stopPropagation(); // Prevents underneath trackpad click
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scrollIcon pointerDown(e):", e));
       this.isToggleClick = true;
@@ -387,7 +389,7 @@ class TrackpadCard extends HTMLElement {
       el.classList.add("zone", zone);
       el.dataset.zone = zone;
 
-      this.addPointerDownListener(el, (e) => {
+      this.eventManager.addPointerDownListener(el, (e) => {
         e.stopImmediatePropagation();
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll pointerDown(e):", e));
 
@@ -398,17 +400,17 @@ class TrackpadCard extends HTMLElement {
         // Setup repeated scrolls for long-press of scroll button
         this.scrollsClick.set(e.pointerId, { "event": e , "long-scroll-timeout": this.addLongScrollTimeout(zone, e, this.triggerLongScroll) } );
       });
-      this.addPointerUpListener(el, (e) => {
+      this.eventManager.addPointerUpListener(el, (e) => {
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll pointerUp(e):", e));
         this.clearLongScrollTimeout(e);
         this.scrollsClick.delete(e.pointerId);
       });
-      this.addPointerCancelListener(el, (e) => {
+      this.eventManager.addPointerCancelListener(el, (e) => {
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll Cancel(e):", e));
         this.clearLongScrollTimeout(e);
         this.scrollsClick.delete(e.pointerId);
       });
-      this.addPointerLeaveListener(el, (e) => {
+      this.eventManager.addPointerLeaveListener(el, (e) => {
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll Leave(e):", e));
         this.clearLongScrollTimeout(e);
         this.scrollsClick.delete(e.pointerId);
@@ -420,7 +422,7 @@ class TrackpadCard extends HTMLElement {
       this.scrollContainer.appendChild(el);
     }
 
-    this.addPointerUpListener(scrollIcon, (e) => {
+    this.eventManager.addPointerUpListener(scrollIcon, (e) => {
       e.stopPropagation(); // Prevents underneath trackpad click
       if (this.isToggleClick) {
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scrollIcon pointerUp(e):", e));
@@ -436,7 +438,7 @@ class TrackpadCard extends HTMLElement {
     trackpad.appendChild(scrollIcon);
 
     // Track touches
-    this.addPointerDownListener(trackpad, (e) => {
+    this.eventManager.addPointerDownListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("touches pointerDown(e):", e));
       this.isToggleClick = false;
       this.pointersClick.set(e.pointerId, { "move-detected": false, "event": e , "long-click-timeout": this.addLongClickTimeout(e) } );
@@ -444,7 +446,7 @@ class TrackpadCard extends HTMLElement {
       this.pointersEnd.set(e.pointerId);
     });
 
-    this.addPointerUpListener(trackpad, (e) => {
+    this.eventManager.addPointerUpListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("touches pointerUp(e):", e));
       this.isToggleClick = false;
       const clickEntry = this.pointersClick.get(e.pointerId);
@@ -473,7 +475,7 @@ class TrackpadCard extends HTMLElement {
       }
     });
 
-    this.addPointerCancelListener(trackpad, (e) => {
+    this.eventManager.addPointerCancelListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerCancel(e):", e));
       this.clearLongClickTimeout(e);
       this.pointersEnd.delete(e.pointerId);
@@ -481,7 +483,7 @@ class TrackpadCard extends HTMLElement {
       this.pointersClick.delete(e.pointerId);
     });
 
-    this.addPointerLeaveListener(trackpad, (e) => {
+    this.eventManager.addPointerLeaveListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerLeave(e):", e));
       this.clearLongClickTimeout(e);
       this.pointersEnd.delete(e.pointerId);
@@ -489,7 +491,7 @@ class TrackpadCard extends HTMLElement {
       this.pointersClick.delete(e.pointerId);
     });
 
-    this.addPointerMoveListener(trackpad, (e) => {
+    this.eventManager.addPointerMoveListener(trackpad, (e) => {
       const clickEntry = this.pointersClick.get(e.pointerId);
       if (clickEntry && !clickEntry["move-detected"]) {
         // No move detected as-of now:
@@ -531,10 +533,10 @@ class TrackpadCard extends HTMLElement {
       const createButton = (serviceCall, className) => {
         const btn = document.createElement("button");
         btn.className = `trackpad-btn ${className}`;
-        this.addPointerDownListener(btn, () => {
+        this.eventManager.addPointerDownListener(btn, () => {
           this.sendMouse(serviceCall, {});
         });
-        this.addPointerUpListener(btn, () => {
+        this.eventManager.addPointerUpListener(btn, () => {
           this.sendMouseClickRelease();
         });
         return btn;
@@ -677,19 +679,19 @@ class TrackpadCard extends HTMLElement {
     switch (zone) {
       case "top":
         this.sendMouseScroll(0, 1);
-        this.moveHapticFeedback();
+        this.eventManager.hapticFeedbackShort();
         break;
       case "bottom":
         this.sendMouseScroll(0, -1);
-        this.moveHapticFeedback();
+        this.eventManager.hapticFeedbackShort();
         break;
       case "left":
         this.sendMouseScroll(-1, 0);
-        this.moveHapticFeedback();
+        this.eventManager.hapticFeedbackShort();
         break;
       case "right":
         this.sendMouseScroll(1, 0);
-        this.moveHapticFeedback();
+        this.eventManager.hapticFeedbackShort();
         break;
     }
   }
@@ -748,7 +750,7 @@ class TrackpadCard extends HTMLElement {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerLeftClick(e):", e));
     this.sendMouseClickLeft();
     this.sendMouseClickRelease();
-    this.hapticFeedback();
+    this.eventManager.hapticFeedback();
   }
   
   handleSinglePointerLeftDblClick(e) {
@@ -757,7 +759,7 @@ class TrackpadCard extends HTMLElement {
     this.sendMouseClickRelease();
     this.sendMouseClickLeft();
     this.sendMouseClickRelease();
-    this.longClickHapticFeedback();
+    this.eventManager.hapticFeedbackLong();
   }
 
   handleSinglePointerMove(e) {
@@ -785,7 +787,7 @@ class TrackpadCard extends HTMLElement {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this.sendMouseMove(dx, dy);
-      this.moveHapticFeedback();
+      this.eventManager.hapticFeedbackShort();
     }
     return updateStartPoint;
   }
@@ -817,7 +819,7 @@ class TrackpadCard extends HTMLElement {
       dyAdjusted = -dyAdjusted;
 
       this.sendMouseScroll(dxAdjusted, dyAdjusted);
-      this.moveHapticFeedback();
+      this.eventManager.hapticFeedbackShort();
     }
     return updateStartPoint;
   }
@@ -838,18 +840,8 @@ class TrackpadCard extends HTMLElement {
     this.sendMouse("scroll", { "x": dx, "y": dy, });
   }
   
-  sendMouse(service, args) {
-    this._hass.callService(Globals.COMPONENT_NAME, service, args);
-  }
-
-  // vibrate the device like an haptic feedback
-  longClickHapticFeedback() {
-    if (this.haptic) this.vibrateDevice(20);
-  }
-
-  // vibrate the device like an haptic feedback
-  moveHapticFeedback() {
-    if (this.haptic) this.vibrateDevice(5);
+  sendMouse(serviceName, serviceArgs) {
+    this.eventManager.callIntegration(this._hass, serviceName, serviceArgs);
   }
 
   getTrackpadMode() {
@@ -897,168 +889,6 @@ class TrackpadCard extends HTMLElement {
     const dxRound = Math.round(dx / count);
     const dyRound = Math.round(dy / count);
     return { dx: dxRound, dy: dyRound };
-  }
-
-  addPointerDownListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
-  addPointerEnterListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
-  addPointerOverListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
-  addPointerMoveListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
-  addPointerLeaveListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
-  addPointerUpListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
-  addPointerCancelListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
-  addPointerOutListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
-  addPointerClickListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
-  addPointerDblClickListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
-  addPointerContextmenuListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
-
-  // Add the available event listener using 
-  // - supported event first (when available) 
-  // - then falling back to legacy event (when available)
-  addAvailableEventListener(target, callback, options, events) {
-    const eventName = this.getSupportedEventListener(target, events);
-    if (eventName) {
-      this.addGivenEventListener(target, callback, options, eventName);
-    }
-    return eventName;
-  }
-
-  // Add the specified event listener
-  addGivenEventListener(target, callback, options, eventName) {
-    if (this.isTargetListenable(target)) {
-      if (options) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on target with options:`, target, options));
-        target.addEventListener(eventName, callback, options);
-      } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on target:`, target));
-        target.addEventListener(eventName, callback);
-      }
-    }
-  }
-
-  removePointerDownListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
-  removePointerEnterListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
-  removePointerOverListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
-  removePointerMoveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
-  removePointerLeaveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
-  removePointerUpListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
-  removePointerCancelListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
-  removePointerOutListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
-  removePointerClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
-  removePointerDblClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
-  removePointerContextmenuListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
-
-  // Remove the available event listener using 
-  // - supported event first (when available) 
-  // - then falling back to legacy event (when available)
-  removeAvailableEventListener(target, callback, options, abstractEventName) {
-    const eventName = this.getSupportedEventListener(target, abstractEventName);
-    if (eventName) {
-      this.removeGivenEventListener(target, callback, options, eventName);
-    }
-    return eventName;
-  }
-
-  // Remove the specified event listener
-  removeGivenEventListener(target, callback, options, eventName) {
-    if (this.isTargetListenable(target)) {
-      if (options) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on target with options:`, target, options));
-        target.removeEventListener(eventName, callback, options);
-      } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on target:`, target));
-        target.removeEventListener(eventName, callback);
-      }
-    }
-  }
-
-  // Checks whether or not target is listenable
-  isTargetListenable(target) {
-    if (!target || typeof target.addEventListener !== 'function') {
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Invalid target ${target} element provided to isTargetListenable`));
-      return false;
-    }
-    return true;
-  }
-
-  // Gets the available event listener using 
-  // - supported event first (when available) 
-  // - then falling back to legacy event (when available)
-  getSupportedEventListener(target, abstractEventName) {
-    if (!abstractEventName) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
-      return null;
-    }
-    
-    // Init events mapping and cache when needed
-    if (!this.eventsMap) {
-      
-      // Mapping for "virtual" event names with their "real" event names counterparts 
-      // that might be supported by device - or not (by preference order)
-      this.eventsMap = new Map();
-      this.eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
-      this.eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
-      this.eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
-      this.eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
-      this.eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
-      this.eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
-      this.eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
-      this.eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
-      this.eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
-      this.eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
-      this.eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
-      
-      // Cache for prefered listeners (lookup speedup)
-      this.preferedEventsNames = new Map();
-    }
-
-    // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
-    const preferedEventName = this.preferedEventsNames.get(abstractEventName);
-    if (preferedEventName) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache HIT for event ${abstractEventName}: found cached prefered event ${preferedEventName}`));
-      return preferedEventName;
-    }
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache MISS for event ${abstractEventName}: no supported prefered event cached`));
-
-    // When no prefered concrete js event, then try to retrieve mapped events
-    const mappedEvents = this.eventsMap.get(abstractEventName);
-    if (!mappedEvents) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Unknwon abstractEventName ${abstractEventName}`));
-      return null;
-    }
-
-    // Check for supported event into all mapped events
-    for (const mappedEvent of mappedEvents) {
-      if (this.isEventSupported(target, mappedEvent)) {
-
-        // First supported event found: cache-it as prefered concrete js event
-        this.preferedEventsNames.set(abstractEventName, mappedEvent);
-
-        // Return prefered concrete js event
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache UPDATE for event ${abstractEventName}: set to prefered event ${mappedEvent}`));
-        return mappedEvent;
-      }
-    }
-
-    if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`No concrete js event supported for ${abstractEventName}`));
-    return null;    
-  }
-
-  isEventSupported(target, eventName) {
-    return (typeof target[`on${eventName}`] === "function" || `on${eventName}` in target);
-  }
-
-  // vibrate the device like an haptic feedback
-  hapticFeedback() {
-    if (this.haptic) this.vibrateDevice(10);
-  }
-
-  // vibrate the device during specified duration (in milliseconds)
-  vibrateDevice(duration) {
-    if (navigator.vibrate) {
-      navigator.vibrate(duration);
-    } else {
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug('Vibration not supported on this device.'));
-    }
   }
 
 }
