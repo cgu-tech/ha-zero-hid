@@ -164,8 +164,8 @@ class CarrouselCard extends HTMLElement {
         align-items: center;
         width: ${this.cellsWidth};
         height: ${this.cellsHeight};
-        margin-left: 4px;
-        margin-right: 4px;
+        margin-left: 2px;
+        margin-right: 2px;
         margin-top: 4px;
         margin-bottom: 4px;
         background: #2c2c2c;
@@ -178,41 +178,52 @@ class CarrouselCard extends HTMLElement {
         cursor: pointer;
       }
 
-      .carrousel-cell img {
+      .carrousel-cell-content {
+        display: inline-flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 4px;
+        overflow: hidden;
+        text-align: center;
+        color: white;
+        font-size: 14px;
+        box-sizing: border-box;
         width: 90%;
         height: 90%;
+      }
+
+      .carrousel-cell img {
+        width: 100%;
+        height: 100%;
         object-fit: contain;
       }
       
       .carrousel-cell img.img-half {
-        border-radius: 4px 4px 0 0; /* top-left, top-right, bottom-right, bottom-left */
-        height: 60%;
+        height: 70%;
       }
       
       .carrousel-cell img.img-full {
-        border-radius: 4px;
-        height: 90%;
+        height: 100%;
       }
 
       .carrousel-label {
         display: flex;
         justify-content: center; /* Horizontal centering */
         align-items: center;     /* Vertical centering */
-        width: 90%;
-        height: 90%;
+        width: 100%;
+        height: 100%;
         white-space: normal;       /* allows wrapping */
         word-wrap: break-word;     /* allows breaking long words */
         overflow-wrap: break-word; /* better support for word breaking */
       }
       
       .carrousel-label.label-half {
-        border-radius: 0 0 4px 4px; /* top-left, top-right, bottom-right, bottom-left */
         height: 30%;
       }
       
       .carrousel-label.label-full {
-        border-radius: 4px;
-        height: 90%;
+        height: 100%;
       }
     `;
     this.shadowRoot.appendChild(style);
@@ -235,31 +246,39 @@ class CarrouselCard extends HTMLElement {
       const cellDisplayMode = cell["display-mode"];
       const cellIconUrl = cell["icon-url"];
       const cellBackgroundColor = cell["background-color"];
+      const cellBackground = cell["background"];
       const targetDisplayMode = this.getDisplayMode(cellDisplayMode, cellId);
+
+      // Create cell content
+      const cellContent = document.createElement("div");
+      cellContent.className = "carrousel-cell-content";
+      if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
+      if (cellBackground) cellContent.style.background = cellBackground;
       
-      // Set cell content (image, label)
+      // Set cell inner content (image, label)
       if (targetDisplayMode === "image") {
         // Image mode
-        const img = this.createImage(cellId, cellLabel, cellIconUrl, cellBackgroundColor, cellLabelColor, cellLabelSize);
+        const img = this.createImage(cellId, cellLabel, cellIconUrl, cellLabelColor, cellLabelSize);
         img.classList.add('img-full');
-        cellDiv.appendChild(img);
+        cellContent.appendChild(img);
 
       } else if (targetDisplayMode === "label") {
         // Label mode
-        const label = this.createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize);
+        const label = this.createLabel(cellId, cellLabel, cellLabelColor, cellLabelSize);
         label.classList.add('label-full');
-        cellDiv.appendChild(label);
+        cellContent.appendChild(label);
 
       } else {
         // Image and label mode
-        const img = this.createImage(cellId, cellLabel, cellIconUrl, cellBackgroundColor, cellLabelColor, cellLabelSize);
+        const img = this.createImage(cellId, cellLabel, cellIconUrl, cellLabelColor, cellLabelSize);
         img.classList.add('img-half');
-        const label = this.createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize);
+        const label = this.createLabel(cellId, cellLabel, cellLabelColor, cellLabelSize);
         label.classList.add('label-half');
-        cellDiv.appendChild(img);
-        cellDiv.appendChild(label);
+        cellContent.appendChild(img);
+        cellContent.appendChild(label);
 
       }
+      cellDiv.appendChild(cellContent);
       
       this.addPointerClickListener(cellDiv, (e) => {
         this.handlePointerClick(e, hass, cellDiv);
@@ -272,7 +291,7 @@ class CarrouselCard extends HTMLElement {
     this.shadowRoot.appendChild(card);
   }
   
-  createImage(cellId, cellLabel, cellIconUrl, cellBackgroundColor, cellLabelColor, cellLabelSize) {
+  createImage(cellId, cellLabel, cellIconUrl, cellLabelColor, cellLabelSize) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating image '${cellIconUrl}' for cell '${cellId}'`));
     const img = document.createElement("img");
     img.className = "carrousel-img";
@@ -285,15 +304,15 @@ class CarrouselCard extends HTMLElement {
       img.style.display = 'none';
     
       // Retrieve label with "Name" text as alternative
-      const cellDiv = img.parentElement;
-      let label = cellDiv.querySelector('.carrousel-label');
+      const cellContent = img.parentElement;
+      let label = cellContent.querySelector('.carrousel-label');
       
       // When missing label (because displayMode was set to image for example)
       if (!label) {
     
         // Create a new label inside the cell and display it
-        label = this.createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize);
-        cellDiv.appendChild(label);
+        label = this.createLabel(cellId, cellLabel, cellLabelColor, cellLabelSize);
+        cellContent.appendChild(label);
       }
       
       // Set the "full" class for the label (to make all rounded corners for example)
@@ -303,16 +322,14 @@ class CarrouselCard extends HTMLElement {
     img.src = targetCellIconUrl;
     img.alt = cellLabel;
     
-    if (cellBackgroundColor) img.style.backgroundColor = cellBackgroundColor;
     return img;
   }
 
-  createLabel(cellId, cellLabel, cellBackgroundColor, cellLabelColor, cellLabelSize) {
+  createLabel(cellId, cellLabel, cellLabelColor, cellLabelSize) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating label '${cellLabel}' for cell '${cellId}'`));
     const label = document.createElement("div");
     label.className = "carrousel-label";
     label.textContent = cellLabel;
-    if (cellBackgroundColor) label.style.backgroundColor = cellBackgroundColor;
     if (cellLabelColor) label.style.color = cellLabelColor;
     if (cellLabelSize && this.isFiniteNumber(cellLabelSize) && Number(cellLabelSize) > 0) label.style.fontSize = cellLabelSize + 'px';
     return label;
