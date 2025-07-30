@@ -242,11 +242,8 @@ class CarrouselCard extends HTMLElement {
       // Retrieve cell user configurations
       const cellId = id;
       const cellLabel = cell["label"] || cellId;
-      const cellLabelColor = cell["label-color"];
-      const cellLabelSize = cell["label-size"];
+
       const cellDisplayMode = cell["display-mode"];
-      const cellIconUrl = cell["icon-url"];
-      const cellIconGap = cell["icon-gap"];
       const cellBackgroundColor = cell["background-color"];
       const cellBackground = cell["background"];
       const targetDisplayMode = this.getDisplayMode(cellDisplayMode, cellId);
@@ -254,33 +251,35 @@ class CarrouselCard extends HTMLElement {
       // Create cell content
       const cellContent = document.createElement("div");
       cellContent.className = "carrousel-cell-content";
-      if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
-      if (cellBackground) cellContent.style.background = cellBackground;
-      if (cellIconGap) cellContent.style.padding = cellIconGap;
-      
+
       // Set cell inner content (image, label)
       if (targetDisplayMode === "image") {
         // Image mode
-        const img = this.createImage(cellId, cellLabel, cellIconUrl, cellLabelColor, cellLabelSize);
+        const img = this.createImage(cellId, cellLabel, cell);
         img.classList.add('img-full');
         cellContent.appendChild(img);
 
       } else if (targetDisplayMode === "label") {
         // Label mode
-        const label = this.createLabel(cellId, cellLabel, cellLabelColor, cellLabelSize);
+        const label = this.createLabel(cellId, cellLabel, cell);
         label.classList.add('label-full');
         cellContent.appendChild(label);
 
       } else {
         // Image and label mode
-        const img = this.createImage(cellId, cellLabel, cellIconUrl, cellLabelColor, cellLabelSize);
+        const img = this.createImage(cellId, cellLabel, cell);
         img.classList.add('img-half');
-        const label = this.createLabel(cellId, cellLabel, cellLabelColor, cellLabelSize);
+        const label = this.createLabel(cellId, cellLabel, cell);
         label.classList.add('label-half');
         cellContent.appendChild(img);
         cellContent.appendChild(label);
 
       }
+
+      // Apply user preferences over label style
+      if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
+      if (cellBackground) cellContent.style.background = cellBackground;
+
       cellDiv.appendChild(cellContent);
       
       this.addPointerClickListener(cellDiv, (e) => {
@@ -294,47 +293,68 @@ class CarrouselCard extends HTMLElement {
     this.shadowRoot.appendChild(card);
   }
   
-  createImage(cellId, cellLabel, cellIconUrl, cellLabelColor, cellLabelSize) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating image '${cellIconUrl}' for cell '${cellId}'`));
+  createImage(cellId, cellLabel, cell) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating image for cell '${cellId}'`));
+
+    // Retrieve user preferences for image
+    const cellIconUrl = cell["icon-url"];
+    const cellIconGap = cell["icon-gap"];
+
+    // Define image source URL
+    const imgCellIconUrl = cellIconUrl ? (this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl)) : "";
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Determined image URL '${imgCellIconUrl}' for cell '${cellId}'`));
+
+    // Instanciates a new image
     const img = document.createElement("img");
     img.className = "carrousel-img";
-    const targetCellIconUrl = cellIconUrl ? (this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl)) : "";
+    img.alt = cellLabel;
     img.addEventListener('error', () => {
-      // When image sources fails to load
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL:${targetCellIconUrl} for cell '${cellId}'`));
-    
+      // Handle image loading error
+      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL '${imgCellIconUrl}' for cell '${cellId}'`));
+
       // Hide image
       img.style.display = 'none';
-    
+
       // Retrieve label with "Name" text as alternative
       const cellContent = img.parentElement;
       let label = cellContent.querySelector('.carrousel-label');
-      
+
       // When missing label (because displayMode was set to image for example)
+      // Create a new label inside the cell and display it
       if (!label) {
-    
-        // Create a new label inside the cell and display it
-        label = this.createLabel(cellId, cellLabel, cellLabelColor, cellLabelSize);
+        label = this.createLabel(cellId, cellLabel, cell);
         cellContent.appendChild(label);
       }
-      
       // Set the "full" class for the label (to make all rounded corners for example)
       label.classList.remove('label-half');
       label.classList.add('label-full');
     });
-    img.src = targetCellIconUrl;
-    img.alt = cellLabel;
+
+    // Apply user preferences on image style
+    if (imgCellIconUrl) img.src = imgCellIconUrl;
+    if (cellIconGap) img.style.padding = cellIconGap;
     
     return img;
   }
 
-  createLabel(cellId, cellLabel, cellLabelColor, cellLabelSize) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating label '${cellLabel}' for cell '${cellId}'`));
+  createLabel(cellId, cellLabel, cell) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating label for cell '${cellId}'`));
+
+    // Retrieve user preferences for label
+    const cellLabelColor = cell["label-color"];
+    const cellLabelSize = cell["label-size"];
+    const cellLabelGap = cell["label-gap"];
+
+    // Instanciates a new label
     const label = document.createElement("div");
     label.className = "carrousel-label";
     label.textContent = cellLabel;
+
+    // Apply user preferences on label style
     if (cellLabelColor) label.style.color = cellLabelColor;
-    if (cellLabelSize && this.isFiniteNumber(cellLabelSize) && Number(cellLabelSize) > 0) label.style.fontSize = cellLabelSize + 'px';
+    if (cellLabelSize) label.style.fontSize = cellLabelSize;
+    if (cellLabelGap) label.style.padding = cellLabelGap;
+
     return label;
   }
 
