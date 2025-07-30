@@ -2,7 +2,7 @@ import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
 
-console.info("Loading Trackpad Card");
+console.info("Loading trackpad-card");
 
 class TrackpadCard extends HTMLElement {
   constructor() {

@@ -4,7 +4,7 @@ import { EventManager } from './utils/event-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 
-console.info("Loading Android Keyboard Card");
+console.info("Loading android-keyboard-card.js");
 
 class AndroidKeyboardCard extends HTMLElement {
   constructor() {
@@ -991,14 +991,14 @@ class AndroidKeyboardCard extends HTMLElement {
   // Set the layout used by keyboard server
   // (different from this keyboard client displayed layout)
   setKeyboardLayout(hass) {
-    hass.callService(Globals.COMPONENT_NAME, "setlayout", {
+    this.eventManager.callIntegration(hass, "setlayout", {
       sendLayout: this.layout,
     });
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    hass.callService(Globals.COMPONENT_NAME, "keypress", {
+    this.eventManager.callIntegration(hass, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
@@ -1006,7 +1006,7 @@ class AndroidKeyboardCard extends HTMLElement {
   
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate(hass) {
-    hass.callService(Globals.COMPONENT_NAME, "conpress", {
+    this.eventManager.callIntegration(hass, "conpress", {
       sendCons: Array.from(this.pressedConsumers),
     });
   }
@@ -1014,7 +1014,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // Send clicked char symbols to HID keyboard 
   // and let it handle the right key-press combination using current kb layout
   sendKeyboardClick(hass, charToSend) {
-    hass.callService(Globals.COMPONENT_NAME, "chartap", {
+    this.eventManager.callIntegration(hass, "chartap", {
       sendChars: charToSend,
     });
   }

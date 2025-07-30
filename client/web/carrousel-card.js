@@ -17,7 +17,7 @@ class CarrouselCard extends HTMLElement {
     this.loglevel = 'warn';
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
-    this.haptic = false;
+    this.eventManager = new EventManager(this.logger);
     this.cellsWidth = 60;
     this.cellsHeight = 60;
     this.cells = [];
@@ -49,13 +49,13 @@ class CarrouselCard extends HTMLElement {
       
       // Update logger when needed
       if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
-        this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
+        this.logger = this.logger.update(this.loglevel, this._hass, this.logpushback);
       }
       if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
       
       // Set haptic feedback
       if (config['haptic']) {
-        this.haptic = config['haptic'];
+        this.eventManager.setHaptic(config['haptic']);
       }
       
       // Set cells width
@@ -288,7 +288,7 @@ class CarrouselCard extends HTMLElement {
 
       cellDiv.appendChild(cellContent);
       
-      this.addPointerClickListener(cellDiv, (e) => {
+      this.eventManager.addPointerClickListener(cellDiv, (e) => {
         this.handlePointerClick(e, hass, cellDiv);
       });
 
@@ -386,13 +386,13 @@ class CarrouselCard extends HTMLElement {
 
     if (config.action) {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Firing action for cell:", cell, config.action));
-      this.fireEvent(cell, "hass-action", {
+      this.eventManager.fireEvent(cell, "hass-action", {
         config: config.action,
         action: "tap",
       });
     }
     
-    this.hapticFeedback();
+    this.eventManager.hapticFeedback();
   }
 
   getDisplayMode(cellDisplayMode, cellId) {
@@ -464,180 +464,6 @@ class CarrouselCard extends HTMLElement {
            a.length === b.length &&
            a.every((val, index) => val === b[index]);
   }
-
-  // Fires HomeAssistant event
-  fireEvent(node, type, detail, options = {}) {
-    const event = new CustomEvent(type, {
-      bubbles: options.bubbles ?? true,
-      cancelable: Boolean(options.cancelable),
-      composed: options.composed ?? true,
-      detail,
-    });
-    node.dispatchEvent(event);
-  }
-
-  addPointerDownListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
-  addPointerEnterListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
-  addPointerOverListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
-  addPointerMoveListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
-  addPointerLeaveListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
-  addPointerUpListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
-  addPointerCancelListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
-  addPointerOutListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
-  addPointerClickListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
-  addPointerDblClickListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
-  addPointerContextmenuListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
-
-  // Add the available event listener using 
-  // - supported event first (when available) 
-  // - then falling back to legacy event (when available)
-  addAvailableEventListener(target, callback, options, events) {
-    const eventName = this.getSupportedEventListener(target, events);
-    if (eventName) {
-      this.addGivenEventListener(target, callback, options, eventName);
-    }
-    return eventName;
-  }
-
-  // Add the specified event listener
-  addGivenEventListener(target, callback, options, eventName) {
-    if (this.isTargetListenable(target)) {
-      if (options) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on target with options:`, target, options));
-        target.addEventListener(eventName, callback, options);
-      } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on target:`, target));
-        target.addEventListener(eventName, callback);
-      }
-    }
-  }
-
-  removePointerDownListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
-  removePointerEnterListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
-  removePointerOverListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
-  removePointerMoveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
-  removePointerLeaveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
-  removePointerUpListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
-  removePointerCancelListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
-  removePointerOutListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
-  removePointerClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
-  removePointerDblClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
-  removePointerContextmenuListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
-
-  // Remove the available event listener using 
-  // - supported event first (when available) 
-  // - then falling back to legacy event (when available)
-  removeAvailableEventListener(target, callback, options, abstractEventName) {
-    const eventName = this.getSupportedEventListener(target, abstractEventName);
-    if (eventName) {
-      this.removeGivenEventListener(target, callback, options, eventName);
-    }
-    return eventName;
-  }
-
-  // Remove the specified event listener
-  removeGivenEventListener(target, callback, options, eventName) {
-    if (this.isTargetListenable(target)) {
-      if (options) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on target with options:`, target, options));
-        target.removeEventListener(eventName, callback, options);
-      } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on target:`, target));
-        target.removeEventListener(eventName, callback);
-      }
-    }
-  }
-
-  // Checks whether or not target is listenable
-  isTargetListenable(target) {
-    if (!target || typeof target.addEventListener !== 'function') {
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Invalid target ${target} element provided to isTargetListenable`));
-      return false;
-    }
-    return true;
-  }
-
-  // Gets the available event listener using 
-  // - supported event first (when available) 
-  // - then falling back to legacy event (when available)
-  getSupportedEventListener(target, abstractEventName) {
-    if (!abstractEventName) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
-      return null;
-    }
-    
-    // Init events mapping and cache when needed
-    if (!this.eventsMap) {
-      
-      // Mapping for "virtual" event names with their "real" event names counterparts 
-      // that might be supported by device - or not (by preference order)
-      this.eventsMap = new Map();
-      this.eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
-      this.eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
-      this.eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
-      this.eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
-      this.eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
-      this.eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
-      this.eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
-      this.eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
-      this.eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
-      this.eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
-      this.eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
-      
-      // Cache for prefered listeners (lookup speedup)
-      this.preferedEventsNames = new Map();
-    }
-
-    // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
-    const preferedEventName = this.preferedEventsNames.get(abstractEventName);
-    if (preferedEventName) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache HIT for event ${abstractEventName}: found cached prefered event ${preferedEventName}`));
-      return preferedEventName;
-    }
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache MISS for event ${abstractEventName}: no supported prefered event cached`));
-
-    // When no prefered concrete js event, then try to retrieve mapped events
-    const mappedEvents = this.eventsMap.get(abstractEventName);
-    if (!mappedEvents) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Unknwon abstractEventName ${abstractEventName}`));
-      return null;
-    }
-
-    // Check for supported event into all mapped events
-    for (const mappedEvent of mappedEvents) {
-      if (this.isEventSupported(target, mappedEvent)) {
-
-        // First supported event found: cache-it as prefered concrete js event
-        this.preferedEventsNames.set(abstractEventName, mappedEvent);
-
-        // Return prefered concrete js event
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache UPDATE for event ${abstractEventName}: set to prefered event ${mappedEvent}`));
-        return mappedEvent;
-      }
-    }
-
-    if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`No concrete js event supported for ${abstractEventName}`));
-    return null;    
-  }
-
-  isEventSupported(target, eventName) {
-    return (typeof target[`on${eventName}`] === "function" || `on${eventName}` in target);
-  }
-
-  // vibrate the device like an haptic feedback
-  hapticFeedback() {
-    if (this.haptic) this.vibrateDevice(10);
-  }
-
-  // vibrate the device during specified duration (in milliseconds)
-  vibrateDevice(duration) {
-    if (navigator.vibrate) {
-      navigator.vibrate(duration);
-    } else {
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug('Vibration not supported on this device.'));
-    }
-  }
-
 }
 
 customElements.define("carrousel-card", CarrouselCard);
