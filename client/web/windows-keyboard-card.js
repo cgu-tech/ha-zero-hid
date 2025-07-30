@@ -1,6 +1,7 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
+import { KeyCodes } from './utils/keycodes.js';
 
 console.info("Loading windows-keyboard-card");
 
@@ -8,6 +9,8 @@ class WindowsKeyboardCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" }); // Create shadow root
+
+    this._keycodes = new KeyCodes().getMapping();
 
     this._hass = null;
     this._uiBuilt = false;
@@ -524,12 +527,13 @@ class WindowsKeyboardCard extends HTMLElement {
   appendKeyCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
     if (code) {
+      const intCode = this._keycodes[code];
       if (this.isModifier(code)) {
         // Modifier key pressed
-        this.pressedModifiers.add(code);
+        this.pressedModifiers.add(intCode);
       } else {
         // Standard key pressed
-        this.pressedKeys.add(code);
+        this.pressedKeys.add(intCode);
       }
     }
     this.sendKeyboardUpdate(hass);
@@ -538,12 +542,13 @@ class WindowsKeyboardCard extends HTMLElement {
   removeKeyCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
     if (code) {
+      const intCode = this._keycodes[code];
       if (this.isModifier(code)) {
         // Modifier key released
-        this.pressedModifiers.delete(code);
+        this.pressedModifiers.delete(intCode);
       } else {
         // Standard key released
-        this.pressedKeys.delete(code);
+        this.pressedKeys.delete(intCode);
       }
     }
     this.sendKeyboardUpdate(hass);
