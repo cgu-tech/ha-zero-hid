@@ -24,7 +24,7 @@ class WindowsKeyboardCard extends HTMLElement {
 
     // Layout loading flags
     this._layoutReady = false;
-    this._layoutLoaded = null;
+  this._layoutLoaded = {};
 
     // To track pressed modifiers
     this.capsLock = false;
@@ -89,14 +89,6 @@ class WindowsKeyboardCard extends HTMLElement {
 
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
-
-    // Load keyboard layout
-    if (!this._layoutLoaded || this._layoutLoaded !== this.layoutUrl) {
-      this._layoutReady = false;
-      await this.loadLayout(this.layoutUrl);
-      this._layoutLoaded = this.layoutUrl;
-      this._layoutReady = true;
-    }
 
     // Check if layout needs loading
     if (!this._layoutLoaded.layoutUrl || this._layoutLoaded.layoutUrl !== this.layoutUrl) {
