@@ -840,7 +840,7 @@ class TrackpadCard extends HTMLElement {
   }
   
   sendMouse(serviceName, serviceArgs) {
-    this.eventManager.callIntegration(this._hass, serviceName, serviceArgs);
+    this.eventManager.callComponentService(this._hass, serviceName, serviceArgs);
   }
 
   getTrackpadMode() {

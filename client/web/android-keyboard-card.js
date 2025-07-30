@@ -990,14 +990,14 @@ class AndroidKeyboardCard extends HTMLElement {
   // Set the layout used by keyboard server
   // (different from this keyboard client displayed layout)
   setKeyboardLayout(hass) {
-    this.eventManager.callIntegration(hass, "setlayout", {
+    this.eventManager.callComponentService(hass, "setlayout", {
       sendLayout: this.layout,
     });
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    this.eventManager.callIntegration(hass, "keypress", {
+    this.eventManager.callComponentService(hass, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
@@ -1005,7 +1005,7 @@ class AndroidKeyboardCard extends HTMLElement {
   
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate(hass) {
-    this.eventManager.callIntegration(hass, "conpress", {
+    this.eventManager.callComponentService(hass, "conpress", {
       sendCons: Array.from(this.pressedConsumers),
     });
   }
@@ -1013,7 +1013,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // Send clicked char symbols to HID keyboard 
   // and let it handle the right key-press combination using current kb layout
   sendKeyboardClick(hass, charToSend) {
-    this.eventManager.callIntegration(hass, "chartap", {
+    this.eventManager.callComponentService(hass, "chartap", {
       sendChars: charToSend,
     });
   }

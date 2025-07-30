@@ -386,11 +386,8 @@ class CarrouselCard extends HTMLElement {
     const config = keyData.config;
 
     if (config.action) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Firing action for cell:", cell, config.action));
-      this.eventManager.fireEvent(cell, "hass-action", {
-        config: config.action,
-        action: "tap",
-      });
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering action for cell:", cell, config.action));
+      this.eventManager.triggerHaosTapAction(btn, config.action);
     }
     
     this.eventManager.hapticFeedback();

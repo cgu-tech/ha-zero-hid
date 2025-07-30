@@ -1409,12 +1409,9 @@ class AndroidRemoteCard extends HTMLElement {
       overrideAction = buttonOverrideConfig['action'];
     }
 
-    // Fire override action
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Firing override action for:", btnId, overrideAction));
-    this.eventManager.fireEvent(btn, "hass-action", {
-      config: overrideAction,
-      action: "tap",
-    });
+    // Trigger override action
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering override action for:", btnId, overrideAction));
+    this.eventManager.triggerHaosTapAction(btn, overrideAction);
   }
 
   appendCode(hass, code) {
@@ -1503,7 +1500,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    this.eventManager.callIntegration(hass, "keypress", {
+    this.eventManager.callComponentService(hass, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
@@ -1511,7 +1508,7 @@ class AndroidRemoteCard extends HTMLElement {
   
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate(hass) {
-    this.eventManager.callIntegration(hass, "conpress", {
+    this.eventManager.callComponentService(hass, "conpress", {
       sendCons: Array.from(this.pressedConsumers),
     });
   }

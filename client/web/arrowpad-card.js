@@ -13,6 +13,7 @@ class ArrowPadCard extends HTMLElement {
     this._uiBuilt = false;
 
     // Configs
+    this.config = null;
     this.loglevel = 'warn';
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
@@ -106,7 +107,7 @@ class ArrowPadCard extends HTMLElement {
       this.keys = layout.keys;
       this.rowsConfig = layout.rowsConfig;
     } catch (e) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load remote layout ${layoutUrl}`, e));
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load layout ${layoutUrl}`, e));
       this.keys = [];
       this.rowsConfig = [];
     }
@@ -138,7 +139,6 @@ class ArrowPadCard extends HTMLElement {
     this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
 
     const card = document.createElement("ha-card");
-    // card.header = "Arrow Pad";
 
     const style = document.createElement("style");
     style.textContent = `
@@ -309,7 +309,7 @@ class ArrowPadCard extends HTMLElement {
   }
 
   handleGlobalPointerUp(evt) {
-    //console.log("handleGlobalPointerUp", this.content, this._hass);
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp(evt):", evt));
     if (this.content && this._hass) {
       for (const btn of this.content.querySelectorAll("button.squarekey.active")) {
         this.handleKeyRelease(this._hass, btn);
@@ -327,7 +327,15 @@ class ArrowPadCard extends HTMLElement {
     this.handleKeyRelease(hass, btn);
   }
 
+  // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
   handleKeyPress(hass, btn) {
+    this.handleKeyPressInternal(hass, btn);
+
+    // Send haptic feedback to make user acknownledgable of succeeded press event
+    this.eventManager.hapticFeedback();
+  }
+
+  handleKeyPressInternal(hass, btn) {
     // Mark button active visually
     btn.classList.add("active");
 
@@ -339,7 +347,15 @@ class ArrowPadCard extends HTMLElement {
     this.appendKeyCode(hass, keyData.code);
   }
 
+  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
   handleKeyRelease(hass, btn) {
+    this.handleKeyReleaseInternal(hass, btn);
+
+    // Send haptic feedback to make user acknownledgable of succeeded release event
+    this.eventManager.hapticFeedback();
+  }
+
+  handleKeyReleaseInternal(hass, btn) {
     const keyData = btn._keyData;
     if (!keyData) return;
 
@@ -370,7 +386,7 @@ class ArrowPadCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    this.eventManager.callIntegration(hass, "keypress", {
+    this.eventManager.callComponentService(hass, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });

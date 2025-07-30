@@ -1,6 +1,8 @@
 import { Globals } from './utils/globals.js';
+import { Logger } from './utils/logger.js';
+import { EventManager } from './utils/event-manager.js';
 
-console.info("Loading Windows Keyboard Card");
+console.info("Loading windows-keyboard-card");
 
 class WindowsKeyboardCard extends HTMLElement {
   constructor() {
@@ -8,13 +10,23 @@ class WindowsKeyboardCard extends HTMLElement {
     this.attachShadow({ mode: "open" }); // Create shadow root
 
     this._hass = null;
-    this._layoutReady = false;
     this._uiBuilt = false;
     this.card = null;
+    
+    // Configs
+    this.config = null;
+    this.loglevel = 'warn';
+    this.logpushback = false;
+    this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
+    this.eventManager = new EventManager(this.logger);
+    this.layout = 'US';
+    this.layoutUrl = `${Globals.DIR_LAYOUTS}/windows/${this.layout}.json`;
 
-    this.layoutUrl = `${Globals.DIR_LAYOUTS}/windows/FR.json`; // Default keyboard layout when not user configured
+    // Layout loading flags
+    this._layoutReady = false;
     this._layoutLoaded = null;
 
+    // To track pressed modifiers
     this.capsLock = false;
     this.shift = false;
     this.ctrl = false;
@@ -28,25 +40,46 @@ class WindowsKeyboardCard extends HTMLElement {
 
     // Handle out of bounds mouse releases
     this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
-    this._handleGlobalTouchEnd = this.handleGlobalPointerUp.bind(this); // reuse same logic
   }
 
   setConfig(config) {
     this.config = config;
 
-    // Retrieve user configured logging level
-    if (config['log_level']) {
-      this.loglevel = config['log_level'];
-    }
+    if (config) {
+      // Set log level
+      const oldLoglevel = this.loglevel;
+      if (config['log_level']) {
+        this.loglevel = config['log_level'];
+      }
+      
+      // Set log pushback
+      const oldLogpushback = this.logpushback;
+      if (config['log_pushback']) {
+        this.logpushback = config['log_pushback'];
+      }
+      
+      // Update logger when needed
+      if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
+        this.logger = this.logger.update(this.loglevel, this._hass, this.logpushback);
+      }
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
+      
+      // Set haptic feedback
+      if (config['haptic']) {
+        this.eventManager.setHaptic(config['haptic']);
+      }
 
-    // Retrieve user configured layout
-    if (config['layout_url']) {
-      this.layoutUrl = config['layout_url'];
-    }
-
-    // Retrieve user configured haptic feedback
-    if (config['haptic']) {
-      this.haptic = config['haptic'];
+      // Set layout
+      if (config['layout']) {
+        this.layout = config['layout'];
+      }
+      
+      // Set layout URL
+      if (config['layout_url']) {
+        this.layoutUrl = config['layout_url'];
+      } else {
+        this.layoutUrl = `${Globals.DIR_LAYOUTS}/arrowpad/${this.layout}.json`;
+      }
     }
   }
 
@@ -55,7 +88,8 @@ class WindowsKeyboardCard extends HTMLElement {
   }
 
   async connectedCallback() {
-    console.log("Windows Keyboard - connectedCallback");
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
+
     // Load keyboard layout
     if (!this._layoutLoaded || this._layoutLoaded !== this.layoutUrl) {
       this._layoutReady = false;
@@ -64,51 +98,64 @@ class WindowsKeyboardCard extends HTMLElement {
       this._layoutReady = true;
     }
 
+    // Check if layout needs loading
+    if (!this._layoutLoaded.layoutUrl || this._layoutLoaded.layoutUrl !== this.layoutUrl) {
+      this._layoutReady = false;
+
+      // Load layout
+      await this.loadLayout(this.layoutUrl);
+
+      // Update loaded layout
+      this._layoutLoaded.layoutUrl = this.layoutUrl;
+      this._layoutReady = true;
+    }
+
     // Only build UI if hass is already set
     if (this._hass) {
-      this.buildKeyboard(this._hass);
+      this.buildUi(this._hass);
     }
   }
 
   async loadLayout(layoutUrl) {
-    console.log("Windows Keyboard - loading keyboard layout:", layoutUrl);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(layoutUrl):", layoutUrl));
     try {
       const response = await fetch(layoutUrl);
       const layout = await response.json();
       this.keys = layout.keys;
       this.rowsConfig = layout.rowsConfig;
     } catch (e) {
-      console.error("Windows Keyboard - Failed to load keyboard layout:", e);
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load layout ${layoutUrl}`, e));
       this.keys = [];
       this.rowsConfig = [];
     }
   }
 
   set hass(hass) {
-    console.log("Windows Keyboard - set hass():", hass);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
     this._hass = hass;
     if (this._layoutReady && !this._uiBuilt) {
-      this.buildKeyboard(this._hass);
+      // Render UI
+      this.buildUi(this._hass);
     }
   }
 
-  buildKeyboard(hass) {
+  buildUi(hass) {
     if (this._uiBuilt) {
-      console.log("Windows Keyboard - buildKeyboard() SKIPPED");
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
       return;
     }
-    console.log("Windows Keyboard - buildKeyboard() ENTER");
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
 
     // Clear existing content (if any)
-    this.shadowRoot.innerHTML = "";
+    this.shadowRoot.innerHTML = '';
 
     this._uiBuilt = true;
+
     // Re-add global handlers to ensure proper out-of-bound handling
-    this.removeGlobalHandlers();
-    this.addGlobalHandlers();
+    this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+    this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
 
     const card = document.createElement("ha-card");
-    // card.header = "Windows Keyboard";
 
     const style = document.createElement("style");
     style.textContent = `
@@ -252,12 +299,9 @@ class WindowsKeyboardCard extends HTMLElement {
         btn._keyData = keyData;
 
         // Add pointer and touch events:
-        btn.addEventListener("pointerdown", (e) => this.handlePointerDown(e, hass, btn));
-        btn.addEventListener("pointerup", (e) => this.handlePointerUp(e, hass, btn));
-        btn.addEventListener("pointercancel", (e) => this.handlePointerCancel(e, hass, btn));
-        // For older touch devices fallback
-        btn.addEventListener("touchend", (e) => this.handlePointerUp(e, hass, btn));
-        btn.addEventListener("touchcancel", (e) => this.handlePointerCancel(e, hass, btn));
+        this.eventManager.addPointerDownListener(btn, (e) => this.handlePointerDown(e, hass, btn));
+        this.eventManager.addPointerUpListener(btn, (e) => this.handlePointerUp(e, hass, btn));
+        this.eventManager.addPointerCancelListener(btn, (e) => this.handlePointerUp(e, hass, btn));
 
         row.appendChild(btn);
       }
@@ -358,24 +402,8 @@ class WindowsKeyboardCard extends HTMLElement {
     return keyData.label.shift;
   }
 
-  addGlobalHandlers() {
-    window.addEventListener("pointerup", this._handleGlobalPointerUp);
-    window.addEventListener("touchend", this._handleGlobalTouchEnd);
-    window.addEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.addEventListener("touchcancel", this._handleGlobalPointerUp);
-    console.log("handleGlobalPointerUp added");
-  }
-
-  removeGlobalHandlers() {
-    window.removeEventListener("pointerup", this._handleGlobalPointerUp);
-    window.removeEventListener("touchend", this._handleGlobalTouchEnd);
-    window.removeEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.removeEventListener("touchcancel", this._handleGlobalPointerUp);
-    console.log("handleGlobalPointerUp removed");
-  }
-
   handleGlobalPointerUp(evt) {
-    //console.log("handleGlobalPointerUp", this.content, this._hass);
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp(evt):", evt));
     if (this.content && this._hass) {
       for (const btn of this.content.querySelectorAll("button.key.active")) {
         this.handleKeyRelease(this._hass, btn);
@@ -393,12 +421,15 @@ class WindowsKeyboardCard extends HTMLElement {
     this.handleKeyRelease(hass, btn);
   }
 
-  handlePointerCancel(evt, hass, btn) {
-    evt.preventDefault();
-    this.handleKeyRelease(hass, btn);
+  // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
+  handleKeyPress(hass, btn) {
+    this.handleKeyPressInternal(hass, btn);
+
+    // Send haptic feedback to make user acknownledgable of succeeded press event
+    this.eventManager.hapticFeedback();
   }
 
-  handleKeyPress(hass, btn) {
+  handleKeyPressInternal(hass, btn) {
     // Mark button active visually
     btn.classList.add("active");
 
@@ -434,14 +465,19 @@ class WindowsKeyboardCard extends HTMLElement {
       this.updateLabels();
     }
 
-    // Pressed key symbol (keyboard layout dependant, for information only)
-    const charToSend = btn._lowerLabel.textContent || "";
-
     // Send keyboard changes
-    this.appendCode(hass, code, charToSend);
+    this.appendKeyCode(hass, code);
   }
 
+  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
   handleKeyRelease(hass, btn) {
+    this.handleKeyReleaseInternal(hass, btn);
+
+    // Send haptic feedback to make user acknownledgable of succeeded release event
+    this.eventManager.hapticFeedback();
+  }
+
+  handleKeyReleaseInternal(hass, btn) {
     const keyData = btn._keyData;
     if (!keyData) return;
 
@@ -475,7 +511,7 @@ class WindowsKeyboardCard extends HTMLElement {
     }
 
     // Release modifier or key through websockets
-    this.removeCode(hass, code);
+    this.removeKeyCode(hass, code);
   }
 
   // When key code is a modifier key, returns true. Returns false otherwise.
@@ -493,8 +529,8 @@ class WindowsKeyboardCard extends HTMLElement {
     return this.isModifier(code) || this.isCapslock(code);
   }
 
-  appendCode(hass, code, charToSend) {
-    console.log("Key pressed:", code, "Char:", charToSend);
+  appendKeyCode(hass, code) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
     if (code) {
       if (this.isModifier(code)) {
         // Modifier key pressed
@@ -507,8 +543,8 @@ class WindowsKeyboardCard extends HTMLElement {
     this.sendKeyboardUpdate(hass);
   }
 
-  removeCode(hass, code) {
-    console.log("Key released:", code);
+  removeKeyCode(hass, code) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
     if (code) {
       if (this.isModifier(code)) {
         // Modifier key released
@@ -523,7 +559,7 @@ class WindowsKeyboardCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    hass.callService(Globals.COMPONENT_NAME, "keypress", {
+    this.eventManager.callComponentService(hass, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
@@ -531,10 +567,7 @@ class WindowsKeyboardCard extends HTMLElement {
 
   // Synchronize with remote keyboard current state through HA websockets API
   syncKeyboard(hass) {
-    hass.connection.sendMessagePromise({
-      type: `${Globals.COMPONENT_NAME}/sync_keyboard`
-    })
-    .then((response) => {
+   this.eventManager.callComponentCommand(hass, 'sync_keyboard').then((response) => {
       // Success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
       console.log("Synced Modifiers:", syncModifiers);
@@ -552,7 +585,7 @@ class WindowsKeyboardCard extends HTMLElement {
       this.updateLabels();
     })
     .catch((err) => {
-      console.error("Failed to sync keyboard state:", err);
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error("Failed to sync keyboard state:", err));
     });
   }
 

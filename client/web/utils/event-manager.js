@@ -29,20 +29,64 @@ export class EventManager {
     this.removePointerCancelListener(window, handleGlobalPointerUp);
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp removed"));
   }
-
-  // Fires HomeAssistant event
-  fireEvent(node, type, detail, options = {}) {
+  
+  // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
+  // 
+  // Parameters:
+  //  - hass: the HAOS object to use to fire the service
+  //  - name: the service name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  // 
+  // Returns: 
+  //  - void (this is a fire-and-forget HAOS integration call)
+  callComponentService(hass, name, args) {
+    hass.callService(Globals.COMPONENT_NAME, name, args);
+  }
+  
+  // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
+  // 
+  // Parameters:
+  //  - hass: the HAOS object to use to fire the command
+  //  - name: the command name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  // 
+  // Returns:
+  //  A promyze :
+  //   - on command success: ".then((response) => {...})"
+  //   - on command error: ".catch((err) => {...})"
+  callIntegrationCommand(hass, name) {
+    return hass.connection.sendMessagePromise({
+      type: `${Globals.COMPONENT_NAME}/${name}`
+    });
+  }
+  
+  // Trigger an event into HAOS.
+  // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
+  // 
+  // Parameters:
+  //  - target: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - type: the event type (knwon types: "hass-action")
+  //  - detail: the event configuration (knwon configurations: { config: <ui_action_object_retrieved_from_yaml_config>, action: "tap", })
+  //  - options: optional object for options (known options: do not specify)
+  triggerHaosEvent(target, type, detail, options = {}) {
     const event = new CustomEvent(type, {
       bubbles: options.bubbles ?? true,
       cancelable: Boolean(options.cancelable),
       composed: options.composed ?? true,
       detail,
     });
-    node.dispatchEvent(event);
+    target.dispatchEvent(event);
   }
-  
-  callIntegration(hass, name, args) {
-    hass.callService(Globals.COMPONENT_NAME, name, args);
+
+  // Trigger a tap action into HAOS, target
+  // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
+  // 
+  // Parameters:
+  //  - target: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - actionConfig: the <config> section for the tap action to trigger
+  triggerHaosTapAction(target, actionConfig) {
+    this.triggerHaosEvent(target, "hass-action", {
+      config: actionConfig,
+      action: "tap",
+    });
   }
 
   addPointerDownListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
