@@ -194,17 +194,23 @@ class CarrouselCard extends HTMLElement {
         padding: 4px;
       }
 
-      .carrousel-cell img {
+      .carrousel-img {
         width: 100%;
         height: 100%;
         object-fit: contain;
       }
+
+      .carrousel-cell .carrousel-content-wrapper {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+      }
       
-      .carrousel-cell img.img-half {
+      .carrousel-cell .carrousel-content-wrapper.img-half {
         height: 70%;
       }
       
-      .carrousel-cell img.img-full {
+      .carrousel-cell .carrousel-content-wrapper.img-full {
         height: 100%;
       }
 
@@ -304,6 +310,11 @@ class CarrouselCard extends HTMLElement {
     const imgCellIconUrl = cellIconUrl ? (this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl)) : "";
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Determined image URL '${imgCellIconUrl}' for cell '${cellId}'`));
 
+    // Instanciates a content wrapper to avoid chromium-based browser bugs
+    // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
+    const wrapper = document.createElement("div");
+    wrapper.className = "carrousel-content-wrapper";
+
     // Instanciates a new image
     const img = document.createElement("img");
     img.className = "carrousel-img";
@@ -332,9 +343,11 @@ class CarrouselCard extends HTMLElement {
 
     // Apply user preferences on image style
     if (imgCellIconUrl) img.src = imgCellIconUrl;
-    if (cellIconGap) img.style.padding = cellIconGap;
-    
-    return img;
+    if (cellIconGap) wrapper.style.padding = cellIconGap; // apply gap on wrapper to avoid chrome bug
+
+    // Append and return wrapper (not image itself)
+    wrapper.appendChild(img);
+    return wrapper;
   }
 
   createLabel(cellId, cellLabel, cell) {
@@ -345,6 +358,10 @@ class CarrouselCard extends HTMLElement {
     const cellLabelSize = cell["label-size"];
     const cellLabelGap = cell["label-gap"];
 
+    // Create wrapper (to align with image structure)
+    const wrapper = document.createElement("div");
+    wrapper.className = "carrousel-content-wrapper";
+
     // Instanciates a new label
     const label = document.createElement("div");
     label.className = "carrousel-label";
@@ -353,9 +370,11 @@ class CarrouselCard extends HTMLElement {
     // Apply user preferences on label style
     if (cellLabelColor) label.style.color = cellLabelColor;
     if (cellLabelSize) label.style.fontSize = cellLabelSize;
-    if (cellLabelGap) label.style.padding = cellLabelGap;
+    if (cellLabelGap) wrapper.style.padding = cellLabelGap;
 
-    return label;
+    // Append and return wrapper (not label itself)
+    wrapper.appendChild(label);
+    return wrapper;
   }
 
   handlePointerClick(evt, hass, cell) {
