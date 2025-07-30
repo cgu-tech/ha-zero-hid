@@ -52,7 +52,7 @@ export class EventManager {
   //  A promyze :
   //   - on command success: ".then((response) => {...})"
   //   - on command error: ".catch((err) => {...})"
-  callIntegrationCommand(hass, name) {
+  callComponentCommand(hass, name) {
     return hass.connection.sendMessagePromise({
       type: `${Globals.COMPONENT_NAME}/${name}`
     });
