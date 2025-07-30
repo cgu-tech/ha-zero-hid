@@ -5,11 +5,14 @@ export class Logger {
   constructor(level, hass, pushback) {
     this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
     this.levelsKeys = Object.fromEntries(Object.entries(this.levels).map(([key, value]) => [value, key]));
+    this.update(level, hass, pushback);
+    this.objLevelLimit = 1;
+    this.objByteLimit = 3000;
+  }
+  update(level, hass, pushback) {
     this._hass = hass;
     this.setPushback(pushback);
     this.setLevel(level);
-    this.objLevelLimit = 1;
-    this.objByteLimit = 3000;
   }
   setLevel(level) {
     this.level = this.levels[level] ?? 0;

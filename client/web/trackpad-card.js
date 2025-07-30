@@ -79,7 +79,7 @@ class TrackpadCard extends HTMLElement {
       
       // Update logger when needed
       if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
-        this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
+        this.logger.update(this.loglevel, this._hass, this.logpushback);
       }
       if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
       
