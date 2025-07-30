@@ -1,7 +1,8 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
+import { EventManager } from './utils/event-manager.js';
 
-console.info("Loading Carrousel Card");
+console.info("Loading carrousel-card");
 
 class CarrouselCard extends HTMLElement {
   constructor() {

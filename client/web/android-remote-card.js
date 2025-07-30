@@ -4,7 +4,7 @@ import { EventManager } from './utils/event-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 
-console.info("Loading android-remote-card.js");
+console.info("Loading android-remote-card");
 
 class AndroidRemoteCard extends HTMLElement {
   constructor() {
@@ -386,7 +386,6 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Handle out of bounds mouse releases
     this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
-    this._handleGlobalTouchEnd = this.handleGlobalPointerUp.bind(this); // reuse same logic
   }
 
   setConfig(config) {

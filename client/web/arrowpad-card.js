@@ -1,15 +1,28 @@
 import { Globals } from './utils/globals.js';
+import { Logger } from './utils/logger.js';
+import { EventManager } from './utils/event-manager.js';
 
-console.info("Loading Arrow Pad Card");
+console.info("Loading arrowpad-card");
 
 class ArrowPadCard extends HTMLElement {
   constructor() {
     super();
+    this.attachShadow({ mode: "open" }); // Create shadow root
 
     this._hass = null;
-    this._layoutReady = false;
     this._uiBuilt = false;
-    this.layoutUrl = `${Globals.DIR_LAYOUTS}/arrowpad/common.json`; // Default keyboard layout when not user configured
+
+    // Configs
+    this.loglevel = 'warn';
+    this.logpushback = false;
+    this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
+    this.eventManager = new EventManager(this.logger);
+    this.layout = 'common';
+    this.layoutUrl = `${Globals.DIR_LAYOUTS}/arrowpad/${this.layout}.json`;
+
+    // Layout loading flags
+    this._layoutReady = false;
+    this._layoutLoaded = {};
 
     // To track pressed modifiers and keys
     this.pressedModifiers = new Set();
@@ -17,15 +30,46 @@ class ArrowPadCard extends HTMLElement {
 
     // Handle out of bounds mouse releases
     this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
-    this._handleGlobalTouchEnd = this.handleGlobalPointerUp.bind(this); // reuse same logic
   }
 
   setConfig(config) {
     this.config = config;
-    
-    // Retrieve user configured layout
-    if (config.layoutUrl) {
-      this.layoutUrl = config.layoutUrl;
+
+    if (config) {
+      // Set log level
+      const oldLoglevel = this.loglevel;
+      if (config['log_level']) {
+        this.loglevel = config['log_level'];
+      }
+      
+      // Set log pushback
+      const oldLogpushback = this.logpushback;
+      if (config['log_pushback']) {
+        this.logpushback = config['log_pushback'];
+      }
+      
+      // Update logger when needed
+      if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
+        this.logger = this.logger.update(this.loglevel, this._hass, this.logpushback);
+      }
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
+      
+      // Set haptic feedback
+      if (config['haptic']) {
+        this.eventManager.setHaptic(config['haptic']);
+      }
+
+      // Set layout
+      if (config['layout']) {
+        this.layout = config['layout'];
+      }
+      
+      // Set layout URL
+      if (config['layout_url']) {
+        this.layoutUrl = config['layout_url'];
+      } else {
+        this.layoutUrl = `${Globals.DIR_LAYOUTS}/arrowpad/${this.layout}.json`;
+      }
     }
   }
 
@@ -34,53 +78,64 @@ class ArrowPadCard extends HTMLElement {
   }
 
   async connectedCallback() {
-    console.log("Arrow Pad - connectedCallback");
-    // Load keyboard layout
-    await this.loadLayout(this.layoutUrl);
-    this._layoutReady = true;
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
+
+    // Check if layout needs loading
+    if (!this._layoutLoaded.layoutUrl || this._layoutLoaded.layoutUrl !== this.layoutUrl) {
+      this._layoutReady = false;
+
+      // Load layout
+      await this.loadLayout(this.layoutUrl);
+
+      // Update loaded layout
+      this._layoutLoaded.layoutUrl = this.layoutUrl;
+      this._layoutReady = true;
+    }
 
     // Only build UI if hass is already set
     if (this._hass) {
-      this.buildKeyboard(this._hass);
+      this.buildUi(this._hass);
     }
   }
 
   async loadLayout(layoutUrl) {
-    console.log("Arrow Pad - loading keyboard layout:", layoutUrl);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(layoutUrl):", layoutUrl));
     try {
       const response = await fetch(layoutUrl);
       const layout = await response.json();
       this.keys = layout.keys;
       this.rowsConfig = layout.rowsConfig;
     } catch (e) {
-      console.error("Arrow Pad - Failed to load keyboard layout:", e);
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load remote layout ${layoutUrl}`, e));
       this.keys = [];
       this.rowsConfig = [];
     }
   }
 
   set hass(hass) {
-    console.log("Arrow Pad - set hass():", hass);
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
     this._hass = hass;
     if (this._layoutReady && !this._uiBuilt) {
-      this.buildKeyboard(this._hass);
+      // Render UI
+      this.buildUi(this._hass);
     }
   }
 
-  buildKeyboard(hass) {
+  buildUi(hass) {
     if (this._uiBuilt) {
-      console.log("Arrow Pad - buildKeyboard() SKIPPED");
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
       return;
     }
-    console.log("Arrow Pad - buildKeyboard() ENTER");
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
 
     // Clear existing content (if any)
-    this.innerHTML = '';
+    this.shadowRoot.innerHTML = '';
 
     this._uiBuilt = true;
+
     // Re-add global handlers to ensure proper out-of-bound handling
-    this.removeGlobalHandlers();
-    this.addGlobalHandlers();
+    this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+    this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
 
     const card = document.createElement("ha-card");
     // card.header = "Arrow Pad";
@@ -191,7 +246,7 @@ class ArrowPadCard extends HTMLElement {
         user-select: none;
       }
     `;
-    this.appendChild(style);
+    this.shadowRoot.appendChild(style);
 
     const container = document.createElement("div");
     container.className = "keyboard-container";
@@ -226,12 +281,9 @@ class ArrowPadCard extends HTMLElement {
         btn._keyData = keyData;
 
         // Add pointer and touch events:
-        btn.addEventListener("pointerdown", (e) => this.handlePointerDown(e, hass, btn));
-        btn.addEventListener("pointerup", (e) => this.handlePointerUp(e, hass, btn));
-        btn.addEventListener("pointercancel", (e) => this.handlePointerCancel(e, hass, btn));
-        // For older touch devices fallback
-        btn.addEventListener("touchend", (e) => this.handlePointerUp(e, hass, btn));
-        btn.addEventListener("touchcancel", (e) => this.handlePointerCancel(e, hass, btn));
+        this.eventManager.addPointerDownListener(btn, (e) => this.handlePointerDown(e, hass, btn));
+        this.eventManager.addPointerUpListener(btn, (e) => this.handlePointerUp(e, hass, btn));
+        this.eventManager.addPointerCancelListener(btn, (e) => this.handlePointerUp(e, hass, btn));
 
         row.appendChild(btn);
       }
@@ -240,7 +292,7 @@ class ArrowPadCard extends HTMLElement {
     });
 
     card.appendChild(container);
-    this.appendChild(card);
+    this.shadowRoot.appendChild(card);
 
     this.content = container;
     this.updateLabels();
@@ -254,22 +306,6 @@ class ArrowPadCard extends HTMLElement {
       // Set displayed labels
       btn._lowerLabel.textContent = keyData.label.normal || "";
     }
-  }
-
-  addGlobalHandlers() {
-    window.addEventListener("pointerup", this._handleGlobalPointerUp);
-    window.addEventListener("touchend", this._handleGlobalTouchEnd);
-    window.addEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.addEventListener("touchcancel", this._handleGlobalPointerUp);
-    console.log("handleGlobalPointerUp added");
-  }
-
-  removeGlobalHandlers() {
-    window.removeEventListener("pointerup", this._handleGlobalPointerUp);
-    window.removeEventListener("touchend", this._handleGlobalTouchEnd);
-    window.removeEventListener("mouseleave", this._handleGlobalPointerUp);
-    window.removeEventListener("touchcancel", this._handleGlobalPointerUp);
-    console.log("handleGlobalPointerUp removed");
   }
 
   handleGlobalPointerUp(evt) {
@@ -291,11 +327,6 @@ class ArrowPadCard extends HTMLElement {
     this.handleKeyRelease(hass, btn);
   }
 
-  handlePointerCancel(evt, hass, btn) {
-    evt.preventDefault();
-    this.handleKeyRelease(hass, btn);
-  }
-
   handleKeyPress(hass, btn) {
     // Mark button active visually
     btn.classList.add("active");
@@ -304,11 +335,8 @@ class ArrowPadCard extends HTMLElement {
     const keyData = btn._keyData;
     if (!keyData) return;
 
-    // Pressed key symbol (keyboard layout dependant, for information only)
-    const charToSend = btn._lowerLabel.textContent || "";
-
     // Send keyboard changes
-    this.appendCode(hass, keyData.code, charToSend);
+    this.appendKeyCode(hass, keyData.code);
   }
 
   handleKeyRelease(hass, btn) {
@@ -319,11 +347,11 @@ class ArrowPadCard extends HTMLElement {
     btn.classList.remove("active");
 
     // Release modifier or key through websockets
-    this.removeCode(hass, keyData.code);
+    this.removeKeyCode(hass, keyData.code);
   }
 
-  appendCode(hass, code, charToSend) {
-    console.log("Key pressed:", code, "Char:", charToSend);
+  appendKeyCode(hass, code) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
     if (code) {
       // Standard key pressed
       this.pressedKeys.add(code);
@@ -331,8 +359,8 @@ class ArrowPadCard extends HTMLElement {
     this.sendKeyboardUpdate(hass);
   }
 
-  removeCode(hass, code) {
-    console.log("Key released:", code);
+  removeKeyCode(hass, code) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
     if (code) {
       // Standard key released
       this.pressedKeys.delete(code);
@@ -342,7 +370,7 @@ class ArrowPadCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate(hass) {
-    hass.callService(Globals.COMPONENT_NAME, "keypress", {
+    this.eventManager.callIntegration(hass, "keypress", {
       sendModifiers: Array.from(this.pressedModifiers),
       sendKeys: Array.from(this.pressedKeys),
     });
