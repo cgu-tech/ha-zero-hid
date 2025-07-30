@@ -78,7 +78,7 @@ class WindowsKeyboardCard extends HTMLElement {
       if (config['layout_url']) {
         this.layoutUrl = config['layout_url'];
       } else {
-        this.layoutUrl = `${Globals.DIR_LAYOUTS}/arrowpad/${this.layout}.json`;
+        this.layoutUrl = `${Globals.DIR_LAYOUTS}/windows/${this.layout}.json`;
       }
     }
   }
