@@ -387,7 +387,7 @@ class CarrouselCard extends HTMLElement {
 
     if (config.action) {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering action for cell:", cell, config.action));
-      this.eventManager.triggerHaosTapAction(btn, config.action);
+      this.eventManager.triggerHaosTapAction(cell, config.action);
     }
     
     this.eventManager.hapticFeedback();
