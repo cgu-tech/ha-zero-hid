@@ -191,6 +191,7 @@ class CarrouselCard extends HTMLElement {
         box-sizing: border-box;
         width: 90%;
         height: 90%;
+        padding: 4px;
       }
 
       .carrousel-cell img {
@@ -245,6 +246,7 @@ class CarrouselCard extends HTMLElement {
       const cellLabelSize = cell["label-size"];
       const cellDisplayMode = cell["display-mode"];
       const cellIconUrl = cell["icon-url"];
+      const cellIconGap = cell["icon-gap"];
       const cellBackgroundColor = cell["background-color"];
       const cellBackground = cell["background"];
       const targetDisplayMode = this.getDisplayMode(cellDisplayMode, cellId);
@@ -254,6 +256,7 @@ class CarrouselCard extends HTMLElement {
       cellContent.className = "carrousel-cell-content";
       if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
       if (cellBackground) cellContent.style.background = cellBackground;
+      if (cellIconGap) cellContent.style.padding = cellIconGap;
       
       // Set cell inner content (image, label)
       if (targetDisplayMode === "image") {
