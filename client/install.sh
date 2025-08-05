@@ -311,6 +311,9 @@ EOF
     echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component authorized users ids to ${websocket_authorized_users_ids} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
     sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
+    echo "Templating ${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME} resources directory name to ${websocket_authorized_users_ids} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    sed -i "s|<ha_resources_dir_name>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
+
     # Templating client component raw files with configurations
     echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
 
