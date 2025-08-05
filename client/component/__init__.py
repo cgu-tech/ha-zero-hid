@@ -8,10 +8,11 @@ import voluptuous as vol
 from datetime import datetime
 
 from homeassistant.core import HomeAssistant, ServiceCall, callback
-from homeassistant.components.lovelace.resources import async_get_resources, async_create_resource, async_delete_resource
+from homeassistant.components.lovelace import LovelaceData
 from homeassistant.components.websocket_api.connection import ActiveConnection
 from homeassistant.components.websocket_api import websocket_command, async_response, async_register_command
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 
 from typing import Set
@@ -157,45 +158,87 @@ def get_timestamp():
     timestamp = now.strftime('%Y%m%d%H%M%S') + f"{int(now.microsecond / 1000):03d}"
     return timestamp
 
+def get_lovelace(hass: HomeAssistant) -> LovelaceData:
+    return hass.data.get("lovelace")
+
+"""Register modules if not already registered."""
+async def _async_register_resources(hass: HomeAssistant) -> None:
+    _LOGGER.debug("Registering resources...")
+    lovelace = get_lovelace(hass)
+
+    # Retrieving all existing HAOS resources that matches 
+    # this custom component resources base URL
+    existing_full_resources = [
+        resource
+        for resource in lovelace.resources.async_items()
+        if resource["url"].startswith(RESOURCES_URL)
+    ]
+    existing_resources = {resource["url"]: resource["id"] for resource in existing_full_resources}
+
+    # Retrieving timestamped version directory for this component existing resources
+    existing_version = get_most_recent_timestamp_dir_name(RESOURCES_DIR)
+
+    # Constitute expected base URL for this component existing resources
+    existing_url_base = f"{RESOURCES_URL}/{existing_version}"
+    urls_to_update = {f"{existing_url_base}/{resource}" for resource in RESOURCES}
+
+    # Generate a new version timestamp
+    new_version = get_timestamp()
+
+    # Migrates resources from old version timestamp to new version timestamp
+    existing_resources_dir = f"{RESOURCES_DIR}/{existing_version}"
+    new_resources_dir = f"{RESOURCES_DIR}/{new_version}"
+    os.rename(existing_resources_dir, new_resources_dir)
+
+    # Constitute new base URL for this component existing resources
+    new_url_base = f"{RESOURCES_URL}/{new_version}"
+
+    # Remove existing resources that are not there anymore
+    for url, id in existing_resources.items():
+        if url not in urls_to_update:
+            _LOGGER.debug(f"Removing existing resource: {url} (id: {id})")
+            await lovelace.resources.async_delete_item(id)
+
+    # Create or update new resources
+    for resource in RESOURCES:
+        resource_old_url = f"{existing_url_base}/{resource}"
+        resource_new_url = f"{new_url_base}/{resource}"
+        resource_new_item = {"res_type": "module", "url": resource_new_url}
+
+        if resource_old_url not in existing_resources:
+            _LOGGER.debug(f"Creating new resource: {resource_new_url}")
+            await lovelace.resources.async_create_item(resource_new_item)
+        else:
+            existing_resource_id = existing_resources.get(resource_old_url)
+            _LOGGER.debug(f"Updating existing resource: from {resource_old_url} to {resource_new_url} (id: {existing_resource_id})")
+            await lovelace.resources.async_update_item(existing_resource_id, resource_new_item)
+
+async def _async_wait_for_lovelace_resources(hass: HomeAssistant) -> None:
+    _LOGGER.debug("Waiting for lovelace resources to be loaded...")
+    lovelace = get_lovelace(hass)
+
+    """Wait for lovelace resources to have loaded."""
+    async def _check_lovelace_resources_loaded(now):
+        if lovelace.resources.loaded:
+            await _async_register_resources(hass)
+        else:
+            _LOGGER.debug(
+                "Unable to install resources because Lovelace resources have not yet loaded.  Trying again in 5 seconds"
+            )
+            async_call_later(hass, 5, _check_lovelace_resources_loaded)
+
+    await _check_lovelace_resources_loaded(0)
+
 async def register_frontend(hass: HomeAssistant) -> None:
+    _LOGGER.debug("Registering component frontend...")
     try:
-        # Retrieving all existing HAOS resources (
-        existing_resources = await async_get_resources(hass)
-        existing_urls = {resource["url"]: resource["id"] for resource in existing_resources}
-
-        # Retrieving timestamped version directory for this component existing resources
-        existing_version = get_most_recent_timestamp_dir_name(RESOURCES_DIR)
-
-        # Constitute expected base URL for this component existing resources
-        existing_url_base = f"{RESOURCES_URL}/{existing_version}"
-
-        # Remove existing resources where resource URL matches any of this component resources URL
-        for resource in RESOURCES:
-            url = f"{existing_url_base}/{resource}"
-            if url in existing_urls:
-                _LOGGER.debug(f"Removing existing resource: {url}")
-                await async_delete_resource(hass, existing_urls[url])
-
-        # Generate a new version timestamp
-        new_version = get_timestamp()
-
-        # Migrates resources from old version timestamp to new version timestamp
-        existing_resources_dir = f"{RESOURCES_DIR}/{existing_version}"
-        new_resources_dir = f"{RESOURCES_DIR}/{new_version}"
-        os.rename(existing_resources_dir, new_resources_dir)
-
-        # Constitute new base URL for this component existing resources
-        new_url_base = f"{RESOURCES_URL}/{new_version}"
-
-        # Add fresh resources
-        for resource in RESOURCES:
-            url = f"{new_url_base}/{resource}"
-            _LOGGER.debug(f"Registering new resource: {url}")
-            await async_create_resource(hass, {"url": url, "type": "module"})
-
+        lovelace = get_lovelace(hass)
+        if lovelace.mode == "storage":
+            await _async_wait_for_lovelace_resources(hass)
         _LOGGER.info("Custom Lovelace resources successfully synced.")
     except Exception as e:
         _LOGGER.exception(f"Failed to sync Lovelace resources: {e}")
+
 
 @websocket_command({vol.Required("type"): DOMAIN + "/sync_keyboard"})
 @async_response
