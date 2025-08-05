@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 import logging
+import os
+import re
 import voluptuous as vol
 
+from datetime import datetime
+
 from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.components.lovelace.resources import async_get_resources, async_create_resource, async_delete_resource
 from homeassistant.components.websocket_api.connection import ActiveConnection
-from homeassistant.components.websocket_api import (
-    websocket_command,
-    async_response,
-    async_register_command,
-)
+from homeassistant.components.websocket_api import websocket_command, async_response, async_register_command
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from typing import Set
 from .websocket_handler import WebSocketClient
 from .const import DOMAIN, MIN_RANGE, MAX_RANGE
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,6 +27,20 @@ AUTHORIZED_USERS: Set[str] = set(ip.strip() for ip in "<websocket_authorized_use
 SERVER_HOST = "<websocket_server_ip>"
 SERVER_PORT = <websocket_server_port>
 SERVER_SECRET = "<websocket_server_secret>"
+
+
+# Frontend Lovelace resources
+RESOURCES_DIR_NAME = "<ha_resources_dir_name>"
+RESOURCES_DIR = f"/config/www/{RESOURCES_DIR_NAME}"
+RESOURCES_URL = f"/local/{RESOURCES_DIR_NAME}"
+RESOURCES = [
+    "android-keyboard-card.js",
+    "android-remote-card.js",
+    "arrowpad-card.js",
+    "carrousel-card.js",
+    "trackpad-card.js",
+    "windows-keyboard-card.js",
+]
 
 # Use empty_config_schema because the component does not have any config options
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
@@ -113,6 +127,75 @@ def is_user_authorized_from_command(hass: HomeAssistant, connection: ActiveConne
 
     user_id = user.id
     return is_user_authorized(hass, user_id)
+
+def get_most_recent_timestamp_dir_name(parent_dir):
+    # Regex for exactly 17 digits (timestamp format: YYYYMMDDHHmmssfff)
+    timestamp_pattern = re.compile(r'^\d{17}$')
+
+    try:
+        # List only directories
+        entries = [
+            entry for entry in os.listdir(parent_dir)
+            if os.path.isdir(os.path.join(parent_dir, entry))
+        ]
+
+        # Filter entries matching the timestamp pattern
+        timestamp_dirs = [d for d in entries if timestamp_pattern.match(d)]
+
+        # Sort them in descending order
+        timestamp_dirs.sort(reverse=True)
+
+        # Return the first (most recent) match if any
+        return timestamp_dirs[0] if timestamp_dirs else None
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+def get_timestamp():
+    now = datetime.now()
+    timestamp = now.strftime('%Y%m%d%H%M%S') + f"{int(now.microsecond / 1000):03d}"
+    return timestamp
+
+async def register_frontend(hass: HomeAssistant) -> None:
+    try:
+        # Retrieving all existing HAOS resources (
+        existing_resources = await async_get_resources(hass)
+        existing_urls = {resource["url"]: resource["id"] for resource in existing_resources}
+
+        # Retrieving timestamped version directory for this component existing resources
+        existing_version = get_most_recent_timestamp_dir_name(RESOURCES_DIR)
+
+        # Constitute expected base URL for this component existing resources
+        existing_url_base = f"{RESOURCES_URL}/{existing_version}"
+
+        # Remove existing resources where resource URL matches any of this component resources URL
+        for resource in RESOURCES:
+            url = f"{existing_url_base}/{resource}"
+            if url in existing_urls:
+                _LOGGER.debug(f"Removing existing resource: {url}")
+                await async_delete_resource(hass, existing_urls[url])
+
+        # Generate a new version timestamp
+        new_version = get_timestamp()
+
+        # Migrates resources from old version timestamp to new version timestamp
+        existing_resources_dir = f"{RESOURCES_DIR}/{existing_version}"
+        new_resources_dir = f"{RESOURCES_DIR}/{new_version}"
+        os.rename(existing_resources_dir, new_resources_dir)
+
+        # Constitute new base URL for this component existing resources
+        new_url_base = f"{RESOURCES_URL}/{new_version}"
+
+        # Add fresh resources
+        for resource in RESOURCES:
+            url = f"{new_url_base}/{resource}"
+            _LOGGER.debug(f"Registering new resource: {url}")
+            await async_create_resource(hass, {"url": url, "type": "module"})
+
+        _LOGGER.info("Custom Lovelace resources successfully synced.")
+    except Exception as e:
+        _LOGGER.exception(f"Failed to sync Lovelace resources: {e}")
 
 @websocket_command({vol.Required("type"): DOMAIN + "/sync_keyboard"})
 @async_response
@@ -328,6 +411,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             if _LOGGER.getEffectiveLevel() == logging.CRITICAL:
                 _LOGGER.critical(fmt, level, *logs)
 
+    """Handle refreshing frontend for this custom component."""
+    @callback
+    async def handle_syncfront(call: ServiceCall) -> None:
+        await register_frontend(hass)
 
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
@@ -340,9 +427,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "conpress", handle_conpress, schema=CONPRESS_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "log", handle_log, schema=LOG_SERVICE_SCHEMA)
+    hass.services.async_register(DOMAIN, "syncfront", handle_syncfront)
 
     # Register WebSocket command
     async_register_command(hass, websocket_sync_keyboard)
+
+    # Register frontend resources
+    await register_frontend(hass)
 
     # Return boolean to indicate that initialization was successfully.
     return True
