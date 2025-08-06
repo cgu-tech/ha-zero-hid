@@ -193,17 +193,6 @@ async def _check_refresh_needed(hass: HomeAssistant) -> None:
     known_version = await hass.async_add_executor_job(read_and_update_version_file, COMPONENT_VERSION_FILE, RESOURCES_VERSION)
 
     if known_version != RESOURCES_VERSION:
-        # Ask user to refresh of lovelace
-        # so new resources registration can happen when lovelace is loaded
-        await hass.services.async_call(
-            "persistent_notification",
-            "create",
-            {
-                "title": f"{DOMAIN} component updated",
-                "message": "Changes have been made. [Click here to reload the page](/lovelace).",
-                "notification_id": f"custom_components_{DOMAIN}_update"
-            }
-        )
         return True
     else:
         return False
@@ -215,12 +204,15 @@ async def _async_wait_for_lovelace_resources(hass: HomeAssistant) -> None:
     # Wait for lovelace resources to have loaded.
     async def _check_lovelace_resources_loaded(now):
         if lovelace.resources.loaded:
+            _LOGGER.debug(f"Lovelace resources have been loaded. Install {DOMAIN} component resources...")
             await _async_register_resources(hass)
         else:
-            _LOGGER.debug(
-                "Unable to install resources because Lovelace resources have not yet loaded.  Trying again in 5 seconds"
-            )
-            async_call_later(hass, 5, _check_lovelace_resources_loaded)
+            _LOGGER.debug("Unable to install resources because Lovelace resources have not yet loaded. Loading lovelace resources...")
+            await lovelace.resources.async_get_info()
+
+            _LOGGER.debug("Trying again...")
+            await _check_lovelace_resources_loaded(0)
+            # async_call_later(hass, 5, _check_lovelace_resources_loaded)
 
     await _check_lovelace_resources_loaded(0)
 
@@ -232,8 +224,6 @@ async def register_frontend(hass: HomeAssistant) -> None:
             _LOGGER.debug("Lovelace in storage mode")
             # Check if resources refresh is needed (and invite user to refresh UI if needed)
             if await _check_refresh_needed(hass):
-                _LOGGER.debug("Sending lovelace updated event...")
-                hass.bus.async_fire(EVENT_LOVELACE_UPDATED, {"url_path": None})
                 await _async_wait_for_lovelace_resources(hass)
             else:
                 _LOGGER.debug(f"Custom Lovelace resources already synced for custom component {DOMAIN}")
