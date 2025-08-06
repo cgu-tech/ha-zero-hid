@@ -69,19 +69,19 @@ export class ResourceManager {
   }
   
   updateResources(hass) {
-    const uiResourcesVersion = this.getVersion();
     this.eventManager.callComponentCommand(hass, 'resources_version').then((response) => {
       // Success handler
       const { resourcesVersion } = response;
       if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("resourcesVersion:", resourcesVersion));
 
-      // Update intenal states
+      const uiResourcesVersion = this.getVersion();
       if (!resourcesVersion) {
         if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Cannot get component resources version (assuming UI up-to-date, HA down?):", uiResourcesVersion));
       } else {
         if (uiResourcesVersion === resourcesVersion) {
           if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Resources versions matches (UI up-to-date):", resourcesVersion));
         } else {
+          // Force refresh browser to reflect UI resources new version
           if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Resources versions different (UI out-dated version, component version):", uiResourcesVersion, resourcesVersion));
           this.forceRefresh();
         }
