@@ -25,7 +25,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.eventManager = new EventManager(this.logger);
-    this.resourceManager = new ResourceManager(this.logger, import.meta.url);
+    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
     this.layout = 'classic';
     this.layoutUrl = `${Globals.DIR_LAYOUTS}/remote/${this.layout}.json`;
     this.keyboardConfig = {};
@@ -454,26 +454,6 @@ class AndroidRemoteCard extends HTMLElement {
   getCardSize() {
     return 4;
   }
-  
-  checkForUpdate(hass) {
-    const uiResourcesVersion = this.resourceManager.getVersion();
-    this.eventManager.callComponentCommand(hass, 'resources_version').then((response) => {
-      // Success handler
-      const { resourcesVersion } = response;
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("resourcesVersion:", resourcesVersion));
-
-      // Update intenal states
-      if (uiResourcesVersion === resourcesVersion) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("UI resources up-to-date:", resourcesVersion));
-      } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("UI resources out-of-date:", resourcesVersion));
-        this.resourceManager.forceRefresh();
-      }
-    })
-    .catch((err) => {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error("Failed to retrieve resourcesVersion:", err));
-    });
-  }
 
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
@@ -492,7 +472,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
-      this.checkForUpdate(this._hass);
+      this.resourceManager.updateResources(this._hass);
       this.buildUi(this._hass);
     }
   }

@@ -1,4 +1,5 @@
 import { Logger } from './logger.js';
+import { EventManager } from './event-manager.js';
 
 function getCurrentScriptUrl(logger, contextUrl) {
   if (logger.isTraceEnabled()) console.debug(...logger.trace("getCurrentScriptUrl(contextUrl)", contextUrl));
@@ -40,9 +41,14 @@ export class ResourceManager {
   
   // Usage:
   // const resources_manager = new ResourceManager(logger, import.meta.url);
-  constructor(logger, contextUrl) {
+  constructor(logger, eventManager, contextUrl) {
     this.setLogger(logger);
+    this.setEventManager(eventManager);
     this.contextUrl = contextUrl;
+  }
+
+  setEventManager(eventManager) {
+    this.eventManager = eventManager;
   }
 
   setLogger(logger) {
@@ -60,5 +66,29 @@ export class ResourceManager {
     const url = new URL(window.location.href);
     url.searchParams.set('v', Date.now()); // Add or replace the 'v' parameter
     window.location.href = url.toString(); // Reload with the updated URL
+  }
+  
+  updateResources(hass) {
+    const uiResourcesVersion = this.getVersion();
+    this.eventManager.callComponentCommand(hass, 'resources_version').then((response) => {
+      // Success handler
+      const { resourcesVersion } = response;
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("resourcesVersion:", resourcesVersion));
+
+      // Update intenal states
+      if (!resourcesVersion) {
+        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Cannot get component resources version (assuming UI up-to-date, HA down?):", uiResourcesVersion));
+      } else {
+        if (uiResourcesVersion === resourcesVersion) {
+          if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Resources versions matches (UI up-to-date):", resourcesVersion));
+        } else {
+          if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Resources versions different (UI out-dated version, component version):", uiResourcesVersion, resourcesVersion));
+          this.forceRefresh();
+        }
+      }
+    })
+    .catch((err) => {
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error("Failed to retrieve resourcesVersion:", err));
+    });
   }
 }
