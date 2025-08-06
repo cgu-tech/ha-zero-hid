@@ -3,6 +3,7 @@ CURRENT_DIR="$(pwd)"
 
 # Parameters
 ZERO_HID_REPO_BRANCH="${1:-main}"
+ENABLE_DEV_MODE="${2:-}"
 
 # Configurations
 HAOS_CONFIG_DIR="/config"
@@ -18,7 +19,7 @@ HA_ZERO_HID_REPO_RESOURCES_DIR="${CURRENT_DIR}/web"
 
 HA_ZERO_HID_CLIENT_COMPONENT_NAME="ha_zero_hid"
 HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME="ha-zero-hid"
-HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME=$(date +%Y%m%d%H%M%S)$(awk -F. '{printf "%03d", $2/1000}' /proc/uptime)
+HA_ZERO_HID_CLIENT_RESOURCES_VERSION=$(date +%Y%m%d%H%M%S)$(awk -F. '{printf "%03d", $2/1000}' /proc/uptime)
 HA_ZERO_HID_CLIENT_COMPONENT_LABEL="HA zero HID"
 
 HA_ZERO_HID_CLIENT_CONFIG_FILE="${HAOS_CONFIG_DIR}/${HA_ZERO_HID_CLIENT_COMPONENT_NAME}.config"
@@ -27,6 +28,7 @@ HA_ZERO_HID_CLIENT_COMPONENT_DIR="${HAOS_CUSTOM_COMPONENTS_DIR}/${HA_ZERO_HID_CL
 HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/__init__.py"
 HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/const.py"
 HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/manifest.json"
+HA_ZERO_HID_CLIENT_COMPONENT_VERSION_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/version"
 
 HA_ZERO_HID_CLIENT_RESOURCES_DIR="${HAOS_RESOURCES_DIR}/${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}"
 HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR="${HA_ZERO_HID_CLIENT_RESOURCES_DIR}/utils"
@@ -313,8 +315,8 @@ EOF
     echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component resources directory name to ${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
     sed -i "s|<ha_resources_domain>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component resources version to ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
-    sed -i "s|<ha_resources_version>|${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component resources version to ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    sed -i "s|<ha_resources_version>|${HA_ZERO_HID_CLIENT_RESOURCES_VERSION}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
     # Templating client component raw files with configurations
     echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
@@ -325,8 +327,15 @@ EOF
     echo "Templating ${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME} resources directory name into ${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}..."
     sed -i "s|<ha_resources_domain>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME} resources version into ${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}..."
-    sed -i "s|<ha_resources_version>|${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION} resources version into ${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}..."
+    sed -i "s|<ha_resources_version>|${HA_ZERO_HID_CLIENT_RESOURCES_VERSION}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
+
+    # Update system and install dependencies
+    echo "Dev mode: ${ENABLE_DEV_MODE}"
+    if [ -z "${ENABLE_DEV_MODE}" ]; then
+        echo "Updating version file to allow reloading of frontend resources without restarting..."
+        echo -n "${HA_ZERO_HID_CLIENT_RESOURCES_VERSION}" > "${HA_ZERO_HID_CLIENT_COMPONENT_VERSION_FILE}"
+    fi
 
     # Register client component into HAOS config to enable it
     grep -qxF "${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:" "${HAOS_CONFIG_FILE}" || echo "${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:" >> "${HAOS_CONFIG_FILE}"
