@@ -50,7 +50,6 @@ export class ResourceManager {
   }
 
   getVersion() {
-    let version = null;
     const scriptUrl = getCurrentScriptUrl(this.logger, this.contextUrl);
     const version = scriptUrl ? getVersionFromUrl(this.logger, scriptUrl) : null;
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Current web-browser loaded resources version is ${version}`));
