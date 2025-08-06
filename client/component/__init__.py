@@ -29,6 +29,9 @@ SERVER_HOST = "<websocket_server_ip>"
 SERVER_PORT = <websocket_server_port>
 SERVER_SECRET = "<websocket_server_secret>"
 
+# Backend component
+COMPONENT_DIR = f"/config/custom_components/{DOMAIN}"
+COMPONENT_VERSION_FILE = f"{COMPONENT_DIR}/version"
 
 # Frontend Lovelace resources
 RESOURCES_DOMAIN = "<ha_resources_domain>"
@@ -164,13 +167,51 @@ async def _async_register_resources(hass: HomeAssistant) -> None:
                     "url": url
                 }
             )
-    _LOGGER.debug("Resources successfully registered")
+    _LOGGER.info(f"Custom Lovelace resources successfully synced for custom component {DOMAIN}")
+
+def read_and_update_version_file(version_file: str, new_timestamp: str) -> str:
+    old_timestamp = ""
+    if os.path.exists(version_file):
+        # File exists: read the old timestamp
+        with open(version_file, 'r', encoding='utf-8') as f:
+            old_timestamp = f.read().strip()
+
+    if old_timestamp != new_timestamp:
+        # File doesn't exist or file exist but timestamp differs: 
+        # (re)create and write new timestamp
+        with open(version_file, 'w', encoding='utf-8') as f:
+            f.write(new_timestamp)
+
+    return old_timestamp
+
+async def _check_refresh_needed(hass: HomeAssistant) -> None:
+    _LOGGER.debug("Checking if resources refresh is needed...")
+
+    # Retrieve old version timestamp (empty when no version file was present before).
+    # Then update version file with current resources version timestamp (when needed).
+    known_version = await hass.async_add_executor_job(read_and_update_version_file, COMPONENT_VERSION_FILE, RESOURCES_VERSION)
+
+    if known_version != RESOURCES_VERSION:
+        # Ask user to refresh of lovelace
+        # so new resources registration can happen when lovelace is loaded
+        await hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {
+                "title": f"{DOMAIN} component updated",
+                "message": "Changes have been made. [Click here to reload the page](javascript:location.reload()).",
+                "notification_id": f"custom_components_{DOMAIN}_update"
+            }
+        )
+        return True
+    else:
+        return False
 
 async def _async_wait_for_lovelace_resources(hass: HomeAssistant) -> None:
     _LOGGER.debug("Waiting for lovelace resources to be loaded...")
     lovelace = get_lovelace(hass)
 
-    """Wait for lovelace resources to have loaded."""
+    # Wait for lovelace resources to have loaded.
     async def _check_lovelace_resources_loaded(now):
         if lovelace.resources.loaded:
             await _async_register_resources(hass)
@@ -187,10 +228,16 @@ async def register_frontend(hass: HomeAssistant) -> None:
     try:
         lovelace = get_lovelace(hass)
         if lovelace.mode == "storage":
-            await _async_wait_for_lovelace_resources(hass)
-        _LOGGER.info("Custom Lovelace resources successfully synced.")
+            _LOGGER.debug("Lovelace in storage mode")
+            # Check if resources refresh is needed (and invite user to refresh UI if needed)
+            if await _check_refresh_needed(hass):
+                await _async_wait_for_lovelace_resources(hass)
+            else:
+                _LOGGER.debug(f"Custom Lovelace resources already synced for custom component {DOMAIN}")
+        else:
+            _LOGGER.warning(f"Lovelace is not in storage mode: you will have to manually declare those resources {RESOURCES} using base URL {RESOURCES_URL_BASE}")
     except Exception as e:
-        _LOGGER.exception(f"Failed to sync Lovelace resources: {e}")
+        _LOGGER.exception(f"Failed to sync custom Lovelace resources for custom component {DOMAIN}: %s", e)
 
 
 @websocket_command({vol.Required("type"): DOMAIN + "/sync_keyboard"})
