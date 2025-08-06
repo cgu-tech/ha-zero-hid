@@ -455,7 +455,7 @@ class AndroidRemoteCard extends HTMLElement {
     return 4;
   }
   
-  checkForUpdate() {
+  checkForUpdate(hass) {
     const uiResourcesVersion = this.resourceManager.getVersion();
     this.eventManager.callComponentCommand(hass, 'resources_version').then((response) => {
       // Success handler
@@ -492,7 +492,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
-      this.checkForUpdate();
+      this.checkForUpdate(this._hass);
       this.buildUi(this._hass);
     }
   }
