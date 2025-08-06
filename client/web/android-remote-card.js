@@ -457,6 +457,7 @@ class AndroidRemoteCard extends HTMLElement {
   
   checkForUpdate() {
     this.resourceManager.getVersion();
+    this.resourceManager.forceRefresh();
   }
 
   async connectedCallback() {

@@ -55,4 +55,10 @@ export class ResourceManager {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Current web-browser loaded resources version is ${version}`));
     return version;
   }
+  
+  forceRefresh() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('v', Date.now()); // Add or replace the 'v' parameter
+    window.location.href = url.toString(); // Reload with the updated URL
+  }
 }
