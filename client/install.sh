@@ -333,7 +333,9 @@ EOF
     # Update system and install dependencies
     echo "Dev mode: ${ENABLE_DEV_MODE}"
     if [ -z "${ENABLE_DEV_MODE}" ]; then
-        echo "Updating version file to allow reloading of frontend resources without restarting..."
+        echo "Restart Home Assistant now to fully apply the update"
+    else
+        echo "Version set to ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION} into version file ${HA_ZERO_HID_CLIENT_COMPONENT_VERSION_FILE}: frontend web resources will be soon reloaded without needing a restart (restart is still required to reload the component backend python code)..."
         echo -n "${HA_ZERO_HID_CLIENT_RESOURCES_VERSION}" > "${HA_ZERO_HID_CLIENT_COMPONENT_VERSION_FILE}"
     fi
 
