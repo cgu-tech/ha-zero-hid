@@ -1,6 +1,7 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
+import { ResourceManager } from './utils/resource-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 
@@ -24,6 +25,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.eventManager = new EventManager(this.logger);
+    this.resourceManager = new ResourceManager(this.logger, import.meta.url);
     this.layout = 'classic';
     this.layoutUrl = `${Globals.DIR_LAYOUTS}/remote/${this.layout}.json`;
     this.keyboardConfig = {};
@@ -452,6 +454,10 @@ class AndroidRemoteCard extends HTMLElement {
   getCardSize() {
     return 4;
   }
+  
+  checkForUpdate() {
+    this.resourceManager.getVersion();
+  }
 
   async connectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
@@ -470,6 +476,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
+      this.checkForUpdate();
       this.buildUi(this._hass);
     }
   }
