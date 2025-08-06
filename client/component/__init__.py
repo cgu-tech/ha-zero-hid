@@ -266,6 +266,19 @@ async def websocket_sync_keyboard(hass: HomeAssistant, connection: ActiveConnect
         _LOGGER.exception("Error in sync_keyboard")
         connection.send_error(msg["id"], "sync_failed", str(e))
 
+@websocket_command({vol.Required("type"): DOMAIN + "/resources_version"})
+@async_response
+async def websocket_resources_version(hass: HomeAssistant, connection: ActiveConnection, msg):
+    try:
+        _LOGGER.debug(f"resources_version(): {RESOURCES_VERSION}")
+
+        connection.send_result(msg["id"], {
+            "resourcesVersion": RESOURCES_VERSION,
+        })
+    except Exception as e:
+        _LOGGER.exception("Error in resources_version")
+        connection.send_error(msg["id"], "resources_version_failed", str(e))
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websocket global client."""
     ws_client = WebSocketClient(f"wss://{SERVER_HOST}:{SERVER_PORT}", SERVER_SECRET)
@@ -477,6 +490,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     # Register WebSocket command
     async_register_command(hass, websocket_sync_keyboard)
+    async_register_command(hass, websocket_resources_version)
 
     # Register frontend resources
     await register_frontend(hass)
