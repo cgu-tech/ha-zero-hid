@@ -199,7 +199,7 @@ async def _check_refresh_needed(hass: HomeAssistant) -> None:
             "create",
             {
                 "title": f"{DOMAIN} component updated",
-                "message": "Changes have been made. [Click here to reload the page](javascript:location.reload()).",
+                "message": "Changes have been made. [Click here to reload the page](/lovelace).",
                 "notification_id": f"custom_components_{DOMAIN}_update"
             }
         )
