@@ -69,7 +69,7 @@ export class ResourceManager {
   }
   
   updateResources(hass) {
-    this.eventManager.callComponentCommand(hass, 'resources_version').then((response) => {
+    this.eventManager.callComponentCommand(hass, 'sync_resources').then((response) => {
       // Success handler
       const { resourcesVersion } = response;
       if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("resourcesVersion:", resourcesVersion));

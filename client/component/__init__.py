@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
+import time
 import voluptuous as vol
 
 from datetime import datetime
@@ -15,11 +17,12 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 
-from typing import Set
+from typing import Set, TypedDict
 from .websocket_handler import WebSocketClient
 from .const import DOMAIN, MIN_RANGE, MAX_RANGE
 
 _LOGGER = logging.getLogger(__name__)
+_LOCK = asyncio.Lock()  # Prevent race conditions
 
 # Frontend user_ids whitelist
 AUTHORIZED_USERS: Set[str] = set(ip.strip() for ip in "<websocket_authorized_users_ids>".split(","))
@@ -47,6 +50,15 @@ RESOURCES = [
     "trackpad-card.js",
     "windows-keyboard-card.js",
 ]
+RESOURCES_LAST_SYNC_TIME = 0
+RESOURCES_SYNC_INTERVAL = 5
+
+class ResourcesVersions(TypedDict):
+    are_equal: bool | None
+    file_value: str | None
+    module_value: str
+    reference_source: str
+    reference_value: str
 
 # Use empty_config_schema because the component does not have any config options
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
@@ -134,104 +146,133 @@ def is_user_authorized_from_command(hass: HomeAssistant, connection: ActiveConne
     user_id = user.id
     return is_user_authorized(hass, user_id)
 
-def get_lovelace(hass: HomeAssistant) -> LovelaceData:
-    return hass.data.get("lovelace")
+async def set_resources_versions(resources_versions: ResourcesVersions, write_to_file: bool) -> None:
+    version_file = COMPONENT_VERSION_FILE
 
-"""Register modules if not already registered."""
-async def _async_register_resources(hass: HomeAssistant) -> None:
-    _LOGGER.debug("Registering resources...")
-    lovelace = get_lovelace(hass)
+    def write_version_to_file() -> str:
+        _LOGGER.debug(f"Writing version {resources_versions.reference_value} to file {version_file}...")
+        with open(version_file, 'w', encoding='utf-8') as f:
+            f.write(resources_versions.reference_value)
+            _LOGGER.debug(f"Version {resources_versions.reference_value} written to file {version_file}")
 
-    # Retrieve existing resources that matches resources base URL
-    existing_resources = {
-        resource["url"]: resource["id"]
-        for resource in lovelace.resources.async_items()
-        if resource["url"].startswith(RESOURCES_URL_BASE)
+    if write_to_file:
+        await hass.async_add_executor_job(write_version_to_file)
+    RESOURCES_VERSION = resources_versions.reference_value
+
+async def get_resources_versions(read_from_file: bool) -> ResourcesVersions:
+    version_file = COMPONENT_VERSION_FILE
+
+    def read_version_from_file() -> str:
+        _LOGGER.debug(f"Reading version from file {version_file}...")
+        if os.path.exists(version_file):
+            # version_file exists: read the timestamp
+            with open(version_file, 'r', encoding='utf-8') as f:
+                version_from_file = f.read().strip()
+                _LOGGER.debug(f"Version {version_from_file} read from file {version_file}")
+                return version_from_file
+        return ""
+
+    are_equal: bool | None = None
+    file_value: str | None = None
+    module_value: str = RESOURCES_VERSION
+    reference_source: str = "module"
+    reference_value: str = module_value
+
+    if read_from_file:
+        file_value = await hass.async_add_executor_job(read_version_from_file)
+
+        if file_value:
+            are_equal = file_value == module_value
+        else:
+            are_equal = False
+
+        if not are_equal:
+            versions = [file_value,module_value]
+            versions_sorted = sorted([version for version in versions if version], reverse=True)
+            reference_value = versions_sorted[0]
+            if reference_value != module_value:
+                reference_source = "file"
+
+    return {
+        "are_equal": are_equal,
+        "file_value": file_value,
+        "module_value": module_value,
+        "reference_source": reference_source,
+        "reference_value": reference_value,
     }
 
-    # Retrieve new resources URLs
-    target_resources_urls = {f"{RESOURCES_URL_BASE}/{resource}?v={RESOURCES_VERSION}" for resource in RESOURCES}
+async def synchronize_resources(hass: HomeAssistant, use_version_file: bool) -> ResourcesVersions:
+    _LOGGER.debug(f"Synchronizing resources (use_version_file={use_version_file})...")
 
-    # Remove existing resources that are not into new resources URLs
-    for url, id in existing_resources.items():
-        if url not in target_resources_urls:
-            _LOGGER.debug(f"Removing existing resource: {url} (id: {id})")
-            await lovelace.resources.async_delete_item(id)
+    resources_versions: ResourcesVersions = None
+    async with _LOCK:
 
-    # Create new resources when not already present
-    for url in target_resources_urls:
-        if url not in existing_resources:
-            _LOGGER.debug(f"Creating new resource: {url}")
-            await lovelace.resources.async_create_item(
-                {
-                    "res_type": "module",
-                    "url": url
-                }
-            )
-    _LOGGER.info(f"Custom Lovelace resources successfully synced for custom component {DOMAIN}")
+        # Retrieve resources versions
+        resources_versions = await get_resources_versions(use_version_file)
+        _LOGGER.debug(f"resources_versions: file={resources_versions.file_value}, module={resources_versions.module_value}")
 
-def read_and_update_version_file(version_file: str, new_timestamp: str) -> str:
-    old_timestamp = ""
-    if os.path.exists(version_file):
-        # File exists: read the old timestamp
-        with open(version_file, 'r', encoding='utf-8') as f:
-            old_timestamp = f.read().strip()
+        # Retrieve Lovelace object with frontend resources
+        lovelace = hass.data.get("lovelace")
+        _LOGGER.debug(f"Lovelace mode set to \"{lovelace.mode}\"")
 
-    if old_timestamp != new_timestamp:
-        # File doesn't exist or file exist but timestamp differs: 
-        # (re)create and write new timestamp
-        with open(version_file, 'w', encoding='utf-8') as f:
-            f.write(new_timestamp)
-
-    return old_timestamp
-
-async def _check_refresh_needed(hass: HomeAssistant) -> None:
-    _LOGGER.debug("Checking if resources refresh is needed...")
-
-    # Retrieve old version timestamp (empty when no version file was present before).
-    # Then update version file with current resources version timestamp (when needed).
-    known_version = await hass.async_add_executor_job(read_and_update_version_file, COMPONENT_VERSION_FILE, RESOURCES_VERSION)
-
-    if known_version != RESOURCES_VERSION:
-        return True
-    else:
-        return False
-
-async def _async_wait_for_lovelace_resources(hass: HomeAssistant) -> None:
-    _LOGGER.debug("Waiting for lovelace resources to be loaded...")
-    lovelace = get_lovelace(hass)
-
-    # Wait for lovelace resources to have loaded.
-    async def _check_lovelace_resources_loaded(now):
-        if lovelace.resources.loaded:
-            _LOGGER.debug(f"Lovelace resources have been loaded. Install {DOMAIN} component resources...")
-            await _async_register_resources(hass)
-        else:
-            _LOGGER.debug("Unable to install resources because Lovelace resources have not yet loaded. Loading lovelace resources...")
-            await lovelace.resources.async_get_info()
-
-            _LOGGER.debug("Trying again...")
-            await _check_lovelace_resources_loaded(0)
-            # async_call_later(hass, 5, _check_lovelace_resources_loaded)
-
-    await _check_lovelace_resources_loaded(0)
-
-async def register_frontend(hass: HomeAssistant) -> None:
-    _LOGGER.debug("Registering component frontend...")
-    try:
-        lovelace = get_lovelace(hass)
         if lovelace.mode == "storage":
-            _LOGGER.debug("Lovelace in storage mode")
-            # Check if resources refresh is needed (and invite user to refresh UI if needed)
-            if await _check_refresh_needed(hass):
-                await _async_wait_for_lovelace_resources(hass)
+            _LOGGER.warning(f"Lovelace mode set to \"storage\": automatic resources synchronization using base URL {RESOURCES_URL_BASE}")
+
+            if not resources_versions.are_equal:
+                # File and module versions are differen
+
+                _LOGGER.warning(f"""
+                Outdated version detected: file version {resources_versions.file_value} and module version {resources_versions.module_value} are different. 
+                Resources versions will be synchronized to {resources_versions.reference_source} version {resources_versions.reference_value}.
+                """)
+
+                # Load existing Lovelace resources
+                if not lovelace.resources.loaded:
+                    _LOGGER.debug("Loading Lovelace resources...")
+                    await lovelace.resources.async_get_info()
+                if not lovelace.resources.loaded:
+                    # Cannot load Lovelace existing resources
+                    _LOGGER.exception("Cannot load Lovelace resources: ensure Home Assistant codebase did not changed (check for .loaded inside .async_get_info())")
+                    return
+
+                # Retrieve existing Lovelace resources linked to this component
+                _LOGGER.debug(f"Retrieving existing Lovelace resources linked to {DOMAIN} component...")
+                existing_resources = {
+                    resource["url"]: resource["id"]
+                    for resource in lovelace.resources.async_items()
+                    if resource["url"].startswith(RESOURCES_URL_BASE)
+                }
+
+                # Create up-to-date resources URLs for this component
+                _LOGGER.debug(f"Retrieving up-to-date {DOMAIN} component resources...")
+                uptodate_resources_urls = {f"{RESOURCES_URL_BASE}/{resource}?v={resources_versions.reference_value}" for resource in RESOURCES}
+
+                # Remove existing outdated Lovelace resources
+                for url, id in existing_resources.items():
+                    if url not in uptodate_resources_urls:
+                        _LOGGER.debug(f"Removing existing outdated Lovelace resource: {url} (id: {id})")
+                        await lovelace.resources.async_delete_item(id)
+
+                # Create missing up-to-date resources
+                for url in uptodate_resources_urls:
+                    if url not in existing_resources:
+                        _LOGGER.debug(f"Creating up-to-date resource: {url}")
+                        await lovelace.resources.async_create_item(
+                            {
+                                "res_type": "module",
+                                "url": url
+                            }
+                        )
+
+                await set_resources_versions(resources_versions, use_version_file)
+                _LOGGER.info(f"Lovelace resources for custom component {DOMAIN} successfully updated to version {resources_versions.reference_value}")
+
             else:
                 _LOGGER.debug(f"Custom Lovelace resources already synced for custom component {DOMAIN}")
         else:
-            _LOGGER.warning(f"Lovelace is not in storage mode: you will have to manually declare those resources {RESOURCES} using base URL {RESOURCES_URL_BASE}")
-    except Exception as e:
-        _LOGGER.exception(f"Failed to sync custom Lovelace resources for custom component {DOMAIN}: %s", e)
+            _LOGGER.warning(f"Lovelace mode is not \"storage\": manually declare those resources {RESOURCES} using base URL {RESOURCES_URL_BASE}")
 
+    return resources_versions
 
 @websocket_command({vol.Required("type"): DOMAIN + "/sync_keyboard"})
 @async_response
@@ -256,18 +297,29 @@ async def websocket_sync_keyboard(hass: HomeAssistant, connection: ActiveConnect
         _LOGGER.exception("Error in sync_keyboard")
         connection.send_error(msg["id"], "sync_failed", str(e))
 
-@websocket_command({vol.Required("type"): DOMAIN + "/resources_version"})
+@websocket_command({vol.Required("type"): DOMAIN + "/sync_resources"})
 @async_response
-async def websocket_resources_version(hass: HomeAssistant, connection: ActiveConnection, msg):
+async def websocket_sync_resources(hass: HomeAssistant, connection: ActiveConnection, msg):
     try:
-        _LOGGER.debug(f"resources_version(): {RESOURCES_VERSION}")
+        global RESOURCES_LAST_SYNC_TIME
+        current_time = time.monotonic()  # monotonic for elapsed time
 
-        connection.send_result(msg["id"], {
-            "resourcesVersion": RESOURCES_VERSION,
-        })
+        # Compute delta since last sync
+        delta = current_time - RESOURCES_LAST_SYNC_TIME
+
+        resources_versions = None
+        if delta > RESOURCES_SYNC_INTERVAL:
+            RESOURCES_LAST_SYNC_TIME = current_time
+            resources_versions = await synchronize_resources(hass, use_version_file=True)
+        else:
+            resources_versions = await synchronize_resources(hass, use_version_file=False)
+
+        connection.send_result(msg["id"], {"resourcesVersion": resources_versions.reference_value})
+
     except Exception as e:
         _LOGGER.exception("Error in resources_version")
         connection.send_error(msg["id"], "resources_version_failed", str(e))
+
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websocket global client."""
@@ -460,11 +512,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             if _LOGGER.getEffectiveLevel() == logging.CRITICAL:
                 _LOGGER.critical(fmt, level, *logs)
 
-    """Handle refreshing frontend for this custom component."""
-    @callback
-    async def handle_syncfront(call: ServiceCall) -> None:
-        await register_frontend(hass)
-
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
@@ -476,14 +523,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "conpress", handle_conpress, schema=CONPRESS_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "log", handle_log, schema=LOG_SERVICE_SCHEMA)
-    hass.services.async_register(DOMAIN, "syncfront", handle_syncfront)
 
     # Register WebSocket command
     async_register_command(hass, websocket_sync_keyboard)
-    async_register_command(hass, websocket_resources_version)
+    async_register_command(hass, websocket_sync_resources)
 
     # Register frontend resources
-    await register_frontend(hass)
+    await synchronize_resources(hass)
 
     # Return boolean to indicate that initialization was successfully.
     return True
