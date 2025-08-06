@@ -567,11 +567,11 @@ class WindowsKeyboardCard extends HTMLElement {
    this.eventManager.callComponentCommand(hass, 'sync_keyboard').then((response) => {
       // Success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
-      console.log("Synced Modifiers:", syncModifiers);
-      console.log("Synced Keys:", syncKeys);
-      console.log("Synced Numlock:", syncNumlock);
-      console.log("Synced Capslock:", syncCapslock);
-      console.log("Synced Scrolllock:", syncScrolllock);
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncModifiers:", syncModifiers));
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncKeys:", syncKeys));
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncNumlock:", syncNumlock));
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncCapslock:", syncCapslock));
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncScrolllock:", syncScrolllock));
       // Update intenal states
       this.capsLock = syncCapslock;
       this.shift = syncModifiers && (syncModifiers.includes("MOD_LEFT_SHIFT") || syncModifiers.includes("MOD_RIGHT_SHIFT"));

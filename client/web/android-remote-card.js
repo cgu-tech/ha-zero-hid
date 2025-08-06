@@ -456,8 +456,23 @@ class AndroidRemoteCard extends HTMLElement {
   }
   
   checkForUpdate() {
-    this.resourceManager.getVersion();
-    this.resourceManager.forceRefresh();
+    const uiResourcesVersion = this.resourceManager.getVersion();
+    this.eventManager.callComponentCommand(hass, 'resources_version').then((response) => {
+      // Success handler
+      const { resourcesVersion } = response;
+      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("resourcesVersion:", resourcesVersion));
+
+      // Update intenal states
+      if (uiResourcesVersion === resourcesVersion) {
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("UI resources up-to-date:", resourcesVersion));
+      } else {
+        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("UI resources out-of-date:", resourcesVersion));
+        this.resourceManager.forceRefresh();
+      }
+    })
+    .catch((err) => {
+      if (this.logger.isErrorEnabled()) console.error(...this.logger.error("Failed to retrieve resourcesVersion:", err));
+    });
   }
 
   async connectedCallback() {
