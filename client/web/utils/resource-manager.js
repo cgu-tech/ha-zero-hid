@@ -83,7 +83,7 @@ export class ResourceManager {
           if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Resources versions matches (UI up-to-date):", resourcesVersion));
         } else {
           if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Resources versions different (UI out-dated version, component version):", uiResourcesVersion, resourcesVersion));
-          // this.forceRefresh();
+          this.forceRefresh();
         }
       }
     })
