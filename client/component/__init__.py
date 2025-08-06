@@ -31,7 +31,7 @@ SERVER_SECRET = "<websocket_server_secret>"
 
 
 # Frontend Lovelace resources
-RESOURCES_DOMAIN = "<ha_resources_dir_name>"
+RESOURCES_DOMAIN = "<ha_resources_domain>"
 RESOURCES_DIR = f"/config/www/{RESOURCES_DOMAIN}"
 RESOURCES_URL_BASE = f"/local/{RESOURCES_DOMAIN}"
 RESOURCES_VERSION = "<ha_resources_version>"
