@@ -529,7 +529,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async_register_command(hass, websocket_sync_resources)
 
     # Register frontend resources
-    await synchronize_resources(hass)
+    await synchronize_resources(hass, use_version_file=True)
 
     # Return boolean to indicate that initialization was successfully.
     return True
