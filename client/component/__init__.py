@@ -34,6 +34,7 @@ COMPONENT_DIR = f"/config/custom_components/{DOMAIN}"
 COMPONENT_VERSION_FILE = f"{COMPONENT_DIR}/version"
 
 # Frontend Lovelace resources
+EVENT_LOVELACE_UPDATED: Final = "lovelace_updated"
 RESOURCES_DOMAIN = "<ha_resources_domain>"
 RESOURCES_DIR = f"/config/www/{RESOURCES_DOMAIN}"
 RESOURCES_URL_BASE = f"/local/{RESOURCES_DOMAIN}"
@@ -215,6 +216,9 @@ async def _async_wait_for_lovelace_resources(hass: HomeAssistant) -> None:
     async def _check_lovelace_resources_loaded(now):
         if lovelace.resources.loaded:
             await _async_register_resources(hass)
+
+            _LOGGER.debug("Sending lovelace updated event...")
+            hass.bus.async_fire(EVENT_LOVELACE_UPDATED, {"url_path": None})
         else:
             _LOGGER.debug(
                 "Unable to install resources because Lovelace resources have not yet loaded.  Trying again in 5 seconds"
