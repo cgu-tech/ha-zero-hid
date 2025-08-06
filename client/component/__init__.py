@@ -138,16 +138,6 @@ async def _async_register_resources(hass: HomeAssistant) -> None:
     _LOGGER.debug("Registering resources...")
     lovelace = get_lovelace(hass)
 
-    # Remove existing bad resources
-    existing_resources_bad = {
-        resource["url"]: resource["id"]
-        for resource in lovelace.resources.async_items()
-        if resource["url"].startswith("/local/<ha_resources_dir_name>")
-    }
-    for url, id in existing_resources_bad.items():
-        _LOGGER.debug(f"Removing existing bad resource: {url} (id: {id})")
-        await lovelace.resources.async_delete_item(id)
-
     # Retrieve existing resources that matches resources base URL
     existing_resources = {
         resource["url"]: resource["id"]
