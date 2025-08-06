@@ -31,9 +31,10 @@ SERVER_SECRET = "<websocket_server_secret>"
 
 
 # Frontend Lovelace resources
-RESOURCES_DIR_NAME = "<ha_resources_dir_name>"
-RESOURCES_DIR = f"/config/www/{RESOURCES_DIR_NAME}"
-RESOURCES_URL = f"/local/{RESOURCES_DIR_NAME}"
+RESOURCES_DOMAIN = "<ha_resources_dir_name>"
+RESOURCES_DIR = f"/config/www/{RESOURCES_DOMAIN}"
+RESOURCES_URL_BASE = f"/local/{RESOURCES_DOMAIN}"
+RESOURCES_VERSION = "<ha_resources_version>"
 RESOURCES = [
     "android-keyboard-card.js",
     "android-remote-card.js",
@@ -129,35 +130,6 @@ def is_user_authorized_from_command(hass: HomeAssistant, connection: ActiveConne
     user_id = user.id
     return is_user_authorized(hass, user_id)
 
-def get_most_recent_timestamp_dir_name(parent_dir):
-    # Regex for exactly 17 digits (timestamp format: YYYYMMDDHHmmssfff)
-    timestamp_pattern = re.compile(r'^\d{17}$')
-
-    try:
-        # List only directories
-        entries = [
-            entry for entry in os.listdir(parent_dir)
-            if os.path.isdir(os.path.join(parent_dir, entry))
-        ]
-
-        # Filter entries matching the timestamp pattern
-        timestamp_dirs = [d for d in entries if timestamp_pattern.match(d)]
-
-        # Sort them in descending order
-        timestamp_dirs.sort(reverse=True)
-
-        # Return the first (most recent) match if any
-        return timestamp_dirs[0] if timestamp_dirs else None
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
-
-def get_timestamp():
-    now = datetime.now()
-    timestamp = now.strftime('%Y%m%d%H%M%S') + f"{int(now.microsecond / 1000):03d}"
-    return timestamp
-
 def get_lovelace(hass: HomeAssistant) -> LovelaceData:
     return hass.data.get("lovelace")
 
@@ -166,52 +138,33 @@ async def _async_register_resources(hass: HomeAssistant) -> None:
     _LOGGER.debug("Registering resources...")
     lovelace = get_lovelace(hass)
 
-    # Retrieving all existing HAOS resources that matches 
-    # this custom component resources base URL
-    existing_full_resources = [
-        resource
+    # Retrieve existing resources that matches resources base URL
+    existing_resources = {
+        resource["url"]: resource["id"]
         for resource in lovelace.resources.async_items()
-        if resource["url"].startswith(RESOURCES_URL)
-    ]
-    existing_resources = {resource["url"]: resource["id"] for resource in existing_full_resources}
+        if resource["url"].startswith(RESOURCES_URL_BASE)
+    }
 
-    # Retrieving timestamped version directory for this component existing resources
-    existing_version = get_most_recent_timestamp_dir_name(RESOURCES_DIR)
+    # Retrieve new resources URLs
+    target_resources_urls = {f"{RESOURCES_URL_BASE}/{resource}?v={RESOURCES_VERSION}" for resource in RESOURCES}
 
-    # Constitute expected base URL for this component existing resources
-    existing_url_base = f"{RESOURCES_URL}/{existing_version}"
-    urls_to_update = {f"{existing_url_base}/{resource}" for resource in RESOURCES}
-
-    # Generate a new version timestamp
-    new_version = get_timestamp()
-
-    # Migrates resources from old version timestamp to new version timestamp
-    existing_resources_dir = f"{RESOURCES_DIR}/{existing_version}"
-    new_resources_dir = f"{RESOURCES_DIR}/{new_version}"
-    os.rename(existing_resources_dir, new_resources_dir)
-
-    # Constitute new base URL for this component existing resources
-    new_url_base = f"{RESOURCES_URL}/{new_version}"
-
-    # Remove existing resources that are not there anymore
+    # Remove existing resources that are not into new resources URLs
     for url, id in existing_resources.items():
-        if url not in urls_to_update:
+        if url not in target_resources_urls:
             _LOGGER.debug(f"Removing existing resource: {url} (id: {id})")
             await lovelace.resources.async_delete_item(id)
 
-    # Create or update new resources
-    for resource in RESOURCES:
-        resource_old_url = f"{existing_url_base}/{resource}"
-        resource_new_url = f"{new_url_base}/{resource}"
-        resource_new_item = {"res_type": "module", "url": resource_new_url}
-
-        if resource_old_url not in existing_resources:
-            _LOGGER.debug(f"Creating new resource: {resource_new_url}")
-            await lovelace.resources.async_create_item(resource_new_item)
-        else:
-            existing_resource_id = existing_resources.get(resource_old_url)
-            _LOGGER.debug(f"Updating existing resource: from {resource_old_url} to {resource_new_url} (id: {existing_resource_id})")
-            await lovelace.resources.async_update_item(existing_resource_id, resource_new_item)
+    # Create new resources when not already present
+    for url in target_resources_urls:
+        if url not in existing_resources:
+            _LOGGER.debug(f"Creating new resource: {url}")
+            await lovelace.resources.async_create_item(
+                {
+                    "res_type": "module",
+                    "url": url
+                }
+            )
+    _LOGGER.debug("Resources successfully registered")
 
 async def _async_wait_for_lovelace_resources(hass: HomeAssistant) -> None:
     _LOGGER.debug("Waiting for lovelace resources to be loaded...")

@@ -29,8 +29,7 @@ HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/con
 HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/manifest.json"
 
 HA_ZERO_HID_CLIENT_RESOURCES_DIR="${HAOS_RESOURCES_DIR}/${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}"
-HA_ZERO_HID_CLIENT_RESOURCES_VERSIONED_DIR="${HA_ZERO_HID_CLIENT_RESOURCES_DIR}/${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME}"
-HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR="${HA_ZERO_HID_CLIENT_RESOURCES_VERSIONED_DIR}/utils"
+HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR="${HA_ZERO_HID_CLIENT_RESOURCES_DIR}/utils"
 HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/globals.js"
 HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/keycodes.js"
 HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/consumercodes.js"
@@ -135,8 +134,8 @@ install() {
 
     # Installing raw client web resources
     echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
-    mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_VERSIONED_DIR}"
-    copy_dir_content "${HA_ZERO_HID_REPO_RESOURCES_DIR}" "${HA_ZERO_HID_CLIENT_RESOURCES_VERSIONED_DIR}"
+    mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
+    copy_dir_content "${HA_ZERO_HID_REPO_RESOURCES_DIR}" "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
 
     echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${ZERO_HID_REPO_BRANCH}..."
     git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
@@ -311,8 +310,11 @@ EOF
     echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component authorized users ids to ${websocket_authorized_users_ids} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
     sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME} resources directory name to ${websocket_authorized_users_ids} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
-    sed -i "s|<ha_resources_dir_name>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component resources directory name to ${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    sed -i "s|<ha_resources_domain>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
+
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component resources version to ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME} into component ${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}..."
+    sed -i "s|<ha_resources_version>|${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_INIT_FILE}"
 
     # Templating client component raw files with configurations
     echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
@@ -321,10 +323,10 @@ EOF
     sed -i "s|<ha_component_name>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
 
     echo "Templating ${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME} resources directory name into ${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}..."
-    sed -i "s|<ha_resources_dir_name>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
+    sed -i "s|<ha_resources_domain>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME} resources version directory name into ${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}..."
-    sed -i "s|<ha_resources_version_dir_name>|${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
+    echo "Templating ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME} resources version into ${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}..."
+    sed -i "s|<ha_resources_version>|${HA_ZERO_HID_CLIENT_RESOURCES_VERSION_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
 
     # Register client component into HAOS config to enable it
     grep -qxF "${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:" "${HAOS_CONFIG_FILE}" || echo "${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:" >> "${HAOS_CONFIG_FILE}"
