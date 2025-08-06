@@ -146,7 +146,7 @@ def is_user_authorized_from_command(hass: HomeAssistant, connection: ActiveConne
     user_id = user.id
     return is_user_authorized(hass, user_id)
 
-async def set_resources_versions(resources_versions: ResourcesVersions, write_to_file: bool) -> None:
+async def set_resources_versions(hass: HomeAssistant, write_to_file: bool, resources_versions: ResourcesVersions) -> None:
     version_file = COMPONENT_VERSION_FILE
 
     def write_version_to_file() -> str:
@@ -159,7 +159,7 @@ async def set_resources_versions(resources_versions: ResourcesVersions, write_to
         await hass.async_add_executor_job(write_version_to_file)
     RESOURCES_VERSION = resources_versions.reference_value
 
-async def get_resources_versions(read_from_file: bool) -> ResourcesVersions:
+async def get_resources_versions(hass: HomeAssistant, read_from_file: bool) -> ResourcesVersions:
     version_file = COMPONENT_VERSION_FILE
 
     def read_version_from_file() -> str:
@@ -208,7 +208,7 @@ async def synchronize_resources(hass: HomeAssistant, use_version_file: bool) -> 
     async with _LOCK:
 
         # Retrieve resources versions
-        resources_versions = await get_resources_versions(use_version_file)
+        resources_versions = await get_resources_versions(hass, use_version_file)
         _LOGGER.debug(f"resources_versions: file={resources_versions.file_value}, module={resources_versions.module_value}")
 
         # Retrieve Lovelace object with frontend resources
@@ -264,7 +264,7 @@ async def synchronize_resources(hass: HomeAssistant, use_version_file: bool) -> 
                             }
                         )
 
-                await set_resources_versions(resources_versions, use_version_file)
+                await set_resources_versions(hass, use_version_file, resources_versions)
                 _LOGGER.info(f"Lovelace resources for custom component {DOMAIN} successfully updated to version {resources_versions.reference_value}")
 
             else:
