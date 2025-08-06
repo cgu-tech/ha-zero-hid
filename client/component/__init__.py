@@ -216,9 +216,6 @@ async def _async_wait_for_lovelace_resources(hass: HomeAssistant) -> None:
     async def _check_lovelace_resources_loaded(now):
         if lovelace.resources.loaded:
             await _async_register_resources(hass)
-
-            _LOGGER.debug("Sending lovelace updated event...")
-            hass.bus.async_fire(EVENT_LOVELACE_UPDATED, {"url_path": None})
         else:
             _LOGGER.debug(
                 "Unable to install resources because Lovelace resources have not yet loaded.  Trying again in 5 seconds"
@@ -235,6 +232,8 @@ async def register_frontend(hass: HomeAssistant) -> None:
             _LOGGER.debug("Lovelace in storage mode")
             # Check if resources refresh is needed (and invite user to refresh UI if needed)
             if await _check_refresh_needed(hass):
+                _LOGGER.debug("Sending lovelace updated event...")
+                hass.bus.async_fire(EVENT_LOVELACE_UPDATED, {"url_path": None})
                 await _async_wait_for_lovelace_resources(hass)
             else:
                 _LOGGER.debug(f"Custom Lovelace resources already synced for custom component {DOMAIN}")
