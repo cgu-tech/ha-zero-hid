@@ -95,7 +95,7 @@
           { "code": "KEY_N_TILDE", "label": { "normal": "ñ", "shift": "Ñ" } }
         ]
       },
-      { "code": "KEY_QUOTE",      "label": { "normal": "\u2018", "shift": "\u2019", "alt1": "?" } },
+      { "code": "KEY_QUOTE",      "label": { "normal": "'", "shift": "'", "alt1": "?" } },
       { "code": "KEY_BACKSPACE",  "label": { "normal": "\u232B" }, "special": true, "width": "altkey" },
 
 
