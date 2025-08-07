@@ -38,9 +38,9 @@ export class Logger {
         this._pushbackSetupNeeded = false;
         this.logInternal("debug", "setPushback", `Log level of backend ${Globals.COMPONENT_NAME} component set to debug`);
       }
-      this.logInternal("debug", "setPushback", `Push frontend log into backend logger activated`);
+      this.logInternal("debug", "setPushback", `Push frontend log into backend logger enabled`);
     } else {
-      this.logInternal("debug", "setPushback", `Push frontend log into backend logger disactivated`);
+      this.logInternal("debug", "setPushback", `Push frontend log into backend logger disabled`);
     }
   }
   setHass(hass) {
@@ -109,79 +109,4 @@ export class Logger {
       return '[unserializable]';
     }
   }
-
-  // Internal deep serialization (bounded by maxDepth)
-  internalSerialize(input, seen = new WeakSet(), currentDepth = 0, maxDepth) {
-    if (
-      input === null ||
-      typeof input !== "object" ||
-      input instanceof Date ||
-      input instanceof RegExp
-    ) {
-      return input;
-    }
-  
-    if (seen.has(input)) return "[Circular]";
-    seen.add(input);
-  
-    const tag = Object.prototype.toString.call(input);
-    const forbidden = [];
-    if (forbidden.includes(tag)) {
-      return `[uncloneable: ${tag}]`;
-    }
-  
-    if (currentDepth >= maxDepth) return "[truncated]";
-  
-    if (Array.isArray(input)) {
-      return input.map(item =>
-        this.internalSerialize(item, seen, currentDepth + 1, maxDepth)
-      );
-    }
-  
-    const result = {};
-    let current = input;
-  
-    while (current && current !== Object.prototype) {
-      for (const key of Object.getOwnPropertyNames(current)) {
-        if (key in result) continue;
-        try {
-          const value = input[key];
-          if (typeof value === "function") continue;
-          result[key] = this.internalSerialize(value, seen, currentDepth + 1, maxDepth);
-        } catch (err) {
-          result[key] = `[unreadable: ${err.message}]`;
-        }
-      }
-      current = Object.getPrototypeOf(current);
-    }
-  
-    return result;
-  }
-  
-  // Byte-limit fallback
-  pruneToFit(obj, maxBytes) {
-    const clone = JSON.parse(JSON.stringify(obj)); // already serialized safely
-    let json = JSON.stringify(clone);
-  
-    if (json.length <= maxBytes) return clone;
-  
-    while (json.length > maxBytes) {
-      this.pruneOneLevel(clone);
-      json = JSON.stringify(clone);
-    }
-  
-    return clone;
-  }
-  
-  // Prune objects one level deeper
-  pruneOneLevel(obj) {
-    if (typeof obj !== "object" || obj === null) return;
-  
-    for (const key in obj) {
-      if (typeof obj[key] === "object" && obj[key] !== null) {
-        obj[key] = "[pruned]";
-      }
-    }
-  }
-
 }
