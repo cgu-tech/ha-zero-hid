@@ -305,6 +305,7 @@ async def websocket_sync_resources(hass: HomeAssistant, connection: ActiveConnec
 
         # Compute delta since last sync
         delta = current_time - RESOURCES_LAST_SYNC_TIME
+        _LOGGER.debug(f"delta:{delta}, current_time={current_time}, RESOURCES_LAST_SYNC_TIME={RESOURCES_LAST_SYNC_TIME}, RESOURCES_SYNC_INTERVAL={RESOURCES_SYNC_INTERVAL}")
 
         resources_versions = None
         if delta > RESOURCES_SYNC_INTERVAL:
