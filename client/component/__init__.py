@@ -54,7 +54,7 @@ RESOURCES_LAST_SYNC_TIME = 0
 RESOURCES_SYNC_INTERVAL = 5
 
 class ResourcesVersions:
-    def __init__(self, url: str, secret: str):
+    def __init__(self):
         self.are_equal: bool | None = None
         self.file_value: str | None = None
         self.module_value: str | None = None
@@ -194,13 +194,13 @@ async def get_resources_versions(hass: HomeAssistant, read_from_file: bool) -> R
             if reference_value != module_value:
                 reference_source = "file"
 
-    return {
-        "are_equal": are_equal,
-        "file_value": file_value,
-        "module_value": module_value,
-        "reference_source": reference_source,
-        "reference_value": reference_value,
-    }
+    resources_versions = ResourcesVersions()
+    resources_versions.are_equal = are_equal
+    resources_versions.file_value = file_value
+    resources_versions.module_value = module_value
+    resources_versions.reference_source = reference_source
+    resources_versions.reference_value = reference_value
+    return resources_versions
 
 async def synchronize_resources(hass: HomeAssistant, use_version_file: bool) -> ResourcesVersions:
     _LOGGER.debug(f"Synchronizing resources (use_version_file={use_version_file})...")
