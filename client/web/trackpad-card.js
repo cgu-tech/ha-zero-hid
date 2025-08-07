@@ -1,6 +1,7 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
+import { ResourceManager } from './utils/resource-manager.js';
 
 console.info("Loading trackpad-card");
 
@@ -12,19 +13,20 @@ class TrackpadCard extends HTMLElement {
     this._hass = null;
     this._uiBuilt = false;
     this.card = null;
-    
+
     // Configs
     this.config = null;
     this.loglevel = 'warn';
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.eventManager = new EventManager(this.logger);
+    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
     this.buttonsMode = 'left-middle-right';
-    
+
     // Layout loading flags
     this._layoutReady = false;
     this._layoutLoaded = {};
-    
+
     this.isToggleClick = false;
     this.isToggledOn = false;
     this.pointersClick = new Map();
@@ -42,7 +44,7 @@ class TrackpadCard extends HTMLElement {
     this.triggerLongScroll = 350;
     this.triggerLongScrollInterval = 25;
     this.triggerLongScrollMin = 75;
-    
+
     this.buttonsLayouts = [
       { mode: 'hidden'           , layout: [] },
       { mode: 'left'             , layout: [ {serviceCall: "clickleft"  , className: "trackpad-solo"  } ] },
@@ -69,24 +71,24 @@ class TrackpadCard extends HTMLElement {
       if (config['log_level']) {
         this.loglevel = config['log_level'];
       }
-      
+
       // Set log pushback
       const oldLogpushback = this.logpushback;
       if (config['log_pushback']) {
         this.logpushback = config['log_pushback'];
       }
-      
+
       // Update logger when needed
       if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
         this.logger.update(this.loglevel, this._hass, this.logpushback);
       }
       if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
-      
+
       // Set haptic feedback
       if (config['haptic']) {
         this.eventManager.setHaptic(config['haptic']);
       }
-      
+
       // Set layout buttons
       if (config['buttons']) {
         this.buttonsMode = config['buttons'];
@@ -121,17 +123,17 @@ class TrackpadCard extends HTMLElement {
       if (config['trigger-scroll-max']) {
         this.triggerScrollMax = config['trigger-scroll-max'];
       }
-      
+
       // Set initial long-press duration that trigger scroll event (in ms)
       if (config['trigger-long-scroll']) {
         this.triggerLongScroll = config['trigger-long-scroll'];
       }
-      
+
       // Set long-press duration interval to decrease between each scroll event (in ms)
       if (config['trigger-long-scroll-interval']) {
         this.triggerLongScrollInterval = config['trigger-long-scroll-interval'];
       }
-      
+
       // Set long-press duration that could not be decreased further between each scroll event (in ms)
       if (config['trigger-long-scroll-min']) {
         this.triggerLongScrollMin = config['trigger-long-scroll-min'];
@@ -160,6 +162,7 @@ class TrackpadCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
+      this.resourceManager.synchronizeResources(this._hass);
       this.buildUi(this._hass);
     }
   }
@@ -372,7 +375,6 @@ class TrackpadCard extends HTMLElement {
         fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
     `;
 
- 
     // Track scrollIcon toggle
     this.eventManager.addPointerDownListener(scrollIcon, (e) => {
       e.stopPropagation(); // Prevents underneath trackpad click
@@ -382,7 +384,7 @@ class TrackpadCard extends HTMLElement {
 
     this.scrollContainer = document.createElement("div");
     this.scrollContainer.classList.add("scroll-zones");
-    
+
     for (const zone of ["top", "bottom", "left", "right"]) {
       const el = document.createElement("div");
       el.classList.add("zone", zone);
@@ -414,10 +416,10 @@ class TrackpadCard extends HTMLElement {
         this.clearLongScrollTimeout(e);
         this.scrollsClick.delete(e.pointerId);
       });
-      
+
       const scrollArrowIcon = this.createArrowSvg(zone);
       el.appendChild(scrollArrowIcon);
-      
+
       this.scrollContainer.appendChild(el);
     }
 
@@ -430,7 +432,7 @@ class TrackpadCard extends HTMLElement {
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll mode toggle on:", this.isToggledOn));
       }
       this.isToggleClick = false;
-      
+
       this.updateScrollZones(trackpad);
     });
 
@@ -540,12 +542,12 @@ class TrackpadCard extends HTMLElement {
         });
         return btn;
       };
-      
+
       const createFirstButton = (serviceCall, className) => {
         const bnt = createButton(serviceCall, className);
         buttonRow.appendChild(bnt);
       };
-      
+
       const createSecondaryButton = (serviceCall, className) => {
         const sep = document.createElement("div");
         sep.className = "btn-separator";
@@ -575,16 +577,16 @@ class TrackpadCard extends HTMLElement {
 
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
-    
+
     this.card = card;
     this.content = container;
   }
-  
+
   updateScrollZones(trackpad) {
     if (this.isToggledOn) {      
       trackpad.appendChild(this.scrollContainer);
       const { width, height } = trackpad.getBoundingClientRect();
-      
+
       const zoneStyles = {
         left: {
           left: 0,
@@ -611,7 +613,7 @@ class TrackpadCard extends HTMLElement {
           height: height / 2,
         },
       };
-      
+
       for (const [zoneName, style] of Object.entries(zoneStyles)) {
         const zoneEl = this.scrollContainer.querySelector(`.zone.${zoneName}`);
         if (!zoneEl) continue;
@@ -624,7 +626,7 @@ class TrackpadCard extends HTMLElement {
           height: `${style.height}px`,
         });
       }
-    
+
     } else {
       if (this.scrollContainer) {
         trackpad.removeChild(this.scrollContainer);
@@ -639,10 +641,10 @@ class TrackpadCard extends HTMLElement {
     svg.setAttribute("width", "24");
     svg.setAttribute("height", "24");
     svg.setAttribute("fill", "none");
-  
+
     const arrow1 = document.createElementNS(svgNS, "polyline");
     const arrow2 = document.createElementNS(svgNS, "polyline");
-  
+
     [arrow1, arrow2].forEach(arrow => {
       arrow.setAttribute("stroke", "currentColor");
       arrow.setAttribute("stroke-width", "2.25");
@@ -650,7 +652,7 @@ class TrackpadCard extends HTMLElement {
       arrow.setAttribute("stroke-linejoin", "round");
       arrow.setAttribute("fill", "none");
     });
-  
+
     if (direction === "left") {
       // Stylized << arrows
       arrow1.setAttribute("points", "14,6 8,12 14,18");
@@ -668,7 +670,7 @@ class TrackpadCard extends HTMLElement {
       arrow1.setAttribute("points", "6,4 12,10 18,4");
       arrow2.setAttribute("points", "6,10 12,16 18,10");
     }
-  
+
     svg.appendChild(arrow1);
     svg.appendChild(arrow2);
     return svg;
@@ -704,15 +706,15 @@ class TrackpadCard extends HTMLElement {
         const duration = endTime - startTime; // current long-scroll duration
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`startTime:${startTime}, endTime:${endTime}, duration:${duration}`));
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Long-scroll of ${duration}ms detected for:`, e));
-        
+
         // Scroll current direction
         this.scrollZone(zone);
-        
+
         // Compute next trigger time
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`this.triggerLongScrollMin:${this.triggerLongScrollMin}, thisTriggerLongScroll:${thisTriggerLongScroll}, this.triggerLongScrollInterval:${this.triggerLongScrollInterval}`));
         const nextTriggerLongScroll = Math.max(this.triggerLongScrollMin, thisTriggerLongScroll - this.triggerLongScrollInterval)
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`nextTriggerLongScroll:${nextTriggerLongScroll}`));
-        
+
         // Add next scroll event
         this.scrollsClick.set(e.pointerId, { "event": e , "long-scroll-timeout": this.addLongScrollTimeout(zone, e, nextTriggerLongScroll) } );
       }
@@ -730,7 +732,7 @@ class TrackpadCard extends HTMLElement {
       if (clickEntry && !clickEntry["move-detected"]) {
         // No move detected as-of now:
         if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("No move detected for:", e));
-        
+
         const startTime = clickEntry["event"].timeStamp;
         const endTime = e.timeStamp;
         const duration = endTime - startTime; // in milliseconds
@@ -751,7 +753,7 @@ class TrackpadCard extends HTMLElement {
     this.sendMouseClickRelease();
     this.eventManager.hapticFeedback();
   }
-  
+
   handleSinglePointerLeftDblClick(e) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleSinglePointerLeftDblClick(e):", e));
     this.sendMouseClickLeft();
@@ -813,7 +815,7 @@ class TrackpadCard extends HTMLElement {
         dxAdjusted = Math.max(this.triggerScrollMin, Math.min(this.triggerScrollMax, dxAdjusted)) * Math.round(dxAbs / this.triggerScroll);
         dyAdjusted = 0;
       }
-      
+
       // Revert dy to get human natural gesture order
       dyAdjusted = -dyAdjusted;
 
@@ -822,23 +824,23 @@ class TrackpadCard extends HTMLElement {
     }
     return updateStartPoint;
   }
-  
+
   sendMouseClickLeft() {
     this.sendMouse("clickleft", {});
   }
-  
+
   sendMouseClickRelease() {
     this.sendMouse("clickrelease", {});
   }
-  
+
   sendMouseMove(dx, dy) {
     this.sendMouse("move", { "x": dx, "y": dy, });
   }
-  
+
   sendMouseScroll(dx, dy) {
     this.sendMouse("scroll", { "x": dx, "y": dy, });
   }
-  
+
   sendMouse(serviceName, serviceArgs) {
     this.eventManager.callComponentService(this._hass, serviceName, serviceArgs);
   }

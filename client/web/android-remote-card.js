@@ -212,7 +212,7 @@ class AndroidRemoteCard extends HTMLElement {
         `<svg id="home-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
           <!-- Roof (triangle) -->
           <path d="M 12 32 L 32 12 L 52 32" />
-          
+
           <!-- House base without top line -->
           <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
           <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
@@ -540,7 +540,7 @@ class AndroidRemoteCard extends HTMLElement {
       display: flex;
       flex-direction: column;
     }
-    
+
     .row {
       display: flex;
       flex-direction: row;
@@ -618,7 +618,7 @@ class AndroidRemoteCard extends HTMLElement {
     .circle-button:hover { background-color: #4a4a4a; }
     .circle-button:active,
     .circle-button.pressed { transform: scale(0.95); }
-    
+
     .side-button {
       aspect-ratio: 3 / 1;
       width: 100%;  /* maintain aspect ratio */
@@ -673,7 +673,7 @@ class AndroidRemoteCard extends HTMLElement {
       color: #bfbfbf;
       border-radius: 999px;
       user-select: none;
-      
+
       display: flex;
       align-items: center;   /* vertical alignment */
       justify-content: center; /* horizontal alignment */
@@ -875,18 +875,18 @@ class AndroidRemoteCard extends HTMLElement {
 
     const container = document.createElement('div');
     container.id = "main-container";
-    
+
     const wrapper = document.createElement('div');
     wrapper.className = "wrapper";
-    
+
     this.rows.forEach((rowConfig, rowIndex) => {
-      
+
       // Create a row
       const row = document.createElement("div");
       row.classList.add('row');
       if (rowConfig["filler-top"]) row.classList.add('gap-top');
       if (rowConfig["filler-bottom"]) row.classList.add('gap-bottom');
-      
+
       // Add cells to row
       rowConfig.cells.forEach((cellConfig, cellIndex) => {
 
@@ -897,19 +897,19 @@ class AndroidRemoteCard extends HTMLElement {
 
         // Remove internal padding on cell when required by the row
         if (rowConfig["no-gap"]) cell.classList.add('no-gap');
-        
+
         // Create cell content
         const cellContent = this.createCellContent(hass, cellConfig);
-        
+
         // Add key element into row
         if (cellContent) cell.appendChild(cellContent);
         row.appendChild(cell);
       });
-      
+
       // Add row into container
       wrapper.appendChild(row);
     });
-    
+
     container.appendChild(wrapper);
     this.shadowRoot.appendChild(container);
 
@@ -928,10 +928,10 @@ class AndroidRemoteCard extends HTMLElement {
     // Override section configured
     if (this.config && this.config['buttons-override']) {
       const buttonsOverride = this.config['buttons-override'];
-      
+
       // Iterate over all override configurations
       Object.keys(buttonsOverride).forEach((btnId) => {
-          
+
         // Search if current override configuration does have a declared sensor
         const btnOverrideConfig = buttonsOverride[btnId];
         const btnOverrideSensor = btnOverrideConfig['sensor'];
@@ -941,9 +941,9 @@ class AndroidRemoteCard extends HTMLElement {
           // Search if current override configuration matches an element from DOM
           const btn = this.content.querySelector(`#${btnId}`);
           if (btn) {
-            
+
             // The current override configuration does have a declared sensor and matches an element from DOM
-            
+
             // Update sensor state
             if (hass.states[btnOverrideSensor]) {
               btn._sensorState = hass.states[btnOverrideSensor].state;
@@ -1076,7 +1076,7 @@ class AndroidRemoteCard extends HTMLElement {
     const rInner = padRadius - padPadding;
     const centerRadius = padRadius - padPadding - padLineThick;
     const svgSize = padRadius * 2;
-    
+
     svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     svg.style.width = "100%";
@@ -1160,7 +1160,6 @@ class AndroidRemoteCard extends HTMLElement {
       // Get the original viewBox
       const vb = arrowSvg.getAttribute("viewBox").split(" ").map(parseFloat);
       const [vbX, vbY, vbWidth, vbHeight] = vb;
-      
 
       // Desired on-screen size (in your SVG coordinate system before scaling)
       const baseSize = 20; // adjust to your taste
@@ -1229,7 +1228,7 @@ class AndroidRemoteCard extends HTMLElement {
     let foldableMouse;
 
     let state = 1;
-    
+
     const updateFoldable = () => {
       foldable.innerHTML = "";  
       foldable.style.display = "block";
@@ -1241,7 +1240,7 @@ class AndroidRemoteCard extends HTMLElement {
       } else if (state === 2) {
         foldableContentName = foldableMouseName;
       }
-      
+
       if (foldableContentName) {
         customElements.whenDefined(foldableContentName).then(() => {
           let foldableContent;
@@ -1279,11 +1278,10 @@ class AndroidRemoteCard extends HTMLElement {
     const updateFoldableUI = () => {
       const leftPercentages = ["0%", "33.33%", "66.66%"];
       indicator.style.left = leftPercentages[state];
-    
+
       options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
       updateFoldable();
     };
-
 
     options.forEach((option, index) => {
       this.eventManager.addPointerClickListener(option, () => {
@@ -1294,7 +1292,7 @@ class AndroidRemoteCard extends HTMLElement {
         }
       });
     });
-  
+
     updateFoldableUI();
   }
 
@@ -1389,13 +1387,13 @@ class AndroidRemoteCard extends HTMLElement {
       this.removeCode(hass, code);
     }
   }
-  
+
   hasOverrideAction(btn) {
     const btnId = btn.id;
     const buttonsOverride = this.config['buttons-override'];
     return (btnId && buttonsOverride && buttonsOverride[btnId]);
   }
-  
+
   executeOverrideAction(btn) {
     const btnId = btn.id;
     const buttonOverrideConfig = this.config['buttons-override'][btnId];
@@ -1496,7 +1494,7 @@ class AndroidRemoteCard extends HTMLElement {
   isModifier(code) {
     return code && code.startsWith("MOD_");
   }
-  
+
   isConsumer(code) {
     return code && code.startsWith("CON_");
   }
@@ -1508,7 +1506,7 @@ class AndroidRemoteCard extends HTMLElement {
       sendKeys: Array.from(this.pressedKeys),
     });
   }
-  
+
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate(hass) {
     this.eventManager.callComponentService(hass, "conpress", {

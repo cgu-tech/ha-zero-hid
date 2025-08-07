@@ -1,6 +1,7 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
+import { ResourceManager } from './utils/resource-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 
 console.info("Loading windows-keyboard-card");
@@ -15,19 +16,20 @@ class WindowsKeyboardCard extends HTMLElement {
     this._hass = null;
     this._uiBuilt = false;
     this.card = null;
-    
+
     // Configs
     this.config = null;
     this.loglevel = 'warn';
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.eventManager = new EventManager(this.logger);
+    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
     this.layout = 'US';
     this.layoutUrl = `${Globals.DIR_LAYOUTS}/windows/${this.layout}.json`;
 
     // Layout loading flags
     this._layoutReady = false;
-  this._layoutLoaded = {};
+    this._layoutLoaded = {};
 
     // To track pressed modifiers
     this.capsLock = false;
@@ -54,19 +56,19 @@ class WindowsKeyboardCard extends HTMLElement {
       if (config['log_level']) {
         this.loglevel = config['log_level'];
       }
-      
+
       // Set log pushback
       const oldLogpushback = this.logpushback;
       if (config['log_pushback']) {
         this.logpushback = config['log_pushback'];
       }
-      
+
       // Update logger when needed
       if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
         this.logger.update(this.loglevel, this._hass, this.logpushback);
       }
       if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
-      
+
       // Set haptic feedback
       if (config['haptic']) {
         this.eventManager.setHaptic(config['haptic']);
@@ -76,7 +78,7 @@ class WindowsKeyboardCard extends HTMLElement {
       if (config['layout']) {
         this.layout = config['layout'];
       }
-      
+
       // Set layout URL
       if (config['layout_url']) {
         this.layoutUrl = config['layout_url'];
@@ -107,6 +109,7 @@ class WindowsKeyboardCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
+      this.resourceManager.synchronizeResources(this._hass);
       this.buildUi(this._hass);
     }
   }

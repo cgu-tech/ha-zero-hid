@@ -1,6 +1,7 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
+import { ResourceManager } from './utils/resource-manager.js';
 
 console.info("Loading carrousel-card");
 
@@ -19,6 +20,7 @@ class CarrouselCard extends HTMLElement {
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.eventManager = new EventManager(this.logger);
+    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
     this.cellsWidth = 60;
     this.cellsHeight = 60;
     this.cells = [];
@@ -103,6 +105,7 @@ class CarrouselCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
+      this.resourceManager.synchronizeResources(this._hass);
       this.buildUi(this._hass);
     }
   }
@@ -157,7 +160,6 @@ class CarrouselCard extends HTMLElement {
         white-space: nowrap;
         scroll-behavior: smooth; /* Optional */
       }
-      
       .carrousel-cell {
         display: inline-flex;
         flex-direction: column;
@@ -178,7 +180,6 @@ class CarrouselCard extends HTMLElement {
         box-sizing: border-box;
         cursor: pointer;
       }
-
       .carrousel-cell-content {
         display: inline-flex;
         flex-direction: column;
@@ -194,27 +195,22 @@ class CarrouselCard extends HTMLElement {
         height: 90%;
         padding: 4px;
       }
-
       .carrousel-img {
         width: 100%;
         height: 100%;
         object-fit: contain;
       }
-
       .carrousel-cell .carrousel-content-wrapper {
         width: 100%;
         height: 100%;
         box-sizing: border-box;
       }
-      
       .carrousel-cell .carrousel-content-wrapper.img-half {
         height: 70%;
       }
-      
       .carrousel-cell .carrousel-content-wrapper.img-full {
         height: 100%;
       }
-
       .carrousel-label {
         display: flex;
         justify-content: center; /* Horizontal centering */
@@ -225,11 +221,9 @@ class CarrouselCard extends HTMLElement {
         word-wrap: break-word;     /* allows breaking long words */
         overflow-wrap: break-word; /* better support for word breaking */
       }
-      
       .carrousel-label.label-half {
         height: 30%;
       }
-      
       .carrousel-label.label-full {
         height: 100%;
       }
@@ -288,7 +282,7 @@ class CarrouselCard extends HTMLElement {
       if (cellBackground) cellContent.style.background = cellBackground;
 
       cellDiv.appendChild(cellContent);
-      
+
       this.eventManager.addPointerClickListener(cellDiv, (e) => {
         this.handlePointerClick(e, hass, cellDiv);
       });
@@ -299,7 +293,7 @@ class CarrouselCard extends HTMLElement {
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
   }
-  
+
   createImage(cellId, cellLabel, cell) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating image for cell '${cellId}'`));
 
@@ -389,7 +383,7 @@ class CarrouselCard extends HTMLElement {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering action for cell:", cell, config.action));
       this.eventManager.triggerHaosTapAction(cell, config.action);
     }
-    
+
     this.eventManager.hapticFeedback();
   }
 
@@ -421,14 +415,14 @@ class CarrouselCard extends HTMLElement {
           }
         }
       }
-      
+
       // Invalid cellDisplayMode specified by user: warn it
       if (!targetDisplayMode) {
         if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
         targetDisplayMode = defaultDisplayMode;
       }
     }
-    
+
     // No cellDisplayMode specified by user: defaulting silently
     if (!targetDisplayMode) {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`No display mode provided for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));

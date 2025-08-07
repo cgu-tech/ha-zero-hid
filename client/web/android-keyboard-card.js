@@ -1,6 +1,7 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
+import { ResourceManager } from './utils/resource-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 
@@ -24,6 +25,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.logpushback = false;
     this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
     this.eventManager = new EventManager(this.logger);
+    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
     this.layout = 'US';
     this.layoutUrl = `${Globals.DIR_LAYOUTS}/android/${this.layout}.json`;
     this.fontscale = 1.0;
@@ -128,6 +130,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
+      this.resourceManager.synchronizeResources(this._hass);
       this.buildUi(this._hass);
     }
   }
@@ -161,20 +164,20 @@ class AndroidKeyboardCard extends HTMLElement {
       return;
     }
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
-    
+
     // Clear existing content (if any)
     this.shadowRoot.innerHTML = '';
-    
+
     // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
-    
+
     // Re-add global handlers to ensure proper out-of-bound handling
     this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
     this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
-    
+
     // Update the logger
     this.logger.update(this.loglevel);
-    
+
     const card = document.createElement("ha-card");
     const style = document.createElement("style");
     style.textContent = `
@@ -382,7 +385,7 @@ class AndroidKeyboardCard extends HTMLElement {
         const lowerLabel = document.createElement("span");
         lowerLabel.className = "label-lower";
         lowerLabel.textContent = keyData.label.normal || "";
-        
+
         btn.appendChild(lowerLabel);
 
         btn._lowerLabel = lowerLabel;
@@ -394,7 +397,7 @@ class AndroidKeyboardCard extends HTMLElement {
         this.eventManager.addPointerDownListener(btn, (e) => {
           this.handlePointerDown(e, hass, btn);
           btn._pointerDown = true;
-        
+
           // Long press timer (only for non-special keys)
           if (!btn._keyData.special) {
             if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerdown(e)->key-normal-long-pressed"));
@@ -410,15 +413,15 @@ class AndroidKeyboardCard extends HTMLElement {
 
         this.eventManager.addPointerUpListener(btn, (e) => {
           btn._pointerDown = false;
-          
+
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointerup(e)->clearTimeout"));
           clearTimeout(this.popinTimeout);
-          
+
           this.handlePointerUp(e, hass, btn);
         });
         this.eventManager.addPointerCancelListener(btn, (e) => {
           btn._pointerDown = false;
-          
+
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("pointercancel(e)->clearTimeout"));
           clearTimeout(this.popinTimeout);
           
@@ -427,13 +430,13 @@ class AndroidKeyboardCard extends HTMLElement {
 
         row.appendChild(btn);
       }
-    
+
       container.appendChild(row);
     });
-    
+
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
-    
+
     this.card = card;
     this.content = container;
 
@@ -452,7 +455,7 @@ class AndroidKeyboardCard extends HTMLElement {
   showPopin(evt, hass, card, btn) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("showPopin(evt, hass, card, btn):", btn));
     if (this.popin) this.closePopin();
-        
+
     // Retrieve key data
     const keyData = btn._keyData;
     if (!keyData) return; // abort popin when no KeyData
@@ -498,7 +501,7 @@ class AndroidKeyboardCard extends HTMLElement {
     popinRows.forEach(rowKeys => {
       const popinRow = document.createElement("div");
       popinRow.className = "key-popin-row";
-      
+
       // Fill row content, key by key
       rowKeys.forEach(popinKeyData => {
 
@@ -523,12 +526,12 @@ class AndroidKeyboardCard extends HTMLElement {
           }
         }
         if (!displayLower) return; // When label is missing, skip the whole key
-        
+
         // When label exists: 
         // create and add the popin key (ie popinBtn) into the popin content 
         const popinBtn = document.createElement("button");
         popinBtn.classList.add("key");
-        
+
         if (popinKeyData.width) popinBtn.classList.add(popinKeyData.width);
 
         popinBtn.dataset.code = popinKeyData.code;
@@ -559,7 +562,7 @@ class AndroidKeyboardCard extends HTMLElement {
         });
 
         popinRow.appendChild(popinBtn);
-        
+
         // trigger animation after the element is attached
         requestAnimationFrame(() => {
           popinBtn.classList.add("enter-active");
@@ -814,10 +817,10 @@ class AndroidKeyboardCard extends HTMLElement {
           }
         }
       }
-      
+
       // Update visual layout with modified virtual modifiers
       this.updateLabels();
-      
+
       // Do not send any key
       return;
     }
@@ -876,7 +879,7 @@ class AndroidKeyboardCard extends HTMLElement {
         this._currentPopinBaseKey = null;
         return; // suppress the unwanted base key release
       }
-      
+
       // Non-special and not virtual key clicked
       const charToSend = btn._lowerLabel.textContent || "";
       if (charToSend) {
@@ -982,7 +985,7 @@ class AndroidKeyboardCard extends HTMLElement {
   isModifier(code) {
     return code && code.startsWith("MOD_");
   }
-  
+
   isConsumer(code) {
     return code && code.startsWith("CON_");
   }
@@ -1002,7 +1005,7 @@ class AndroidKeyboardCard extends HTMLElement {
       sendKeys: Array.from(this.pressedKeys),
     });
   }
-  
+
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate(hass) {
     this.eventManager.callComponentService(hass, "conpress", {
