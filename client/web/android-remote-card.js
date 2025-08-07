@@ -385,9 +385,6 @@ class AndroidRemoteCard extends HTMLElement {
     this.pressedConsumers = new Set();
 
     this.dynamicStyles = new Map();
-
-    // Handle out of bounds mouse releases
-    this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
   }
 
   setConfig(config) {
@@ -476,7 +473,7 @@ class AndroidRemoteCard extends HTMLElement {
       this.buildUi(this._hass);
     }
   }
-
+  
   async loadLayout(layoutUrl) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(layoutUrl):", layoutUrl));
     try {
@@ -499,6 +496,18 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
+  async disconnectedCallback() {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("disconnectedCallback()"));
+    
+    // Remove global event listeners
+    if (this._handleGlobalPointerUp) this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+  
+    // Nullify internal references
+    this._handleGlobalPointerUp = null;
+    this._hass = null;
+    this._uiBuilt = false;
+  }
+
   buildUi(hass) {
     if (this._uiBuilt) {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
@@ -512,8 +521,14 @@ class AndroidRemoteCard extends HTMLElement {
     // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
 
-    // Re-add global handlers to ensure proper out-of-bound handling
-    this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+    // Lazy bound global handler
+    if (!this._handleGlobalPointerUp) {
+      this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
+    } else {
+      this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+    }
+    
+    // Add global handlers to ensure proper out-of-bound handling
     this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
 
     // Update the logger
