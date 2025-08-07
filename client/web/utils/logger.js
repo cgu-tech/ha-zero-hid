@@ -1,4 +1,5 @@
 import { Globals } from './globals.js';
+import { parse, stringify, toJSON, fromJSON } from '../libs/flatted_3.3.3_min.js';
 
 // Define logger helper class
 export class Logger {
@@ -52,7 +53,7 @@ export class Logger {
   getArgs(skipPushback, header, logStyle, ...args) {
     // Push logs to backend when needed
     if (!skipPushback && this._hass && this._pushback) {
-      console.log("GET_ARGS", ...args);
+      // console.log("GET_ARGS", ...args);
       const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.deepSerialize(arg, this.objByteLimit, this.objLevelLimit)) : [];
       if (serializedArgs.length > 0) {
         this._hass.callService(Globals.COMPONENT_NAME, "log", { "level": header, "origin": this.origin, "logs": serializedArgs, });
@@ -97,16 +98,11 @@ export class Logger {
 
   // Entry point
   deepSerialize(input, maxBytes, maxDepth) {
-    const seen = new WeakSet();
-  
-    // Step 1: Serialize only up to maxDepth
-    const full = this.internalSerialize(input, seen, 0, maxDepth);
-  
-    // Step 2: Check size and prune if needed
-    let json = JSON.stringify(full);
-    if (json.length <= maxBytes) return full;
-  
-    return this.pruneToFit(full, maxBytes);
+    try {
+      return stringify(input); // Use Flatted to serialize
+    } catch (e) {
+      return '[unserializable]';
+    }
   }
 
   // Internal deep serialization (bounded by maxDepth)
