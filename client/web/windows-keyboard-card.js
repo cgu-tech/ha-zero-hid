@@ -21,7 +21,7 @@ class WindowsKeyboardCard extends HTMLElement {
     this.config = null;
     this.loglevel = 'warn';
     this.logpushback = false;
-    this.logger = new Logger(this.loglevel, this._hass, this.logpushback);
+    this.logger = new Logger("windows-keyboard-card.js", this.loglevel, this._hass, this.logpushback);
     this.eventManager = new EventManager(this.logger);
     this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
     this.layout = 'US';
