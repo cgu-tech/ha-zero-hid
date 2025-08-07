@@ -145,7 +145,7 @@ class ArrowPadCard extends HTMLElement {
     this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
 
     // Update the logger
-    this.logger.update(this.loglevel, hass, this.logpushback);
+    //this.logger.update(this.loglevel, hass, this.logpushback);
 
     const card = document.createElement("ha-card");
 

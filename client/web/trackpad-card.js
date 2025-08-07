@@ -202,7 +202,7 @@ class TrackpadCard extends HTMLElement {
     this._uiBuilt = true;
 
     // Update the logger
-    this.logger.update(this.loglevel, hass, this.logpushback);
+    //this.logger.update(this.loglevel, hass, this.logpushback);
 
     const card = document.createElement("ha-card");
     card.style.borderRadius = "10px";
