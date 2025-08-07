@@ -53,12 +53,13 @@ RESOURCES = [
 RESOURCES_LAST_SYNC_TIME = 0
 RESOURCES_SYNC_INTERVAL = 5
 
-class ResourcesVersions(TypedDict):
-    are_equal: bool | None
-    file_value: str | None
-    module_value: str
-    reference_source: str
-    reference_value: str
+class ResourcesVersions:
+    def __init__(self, url: str, secret: str):
+        self.are_equal: bool | None = None
+        self.file_value: str | None = None
+        self.module_value: str | None = None
+        self.reference_source: str | None = None
+        self.reference_value: str | None = None
 
 # Use empty_config_schema because the component does not have any config options
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
