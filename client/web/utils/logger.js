@@ -13,7 +13,7 @@ export class Logger {
   update(level, hass, pushback) {
     this._hass = hass;
     this.setLevel(level);
-    this.setPushback(pushback);
+    // this.setPushback(pushback);
   }
   setLevel(level) {
     const newLevel = this.levels[level] ?? 0;
