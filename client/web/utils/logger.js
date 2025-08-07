@@ -58,7 +58,7 @@ export class Logger {
   getArgs(skipPushback, header, logStyle, ...args) {
     // Push logs to backend when needed
     if (!skipPushback && this._hass && this._pushback) {
-      // console.log("GET_ARGS", ...args);
+      console.log(`skipPushback:${skipPushback},this._hass:${this._hass},this._pushback:${this._pushback}`);
       const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.deepSerialize(arg, this.objByteLimit, this.objLevelLimit)) : [];
       if (serializedArgs.length > 0) {
         this._hass.callService(Globals.COMPONENT_NAME, "log", { "level": header, "origin": this.origin, "logs": serializedArgs, });
