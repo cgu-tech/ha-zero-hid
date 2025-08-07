@@ -12,18 +12,24 @@ export class Logger {
   }
   update(level, hass, pushback) {
     this._hass = hass;
-    this.setPushback(pushback);
     this.setLevel(level);
+    this.setPushback(pushback);
   }
   setLevel(level) {
-    this.level = this.levels[level] ?? 0;
-    this.logInternal("debug", "setLevel", `Log level of frontend ${this.origin} set to ${level}`);
-    this.setPushback(this._pushback);
+    const newLevel = this.levels[level] ?? 0;
+    if (newLevel !== this.level) {
+      this.level = newLevel;
+      this.logInternal("debug", "setLevel", `Log level of frontend ${this.origin} set to ${this.level}`);
+    }
   }
   setPushback(pushback) {
-    this._pushback = pushback;
-    if (this._hass && this._pushback) {
+    if (pushback !== this._pushback) {
+      this._pushback = pushback;
+      this._pushbackSetupNeeded = pushback;
+    }
+    if (this._pushbackSetupNeeded && this._hass && this._pushback) {
       this._hass.callService("logger", "set_level", { [`custom_components.${Globals.COMPONENT_NAME}`]: 'debug' });
+      this._pushbackSetupNeeded = false;
       this.logInternal("debug", "setPushback", `Log level of backend ${Globals.COMPONENT_NAME} component set to debug`);
     }
   }
@@ -55,18 +61,6 @@ export class Logger {
     return [`%c[${header}][${this.origin}]`, logStyle];
   }
 
-  logInternal(level, caller, ...args) {
-    const internalLevel = this.levels[level] ?? 0;
-    const internalArgs = [`[${caller}]`, ...args];
-    if (this.isLevelEnabled(internalLevel)) {
-      if (internalLevel === 0) { console.error(...this.error(internalArgs)); return; }
-      if (internalLevel === 1) { console.warn(...this.warn(internalArgs)); return; }
-      if (internalLevel === 2) { console.info(...this.info(internalArgs)); return; }
-      if (internalLevel === 3) { console.debug(...this.debug(internalArgs)); return; }
-      if (internalLevel === 4) { console.debug(...this.trace(internalArgs)); return; }
-    }
-  }
-
   // ERROR: if (this.logger.isErrorEnabled()) console.error(...this.logger.error(args));
   error(...args) { return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
   // WARN: if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(args));
@@ -77,7 +71,19 @@ export class Logger {
   debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
   // TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
   trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
-  
+
+  logInternal(level, caller, ...args) {
+    const internalLevel = this.levels[level] ?? 0;
+    const internalArgs = [`[${caller}]`, ...args];
+    if (this.isLevelEnabled(internalLevel)) {
+      if (internalLevel === 0) { console.error(...this.error(...internalArgs)); return; }
+      if (internalLevel === 1) { console.warn(...this.warn(...internalArgs)); return; }
+      if (internalLevel === 2) { console.info(...this.info(...internalArgs)); return; }
+      if (internalLevel === 3) { console.debug(...this.debug(...internalArgs)); return; }
+      if (internalLevel === 4) { console.debug(...this.trace(...internalArgs)); return; }
+    }
+  }
+
   // Entry point
   deepSerialize(input, maxBytes, maxDepth) {
     const seen = new WeakSet();
@@ -91,7 +97,7 @@ export class Logger {
   
     return this.pruneToFit(full, maxBytes);
   }
-  
+
   // Internal deep serialization (bounded by maxDepth)
   internalSerialize(input, seen = new WeakSet(), currentDepth = 0, maxDepth) {
     if (

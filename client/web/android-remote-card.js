@@ -408,9 +408,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Update logger when needed
     if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
       this.logger.update(this.loglevel, this._hass, this.logpushback);
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("this.logger.update(this.loglevel, this._hass, this.logpushback):", this.loglevel, this._hass, this.logpushback));
     }
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("oldLoglevel, this.loglevel, oldLogpushback, this.logpushback:", oldLoglevel, this.loglevel, oldLogpushback, this.logpushback));
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
 
     // Set haptic feedback
@@ -517,6 +515,9 @@ class AndroidRemoteCard extends HTMLElement {
     // Re-add global handlers to ensure proper out-of-bound handling
     this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
     this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+
+    // Update the logger
+    this.logger.update(this.loglevel, hass, this.logpushback);
 
     const style = document.createElement('style');
     style.textContent = `

@@ -201,6 +201,9 @@ class TrackpadCard extends HTMLElement {
     // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
 
+    // Update the logger
+    this.logger.update(this.loglevel, hass, this.logpushback);
+
     const card = document.createElement("ha-card");
     card.style.borderRadius = "10px";
 
