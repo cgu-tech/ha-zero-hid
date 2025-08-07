@@ -217,10 +217,8 @@ async def synchronize_resources(hass: HomeAssistant, use_version_file: bool) -> 
         _LOGGER.debug(f"Lovelace mode set to \"{lovelace.mode}\"")
 
         if lovelace.mode == "storage":
-            _LOGGER.warning(f"Lovelace mode set to \"storage\": automatic resources synchronization using base URL {RESOURCES_URL_BASE}")
-
-            if not resources_versions.are_equal:
-                # File and module versions are differen
+            if use_version_file and not resources_versions.are_equal:
+                # File and module versions are different
 
                 _LOGGER.warning(f"""
                 Outdated version detected: file version {resources_versions.file_value} and module version {resources_versions.module_value} are different. 
