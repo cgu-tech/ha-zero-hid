@@ -530,6 +530,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
 
     // Clear existing content (if any)
+    this.removeGlobalHandlers();
     this.shadowRoot.innerHTML = '';
 
     // Mark UI as "built" to prevent re-enter
