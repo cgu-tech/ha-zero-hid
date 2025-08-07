@@ -407,6 +407,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Update logger when needed
     if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("this.logger.update(this.loglevel, this._hass, this.logpushback):", this.loglevel, this._hass, this.logpushback));
       this.logger.update(this.loglevel, this._hass, this.logpushback);
     }
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
