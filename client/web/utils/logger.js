@@ -4,6 +4,7 @@ import { parse, stringify, toJSON, fromJSON } from '../libs/flatted_3.3.3_min.js
 // Define logger helper class
 export class Logger {
   constructor(origin, level, hass, pushback) {
+    this.guid = this.generateUUID(); // Replace static ID
     this.origin = origin;
     this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
     this.levelsKeys = Object.fromEntries(Object.entries(this.levels).map(([key, value]) => [value, key]));
@@ -11,6 +12,16 @@ export class Logger {
     this.objLevelLimit = 1;
     this.objByteLimit = 3000;
   }
+  
+  generateUUID() {
+    // Simple RFC4122-compliant UUID v4 generator
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+  
   update(level, hass, pushback) {
     this._hass = hass;
     this.setLevel(level);
@@ -58,7 +69,7 @@ export class Logger {
   getArgs(skipPushback, header, logStyle, ...args) {
     // Push logs to backend when needed
     if (!skipPushback && this._hass && this._pushback) {
-      console.log(`skipPushback:${skipPushback},this._hass:${this._hass},this._pushback:${this._pushback}`);
+      console.log(`[${this.guid}]skipPushback:${skipPushback},this._hass:${this._hass},this._pushback:${this._pushback}`);
       const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.deepSerialize(arg, this.objByteLimit, this.objLevelLimit)) : [];
       if (serializedArgs.length > 0) {
         this._hass.callService(Globals.COMPONENT_NAME, "log", { "level": header, "origin": this.origin, "logs": serializedArgs, });
@@ -67,9 +78,9 @@ export class Logger {
     
     // Give frontend logs format
     if (args && args.length && args.length > 0) {
-      return [`%c[${header}][${this.origin}]`, logStyle, ...args];
+      return [`%c[${header}][${this.origin}][${this.guid}]`, logStyle, ...args];
     }
-    return [`%c[${header}][${this.origin}]`, logStyle];
+    return [`%c[${header}][${this.origin}][${this.guid}]`, logStyle];
   }
 
   // ERROR: if (this.logger.isErrorEnabled()) console.error(...this.logger.error(args));
