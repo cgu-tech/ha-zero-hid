@@ -19,7 +19,7 @@ export class Logger {
     const newLevel = this.levels[level] ?? 0;
     if (!this.level || newLevel !== this.level) {
       this.level = newLevel;
-      this.logInternal("debug", "setLevel", `Log level of frontend ${this.origin} set to ${this.level}`);
+      this.logInternal("debug", "setLevel", `Log level of frontend ${this.origin} set to ${level}`);
     }
   }
   setPushback(pushback) {
@@ -28,7 +28,7 @@ export class Logger {
       this._pushbackSetupNeeded = pushback;
     }
     if (this._pushbackSetupNeeded && this._hass && this._pushback) {
-      this._hass.callService("logger", "set_level", { [`custom_components.${Globals.COMPONENT_NAME}`]: 'debug' });
+      // this._hass.callService("logger", "set_level", { [`custom_components.${Globals.COMPONENT_NAME}`]: 'debug' });
       this._pushbackSetupNeeded = false;
       this.logInternal("debug", "setPushback", `Log level of backend ${Globals.COMPONENT_NAME} component set to debug`);
     }
