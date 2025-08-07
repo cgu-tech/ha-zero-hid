@@ -5,6 +5,7 @@ import { parse, stringify, toJSON, fromJSON } from '../libs/flatted_3.3.3_min.js
 export class Logger {
   constructor(origin, level, hass, pushback) {
     this.guid = this.generateUUID(); // Replace static ID
+    console.debug(`[Logger constructor] New instance created: ${this.guid}`, new Error().stack);
     this.origin = origin;
     this.levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
     this.levelsKeys = Object.fromEntries(Object.entries(this.levels).map(([key, value]) => [value, key]));
