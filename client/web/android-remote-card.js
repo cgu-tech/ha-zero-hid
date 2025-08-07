@@ -510,6 +510,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   addGlobalHandlers() {
+    // Preventively remove global handlers
+    this.removeGlobalHandlers();
+    
     // Add global handlers to ensure proper out-of-bound handling
     if (!this._handleGlobalPointerUp) {
       this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
