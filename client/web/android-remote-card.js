@@ -472,7 +472,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Only build UI if hass is already set
     if (this._hass) {
-      this.resourceManager.updateResources(this._hass);
+      this.resourceManager.synchronizeResources(this._hass);
       this.buildUi(this._hass);
     }
   }

@@ -68,7 +68,7 @@ export class ResourceManager {
     window.location.href = url.toString(); // Reload with the updated URL
   }
   
-  updateResources(hass) {
+  synchronizeResources(hass) {
     this.eventManager.callComponentCommand(hass, 'sync_resources').then((response) => {
       // Success handler
       const { resourcesVersion } = response;
