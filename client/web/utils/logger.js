@@ -17,13 +17,13 @@ export class Logger {
   }
   setLevel(level) {
     const newLevel = this.levels[level] ?? 0;
-    if (newLevel !== this.level) {
+    if (!this.level || newLevel !== this.level) {
       this.level = newLevel;
       this.logInternal("debug", "setLevel", `Log level of frontend ${this.origin} set to ${this.level}`);
     }
   }
   setPushback(pushback) {
-    if (pushback !== this._pushback) {
+    if (!this._pushback || pushback !== this._pushback) {
       this._pushback = pushback;
       this._pushbackSetupNeeded = pushback;
     }
