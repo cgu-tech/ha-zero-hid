@@ -13,9 +13,13 @@ export class Logger {
   update(level, hass, pushback) {
     this._hass = hass;
     this.setLevel(level);
-    // this.setPushback(pushback);
+    this.setPushback(pushback);
   }
   setLevel(level) {
+    if (!(level in this.levels)) {
+      this.logInternal("warn", "setLevel", `Invalid log level: ${level} (will default to warn)`);
+      level = 'warn';
+    }
     const newLevel = this.levels[level] ?? 0;
     if (!this.level || newLevel !== this.level) {
       this.level = newLevel;
@@ -28,7 +32,7 @@ export class Logger {
       this._pushbackSetupNeeded = pushback;
     }
     if (this._pushbackSetupNeeded && this._hass && this._pushback) {
-      // this._hass.callService("logger", "set_level", { [`custom_components.${Globals.COMPONENT_NAME}`]: 'debug' });
+      this._hass.callService("logger", "set_level", { [`custom_components.${Globals.COMPONENT_NAME}`]: 'debug' });
       this._pushbackSetupNeeded = false;
       this.logInternal("debug", "setPushback", `Log level of backend ${Globals.COMPONENT_NAME} component set to debug`);
     }
@@ -45,9 +49,9 @@ export class Logger {
   isDebugEnabled() { return this.isLevelEnabled(3); }
   isTraceEnabled() { return this.isLevelEnabled(4); }
   
-  getArgs(header, logStyle, ...args) {
+  getArgs(skipPushback, header, logStyle, ...args) {
     // Push logs to backend when needed
-    if (this._hass && this._pushback) {
+    if (!skipPushback && this._hass && this._pushback) {
       const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.deepSerialize(arg, this.objByteLimit, this.objLevelLimit)) : [];
       if (serializedArgs.length > 0) {
         this._hass.callService(Globals.COMPONENT_NAME, "log", { "level": header, "origin": this.origin, "logs": serializedArgs, });
@@ -62,25 +66,31 @@ export class Logger {
   }
 
   // ERROR: if (this.logger.isErrorEnabled()) console.error(...this.logger.error(args));
-  error(...args) { return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
+  error(...args) { return this.getArgsError(false, ...args); }
   // WARN: if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(args));
-  warn(...args)  { return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
+  warn(...args)  { return this.getArgsWarn(false, ...args); }
   // INFO: if (this.logger.isInfoEnabled()) console.info(...this.logger.info(args));
-  info(...args)  { return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
+  info(...args)  { return this.getArgsInfo(false, ...args); }
   // DEBUG: if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(args));
-  debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
+  debug(...args) { return this.getArgsDebug(false, ...args); }
   // TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
-  trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
+  trace(...args) { return this.getArgsTrace(false, ...args); }
+
+  getArgsError(skipPushback, ...args) { return this.getArgs(skipPushback, 'ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
+  getArgsWarn(skipPushback, ...args)  { return this.getArgs(skipPushback, 'WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
+  getArgsInfo(skipPushback, ...args)  { return this.getArgs(skipPushback, 'INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
+  getArgsDebug(skipPushback, ...args) { return this.getArgs(skipPushback, 'DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
+  getArgsTrace(skipPushback, ...args) { return this.getArgs(skipPushback, 'TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
 
   logInternal(level, caller, ...args) {
     const internalLevel = this.levels[level] ?? 0;
     const internalArgs = [`[${caller}]`, ...args];
     if (this.isLevelEnabled(internalLevel)) {
-      if (internalLevel === 0) { console.error(...this.error(...internalArgs)); return; }
-      if (internalLevel === 1) { console.warn(...this.warn(...internalArgs)); return; }
-      if (internalLevel === 2) { console.info(...this.info(...internalArgs)); return; }
-      if (internalLevel === 3) { console.debug(...this.debug(...internalArgs)); return; }
-      if (internalLevel === 4) { console.debug(...this.trace(...internalArgs)); return; }
+      if (internalLevel === 0) { console.error(...this.getArgsError(true, ...internalArgs)); return; }
+      if (internalLevel === 1) { console.warn(...this.getArgsWarn(true, ...internalArgs)); return; }
+      if (internalLevel === 2) { console.info(...this.getArgsInfo(true, ...internalArgs)); return; }
+      if (internalLevel === 3) { console.debug(...this.getArgsDebug(true, ...internalArgs)); return; }
+      if (internalLevel === 4) { console.debug(...this.getArgsTrace(true, ...internalArgs)); return; }
     }
   }
 
