@@ -498,18 +498,29 @@ class AndroidRemoteCard extends HTMLElement {
 
   async disconnectedCallback() {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("disconnectedCallback()"));
-    
+    this.removeGlobalHandlers();
+  }
+
+  removeGlobalHandlers() {
     // Remove global event listeners
-    if (this._handleGlobalPointerUp) this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
-  
-    // Nullify internal references
-    this._handleGlobalPointerUp = null;
-    this._hass = null;
-    this._uiBuilt = false;
+    if (this._handleGlobalPointerUp) {
+      this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+      this._handleGlobalPointerUp = null;
+    }
+  }
+
+  addGlobalHandlers() {
+    // Add global handlers to ensure proper out-of-bound handling
+    if (!this._handleGlobalPointerUp) {
+      this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
+      this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+    }
   }
 
   buildUi(hass) {
+    // Build UI if needed
     if (this._uiBuilt) {
+      this.addGlobalHandlers();
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
       return;
     }
@@ -521,18 +532,11 @@ class AndroidRemoteCard extends HTMLElement {
     // Mark UI as "built" to prevent re-enter
     this._uiBuilt = true;
 
-    // Lazy bound global handler
-    if (!this._handleGlobalPointerUp) {
-      this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
-    } else {
-      this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
-    }
-    
-    // Add global handlers to ensure proper out-of-bound handling
-    this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
-
     // Update the logger
     this.logger.update(this.loglevel, hass, this.logpushback);
+
+    // Add global handlers
+    this.addGlobalHandlers();
 
     const style = document.createElement('style');
     style.textContent = `
