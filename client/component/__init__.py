@@ -148,6 +148,7 @@ def is_user_authorized_from_command(hass: HomeAssistant, connection: ActiveConne
     return is_user_authorized(hass, user_id)
 
 async def set_resources_versions(hass: HomeAssistant, write_to_file: bool, resources_versions: ResourcesVersions) -> None:
+    global RESOURCES_VERSION
     version_file = COMPONENT_VERSION_FILE
 
     def write_version_to_file() -> str:
@@ -156,9 +157,13 @@ async def set_resources_versions(hass: HomeAssistant, write_to_file: bool, resou
             f.write(resources_versions.reference_value)
             _LOGGER.debug(f"Version {resources_versions.reference_value} written to file {version_file}")
 
-    if write_to_file:
+    # Set reference value into file (when different)
+    if resources_versions.file_value != resources_versions.reference_value and write_to_file:
         await hass.async_add_executor_job(write_version_to_file)
-    RESOURCES_VERSION = resources_versions.reference_value
+
+    # Set reference value into module (when different)
+    if resources_versions.module_value != resources_versions.reference_value:
+        RESOURCES_VERSION = resources_versions.reference_value
 
 async def get_resources_versions(hass: HomeAssistant, read_from_file: bool) -> ResourcesVersions:
     version_file = COMPONENT_VERSION_FILE
@@ -202,7 +207,7 @@ async def get_resources_versions(hass: HomeAssistant, read_from_file: bool) -> R
     resources_versions.reference_value = reference_value
     return resources_versions
 
-async def synchronize_resources(hass: HomeAssistant, use_version_file: bool) -> ResourcesVersions:
+async def synchronize_resources(hass: HomeAssistant, use_version_file: bool, force_sync: bool) -> ResourcesVersions:
     _LOGGER.debug(f"Synchronizing resources (use_version_file={use_version_file})...")
 
     resources_versions: ResourcesVersions = None
@@ -217,13 +222,18 @@ async def synchronize_resources(hass: HomeAssistant, use_version_file: bool) -> 
         _LOGGER.debug(f"Lovelace mode set to \"{lovelace.mode}\"")
 
         if lovelace.mode == "storage":
-            if use_version_file and not resources_versions.are_equal:
-                # File and module versions are different
-
-                _LOGGER.warning(f"""
-                Outdated version detected: file version {resources_versions.file_value} and module version {resources_versions.module_value} are different. 
-                Resources versions will be synchronized to {resources_versions.reference_source} version {resources_versions.reference_value}.
-                """)
+            if force_sync or (use_version_file and not resources_versions.are_equal):
+                
+                if force_sync:
+                    # Forced synchonization to avoid infinite loop in case of DEV MODE misuse 
+                    # (ie. install in DEV MODE and instant reboot without going first on Lovelace dashboard to trigger resources registration)
+                    _LOGGER.debug(f"Refreshing Lovelace resources for {DOMAIN} component...")
+                else:
+                    # File and module versions are different
+                    _LOGGER.warning(
+                        f"Outdated version detected: file version {resources_versions.file_value} and module version {resources_versions.module_value} are different. " +
+                        f"Resources versions will be synchronized to {resources_versions.reference_source} version {resources_versions.reference_value}."
+                    )
 
                 # Load existing Lovelace resources
                 if not lovelace.resources.loaded:
@@ -299,8 +309,8 @@ async def websocket_sync_keyboard(hass: HomeAssistant, connection: ActiveConnect
 @websocket_command({vol.Required("type"): DOMAIN + "/sync_resources"})
 @async_response
 async def websocket_sync_resources(hass: HomeAssistant, connection: ActiveConnection, msg):
+    global RESOURCES_LAST_SYNC_TIME
     try:
-        global RESOURCES_LAST_SYNC_TIME
         current_time = time.monotonic()  # monotonic for elapsed time
 
         # Compute delta since last sync
@@ -310,9 +320,9 @@ async def websocket_sync_resources(hass: HomeAssistant, connection: ActiveConnec
         resources_versions = None
         if delta > RESOURCES_SYNC_INTERVAL:
             RESOURCES_LAST_SYNC_TIME = current_time
-            resources_versions = await synchronize_resources(hass, use_version_file=True)
+            resources_versions = await synchronize_resources(hass, use_version_file=True, force_sync=False)
         else:
-            resources_versions = await synchronize_resources(hass, use_version_file=False)
+            resources_versions = await synchronize_resources(hass, use_version_file=False, force_sync=False)
 
         connection.send_result(msg["id"], {"resourcesVersion": resources_versions.reference_value})
 
@@ -529,7 +539,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async_register_command(hass, websocket_sync_resources)
 
     # Register frontend resources
-    await synchronize_resources(hass, use_version_file=True)
+    await synchronize_resources(hass, use_version_file=True, force_sync=True)
 
     # Return boolean to indicate that initialization was successfully.
     return True
