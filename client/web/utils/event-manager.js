@@ -9,7 +9,10 @@ export class EventManager {
   constructor(origin) {
     this._origin = origin;
   }
-  getLogger() { return this._origin?._logger; }
+
+  getLogger() {
+    return this._origin?._logger;
+  }
 
   getHaptic() {
     return !!this._origin?._config?["haptic"];

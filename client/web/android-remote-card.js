@@ -38,7 +38,10 @@ class AndroidRemoteCard extends HTMLElement {
     this.doQueryElements();
     this.doListen();
   }
-  getLogger() { return this._logger; }
+
+  getLogger() {
+    return this._logger;
+  }
 
   setConfig(config) {
     this._config = config;
