@@ -37,6 +37,8 @@ class AndroidRemoteCard extends HTMLElement {
     this.doAttach();
     this.doQueryElements();
     this.doListen();
+
+    this.doUpdateLayout();
   }
 
   getLogger() {
@@ -53,6 +55,10 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
     this.doUpdateHass()
+  }
+
+  getAttachedLayoutName() {
+    return this._elements.wrapper._layoutData?.name;
   }
 
   getLayoutName() {
@@ -422,6 +428,16 @@ class AndroidRemoteCard extends HTMLElement {
     //TODO: add global PointerUp listener?
   }
 
+  doUpdateConfig() {
+    if (!this.getAttachedLayoutName() || this.getAttachedLayoutName() !== this.getLayoutName()) {
+      this.doUpdateLayout();
+    }
+  }
+
+  doUpdateHass() {
+    // TODO: update overriden cells bounds to sensors
+  }
+
   doUpdateLayout() {
     this.doResetLayout();
     this.doCreateLayout();
@@ -439,9 +455,15 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Reset rows elements (if any)
     this._elements.rows = []
+    
+    // Reset layout name
+    this._elements.wrapper._layoutData = { name: null };
   }
 
   doCreateLayout() {
+    
+    // Define layout name
+    this._elements.wrapper._layoutData = { name: this.getLayoutName() };
     
     // Create rows
     for (const rowConfig of this.getLayout().rows) {
@@ -855,10 +877,6 @@ class AndroidRemoteCard extends HTMLElement {
     const flexStr = String(flex);
     const styleId = flexStr.replace(/\./g, '-');
     return `span-${styleId}`;
-  }
-
-  doUpdateConfig() {
-
   }
 
   // configuration defaults
