@@ -3,31 +3,30 @@ import { Logger } from './logger.js';
 
 // Define EventManager helper class
 export class EventManager {
-  constructor(logger) {
-    this.setLogger(logger);
-    this.setHaptic(false);
+
+  _origin;
+
+  constructor(origin) {
+    this._origin = origin;
   }
-  
-  setLogger(logger) {
-    this.logger = logger;
-  }
-  
-  setHaptic(haptic) {
-    this.haptic = haptic;
+  getLogger() { return this._origin?._logger; }
+
+  getHaptic() {
+    return !!this._origin?._config?["haptic"];
   }
 
   addGlobalPointerUpHandlers(handleGlobalPointerUp) {
     this.addPointerUpListener(window, handleGlobalPointerUp);
     this.addPointerLeaveListener(window, handleGlobalPointerUp);
     this.addPointerCancelListener(window, handleGlobalPointerUp);
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp added"));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleGlobalPointerUp added"));
   }
 
   removeGlobalPointerUpHandlers(handleGlobalPointerUp) {
     this.removePointerUpListener(window, handleGlobalPointerUp);
     this.removePointerLeaveListener(window, handleGlobalPointerUp);
     this.removePointerCancelListener(window, handleGlobalPointerUp);
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp removed"));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleGlobalPointerUp removed"));
   }
   
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
@@ -116,10 +115,10 @@ export class EventManager {
   addGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
       if (options) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on target with options:`, target, options));
+        if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding event listener ${eventName} on target with options:`, target, options));
         target.addEventListener(eventName, callback, options);
       } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Adding event listener ${eventName} on target:`, target));
+        if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding event listener ${eventName} on target:`, target));
         target.addEventListener(eventName, callback);
       }
     }
@@ -152,10 +151,10 @@ export class EventManager {
   removeGivenEventListener(target, callback, options, eventName) {
     if (this.isTargetListenable(target)) {
       if (options) {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on target with options:`, target, options));
+        if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Removing event listener ${eventName} on target with options:`, target, options));
         target.removeEventListener(eventName, callback, options);
       } else {
-        if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug(`Removing event listener ${eventName} on target:`, target));
+        if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Removing event listener ${eventName} on target:`, target));
         target.removeEventListener(eventName, callback);
       }
     }
@@ -164,7 +163,7 @@ export class EventManager {
   // Checks whether or not target is listenable
   isTargetListenable(target) {
     if (!target || typeof target.addEventListener !== 'function') {
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Invalid target ${target} element provided to isTargetListenable`));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Invalid target ${target} element provided to isTargetListenable`));
       return false;
     }
     return true;
@@ -175,7 +174,7 @@ export class EventManager {
   // - then falling back to legacy event (when available)
   getSupportedEventListener(target, abstractEventName) {
     if (!abstractEventName) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
       return null;
     }
     
@@ -204,15 +203,15 @@ export class EventManager {
     // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
     const preferedEventName = this.preferedEventsNames.get(abstractEventName);
     if (preferedEventName) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache HIT for event ${abstractEventName}: found cached prefered event ${preferedEventName}`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache HIT for event ${abstractEventName}: found cached prefered event ${preferedEventName}`));
       return preferedEventName;
     }
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache MISS for event ${abstractEventName}: no supported prefered event cached`));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache MISS for event ${abstractEventName}: no supported prefered event cached`));
 
     // When no prefered concrete js event, then try to retrieve mapped events
     const mappedEvents = this.eventsMap.get(abstractEventName);
     if (!mappedEvents) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Unknwon abstractEventName ${abstractEventName}`));
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Unknwon abstractEventName ${abstractEventName}`));
       return null;
     }
 
@@ -224,12 +223,12 @@ export class EventManager {
         this.preferedEventsNames.set(abstractEventName, mappedEvent);
 
         // Return prefered concrete js event
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Cache UPDATE for event ${abstractEventName}: set to prefered event ${mappedEvent}`));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache UPDATE for event ${abstractEventName}: set to prefered event ${mappedEvent}`));
         return mappedEvent;
       }
     }
 
-    if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`No concrete js event supported for ${abstractEventName}`));
+    if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`No concrete js event supported for ${abstractEventName}`));
     return null;    
   }
 
@@ -257,7 +256,7 @@ export class EventManager {
     if (navigator.vibrate) {
       navigator.vibrate(duration);
     } else {
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug('Vibration not supported on this device.'));
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug('Vibration not supported on this device.'));
     }
   }
 

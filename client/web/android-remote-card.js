@@ -1,7 +1,6 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
-import { ResourceManager } from './utils/resource-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 import { androidRemoteCardConfig } from './configs/android-remote-card-config.js';
@@ -17,6 +16,9 @@ class AndroidRemoteCard extends HTMLElement {
   _elements = {};
   _logger;
   _dynamicStyleNames = new Set();
+  _pressedModifiers = new Set();
+  _pressedKeys = new Set();
+  _pressedConsumers = new Set();
 
   // private constants
   _layoutsByNames = this.constructor.getLayoutsByNames(layoutsRemote);
@@ -28,31 +30,15 @@ class AndroidRemoteCard extends HTMLElement {
     super();
 
     this._logger = new Logger("android-remote-card.js", this);
-    this.eventManager = new EventManager(this.logger);
-    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
+    this.eventManager = new EventManager(this);
 
     this.doCard();
     this.doStyle();
     this.doAttach();
     this.doQueryElements();
     this.doListen();
-
-    this.layout = 'classic';
-    this.layoutUrl = `${Globals.DIR_LAYOUTS}/remote/${this.layout}.json`;
-    this.keyboardConfig = {};
-    this.mouseConfig = {};
-    this.activitiesConfig = {};
-    this.autoScroll = true;
-
-    // Layout loading flags
-    this._layoutReady = false;
-    this._layoutLoaded = {};
-
-    // To track pressed modifiers and keys
-    this._pressedModifiers = new Set();
-    this._pressedKeys = new Set();
-    this._pressedConsumers = new Set();
   }
+  getLogger() { return this._logger; }
 
   setConfig(config) {
     this._config = config;
@@ -61,13 +47,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   set hass(hass) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
-    this.updateSensors(this._hass);
-    if (this._layoutReady && !this._uiBuilt) {
-      // Render UI
-      this.buildUi(this._hass);
-    }
+    this.doUpdateHass()
   }
 
   getLayoutName() {
@@ -537,7 +519,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
   
   doCellContent(cellConfig) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("doCellContent(cellConfig):", cellConfig));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("doCellContent(cellConfig):", cellConfig));
 
     // Retrieve target cell identifier (content will be created according to this name)
     const cellName = cellConfig.name;
@@ -591,7 +573,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Add cell content data when cell content is a button
     if (cellContentTag === "button") this.addClickableData(cellContent, defaultCellConfig);
 
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("created cellContent:", cellContent));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
     return cellContent;
   }
 
@@ -852,7 +834,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   createSpanClass(flex) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createSpanClass(flex):", flex));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createSpanClass(flex):", flex));
     const styleName = this.getStyleSpanName(flex);
     if (!this._dynamicStyleNames.has(styleName)) {
       const dynamicStyle = `
@@ -866,7 +848,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getStyleSpanName(flex) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("getStyleSpanName(flex):", flex));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("getStyleSpanName(flex):", flex));
     const flexStr = String(flex);
     const styleId = flexStr.replace(/\./g, '-');
     return `span-${styleId}`;
@@ -940,11 +922,11 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Pressed key code (keyboard layout independant, later send to remote keyboard)
     const code = keyData.code;
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-pressed:", code));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-pressed:", code));
 
     if (this.hasOverrideAction(clickable)) {
       // Override detected: do nothing (override action will be executed on button up)
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Override detected on key press (suppressed):", clickable.id));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", clickable.id));
     } else {
       // Default action
 
@@ -972,14 +954,14 @@ class AndroidRemoteCard extends HTMLElement {
 
     // When the mouse is released over another key than the first pressed key
     if (this._currentBaseCell && this._currentBaseCell._keyData.code !== keyData.code) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-suppressed:", keyData.code, "char:", btn._lowerLabel.textContent || "", "in-favor-of-key:", this._currentBaseCell._keyData.code));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-suppressed:", keyData.code, "char:", btn._lowerLabel.textContent || "", "in-favor-of-key:", this._currentBaseCell._keyData.code));
       return; // suppress the unwanted other key release
     }
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-released:", code));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-released:", code));
 
     if (this.hasOverrideAction(btn)) {
       // Override detected: do override action
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Override detected on key release:", btn.id));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key release:", btn.id));
       this.executeOverrideAction(btn);
     } else {
       // Default action
@@ -1011,7 +993,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
 
     // Trigger override action
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering override action for:", btnId, overrideAction));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Triggering override action for:", btnId, overrideAction));
     this.eventManager.triggerHaosTapAction(clickable, overrideAction);
   }
 
@@ -1022,13 +1004,13 @@ class AndroidRemoteCard extends HTMLElement {
       } else if (this.isConsumer(code)) {
         this.appendConsumerCode(code);
       } else {
-        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Unknown code type:", code));
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
     }
   }
 
   appendKeyCode(code) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Key pressed:", code));
     if (code) {
       const intCode = this._keycodes[code];
       if (this.isModifier(code)) {
@@ -1043,7 +1025,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   appendConsumerCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer pressed:", code));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Consumer pressed:", code));
     if (code) {
       const intCode = this._consumercodes[code];
       this._pressedConsumers.add(intCode);
@@ -1058,13 +1040,13 @@ class AndroidRemoteCard extends HTMLElement {
       } else if (this.isConsumer(code)) {
         this.removeConsumerCode(hass, code);
       } else {
-        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Unknown code type:", code));
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
     }
   }
 
   removeKeyCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Key released:", code));
     if (code) {
       const intCode = this._keycodes[code];
       if (this.isModifier(code)) {
@@ -1079,7 +1061,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   removeConsumerCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer released:", code));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Consumer released:", code));
     if (code) {
       const intCode = this._consumercodes[code];
       this._pressedConsumers.delete(intCode);

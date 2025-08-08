@@ -1,42 +1,6 @@
 import { Logger } from './logger.js';
 import { EventManager } from './event-manager.js';
 
-function getCurrentScriptUrl(logger, contextUrl) {
-  if (logger.isTraceEnabled()) console.debug(...logger.trace("getCurrentScriptUrl(contextUrl)", contextUrl));
-  if (contextUrl) {
-    const script_url = contextUrl;
-    if (logger.isTraceEnabled()) console.debug(...logger.trace("Script URL is context URL:", script_url));
-    return script_url;
-  }
-
-  if (document.currentScript?.src) {
-    const script_url = document.currentScript.src;
-    if (logger.isTraceEnabled()) console.debug(...logger.trace("Script URL is document current script URL:", script_url));
-    return script_url;
-  }
-
-  const scripts = Array.from(document.getElementsByTagName('script')).filter((script) => script.src);
-  if (scripts.length > 0) {
-    const script_tag_index = scripts.length - 1;
-    const script_url = scripts[script_tag_index].src;
-    if (logger.isTraceEnabled()) console.debug(...logger.trace(`Script URL is script tag src URL at index ${script_tag_index}:`, script_url));
-    return script_url;
-  }
-  
-  if (logger.isWarnEnabled()) console.warn(...logger.warn("Unable to determine script URL (contextUrl):", contextUrl));
-  return null;
-}
-
-function getVersionFromUrl(logger, url) {
-  try {
-    const parsedUrl = new URL(url, window.location.origin); // Handle relative or absolute URLs
-    return parsedUrl.searchParams.get('v');
-  } catch (e) {
-    if (logger.isWarnEnabled()) console.warn(...logger.warn("Unable to get version from URL (url):", url, e));
-    return null;
-  }
-}
-
 export class ResourceManager {
   
   // Usage:
@@ -90,5 +54,41 @@ export class ResourceManager {
     .catch((err) => {
       if (this.logger.isErrorEnabled()) console.error(...this.logger.error("Failed to retrieve resourcesVersion:", err));
     });
+  }
+
+  getCurrentScriptUrl(contextUrl) {
+    if (logger.isTraceEnabled()) console.debug(...logger.trace("getCurrentScriptUrl(contextUrl)", contextUrl));
+    if (contextUrl) {
+      const script_url = contextUrl;
+      if (logger.isTraceEnabled()) console.debug(...logger.trace("Script URL is context URL:", script_url));
+      return script_url;
+    }
+  
+    if (document.currentScript?.src) {
+      const script_url = document.currentScript.src;
+      if (logger.isTraceEnabled()) console.debug(...logger.trace("Script URL is document current script URL:", script_url));
+      return script_url;
+    }
+  
+    const scripts = Array.from(document.getElementsByTagName('script')).filter((script) => script.src);
+    if (scripts.length > 0) {
+      const script_tag_index = scripts.length - 1;
+      const script_url = scripts[script_tag_index].src;
+      if (logger.isTraceEnabled()) console.debug(...logger.trace(`Script URL is script tag src URL at index ${script_tag_index}:`, script_url));
+      return script_url;
+    }
+    
+    if (logger.isWarnEnabled()) console.warn(...logger.warn("Unable to determine script URL (contextUrl):", contextUrl));
+    return null;
+  }
+  
+  getVersionFromUrl(url) {
+    try {
+      const parsedUrl = new URL(url, window.location.origin); // Handle relative or absolute URLs
+      return parsedUrl.searchParams.get('v');
+    } catch (e) {
+      if (logger.isWarnEnabled()) console.warn(...logger.warn("Unable to get version from URL (url):", url, e));
+      return null;
+    }
   }
 }

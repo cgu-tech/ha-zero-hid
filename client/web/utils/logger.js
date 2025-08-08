@@ -28,7 +28,7 @@ export class Logger {
   }
 
   getPushback() {
-    return !!this._origin?._config?.log_pushback;
+    return !!this._origin?._config?["log_pushback"];
   }
 
   getHass() {
