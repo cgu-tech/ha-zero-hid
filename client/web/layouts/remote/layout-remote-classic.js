@@ -1,4 +1,4 @@
-{
+export const layoutRemoteClassic = {
     "Name": "classic",
     "Description": "Contains classic default layout for android remote buttons",
     "rows": [
@@ -51,4 +51,4 @@
         ]
       }
     ]
-}
+};

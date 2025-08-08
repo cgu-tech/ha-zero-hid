@@ -1,12 +1,12 @@
-{
-    "Name": "extended-right",
+export const layoutRemoteRightHandV1 = {
+    "Name": "right-hand-v1",
     "Description": "Contains extended right-handed layout for android remote buttons",
     "rows": [
       {
         "cells": [
-          { "name": "remote-button-power-tv",       "weight": 1 },
+          { "name": "remote-button-power",          "weight": 1 },
           { "name": "filler",                       "weight": 1 },
-          { "name": "remote-button-power-shield-1", "weight": 1 },
+          { "name": "remote-button-power-tv",       "weight": 1 },
           { "name": "remote-button-power-device",   "weight": 1 },
           { "name": "remote-button-settings",       "weight": 1 }
         ]
@@ -54,4 +54,4 @@
         ]
       }
     ]
-}
+};

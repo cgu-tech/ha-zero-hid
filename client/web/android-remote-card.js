@@ -4,23 +4,33 @@ import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
+import * as layoutsRemote from './layouts/remote/index.js';
 
 console.info("Loading android-remote-card");
 
 class AndroidRemoteCard extends HTMLElement {
+
+  // private properties
+  _config;
+  _hass;
+  _elements = {};
+  _dynamicStyleNames = new Set();
+
+  // private constants
+  _layoutsByNames = this.constructor.getLayoutsByNames(layoutsRemote);
+  _defaultCellConfigs = this.constructor.getDefaultCellConfigs();
+  _keycodes = new KeyCodes().getMapping();
+  _consumercodes = new ConsumerCodes().getMapping();
+
   constructor() {
-    super();    
-    this.attachShadow({ mode: "open" }); // Create shadow root
-
-    this._keycodes = new KeyCodes().getMapping();
-    this._consumercodes = new ConsumerCodes().getMapping();
-
-    this._hass = null;
-    this._uiBuilt = false;
-    this.card = null;
+    super();
+    this.doCard();
+    this.doStyle();
+    this.doAttach();
+    this.doQueryElements();
+    this.doListen();
 
     // Configs
-    this.config = null;
     this.loglevel = 'warn';
     this.logpushback = false;
     this.logger = new Logger("android-remote-card.js", this.loglevel, this._hass, this.logpushback);
@@ -37,7 +47,724 @@ class AndroidRemoteCard extends HTMLElement {
     this._layoutReady = false;
     this._layoutLoaded = {};
 
-    this.cellContents = { 
+    // To track pressed modifiers and keys
+    this._pressedModifiers = new Set();
+    this._pressedKeys = new Set();
+    this._pressedConsumers = new Set();
+  }
+
+  setConfig(config) {
+    this._config = config;
+    this.doCheckConfig();
+    this.doUpdateConfig();
+
+    // Set log level
+    const oldLoglevel = this.loglevel;
+    if (config['log_level']) {
+      this.loglevel = config['log_level'];
+    }
+
+    // Set log pushback
+    const oldLogpushback = this.logpushback;
+    if (config['log_pushback']) {
+      this.logpushback = config['log_pushback'];
+    }
+
+    // Update logger when needed
+    if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
+      this.logger.update(this.loglevel, this._hass, this.logpushback);
+    }
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
+
+    // Set haptic feedback
+    if (config['haptic']) {
+      this.eventManager.setHaptic(config['haptic']);
+    }
+
+    // Set layout
+    if (config['layout']) {
+      this.layout = config['layout'];
+    }
+
+    // Set layout URL
+    if (config['layout_url']) {
+      this.layoutUrl = config['layout_url'];
+    } else {
+      this.layoutUrl = `${Globals.DIR_LAYOUTS}/remote/${this.layout}.json`;
+    }
+
+    // Set auto-scroll behavior
+    if (config['auto_scroll']) {
+      this.autoScroll = config['auto_scroll'];
+    } else {
+      this.autoScroll = true;
+    }
+
+    // Set keyboard configs
+    if (config['keyboard']) {
+      this.keyboardConfig = config['keyboard'];
+    }
+
+    // Set mouse configs
+    if (config['mouse']) {
+      this.mouseConfig = config['mouse'];
+    }
+
+    // Set activites configs
+    if (config['activities']) {
+      this.activitiesConfig = config['activities'];
+    }
+  }
+
+  set hass(hass) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
+    this._hass = hass;
+    this.updateSensors(this._hass);
+    if (this._layoutReady && !this._uiBuilt) {
+      // Render UI
+      this.buildUi(this._hass);
+    }
+  }
+
+  getLayoutName() {
+    return this._config?.layout || this.constructor.getStubConfig().layout;
+  }
+
+  getLayout() {
+    return this._layoutsByNames[this.getLayoutName()];
+  }
+
+  getLayoutsNames() {
+    return Object.keys(this._layoutsByNames);
+  }
+
+  // jobs
+  doCheckConfig() {
+    if (this._config.layout && !this._layoutsByNames.has(this._config.layout)) {
+      throw new Error(`Unknown layout "${this._config.layout}". Please define a known layout (${this.getLayoutsNames()}).`);
+    }
+  }
+
+  doCard() {
+    this._elements.card = document.createElement("ha-card");
+    this._elements.card.innerHTML = `
+      <div id="main-container" class="card-content">
+        <div class="wrapper">
+        </div>
+      </div>
+    `;
+  }
+
+  doStyle() {
+    this._elements.style = document.createElement("style");
+    this._elements.style.textContent = `
+      :host {
+        display: block;
+        box-sizing: border-box;
+        max-width: 100%;
+        background: var(--card-background-color, white);
+        border-radius: 0.5em;
+        overflow: hidden; /* prevent overflow outside card */
+        font-family: sans-serif;
+      }
+      #main-container {
+        --base-font-size: 1rem; /* base scaling unit */
+        font-size: var(--base-font-size);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        max-width: 100%;
+      }
+      .wrapper {
+        display: flex;
+        flex-direction: column;
+      }
+      .row {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        flex-wrap: nowrap; /* to keep all items in a row */
+        overflow-x: hidden; /* to prevent horizontal scroll */
+      }
+      .row.gap-top {
+        margin-top: clamp(1px, 1vw, 6px);
+      }
+      .row.gap-bottom {
+        margin-bottom: clamp(1px, 1vw, 6px);
+      }
+      .cell {
+        min-width: 0; /* to allow shrinking */
+        max-width: 100%;
+        padding: clamp(1px, 1vw, 6px);
+      }
+      .cell.highlight {
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+        border-bottom-style: solid;
+        border-bottom-width: 2px;
+        border-image-outset: 0;
+        border-image-repeat: stretch;
+        border-image-slice: 100%;
+        border-image-source: none;
+        border-image-width: 1;
+        border-left-color: rgb(155, 80, 0);
+        border-left-style: solid;
+        border-left-width: 2px;
+        border-right-color: rgb(155, 80, 0);
+        border-right-style: solid;
+        border-right-width: 2px;
+        border-top-color: rgb(155, 80, 0);
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        border-top-style: solid;
+        border-top-width: 2px;
+        color: rgb(241, 108, 55);
+        color-scheme: dark;
+      }
+      .cell.no-gap {
+        padding: 0;
+      }
+      .standard-grey {
+        fill: #bfbfbf;
+        stroke: #bfbfbf;
+      }
+      .highlight-yellow {
+        fill: #ffc107;
+        stroke: #ffc107;
+      }
+      .circle-button {
+        height: 100%;
+        width: 100%;  /* maintain aspect ratio */
+        flex: 1 1 0;
+        aspect-ratio: 1 / 1;
+        background-color: #3a3a3a;
+        color: #bfbfbf;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        font-family: sans-serif;
+        font-size: clamp(1px, 4vw, 24px);
+        transition: background-color 0.2s ease;
+        align-items: center;
+        justify-content: center;
+        display: flex;
+        border-radius: 50%;   /* This makes the button circular */
+      }
+      .circle-button:hover { background-color: #4a4a4a; }
+      .circle-button:active,
+      .circle-button.pressed { transform: scale(0.95); }
+      .side-button {
+        aspect-ratio: 3 / 1;
+        width: 100%;  /* maintain aspect ratio */
+        flex: 1 1 0;
+        background-color: #3a3a3a;
+        color: #bfbfbf;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        font-family: sans-serif;
+        transition: background-color 0.2s ease;
+        align-items: center;
+        justify-content: center;
+        display: flex;
+      }
+      .side-button.left {
+        border-top-left-radius: 999px;
+        border-bottom-left-radius: 999px;
+      }
+      .side-button.right {
+        border-top-right-radius: 999px;
+        border-bottom-right-radius: 999px;
+      }
+      .side-button:hover { background-color: #4a4a4a; }
+      .side-button:active,
+      .side-button.pressed { transform: scale(0.95); }
+      .ts-toggle-container {
+        min-width: 0;
+        text-align: center;
+        flex: 1 1 0;
+        background-color: #3a3a3a;
+        outline: none;
+        cursor: pointer;
+        font-family: sans-serif;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 0;
+        user-select: none;
+        position: relative; /* Needed for absolute children */
+      }
+      .ts-toggle-option {
+        flex: 1 1 0;
+        aspect-ratio: 1 / 1;
+        max-width: 100%;
+        position: relative;
+        z-index: 1;
+        font-size: clamp(1px, 5vw, 30px);
+        color: #bfbfbf;
+        border-radius: 999px;
+        user-select: none;
+        display: flex;
+        align-items: center;   /* vertical alignment */
+        justify-content: center; /* horizontal alignment */
+      }
+      .ts-toggle-indicator {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: calc(100% / 3); /* Assuming 3 options */
+        left: 0;
+        z-index: 0;
+        background-color: #4a4a4a;
+        border-radius: 999px;
+        transition: left 0.3s ease;
+      }
+      .ts-toggle-option:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      .ts-toggle-option.active {
+        color: #bfbfbf;
+        font-weight: bold;
+      }
+      .quarter {
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      .quarter:hover { opacity: 0.0; }
+      text {
+        font-family: sans-serif;
+        fill: #bfbfbf;
+        pointer-events: none;
+        user-select: none;
+      }
+      #foldable-container {
+        width: 100%;
+        display: none;
+      }
+      #power-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4);
+      }
+      #shield-tv-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.6, 0.6);
+      }
+      #shield-tv-icon-2 {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.6, 0.6);
+      }
+      #tv-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.6, 0.6);
+      }
+      #old-tv-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      #device-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      #arrow-up-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+      }
+      #arrow-right-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+      }
+      #arrow-down-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+      }
+      #arrow-left-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+      }
+      #return-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.6, 0.6);
+      }
+      #home-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.6, 0.6);
+      }
+      #backspace-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4);
+      }
+      #keyboard-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4);
+      }
+      #toggle-neutral {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.1, 0.1);
+      }
+      #mouse-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4) rotate(315deg);
+      }
+      #settings-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.4, 0.4);
+      }
+      #previous-track-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      #play-pause-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      #next-track-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      #volumemute-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      #volumedown-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      #volumeup-icon {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.5, 0.5);
+      }
+    `;
+  }
+
+  doAttach() {
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.append(this._elements.style, this._elements.card);
+  }
+
+  doQueryElements() {
+    const card = this._elements.card;
+    this._elements.wrapper = card.querySelector(".wrapper")
+  }
+
+  doListen() {
+    //TODO: add global PointerUp listener?
+  }
+
+  doUpdateLayout() {
+    this.doResetLayout();
+    this.doCreateLayout();
+  }
+
+  doResetLayout() {
+    // Detach existing layout from DOM
+    this._elements.wrapper.innerHTML = '';
+
+    // Reset cells contents elements (if any)
+    this._elements.cellContents = []
+
+    // Reset cells elements (if any)
+    this._elements.cells = []
+
+    // Reset rows elements (if any)
+    this._elements.rows = []
+  }
+
+  doCreateLayout() {
+    
+    // Create rows
+    for (const rowConfig of this.getLayout().rows) {
+      const row = this.doRow(rowConfig);
+      this.doStyleRow();
+      this.doAttachRow(row);
+      this.doQueryRowElements();
+      this.doListenRow();
+    }
+  }
+
+  doRow(rowConfig) {
+    const row = document.createElement("div");
+    this._elements.rows.push(row);
+    row.classList.add('row');
+    if (rowConfig["filler-top"]) row.classList.add('gap-top');
+    if (rowConfig["filler-bottom"]) row.classList.add('gap-bottom');
+
+    // Create cells
+    for (const cellConfig of rowConfig.cells) {
+      const cell = this.doCell(rowConfig, cellConfig);
+      this.doStyleCell();
+      this.doAttachCell(row, cell);
+      this.doQueryCellElements();
+      this.doListenCell();
+    }
+
+    return row;
+  }
+
+  doStyleRow() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachRow(row) {
+    this._elements.wrapper.appendChild(row);
+  }
+
+  doQueryRowElements() {
+    // Nothing to do here: element already referenced and sub-elements already are included by them
+  }
+
+  doListenRow() {
+    // Nothing to do here: no listener on element and sub-elements listeners are included by them
+  }
+
+  doCell(rowConfig, cellConfig) {
+    const cell = document.createElement("div");
+    this._elements.cells.push(cell);
+    cell.classList.add('cell');
+    cell.classList.add(this.createSpanClass(cellConfig.weight));
+    if (rowConfig["no-gap"]) cell.classList.add('no-gap'); // Remove internal padding on cell when required by the row
+
+    // Create cell content
+    const cellContent = this.doCellContent(cellConfig);
+    this.doStyleCellContent();
+    this.doAttachCellContent(cell, cellContent);
+    this.doQueryCellContentElements();
+    this.doListenCellContent(cellContent);
+
+    return cell;
+  }
+
+  doStyleCell() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachCell(row, cell) {
+    row.appendChild(cell);
+  }
+
+  doQueryCellElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenCell() {
+    // Nothing to do here: no listener on element and sub-elements listeners are included by them
+  }
+  
+  doCellContent(cellConfig) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createCellContent(cellConfig):", cellConfig));
+
+    // Retrieve target cell identifier (content will be created according to this name)
+    const cellName = cellConfig.name;
+
+    // Filler does not have cell content: skip cell content creation
+    if (cellName === "filler") return null;
+
+    // Retrieve default cell config that matches the cell name (when available)
+    const defaultCellConfig = this._defaultCellConfigs[cellName];
+
+    // Define cell content tag
+    let cellContentTag = null;
+    if (defaultCellConfig && defaultCellConfig.tag) cellContentTag = defaultCellConfig.tag; // Default config
+    if (cellConfig.tag) cellContentTag = cellConfig.tag; // Override with user config when specified
+    if (!cellContentTag) cellContentTag = "button"; // Fallback to "button" when no default nor user config available
+
+    // Define cell content class
+    let cellContentClass = null;
+    if (defaultCellConfig && defaultCellConfig.visual) cellContentClass = defaultCellConfig.visual; // Default config
+    if (cellConfig.visual) cellContentClass = cellConfig.visual; // Override with user config when specified
+    if (!cellContentClass && cellContentTag === "button") cellContentClass = "circle-button"; // Fallback to "circle-button" visual when no default nor user config available and tag is a button
+
+    // Define cell content inner html (when available)
+    let cellContentHtml = null;
+    if (defaultCellConfig && defaultCellConfig.html) cellContentHtml = defaultCellConfig.html; // Default config
+    if (cellConfig.html) cellContentHtml = cellConfig.html; // Override with user config when specified
+    // No default html fallback
+
+    // Build cell content using previously defined tag + style + inner html
+    let cellContent;
+    if (cellContentTag === "svg") {
+      cellContent = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    } else {
+      cellContent = document.createElement(cellContentTag);
+    }
+    this._elements.cellContents.push(cellContent);
+    cellContent.id = cellName;
+    if (cellContentClass) cellContent.className = cellContentClass;
+    if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
+
+    // Add cell content data when cell content is a button
+    if (cellContentTag === "button") {
+
+      // Set key code to send when button clicked
+      if (defaultCellConfig && defaultCellConfig.code) cellContent._keyData = { code: defaultCellConfig.code };
+      if (!cellContent._keyData) cellContent._keyData = {};
+    }
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("created cellContent:", cellContent));
+
+    return cellContent;
+  }
+
+  doStyleCellContent() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachCellContent(cell, cellContent) {
+    cell.appendChild(cellContent);
+  }
+
+  doQueryCellContentElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenCellContent(cellContent) {
+    this.eventManager.addPointerDownListener(cellContent, this.onCellPointerDown.bind(this));
+    this.eventManager.addPointerUpListener(cellContent, this.onCellPointerUp.bind(this));
+    this.eventManager.addPointerCancelListener(cellContent, this.onCellPointerUp.bind(this));
+  }
+
+  createSpanClass(flex) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createSpanClass(flex):", flex));
+    const styleName = this.getStyleSpanName(flex);
+    if (!this._dynamicStyleNames.has(styleName)) {
+      const dynamicStyle = `
+        .${styleName} {
+          flex: ${flex};
+        }`;
+      this._elements.style.textContent += dynamicStyle;
+      this._dynamicStyleNames.add(styleName);
+    }
+    return styleName;
+  }
+
+  getStyleSpanName(flex) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("getStyleSpanName(flex):", flex));
+    const flexStr = String(flex);
+    const styleId = flexStr.replace(/\./g, '-');
+    return `span-${styleId}`;
+  }
+
+  createCellContent(userCellConfig) {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createCellContent(userCellConfig):", userCellConfig));
+
+    // Retrieve target cell identifier (content will be created according to this name)
+    const cellName = userCellConfig.name;
+    
+    // Filler does not have cell content: skip cell content creation
+    if (cellName === "filler") return null;
+
+    // Retrieve default cell config that matches the cell name (when available)
+    const defaultCellConfig = this._defaultCellConfigs[cellName];
+
+    // Define cell content tag
+    let cellContentTag = null;
+    if (defaultCellConfig && defaultCellConfig.tag) cellContentTag = defaultCellConfig.tag; // Default config
+    if (userCellConfig.tag) cellContentTag = userCellConfig.tag; // Override with user config when specified
+    if (!cellContentTag) cellContentTag = "button"; // Fallback to "button" when no default nor user config available
+
+    // Define cell content style
+    let cellContentClass = null;
+    if (defaultCellConfig && defaultCellConfig.style) cellContentClass = defaultCellConfig.style; // Default config
+    if (userCellConfig.style) cellContentClass = userCellConfig.style; // Override with user config when specified
+    if (!cellContentClass && cellContentTag === "button") cellContentClass = "circle-button"; // Fallback to "circle-button" style when no default nor user config available and tag is a button
+
+    // Define cell content inner html (when available)
+    let cellContentHtml = null;
+    if (defaultCellConfig && defaultCellConfig.html) cellContentHtml = defaultCellConfig.html; // Default config
+    if (userCellConfig.html) cellContentHtml = userCellConfig.html; // Override with user config when specified
+    // No default html fallback
+
+    // Build cell content using previously defined tag + style + inner html
+    let cellContent;
+    if (cellContentTag === "svg") {
+      cellContent = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    } else {
+      cellContent = document.createElement(cellContentTag);
+    }
+    cellContent.id = cellName;
+    if (cellContentClass) cellContent.className = cellContentClass;
+    if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
+
+    // Add cell content data when cell content is a button
+    if (cellContentTag === "button") {
+
+      // Set key code to send when button clicked
+      if (defaultCellConfig && defaultCellConfig.code) cellContent._keyData = { code: defaultCellConfig.code };
+      if (!cellContent._keyData) btn._keyData = {};
+    }
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("created cellContent:", cellContent));
+
+    return cellContent;
+  }
+
+  doUpdateConfig() {
+
+  }
+
+  // configuration defaults
+  static getStubConfig() {
+    return {
+      log_level: "warn",
+      log_pushback: false,
+      layout = "classic",
+      keyboard = {},
+      mouse = {},
+      activities = {},
+      auto_scroll: true
+    }
+  }
+
+  static getLayoutsByNames(layouts) {
+    const layoutsByNames = {};
+    for (const layout of Object.values(layouts)) {
+      layoutsByNames[layout.Name] = layout;
+    }
+    return layoutsByNames;
+  }
+
+  static getDefaultCellConfigs() {
+    return { 
       "remote-button-power": {
         code: "CON_POWER",
         html: 
@@ -192,7 +919,7 @@ class AndroidRemoteCard extends HTMLElement {
       },
       "remote-button-return": {
         code: "CON_AC_BACK", 
-        style: "side-button left", 
+        visual: "side-button left", 
         html: 
         `<svg id="return-icon" viewBox="-14 0 80 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
           <!-- Top horizontal line -->
@@ -207,7 +934,7 @@ class AndroidRemoteCard extends HTMLElement {
       },
       "remote-button-home": {
         code: "CON_AC_HOME", 
-        style: "side-button right", 
+        visual: "side-button right", 
         html: 
         `<svg id="home-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
           <!-- Roof (triangle) -->
@@ -221,7 +948,7 @@ class AndroidRemoteCard extends HTMLElement {
       },
       "ts-toggle-container": {
         tag: "div",
-        style: "ts-toggle-container", 
+        visual: "ts-toggle-container", 
         html: 
         `<div class="ts-toggle-indicator"></div>
         <div class="ts-toggle-option active">
@@ -378,74 +1105,6 @@ class AndroidRemoteCard extends HTMLElement {
         </svg>`
       }
     };
-
-    // To track pressed modifiers and keys
-    this.pressedModifiers = new Set();
-    this.pressedKeys = new Set();
-    this.pressedConsumers = new Set();
-
-    this.dynamicStyles = new Map();
-  }
-
-  setConfig(config) {
-    this.config = config;
-
-    // Set log level
-    const oldLoglevel = this.loglevel;
-    if (config['log_level']) {
-      this.loglevel = config['log_level'];
-    }
-
-    // Set log pushback
-    const oldLogpushback = this.logpushback;
-    if (config['log_pushback']) {
-      this.logpushback = config['log_pushback'];
-    }
-
-    // Update logger when needed
-    if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
-      this.logger.update(this.loglevel, this._hass, this.logpushback);
-    }
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
-
-    // Set haptic feedback
-    if (config['haptic']) {
-      this.eventManager.setHaptic(config['haptic']);
-    }
-
-    // Set layout
-    if (config['layout']) {
-      this.layout = config['layout'];
-    }
-
-    // Set layout URL
-    if (config['layout_url']) {
-      this.layoutUrl = config['layout_url'];
-    } else {
-      this.layoutUrl = `${Globals.DIR_LAYOUTS}/remote/${this.layout}.json`;
-    }
-
-    // Set auto-scroll behavior
-    if (config['auto_scroll']) {
-      this.autoScroll = config['auto_scroll'];
-    } else {
-      this.autoScroll = true;
-    }
-
-    // Set keyboard configs
-    if (config['keyboard']) {
-      this.keyboardConfig = config['keyboard'];
-    }
-
-    // Set mouse configs
-    if (config['mouse']) {
-      this.mouseConfig = config['mouse'];
-    }
-
-    // Set activites configs
-    if (config['activities']) {
-      this.activitiesConfig = config['activities'];
-    }
   }
 
   getCardSize() {
@@ -483,16 +1142,6 @@ class AndroidRemoteCard extends HTMLElement {
     } catch (e) {
       if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load remote layout ${layoutUrl}`, e));
       this.rows = {};
-    }
-  }
-
-  set hass(hass) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
-    this._hass = hass;
-    this.updateSensors(this._hass);
-    if (this._layoutReady && !this._uiBuilt) {
-      // Render UI
-      this.buildUi(this._hass);
     }
   }
 
@@ -543,360 +1192,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.addGlobalHandlers();
 
     const style = document.createElement('style');
-    style.textContent = `
-      :host {
-        display: block;
-        box-sizing: border-box;
-        max-width: 100%;
-        background: var(--card-background-color, white);
-        border-radius: 0.5em;
-        overflow: hidden; /* prevent overflow outside card */
-        font-family: sans-serif;
-      }
-
-    #main-container {
-      --base-font-size: 1rem; /* base scaling unit */
-      font-size: var(--base-font-size);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      max-width: 100%;
-    }
-
-    .wrapper {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .row {
-      display: flex;
-      flex-direction: row;
-      width: 100%;
-      flex-wrap: nowrap; /* to keep all items in a row */
-      overflow-x: hidden; /* to prevent horizontal scroll */
-    }
-    .row.gap-top {
-      margin-top: clamp(1px, 1vw, 6px);
-    }
-    .row.gap-bottom {
-      margin-bottom: clamp(1px, 1vw, 6px);
-    }
-
-    .cell {
-      min-width: 0; /* to allow shrinking */
-      max-width: 100%;
-      padding: clamp(1px, 1vw, 6px);
-    }
-    .cell.highlight {
-      border-bottom-left-radius: 5px;
-      border-bottom-right-radius: 5px;
-      border-bottom-style: solid;
-      border-bottom-width: 2px;
-      border-image-outset: 0;
-      border-image-repeat: stretch;
-      border-image-slice: 100%;
-      border-image-source: none;
-      border-image-width: 1;
-      border-left-color: rgb(155, 80, 0);
-      border-left-style: solid;
-      border-left-width: 2px;
-      border-right-color: rgb(155, 80, 0);
-      border-right-style: solid;
-      border-right-width: 2px;
-      border-top-color: rgb(155, 80, 0);
-      border-top-left-radius: 5px;
-      border-top-right-radius: 5px;
-      border-top-style: solid;
-      border-top-width: 2px;
-      color: rgb(241, 108, 55);
-      color-scheme: dark;
-    }
-    .cell.no-gap {
-      padding: 0;
-    }
-
-    .standard-grey {
-      fill: #bfbfbf;
-      stroke: #bfbfbf;
-    }
-    .highlight-yellow {
-      fill: #ffc107;
-      stroke: #ffc107;
-    }
-
-    .circle-button {
-      height: 100%;
-      width: 100%;  /* maintain aspect ratio */
-      flex: 1 1 0;
-      aspect-ratio: 1 / 1;
-      background-color: #3a3a3a;
-      color: #bfbfbf;
-      border: none;
-      outline: none;
-      cursor: pointer;
-      font-family: sans-serif;
-      font-size: clamp(1px, 4vw, 24px);
-      transition: background-color 0.2s ease;
-      align-items: center;
-      justify-content: center;
-      display: flex;
-      border-radius: 50%;   /* This makes the button circular */
-    }
-    .circle-button:hover { background-color: #4a4a4a; }
-    .circle-button:active,
-    .circle-button.pressed { transform: scale(0.95); }
-
-    .side-button {
-      aspect-ratio: 3 / 1;
-      width: 100%;  /* maintain aspect ratio */
-      flex: 1 1 0;
-      background-color: #3a3a3a;
-      color: #bfbfbf;
-      border: none;
-      outline: none;
-      cursor: pointer;
-      font-family: sans-serif;
-      transition: background-color 0.2s ease;
-      align-items: center;
-      justify-content: center;
-      display: flex;
-    }
-    .side-button.left {
-      border-top-left-radius: 999px;
-      border-bottom-left-radius: 999px;
-    }
-    .side-button.right {
-      border-top-right-radius: 999px;
-      border-bottom-right-radius: 999px;
-    }
-    .side-button:hover { background-color: #4a4a4a; }
-    .side-button:active,
-    .side-button.pressed { transform: scale(0.95); }
-
-    .ts-toggle-container {
-      min-width: 0;
-      text-align: center;
-      flex: 1 1 0;
-      background-color: #3a3a3a;
-      outline: none;
-      cursor: pointer;
-      font-family: sans-serif;
-      transition: background-color 0.2s ease, transform 0.1s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      padding: 0;
-      user-select: none;
-      position: relative; /* Needed for absolute children */
-    }
-    .ts-toggle-option {
-      flex: 1 1 0;
-      aspect-ratio: 1 / 1;
-      max-width: 100%;
-      position: relative;
-      z-index: 1;
-      font-size: clamp(1px, 5vw, 30px);
-      color: #bfbfbf;
-      border-radius: 999px;
-      user-select: none;
-
-      display: flex;
-      align-items: center;   /* vertical alignment */
-      justify-content: center; /* horizontal alignment */
-    }
-    .ts-toggle-indicator {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: calc(100% / 3); /* Assuming 3 options */
-      left: 0;
-      z-index: 0;
-      background-color: #4a4a4a;
-      border-radius: 999px;
-      transition: left 0.3s ease;
-    }
-    .ts-toggle-option:hover {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
-    .ts-toggle-option.active {
-      color: #bfbfbf;
-      font-weight: bold;
-    }
-
-    .quarter {
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .quarter:hover { opacity: 0.0; }
-    text {
-      font-family: sans-serif;
-      fill: #bfbfbf;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    #foldable-container {
-      width: 100%;
-      display: none;
-    }
-
-    #power-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.4, 0.4);
-    }
-
-    #shield-tv-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.6, 0.6);
-    }
-
-    #shield-tv-icon-2 {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.6, 0.6);
-    }
-
-    #tv-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.6, 0.6);
-    }
-
-    #old-tv-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.5, 0.5);
-    }
-
-    #device-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.5, 0.5);
-    }
-
-    #arrow-up-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-    }
-
-    #arrow-right-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-    }
-
-    #arrow-down-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-    }
-
-    #arrow-left-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-    }
-
-    #return-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.6, 0.6);
-    }
-
-    #home-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.6, 0.6);
-    }
-
-    #backspace-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.4, 0.4);
-    }
-
-    #keyboard-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.4, 0.4);
-    }
-
-    #toggle-neutral {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.1, 0.1);
-    }
-
-    #mouse-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.4, 0.4) rotate(315deg);
-    }
-
-    #settings-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.4, 0.4);
-    }
-
-    #previous-track-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.5, 0.5);
-    }
-
-    #play-pause-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.5, 0.5);
-    }
-
-    #next-track-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.5, 0.5);
-    }
-
-    #volumemute-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.5, 0.5);
-    }
-
-    #volumedown-icon {
-      height: 100%;
-      width: auto;
-      display: block;
-      transform: scale(0.5, 0.5);
-    }
-
-    #volumeup-icon {
-      height: 100%;
-      width: auto;  /* maintain aspect ratio */
-      display: block; /* removes any inline space */
-      transform: scale(0.5, 0.5);
-    }
-    `;
+    style.textContent = ``;
     this.shadowRoot.appendChild(style);
 
     const container = document.createElement('div');
@@ -914,18 +1210,18 @@ class AndroidRemoteCard extends HTMLElement {
       if (rowConfig["filler-bottom"]) row.classList.add('gap-bottom');
 
       // Add cells to row
-      rowConfig.cells.forEach((cellConfig, cellIndex) => {
+      rowConfig.cells.forEach((userCellConfig, cellIndex) => {
 
         // Create cell
         const cell = document.createElement("div");
         cell.classList.add('cell');
-        cell.classList.add(this.addStyleSpan(style, cellConfig.weight));
+        cell.classList.add(this.createSpanClass(userCellConfig.weight));
 
         // Remove internal padding on cell when required by the row
         if (rowConfig["no-gap"]) cell.classList.add('no-gap');
 
         // Create cell content
-        const cellContent = this.createCellContent(hass, cellConfig);
+        const cellContent = this.createCellContent(userCellConfig);
 
         // Add key element into row
         if (cellContent) cell.appendChild(cellContent);
@@ -953,13 +1249,13 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Override section configured
     if (this.config && this.config['buttons-override']) {
-      const buttonsOverride = this.config['buttons-override'];
+      const cellOverrides = this.config['buttons-override'];
 
       // Iterate over all override configurations
-      Object.keys(buttonsOverride).forEach((btnId) => {
+      Object.keys(cellOverrides).forEach((btnId) => {
 
         // Search if current override configuration does have a declared sensor
-        const btnOverrideConfig = buttonsOverride[btnId];
+        const btnOverrideConfig = cellOverrides[btnId];
         const btnOverrideSensor = btnOverrideConfig['sensor'];
         if (btnOverrideSensor) {
           if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Button-override config ${btnOverrideSensor} detected`));
@@ -996,99 +1292,29 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  addStyleSpan(style, flex) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("addStyleSpan(style, flex):", style, flex));
-    const styleName = this.getStyleSpanName(flex);
-    let dynamicStyle = this.dynamicStyles.get(styleName);
-    if (!dynamicStyle) {
-      dynamicStyle = `
-        .${styleName} {
-          flex: ${flex};
-        }`;
-      style.textContent += dynamicStyle;
-      this.dynamicStyles.set(styleName, dynamicStyle);
-    }
-    return styleName;
-  }
-
-  getStyleSpanName(flex) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("getStyleSpanName(flex):", flex));
-    const flexStr = String(flex);
-    const styleId = flexStr.replace(/\./g, '-');
-    return `span-${styleId}`;
-  }
-
-  createCellContent(hass, cellConfig) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createCellContent(cellConfig):", cellConfig));
-
-    // Create element inside cell, according to its name
-    const cellName = cellConfig.name;
-    if (cellName === "filler") return null; // No content for filler cell
-
-    // Retrieve known default config for cell content (when available)
-    const knownConfig = this.cellContents[cellName];
-
-    // Retrieve cell content tag
-    let cellContentTag = null;
-    if (knownConfig && knownConfig.tag) cellContentTag = knownConfig.tag; // Known config
-    if (cellConfig.tag) cellContentTag = cellConfig.tag; // User config override
-    if (!cellContentTag) cellContentTag = "button"; // Default tag fallback
-
-    // Retrieve cell content style
-    let cellContentStyle = null;
-    if (knownConfig && knownConfig.style) cellContentStyle = knownConfig.style; // Known config
-    if (cellConfig.style) cellContentStyle = cellConfig.style; // User config override
-    if (!cellContentStyle && cellContentTag === "button") {
-      cellContentStyle = "circle-button"; // Default style fallback (button tag only)
-    }
-
-    // Retrieve cell content html
-    let cellContentHtml = null;
-    if (knownConfig && knownConfig.html) cellContentHtml = knownConfig.html; // Known config
-    if (cellConfig.html) cellContentHtml = cellConfig.html; // User config override
-    // No default html fallback
-
-    // Build cell content
-    let cellContent;
-    if (cellContentTag === "svg") {
-      cellContent = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    } else {
-      cellContent = document.createElement(cellContentTag);
-    }
-    cellContent.id = cellName;
-    if (cellContentStyle) cellContent.className = cellContentStyle;
-    if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
-
-    // Add cell content data and event (button tag only)
-    if (cellContentTag === "button") this.setDataAndEvents(hass, cellContent);
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("created cellContent:", cellContent));
-
-    return cellContent;
-  }
-
   setDataAndEvents(hass, btn) {
 
     // Retrieve known default config for cell content (when available)
-    const knownConfig = this.cellContents[btn.id];
+    const defaultCellConfig = this._defaultCellConfigs[btn.id];
 
     // Set cell content data
-    if (knownConfig && knownConfig.code) {
-      btn._keyData = { code: knownConfig.code };
+    if (defaultCellConfig && defaultCellConfig.code) {
+      btn._keyData = { code: defaultCellConfig.code };
     } else {
       btn._keyData = {};
     }
 
     // Add pointer Down events:
     this.eventManager.addPointerDownListener(btn, (e) => {
-      this.handlePointerDown(e, hass, btn);
+      this.onCellPointerDown(e, hass, btn);
     });
 
     // Add pointer Up events:
     this.eventManager.addPointerUpListener(btn, (e) => {
-      this.handlePointerUp(e, hass, btn);
+      this.onCellPointerUp(e, hass, btn);
     });
     this.eventManager.addPointerCancelListener(btn, (e) => {
-      this.handlePointerUp(e, hass, btn);
+      this.onCellPointerUp(e, hass, btn);
     });
   }
 
@@ -1170,8 +1396,8 @@ class AndroidRemoteCard extends HTMLElement {
       svg.appendChild(btn);
 
       // Retrieve arrow content from default config
-      const knownConfig = this.cellContents[keyId];
-      const arrowContentHtml = knownConfig.html;
+      const defaultCellConfig = this._defaultCellConfigs[keyId];
+      const arrowContentHtml = defaultCellConfig.html;
       const parser = new DOMParser();
       const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
       const arrowSvg = doc.documentElement;
@@ -1325,8 +1551,8 @@ class AndroidRemoteCard extends HTMLElement {
   handleGlobalPointerUp(evt) {
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp(evt):", evt));
     if (this.content && this._hass) {
-      Object.keys(this.cellContents).forEach((cellConfig) => {
-        const cell = this.content.querySelector(`#${cellConfig.id}`);
+      Object.keys(this._defaultCellConfigs).forEach((userCellConfig) => {
+        const cell = this.content.querySelector(`#${userCellConfig.id}`);
         if (cell && cell.tagName === 'BUTTON' && cell.classList.contains("active")) {
           this.handleKeyRelease(this._hass, cell);
         }
@@ -1334,47 +1560,50 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  handlePointerDown(evt, hass, btn) {
+  onCellPointerDown(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    this.handleKeyPress(hass, btn);
+    const cell = evt.currentTarget; // Retrieve cell attached to the listener that triggered the event
+    this.handleKeyPress(cell);
   }
 
-  handlePointerUp(evt, hass, btn) {
-    evt.preventDefault();
-    this.handleKeyRelease(hass, btn);
+  onCellPointerUp(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const cell = evt.currentTarget; // Retrieve cell attached to the listener that triggered the event
+    this.handleKeyRelease(cell);
   }
 
   // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyPress(hass, btn) {
-    this.handleKeyPressInternal(hass, btn);
+  handleKeyPress(cell) {
+    this.handleKeyPressInternal(cell);
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
     this.eventManager.hapticFeedback();
   }
 
-  handleKeyPressInternal(hass, btn) {
-    // Mark button active visually
-    btn.classList.add("active");
+  handleKeyPressInternal(cell) {
 
-    // Retrieve key data
-    const keyData = btn._keyData;
+    // Mark cell active
+    cell.classList.add("active");
+
+    // Retrieve cell data
+    const keyData = cell._keyData;
     if (!keyData) return;
 
-    // track the key press to avoid unwanted other key release
-    this._currentBaseKey = btn;
+    // track the cell press to avoid unwanted other cell release
+    this._currentBaseCell = cell;
 
     // Pressed key code (keyboard layout independant, later send to remote keyboard)
     const code = keyData.code;
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-pressed:", code));
 
-    if (this.hasOverrideAction(btn)) {
+    if (this.hasOverrideAction(cell)) {
       // Override detected: do nothing (override action will be executed on button up)
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Override detected on key press (suppressed):", btn.id));
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Override detected on key press (suppressed):", cell.id));
     } else {
       // Default action
 
       // Press HID key
-      this.appendCode(hass, code);
+      this.appendCode(code);
     }
   }
 
@@ -1396,8 +1625,8 @@ class AndroidRemoteCard extends HTMLElement {
     btn.classList.remove("active");
 
     // When the mouse is released over another key than the first pressed key
-    if (this._currentBaseKey && this._currentBaseKey._keyData.code !== keyData.code) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-suppressed:", keyData.code, "char:", btn._lowerLabel.textContent || "", "in-favor-of-key:", this._currentBaseKey._keyData.code));
+    if (this._currentBaseCell && this._currentBaseCell._keyData.code !== keyData.code) {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-suppressed:", keyData.code, "char:", btn._lowerLabel.textContent || "", "in-favor-of-key:", this._currentBaseCell._keyData.code));
       return; // suppress the unwanted other key release
     }
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-released:", code));
@@ -1414,20 +1643,19 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  hasOverrideAction(btn) {
-    const btnId = btn.id;
-    const buttonsOverride = this.config['buttons-override'];
-    return (btnId && buttonsOverride && buttonsOverride[btnId]);
+  hasOverrideAction(cell) {
+    const cellOverrides = this._config['buttons-override'];
+    return (cell.id && cellOverrides && cellOverrides[cell.id]);
   }
 
-  executeOverrideAction(btn) {
-    const btnId = btn.id;
+  executeOverrideAction(cell) {
+    const btnId = cell.id;
     const buttonOverrideConfig = this.config['buttons-override'][btnId];
 
     // Select override action
     let overrideAction;
     if (buttonOverrideConfig['sensor']) {
-      if (btn._sensorState && btn._sensorState.toLowerCase() === "on") {
+      if (cell._sensorState && cell._sensorState.toLowerCase() === "on") {
         overrideAction = buttonOverrideConfig['action-when-on'];
       } else {
         overrideAction = buttonOverrideConfig['action-when-off'];
@@ -1438,43 +1666,43 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Trigger override action
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering override action for:", btnId, overrideAction));
-    this.eventManager.triggerHaosTapAction(btn, overrideAction);
+    this.eventManager.triggerHaosTapAction(cell, overrideAction);
   }
 
-  appendCode(hass, code) {
+  appendCode(code) {
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
-        this.appendKeyCode(hass, code);
+        this.appendKeyCode(code);
       } else if (this.isConsumer(code)) {
-        this.appendConsumerCode(hass, code);
+        this.appendConsumerCode(code);
       } else {
         if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn("Unknown code type:", code));
       }
     }
   }
 
-  appendKeyCode(hass, code) {
+  appendKeyCode(code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
     if (code) {
       const intCode = this._keycodes[code];
       if (this.isModifier(code)) {
         // Modifier key pressed
-        this.pressedModifiers.add(intCode);
+        this._pressedModifiers.add(intCode);
       } else {
         // Standard key pressed
-        this.pressedKeys.add(intCode);
+        this._pressedKeys.add(intCode);
       }
     }
-    this.sendKeyboardUpdate(hass);
+    this.sendKeyboardUpdate();
   }
 
   appendConsumerCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer pressed:", code));
     if (code) {
       const intCode = this._consumercodes[code];
-      this.pressedConsumers.add(intCode);
+      this._pressedConsumers.add(intCode);
     }
-    this.sendConsumerUpdate(hass);
+    this.sendConsumerUpdate();
   }
 
   removeCode(hass, code) {
@@ -1495,22 +1723,22 @@ class AndroidRemoteCard extends HTMLElement {
       const intCode = this._keycodes[code];
       if (this.isModifier(code)) {
         // Modifier key released
-        this.pressedModifiers.delete(intCode);
+        this._pressedModifiers.delete(intCode);
       } else {
         // Standard key released
-        this.pressedKeys.delete(intCode);
+        this._pressedKeys.delete(intCode);
       }
     }
-    this.sendKeyboardUpdate(hass);
+    this.sendKeyboardUpdate();
   }
 
   removeConsumerCode(hass, code) {
     if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Consumer released:", code));
     if (code) {
       const intCode = this._consumercodes[code];
-      this.pressedConsumers.delete(intCode);
+      this._pressedConsumers.delete(intCode);
     }
-    this.sendConsumerUpdate(hass);
+    this.sendConsumerUpdate();
   }
 
   isKey(code) {
@@ -1526,17 +1754,17 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
-  sendKeyboardUpdate(hass) {
-    this.eventManager.callComponentService(hass, "keypress", {
-      sendModifiers: Array.from(this.pressedModifiers),
-      sendKeys: Array.from(this.pressedKeys),
+  sendKeyboardUpdate() {
+    this.eventManager.callComponentService(this._hass, "keypress", {
+      sendModifiers: Array.from(this._pressedModifiers),
+      sendKeys: Array.from(this._pressedKeys),
     });
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
-  sendConsumerUpdate(hass) {
-    this.eventManager.callComponentService(hass, "conpress", {
-      sendCons: Array.from(this.pressedConsumers),
+  sendConsumerUpdate() {
+    this.eventManager.callComponentService(this._hass, "conpress", {
+      sendCons: Array.from(this._pressedConsumers),
     });
   }
 
