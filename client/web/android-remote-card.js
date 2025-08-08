@@ -429,7 +429,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateConfig() {
-    if (!this.getAttachedLayoutName() || this.getAttachedLayoutName() !== this.getLayoutName()) {
+    if (this.getLayoutName() !== this.getAttachedLayoutName()) {
       this.doUpdateLayout();
     }
   }
