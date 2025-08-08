@@ -593,7 +593,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
   
   doCellContent(cellConfig) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createCellContent(cellConfig):", cellConfig));
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("doCellContent(cellConfig):", cellConfig));
 
     // Retrieve target cell identifier (content will be created according to this name)
     const cellName = cellConfig.name;
@@ -625,7 +625,17 @@ class AndroidRemoteCard extends HTMLElement {
     // Build cell content using previously defined tag + style + inner html
     let cellContent;
     if (cellContentTag === "svg") {
-      cellContent = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      cellContent = document.createElementNS(this.constructor.getSvgNamespace(), "svg");
+      // Create Dpad content
+      if (!cellContentHtml && cellName === "dpad") {
+        const dpad = cellContent;
+        const dpadConfig = cellConfig;
+        this.doDpad(dpad, dpadConfig);
+        this.doStyleDpad();
+        this.doAttachDpad();
+        this.doQueryDpadElements();
+        this.doListenDpad();
+      }
     } else {
       cellContent = document.createElement(cellContentTag);
     }
@@ -635,14 +645,9 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
 
     // Add cell content data when cell content is a button
-    if (cellContentTag === "button") {
+    if (cellContentTag === "button") this.addClickableData(cellContent, defaultCellConfig);
 
-      // Set key code to send when button clicked
-      if (defaultCellConfig && defaultCellConfig.code) cellContent._keyData = { code: defaultCellConfig.code };
-      if (!cellContent._keyData) cellContent._keyData = {};
-    }
     if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("created cellContent:", cellContent));
-
     return cellContent;
   }
 
@@ -659,9 +664,247 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doListenCellContent(cellContent) {
-    this.eventManager.addPointerDownListener(cellContent, this.onCellPointerDown.bind(this));
-    this.eventManager.addPointerUpListener(cellContent, this.onCellPointerUp.bind(this));
-    this.eventManager.addPointerCancelListener(cellContent, this.onCellPointerUp.bind(this));
+    this.addClickableListeners(cellContent);
+  }
+
+  doDpad(dpad, dpadConfig) {
+    // Dpad config
+    //TODO: externalize
+    const padRadius = 100;
+    const padPadding = 56;
+    const padLineThick = 5;
+    const center = padRadius;
+    const rOuter = padRadius;
+    const rInner = padRadius - padPadding;
+    const centerRadius = padRadius - padPadding - padLineThick;
+    const svgSize = padRadius * 2;
+
+    dpad.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
+    dpad.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    dpad.style.width = "100%";
+    dpad.style.height = "auto";
+    dpad.style.flex = dpadConfig.weight;
+    dpad.style["aspect-ratio"] = "1 / 1";
+
+    const defs = document.createElementNS(this.constructor.getSvgNamespace(), "defs");
+    dpad.appendChild(defs);
+
+    // Dpad quarters config
+    //TODO: externalize
+    const quarters = [
+      { quarterId: "remote-button-arrow-up"   , clipId: 'clip-quarter-1', angleStart: 225 },
+      { quarterId: "remote-button-arrow-right", clipId: 'clip-quarter-2', angleStart: 315 },
+      { quarterId: "remote-button-arrow-down" , clipId: 'clip-quarter-3', angleStart: 45  },
+      { quarterId: "remote-button-arrow-left" , clipId: 'clip-quarter-4', angleStart: 135 }
+    ];
+    const arrowColor = "#bfbfbf";  // ← dynamic color
+    const arrowScale = 0.6;          // ← 1 = normal size, <1 = smaller, >1 = larger
+
+    for (const quarterConfig of quarters) {
+      const dpadQuarter = this.doDpadQuarter(dpad, defs, center, rOuter, rInner, arrowColor, arrowScale, quarterConfig);
+      this.doStyleDpadQuarter();
+      this.doAttachDpadQuarter();
+      this.doQueryDpadQuarterElements();
+      this.doListenDpadQuarter(dpadQuarter);
+    }
+
+    const dpadCenter = this.doDpadCenter(dpad, center, centerRadius);
+    this.doStyleDpadCenter();
+    this.doAttachDpadCenter();
+    this.doQueryDpadCenterElements();
+    this.doListenDpadCenter(dpadCenter);
+  }
+
+  doStyleDpad() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachDpad() {
+    // Nothing to do here: already attached by its parent
+  }
+
+  doQueryDpadElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenDpad() {
+    // Nothing to do here: no listener on element and sub-elements listeners are included by them
+  }
+
+  doDpadQuarter(dpad, defs, center, rOuter, rInner, arrowColor, arrowScale, quarterConfig) {    
+
+    // Quarter specific config
+    const angleStart = quarterConfig.angleStart;
+    const clipId = quarterConfig.clipId;
+    const quarterId = quarterConfig.quarterId;
+
+    const quarterPath = this.createQuarterPath(angleStart, center, rOuter, rInner);
+    const clip = document.createElementNS(this.constructor.getSvgNamespace(), "clipPath");
+    clip.setAttribute("id", clipId);
+    const clipShape = document.createElementNS(this.constructor.getSvgNamespace(), "path");
+    clipShape.setAttribute("d", quarterPath);
+    clip.appendChild(clipShape);
+    defs.appendChild(clip);
+
+    const bg = document.createElementNS(this.constructor.getSvgNamespace(), "path");
+    bg.setAttribute("d", quarterPath);
+    bg.setAttribute("fill", "#4a4a4a");
+    bg.setAttribute("clip-path", `url(#${clipId})`);
+    dpad.appendChild(bg);
+
+    const clickable = document.createElementNS(this.constructor.getSvgNamespace(), "path");
+    clickable.setAttribute("d", quarterPath);
+    clickable.setAttribute("fill", "#3a3a3a");
+    clickable.setAttribute("clip-path", `url(#${clipId})`);
+    clickable.setAttribute("class", "quarter");
+    clickable.setAttribute("id", quarterId);
+    this.addClickableData(clickable, this._defaultCellConfigs[clickable.id]);
+    dpad.appendChild(clickable);
+
+    // Retrieve arrow content from default config
+    const defaultCellConfig = this._defaultCellConfigs[quarterId];
+    const arrowContentHtml = defaultCellConfig.html;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
+    const arrowSvg = doc.documentElement;
+
+    // Clean ID to avoid duplicate IDs in document
+    arrowSvg.removeAttribute("id");
+
+    // Set fill color on inner shapes
+    const shapes = arrowSvg.querySelectorAll("path, polygon, circle, rect");
+    shapes.forEach(shape => shape.setAttribute("fill", arrowColor));
+
+    // Get the original viewBox
+    const vb = arrowSvg.getAttribute("viewBox").split(" ").map(parseFloat);
+    const [vbX, vbY, vbWidth, vbHeight] = vb;
+
+    // Desired on-screen size (in your SVG coordinate system before scaling)
+    const baseSize = 20; // adjust to your taste
+
+    // Scale to fit iconSize in both dimensions
+    const scaleX = (baseSize / vbWidth) * arrowScale;
+    const scaleY = (baseSize / vbHeight) * arrowScale;
+
+    // Create a group to wrap and position the arrow
+    const iconGroup = document.createElementNS(this.constructor.getSvgNamespace(), "g");
+
+    // Centered position in D-Pad arc
+    const angle = (angleStart + 45) % 360;
+    const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
+
+    // Position and center the viewBox origin
+    iconGroup.setAttribute(
+      "transform",
+      `translate(${labelPos.x}, ${labelPos.y}) scale(${scaleX}, ${scaleY}) translate(${-vbX - vbWidth / 2}, ${-vbY - vbHeight / 2})`
+    );
+
+    // Move all children of the parsed SVG into the group
+    while (arrowSvg.firstChild) {
+      iconGroup.appendChild(arrowSvg.firstChild);
+    }
+
+    dpad.appendChild(iconGroup);
+
+    return clickable;
+  }
+
+  doStyleDpadQuarter() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachDpadQuarter() {
+    // Nothing to do here: already attached during creation
+    //TODO refactor in the future
+  }
+
+  doQueryDpadQuarterElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenDpadQuarter(dpadQuarter) {
+    this.addClickableListeners(dpadQuarter);
+  }
+
+  doDpadCenter(dpad, center, centerRadius) {
+    const centerCircle = document.createElementNS(this.constructor.getSvgNamespace(), "circle");
+    centerCircle.setAttribute("cx", center);
+    centerCircle.setAttribute("cy", center);
+    centerCircle.setAttribute("r", centerRadius);
+    centerCircle.setAttribute("fill", "#4a4a4a");
+    dpad.appendChild(centerCircle);
+
+    const clickable = document.createElementNS(this.constructor.getSvgNamespace(), "circle");
+    clickable.setAttribute("cx", center);
+    clickable.setAttribute("cy", center);
+    clickable.setAttribute("r", centerRadius);
+    clickable.setAttribute("fill", "#3a3a3a");
+    clickable.setAttribute("class", "quarter");
+    clickable.setAttribute("id", "remote-button-center");
+    this.addClickableData(clickable, this._defaultCellConfigs[clickable.id]);
+    dpad.appendChild(clickable);
+
+    const centerLabel = document.createElementNS(this.constructor.getSvgNamespace(), "text");
+    centerLabel.setAttribute("x", center);
+    centerLabel.setAttribute("y", center);
+    centerLabel.setAttribute("text-anchor", "middle");
+    centerLabel.setAttribute("dominant-baseline", "middle");
+    centerLabel.textContent = "OK";
+    dpad.appendChild(centerLabel);
+
+    return clickable;
+  }
+
+  doStyleDpadCenter() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachDpadCenter() {
+    //TODO
+  }
+
+  doQueryDpadCenterElements() {
+    //TODO or 
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenDpadCenter(dpadCenter) {
+    this.addClickableListeners(dpadCenter);
+  }
+
+  // Set key data with code to send when clickable clicked
+  addClickableData(clickable, clickableConfig) {
+    if (clickableConfig && clickableConfig.code) clickable._keyData = { code: clickableConfig.code };
+    if (!clickable._keyData) clickable._keyData = {};
+  }
+  
+  // Set key data with code to send when clickable clicked
+  addClickableListeners(clickable) {
+    this.eventManager.addPointerDownListener(clickable, this.onClickablePointerDown.bind(this));
+    this.eventManager.addPointerUpListener(clickable, this.onClickablePointerUp.bind(this));
+    this.eventManager.addPointerCancelListener(clickable, this.onClickablePointerUp.bind(this));
+  }
+
+  degToRad(deg) {
+    return (deg * Math.PI) / 180;
+  }
+
+  pointOnCircle(cx, cy, r, deg) {
+    const rad = this.degToRad(deg);
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  createQuarterPath(angleStart, center, rOuter, rInner) {
+    const angleEnd = (angleStart + 90) % 360;
+    const p1 = this.pointOnCircle(center, center, rOuter, angleStart);
+    const p2 = this.pointOnCircle(center, center, rOuter, angleEnd);
+    const p3 = this.pointOnCircle(center, center, rInner, angleEnd);
+    const p4 = this.pointOnCircle(center, center, rInner, angleStart);
+    return `M ${p1.x} ${p1.y}
+            A ${rOuter} ${rOuter} 0 0 1 ${p2.x} ${p2.y}
+            L ${p3.x} ${p3.y}
+            A ${rInner} ${rInner} 0 0 0 ${p4.x} ${p4.y}
+            Z`;
   }
 
   createSpanClass(flex) {
@@ -685,59 +928,6 @@ class AndroidRemoteCard extends HTMLElement {
     return `span-${styleId}`;
   }
 
-  createCellContent(userCellConfig) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("createCellContent(userCellConfig):", userCellConfig));
-
-    // Retrieve target cell identifier (content will be created according to this name)
-    const cellName = userCellConfig.name;
-    
-    // Filler does not have cell content: skip cell content creation
-    if (cellName === "filler") return null;
-
-    // Retrieve default cell config that matches the cell name (when available)
-    const defaultCellConfig = this._defaultCellConfigs[cellName];
-
-    // Define cell content tag
-    let cellContentTag = null;
-    if (defaultCellConfig && defaultCellConfig.tag) cellContentTag = defaultCellConfig.tag; // Default config
-    if (userCellConfig.tag) cellContentTag = userCellConfig.tag; // Override with user config when specified
-    if (!cellContentTag) cellContentTag = "button"; // Fallback to "button" when no default nor user config available
-
-    // Define cell content style
-    let cellContentClass = null;
-    if (defaultCellConfig && defaultCellConfig.style) cellContentClass = defaultCellConfig.style; // Default config
-    if (userCellConfig.style) cellContentClass = userCellConfig.style; // Override with user config when specified
-    if (!cellContentClass && cellContentTag === "button") cellContentClass = "circle-button"; // Fallback to "circle-button" style when no default nor user config available and tag is a button
-
-    // Define cell content inner html (when available)
-    let cellContentHtml = null;
-    if (defaultCellConfig && defaultCellConfig.html) cellContentHtml = defaultCellConfig.html; // Default config
-    if (userCellConfig.html) cellContentHtml = userCellConfig.html; // Override with user config when specified
-    // No default html fallback
-
-    // Build cell content using previously defined tag + style + inner html
-    let cellContent;
-    if (cellContentTag === "svg") {
-      cellContent = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    } else {
-      cellContent = document.createElement(cellContentTag);
-    }
-    cellContent.id = cellName;
-    if (cellContentClass) cellContent.className = cellContentClass;
-    if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
-
-    // Add cell content data when cell content is a button
-    if (cellContentTag === "button") {
-
-      // Set key code to send when button clicked
-      if (defaultCellConfig && defaultCellConfig.code) cellContent._keyData = { code: defaultCellConfig.code };
-      if (!cellContent._keyData) btn._keyData = {};
-    }
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("created cellContent:", cellContent));
-
-    return cellContent;
-  }
-
   doUpdateConfig() {
 
   }
@@ -753,6 +943,10 @@ class AndroidRemoteCard extends HTMLElement {
       activities = {},
       auto_scroll: true
     }
+  }
+
+  static getSvgNamespace() {
+    return "http://www.w3.org/2000/svg";
   }
 
   static getLayoutsByNames(layouts) {
@@ -1306,20 +1500,20 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Add pointer Down events:
     this.eventManager.addPointerDownListener(btn, (e) => {
-      this.onCellPointerDown(e, hass, btn);
+      this.onClickablePointerDown(e, hass, btn);
     });
 
     // Add pointer Up events:
     this.eventManager.addPointerUpListener(btn, (e) => {
-      this.onCellPointerUp(e, hass, btn);
+      this.onClickablePointerUp(e, hass, btn);
     });
     this.eventManager.addPointerCancelListener(btn, (e) => {
-      this.onCellPointerUp(e, hass, btn);
+      this.onClickablePointerUp(e, hass, btn);
     });
   }
 
   setupDpad(hass) {
-    const svg = this.content.querySelector("#dpad");
+    const dpad = this.content.querySelector("#dpad");
     const padRadius = 100;
     const padPadding = 56;
     const padLineThick = 5;
@@ -1329,16 +1523,15 @@ class AndroidRemoteCard extends HTMLElement {
     const centerRadius = padRadius - padPadding - padLineThick;
     const svgSize = padRadius * 2;
 
-    svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    svg.style.width = "100%";
-    svg.style.height = "auto";
-    svg.style.flex = "4";
-    svg.style["aspect-ratio"] = "1 / 1";
+    dpad.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
+    dpad.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    dpad.style.width = "100%";
+    dpad.style.height = "auto";
+    dpad.style.flex = "4";
+    dpad.style["aspect-ratio"] = "1 / 1";
 
-    const ns = "http://www.w3.org/2000/svg";
-    const defs = document.createElementNS(ns, "defs");
-    svg.appendChild(defs);
+    const defs = document.createElementNS(this.constructor.getSvgNamespace(), "defs");
+    dpad.appendChild(defs);
 
     const degToRad = (deg) => (deg * Math.PI) / 180;
     const pointOnCircle = (cx, cy, r, deg) => {
@@ -1361,42 +1554,42 @@ class AndroidRemoteCard extends HTMLElement {
     };
 
     const quarters = [
-      { id: 1, angleStart: 225, keyId: "remote-button-arrow-up" },
-      { id: 2, angleStart: 315, keyId: "remote-button-arrow-right" },
-      { id: 3, angleStart: 45,  keyId: "remote-button-arrow-down" },
-      { id: 4, angleStart: 135, keyId: "remote-button-arrow-left" }
+      { id: 1, angleStart: 225, quarterId: "remote-button-arrow-up" },
+      { id: 2, angleStart: 315, quarterId: "remote-button-arrow-right" },
+      { id: 3, angleStart: 45,  quarterId: "remote-button-arrow-down" },
+      { id: 4, angleStart: 135, quarterId: "remote-button-arrow-left" }
     ];
 
     const arrowColor = "#bfbfbf";  // ← dynamic color
     const arrowScale = 0.6;          // ← 1 = normal size, <1 = smaller, >1 = larger
 
-    quarters.forEach(({ id, keyId, angleStart }) => {
+    quarters.forEach(({ id, quarterId, angleStart }) => {
       const quarterPath = createQuarterPath(angleStart);
       const clipId = `clip-quarter-${id}`;
-      const clip = document.createElementNS(ns, "clipPath");
+      const clip = document.createElementNS(this.constructor.getSvgNamespace(), "clipPath");
       clip.setAttribute("id", clipId);
-      const clipShape = document.createElementNS(ns, "path");
+      const clipShape = document.createElementNS(this.constructor.getSvgNamespace(), "path");
       clipShape.setAttribute("d", quarterPath);
       clip.appendChild(clipShape);
       defs.appendChild(clip);
 
-      const bg = document.createElementNS(ns, "path");
+      const bg = document.createElementNS(this.constructor.getSvgNamespace(), "path");
       bg.setAttribute("d", quarterPath);
       bg.setAttribute("fill", "#4a4a4a");
       bg.setAttribute("clip-path", `url(#${clipId})`);
-      svg.appendChild(bg);
+      dpad.appendChild(bg);
 
-      const btn = document.createElementNS(ns, "path");
+      const btn = document.createElementNS(this.constructor.getSvgNamespace(), "path");
       btn.setAttribute("d", quarterPath);
       btn.setAttribute("fill", "#3a3a3a");
       btn.setAttribute("clip-path", `url(#${clipId})`);
       btn.setAttribute("class", "quarter");
-      btn.setAttribute("id", keyId);
+      btn.setAttribute("id", quarterId);
       this.setDataAndEvents(hass, btn);
-      svg.appendChild(btn);
+      dpad.appendChild(btn);
 
       // Retrieve arrow content from default config
-      const defaultCellConfig = this._defaultCellConfigs[keyId];
+      const defaultCellConfig = this._defaultCellConfigs[quarterId];
       const arrowContentHtml = defaultCellConfig.html;
       const parser = new DOMParser();
       const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
@@ -1421,7 +1614,7 @@ class AndroidRemoteCard extends HTMLElement {
       const scaleY = (baseSize / vbHeight) * arrowScale;
 
       // Create a group to wrap and position the arrow
-      const iconGroup = document.createElementNS(ns, "g");
+      const iconGroup = document.createElementNS(this.constructor.getSvgNamespace(), "g");
 
       // Centered position in D-Pad arc
       const angle = (angleStart + 45) % 360;
@@ -1438,17 +1631,17 @@ class AndroidRemoteCard extends HTMLElement {
         iconGroup.appendChild(arrowSvg.firstChild);
       }
 
-      svg.appendChild(iconGroup);
+      dpad.appendChild(iconGroup);
     });
 
-    const centerCircle = document.createElementNS(ns, "circle");
+    const centerCircle = document.createElementNS(this.constructor.getSvgNamespace(), "circle");
     centerCircle.setAttribute("cx", center);
     centerCircle.setAttribute("cy", center);
     centerCircle.setAttribute("r", centerRadius);
     centerCircle.setAttribute("fill", "#4a4a4a");
-    svg.appendChild(centerCircle);
+    dpad.appendChild(centerCircle);
 
-    const centerButton = document.createElementNS(ns, "circle");
+    const centerButton = document.createElementNS(this.constructor.getSvgNamespace(), "circle");
     centerButton.setAttribute("cx", center);
     centerButton.setAttribute("cy", center);
     centerButton.setAttribute("r", centerRadius);
@@ -1456,15 +1649,15 @@ class AndroidRemoteCard extends HTMLElement {
     centerButton.setAttribute("class", "quarter");
     centerButton.setAttribute("id", "remote-button-center");
     this.setDataAndEvents(hass, centerButton);
-    svg.appendChild(centerButton);
+    dpad.appendChild(centerButton);
 
-    const centerLabel = document.createElementNS(ns, "text");
+    const centerLabel = document.createElementNS(this.constructor.getSvgNamespace(), "text");
     centerLabel.setAttribute("x", center);
     centerLabel.setAttribute("y", center);
     centerLabel.setAttribute("text-anchor", "middle");
     centerLabel.setAttribute("dominant-baseline", "middle");
     centerLabel.textContent = "OK";
-    svg.appendChild(centerLabel);
+    dpad.appendChild(centerLabel);
   }
 
   setupFoldables() {
@@ -1560,13 +1753,13 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  onCellPointerDown(evt) {
+  onClickablePointerDown(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const cell = evt.currentTarget; // Retrieve cell attached to the listener that triggered the event
     this.handleKeyPress(cell);
   }
 
-  onCellPointerUp(evt) {
+  onClickablePointerUp(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const cell = evt.currentTarget; // Retrieve cell attached to the listener that triggered the event
     this.handleKeyRelease(cell);
