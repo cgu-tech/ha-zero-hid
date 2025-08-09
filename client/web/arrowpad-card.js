@@ -449,6 +449,10 @@ class ArrowPadCard extends HTMLElement {
     this._eventManager.hapticFeedback();
   }
 
+  getButtonsOverrides() {
+    return this._config?.['buttons_overrides'] || this.getStubConfig()['buttons_overrides'];
+  }
+
   hasButtonOverride(btn) {
     return (btn.id && this.getButtonsOverrides()[btn.id]);
   }

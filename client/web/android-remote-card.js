@@ -59,10 +59,6 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateHass()
   }
 
-  getButtonsOverrides() {
-    return this._config?.['buttons_overrides'] || this.getStubConfig()['buttons_overrides'];
-  }
-
   // jobs
   doCheckConfig() {
     this._resourceManager.checkConfiguredLayout();
@@ -1000,6 +996,10 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
     this._eventManager.hapticFeedback();
+  }
+
+  getButtonsOverrides() {
+    return this._config?.['buttons_overrides'] || this.getStubConfig()['buttons_overrides'];
   }
 
   hasButtonOverride(btn) {
