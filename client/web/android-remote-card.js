@@ -704,14 +704,14 @@ class AndroidRemoteCard extends HTMLElement {
     bg.setAttribute("clip-path", `url(#${clipId})`);
     dpad.appendChild(bg);
 
-    const clickable = document.createElementNS(this.constructor.getSvgNamespace(), "path");
-    clickable.setAttribute("d", quarterPath);
-    clickable.setAttribute("fill", "#3a3a3a");
-    clickable.setAttribute("clip-path", `url(#${clipId})`);
-    clickable.setAttribute("class", "quarter");
-    clickable.setAttribute("id", quarterId);
-    this.addClickableData(clickable, this._defaultCellConfigs[clickable.id]);
-    dpad.appendChild(clickable);
+    const btn = document.createElementNS(this.constructor.getSvgNamespace(), "path");
+    btn.setAttribute("d", quarterPath);
+    btn.setAttribute("fill", "#3a3a3a");
+    btn.setAttribute("clip-path", `url(#${clipId})`);
+    btn.setAttribute("class", "quarter");
+    btn.setAttribute("id", quarterId);
+    this.addClickableData(btn, this._defaultCellConfigs[btn.id]);
+    dpad.appendChild(btn);
 
     // Retrieve arrow content from default config
     const defaultCellConfig = this._defaultCellConfigs[quarterId];
@@ -743,7 +743,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Centered position in D-Pad arc
     const angle = (angleStart + 45) % 360;
-    const labelPos = pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
+    const labelPos = this.pointOnCircle(center, center, (rOuter + rInner) / 2, angle);
 
     // Position and center the viewBox origin
     iconGroup.setAttribute(
@@ -758,7 +758,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     dpad.appendChild(iconGroup);
 
-    return clickable;
+    return btn;
   }
 
   doStyleDpadQuarter() {
@@ -786,15 +786,15 @@ class AndroidRemoteCard extends HTMLElement {
     centerCircle.setAttribute("fill", "#4a4a4a");
     dpad.appendChild(centerCircle);
 
-    const clickable = document.createElementNS(this.constructor.getSvgNamespace(), "circle");
-    clickable.setAttribute("cx", center);
-    clickable.setAttribute("cy", center);
-    clickable.setAttribute("r", centerRadius);
-    clickable.setAttribute("fill", "#3a3a3a");
-    clickable.setAttribute("class", "quarter");
-    clickable.setAttribute("id", "remote-button-center");
-    this.addClickableData(clickable, this._defaultCellConfigs[clickable.id]);
-    dpad.appendChild(clickable);
+    const btn = document.createElementNS(this.constructor.getSvgNamespace(), "circle");
+    btn.setAttribute("cx", center);
+    btn.setAttribute("cy", center);
+    btn.setAttribute("r", centerRadius);
+    btn.setAttribute("fill", "#3a3a3a");
+    btn.setAttribute("class", "quarter");
+    btn.setAttribute("id", "remote-button-center");
+    this.addClickableData(btn, this._defaultCellConfigs[btn.id]);
+    dpad.appendChild(btn);
 
     const centerLabel = document.createElementNS(this.constructor.getSvgNamespace(), "text");
     centerLabel.setAttribute("x", center);
@@ -804,7 +804,7 @@ class AndroidRemoteCard extends HTMLElement {
     centerLabel.textContent = "OK";
     dpad.appendChild(centerLabel);
 
-    return clickable;
+    return btn;
   }
 
   doStyleDpadCenter() {
@@ -824,17 +824,17 @@ class AndroidRemoteCard extends HTMLElement {
     this.addClickableListeners(dpadCenter);
   }
 
-  // Set key data with code to send when clickable clicked
-  addClickableData(clickable, clickableConfig) {
-    if (clickableConfig && clickableConfig.code) clickable._keyData = { code: clickableConfig.code };
-    if (!clickable._keyData) clickable._keyData = {};
+  // Set key data with code to send when a button is clicked
+  addClickableData(btn, btnConfig) {
+    if (btnConfig && btnConfig.code) btn._keyData = { code: btnConfig.code };
+    if (!btn._keyData) btn._keyData = {};
   }
   
-  // Set key data with code to send when clickable clicked
-  addClickableListeners(clickable) {
-    this.eventManager.addPointerDownListener(clickable, this.onClickablePointerDown.bind(this));
-    this.eventManager.addPointerUpListener(clickable, this.onClickablePointerUp.bind(this));
-    this.eventManager.addPointerCancelListener(clickable, this.onClickablePointerUp.bind(this));
+  // Set listeners on a clickable button
+  addClickableListeners(btn) {
+    this.eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
+    this.eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
+    this.eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
   }
 
   degToRad(deg) {
@@ -885,11 +885,11 @@ class AndroidRemoteCard extends HTMLElement {
     return {
       log_level: "warn",
       log_pushback: false,
-      layout = "classic",
+      layout: "classic",
       haptic: true,
-      keyboard = {},
-      mouse = {},
-      activities = {},
+      keyboard: {},
+      mouse: {},
+      activities: {},
       auto_scroll: true
     }
   }
@@ -910,79 +910,72 @@ class AndroidRemoteCard extends HTMLElement {
     return 4;
   }
 
-  onClickablePointerDown(evt) {
+  onButtonPointerDown(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    const clickable = evt.currentTarget; // Retrieve clickable attached to the listener that triggered the event
-    this.handleKeyPress(clickable);
+    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    this.handleKeyPress(btn);
   }
 
-  onClickablePointerUp(evt) {
+  onButtonPointerUp(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    const clickable = evt.currentTarget; // Retrieve clickable attached to the listener that triggered the event
-    this.handleKeyRelease(clickable);
+    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    this.handleKeyRelease(btn);
   }
 
   // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyPress(clickable) {
-    this.handleKeyPressInternal(clickable);
+  handleKeyPress(btn) {
 
-    // Send haptic feedback to make user acknownledgable of succeeded press event
-    this.eventManager.hapticFeedback();
-  }
+    // Mark clickable button active for visual feedback
+    btn.classList.add("active");
 
-  handleKeyPressInternal(clickable) {
-
-    // Mark clickable active
-    clickable.classList.add("active");
-
-    // Retrieve clickable data
-    const keyData = clickable._keyData;
+    // Retrieve clickable button data
+    const keyData = btn._keyData;
     if (!keyData) return;
 
-    // track the clickable press to avoid unwanted other clickable release
-    this._currentBaseCell = clickable;
-
-    // Pressed key code (keyboard layout independant, later send to remote keyboard)
+    // Key code to press
     const code = keyData.code;
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-pressed:", code));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to press:", code));
 
-    if (this.hasOverrideAction(clickable)) {
+    // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
+    this._referenceBtn = btn;
+
+    if (this.hasOverrideAction(btn)) {
       // Override detected: do nothing (override action will be executed on button up)
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", clickable.id));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", btn.id));
     } else {
       // Default action
 
       // Press HID key
       this.appendCode(code);
     }
-  }
 
-  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyRelease(hass, btn) {
-    this.handleKeyReleaseInternal(hass, btn);
-
-    // Send haptic feedback to make user acknownledgable of succeeded release event
+    // Send haptic feedback to make user acknownledgable of succeeded press event
     this.eventManager.hapticFeedback();
   }
 
-  handleKeyReleaseInternal(hass, btn) {
+  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
+  handleKeyRelease(btn) {
+
+    // Unmark clickable button active for visual feedback
+    btn.classList.remove("active");
+
+    // Retrieve clickable button data
     const keyData = btn._keyData;
     if (!keyData) return;
 
+    // Key code to release
     const code = keyData.code;
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
 
-    // Remove active visual for all other keys / states
-    btn.classList.remove("active");
-
-    // When the mouse is released over another key than the first pressed key
-    if (this._currentBaseCell && this._currentBaseCell._keyData.code !== keyData.code) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-suppressed:", keyData.code, "char:", btn._lowerLabel.textContent || "", "in-favor-of-key:", this._currentBaseCell._keyData.code));
-      return; // suppress the unwanted other key release
+    // Suppress this clickable button release if reference pointer down event was originated from a different clickable button
+    const referenceCode = this._referenceBtn?._keyData?.code;
+    if (referenceCode !== code) {
+      //TODO: foolproof multiples buttons with same code, by using unique ID per button for reference and comparison, instead of key code
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to existing reference key code ${referenceCode}`));
+      return;
     }
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-released:", code));
 
     if (this.hasOverrideAction(btn)) {
-      // Override detected: do override action
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key release:", btn.id));
       this.executeOverrideAction(btn);
     } else {
@@ -991,32 +984,35 @@ class AndroidRemoteCard extends HTMLElement {
       // Release HID key
       this.removeCode(hass, code);
     }
+
+    // Send haptic feedback to make user acknownledgable of succeeded release event
+    this.eventManager.hapticFeedback();
   }
 
-  hasOverrideAction(clickable) {
-    const cellOverrides = this._config['buttons-override'];
-    return (clickable.id && cellOverrides && cellOverrides[clickable.id]);
+  hasOverrideAction(btn) {
+    const overridesConfig = this._config['buttons-override'];
+    return (btn.id && overridesConfig && overridesConfig[btn.id]);
   }
 
-  executeOverrideAction(clickable) {
-    const btnId = clickable.id;
-    const buttonOverrideConfig = this.config['buttons-override'][btnId];
+  executeOverrideAction(btn) {
+    const btnId = btn.id;
+    const overridesConfig = this._config['buttons-override'][btnId];
 
     // Select override action
     let overrideAction;
-    if (buttonOverrideConfig['sensor']) {
-      if (clickable._sensorState && clickable._sensorState.toLowerCase() === "on") {
-        overrideAction = buttonOverrideConfig['action-when-on'];
+    if (overridesConfig['sensor']) {
+      if (btn._sensorState && btn._sensorState.toLowerCase() === "on") {
+        overrideAction = overridesConfig['action-when-on'];
       } else {
-        overrideAction = buttonOverrideConfig['action-when-off'];
+        overrideAction = overridesConfig['action-when-off'];
       }
     } else {
-      overrideAction = buttonOverrideConfig['action'];
+      overrideAction = overridesConfig['action'];
     }
 
     // Trigger override action
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Triggering override action for:", btnId, overrideAction));
-    this.eventManager.triggerHaosTapAction(clickable, overrideAction);
+    this.eventManager.triggerHaosTapAction(btn, overrideAction);
   }
 
   appendCode(code) {
