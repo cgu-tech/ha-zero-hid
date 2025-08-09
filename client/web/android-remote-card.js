@@ -2,6 +2,7 @@ import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
+import { LayoutManager } from './utils/layout-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 import { androidRemoteCardConfig } from './configs/android-remote-card-config.js';
@@ -17,6 +18,7 @@ class AndroidRemoteCard extends HTMLElement {
   _elements = {};
   _logger;
   _eventManager;
+  _layoutManager;
   _resourceManager;
   _dynamicStyleNames = new Set();
   _pressedModifiers = new Set();
@@ -33,7 +35,8 @@ class AndroidRemoteCard extends HTMLElement {
 
     this._logger = new Logger(this, "android-remote-card.js");
     this._eventManager = new EventManager(this);
-    this._resourceManager = new ResourceManager(this, import.meta.url, layoutsRemote);
+    this._layoutManager = new ResourceManager(this, layoutsRemote);
+    this._resourceManager = new ResourceManager(this, import.meta.url);
 
     this.doCard();
     this.doStyle();
@@ -63,7 +66,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // jobs
   doCheckConfig() {
-    this._resourceManager.checkConfiguredLayout();
+    this._layoutManager.checkConfiguredLayout();
   }
 
   doCard() {
@@ -415,7 +418,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateConfig() {
-    if (this._resourceManager.configuredLayoutChanged()) {
+    if (this._layoutManager.configuredLayoutChanged()) {
       this.doUpdateLayout();
     }
   }
@@ -423,10 +426,11 @@ class AndroidRemoteCard extends HTMLElement {
   doUpdateHass() {
 
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
-    Object.keys(this.getButtonsOverrides()).forEach((btnId) => {
+    const overridesConfigs = this._layoutManager.getButtonsOverrides();
+    Object.keys(overridesConfigs).forEach((btnId) => {
 
       // Search if current override configuration does have a declared sensor
-      const overrideConfig = this.getButtonsOverrides()[btnId];
+      const overrideConfig = overridesConfigs[btnId];
       const sensorEntityId = overrideConfig['sensor'];
       if (sensorEntityId) {
 
@@ -482,16 +486,16 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.rows = []
     
     // Reset attached layout
-    this._resourceManager.resetAttachedLayout();
+    this._layoutManager.resetAttachedLayout();
   }
 
   doCreateLayout() {
 
     // Mark configured layout as attached
-    this._resourceManager.configuredLayoutAttached();
+    this._layoutManager.configuredLayoutAttached();
 
     // Create rows
-    for (const rowConfig of this._resourceManager.getLayout().rows) {
+    for (const rowConfig of this._layoutManager.getLayout().rows) {
       const row = this.doRow(rowConfig);
       this.doStyleRow();
       this.doAttachRow(row);
@@ -621,7 +625,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
 
     // Add cell content data when cell content is a button
-    if (cellContentTag === "button") this.addClickableData(cellContent, defaultCellConfig);
+    if (cellContentTag === "button") this.addClickableData(cellContent, defaultCellConfig, cellConfig);
 
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
     return cellContent;
@@ -713,6 +717,7 @@ class AndroidRemoteCard extends HTMLElement {
     const angleStart = quarterConfig.angleStart;
     const clipId = quarterConfig.clipId;
     const quarterId = quarterConfig.quarterId;
+    const defaultQuarterConfig = this._defaultCellConfigs[quarterId];
 
     const quarterPath = this.createQuarterPath(angleStart, center, rOuter, rInner);
     const clip = document.createElementNS(Globals.SVG_NAMESPACE, "clipPath");
@@ -734,12 +739,11 @@ class AndroidRemoteCard extends HTMLElement {
     btn.setAttribute("clip-path", `url(#${clipId})`);
     btn.setAttribute("class", "quarter");
     btn.setAttribute("id", quarterId);
-    this.addClickableData(btn, this._defaultCellConfigs[btn.id]);
+    this.addClickableData(btn, defaultQuarterConfig, null);
     dpad.appendChild(btn);
 
     // Retrieve arrow content from default config
-    const defaultCellConfig = this._defaultCellConfigs[quarterId];
-    const arrowContentHtml = defaultCellConfig.html;
+    const arrowContentHtml = defaultQuarterConfig.html;
     const parser = new DOMParser();
     const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
     const arrowSvg = doc.documentElement;
@@ -803,6 +807,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doDpadCenter(dpad, center, centerRadius) {
+    const centerId = "remote-button-center";
+    const defaultCenterConfig = this._defaultCellConfigs[centerId];
+
     const centerCircle = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
     centerCircle.setAttribute("cx", center);
     centerCircle.setAttribute("cy", center);
@@ -816,8 +823,8 @@ class AndroidRemoteCard extends HTMLElement {
     btn.setAttribute("r", centerRadius);
     btn.setAttribute("fill", "#3a3a3a");
     btn.setAttribute("class", "quarter");
-    btn.setAttribute("id", "remote-button-center");
-    this.addClickableData(btn, this._defaultCellConfigs[btn.id]);
+    btn.setAttribute("id", centerId);
+    this.addClickableData(btn, defaultCenterConfig, null);
     dpad.appendChild(btn);
 
     const centerLabel = document.createElementNS(Globals.SVG_NAMESPACE, "text");
@@ -910,12 +917,33 @@ class AndroidRemoteCard extends HTMLElement {
     return 4;
   }
 
-  // Set key data with code to send when a button is clicked
-  addClickableData(btn, btnConfig) {
-    if (btnConfig && btnConfig.code) btn._keyData = { code: btnConfig.code };
-    if (!btn._keyData) btn._keyData = {};
+  // Set key data
+  addClickableData(btn, defaultBtnConfig, btnConfig) {
+    this.addClickableFilteredData(btn, defaultBtnConfig, btnConfig, (key, value, source) => key === 'code');
   }
-  
+
+  addClickableFilteredData(btn, defaultBtnConfig, btnConfig, accept) {
+    if (!btn._keyData) btn._keyData = {};
+
+    // Process defaults first
+    if (defaultBtnConfig && typeof defaultBtnConfig === 'object') {
+      for (const [key, value] of Object.entries(defaultBtnConfig)) {
+        if (accept?.(key, value, 'default')) {
+          btn._keyData[key] = value;
+        }
+      }
+    }
+
+    // Then override with user config
+    if (btnConfig && typeof btnConfig === 'object') {
+      for (const [key, value] of Object.entries(btnConfig)) {
+        if (accept?.(key, value, 'user')) {
+          btn._keyData[key] = value;
+        }
+      }
+    }
+  }
+
   // Set listeners on a clickable button
   addClickableListeners(btn) {
     this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
@@ -951,7 +979,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
     this._referenceBtn = btn;
 
-    if (this.hasButtonOverride(btn)) {
+    if (this._layoutManager.hasButtonOverride(btn)) {
       // Override detected: do nothing (override action will be executed on button up)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", btn.id));
     } else {
@@ -986,7 +1014,7 @@ class AndroidRemoteCard extends HTMLElement {
       return;
     }
 
-    if (this.hasButtonOverride(btn)) {
+    if (this._layoutManager.hasButtonOverride(btn)) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to detected override on ${btn.id}`));
       this.executeButtonOverride(btn);
     } else {
@@ -1000,16 +1028,8 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.hapticFeedback();
   }
 
-  getButtonsOverrides() {
-    return this._config?.['buttons_overrides'] || this.getStubConfig()['buttons_overrides'];
-  }
-
-  hasButtonOverride(btn) {
-    return (btn.id && this.getButtonsOverrides()[btn.id]);
-  }
-
   executeButtonOverride(btn) {
-    const overrideConfig = this.getButtonsOverrides()[btn.id];
+    const overrideConfig = this._layoutManager.getButtonOverride(btn.id);
 
     // When sensor detected in override configuration, 
     // choose override action to execute according to current sensor state (on/off)

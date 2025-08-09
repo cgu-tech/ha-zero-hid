@@ -2,6 +2,7 @@ import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
+import { LayoutManager } from './utils/layout-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 import * as layoutsArrowpad from './layouts/arrowpad/index.js';
@@ -16,7 +17,8 @@ class ArrowPadCard extends HTMLElement {
   _elements = {};
   _logger;
   _eventManager;
-  _resourceManager;
+  _layoutManager;
+  _layoutManager;
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
@@ -30,7 +32,8 @@ class ArrowPadCard extends HTMLElement {
 
     this._logger = new Logger(this, "arrowpad-card.js");
     this._eventManager = new EventManager(this);
-    this._resourceManager = new ResourceManager(this, import.meta.url, layoutsArrowpad);
+    this._layoutManager = new ResourceManager(this, layoutsArrowpad);
+    this._resourceManager = new ResourceManager(this, import.meta.url);
 
     this.doCard();
     this.doStyle();
@@ -60,7 +63,7 @@ class ArrowPadCard extends HTMLElement {
 
   // jobs
   doCheckConfig() {
-    this._resourceManager.checkConfiguredLayout();
+    this._layoutManager.checkConfiguredLayout();
   }
 
   doCard() {
@@ -195,7 +198,7 @@ class ArrowPadCard extends HTMLElement {
   }
 
   doUpdateConfig() {
-    if (this._resourceManager.configuredLayoutChanged()) {
+    if (this._layoutManager.configuredLayoutChanged()) {
       this.doUpdateLayout();
     }
   }
@@ -223,16 +226,16 @@ class ArrowPadCard extends HTMLElement {
     this._elements.rows = []
     
     // Reset attached layout
-    this._resourceManager.resetAttachedLayout();
+    this._layoutManager.resetAttachedLayout();
   }
 
   doCreateLayout() {
 
     // Mark configured layout as attached
-    this._resourceManager.configuredLayoutAttached();
+    this._layoutManager.configuredLayoutAttached();
 
     // Create rows
-    for (const rowConfig of this._resourceManager.getLayout().rows) {
+    for (const rowConfig of this._layoutManager.getLayout().rows) {
       const row = this.doRow(rowConfig);
       this.doStyleRow();
       this.doAttachRow(row);
@@ -281,7 +284,7 @@ class ArrowPadCard extends HTMLElement {
     if (cellConfig.special) cell.classList.add("special");
     if (cellConfig.width) cell.classList.add(cellConfig.width);
     if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
-    cell._keyData = cellConfig;
+    this.addClickableData(cell, null, cellConfig);
 
     // Create cell content
     const cellContent = this.doCellContent(cellConfig);
@@ -351,12 +354,33 @@ class ArrowPadCard extends HTMLElement {
     return 1;
   }
 
-  // Set key data with code to send when a button is clicked
-  addClickableData(btn, btnConfig) {
-    if (btnConfig && btnConfig.code) btn._keyData = { code: btnConfig.code };
-    if (!btn._keyData) btn._keyData = {};
+  // Set key data
+  addClickableData(btn, defaultBtnConfig, btnConfig) {
+    this.addClickableFilteredData(btn, defaultBtnConfig, btnConfig, (key, value, source) => key === 'code');
   }
-  
+
+  addClickableFilteredData(btn, defaultBtnConfig, btnConfig, accept) {
+    if (!btn._keyData) btn._keyData = {};
+
+    // Process defaults first
+    if (defaultBtnConfig && typeof defaultBtnConfig === 'object') {
+      for (const [key, value] of Object.entries(defaultBtnConfig)) {
+        if (accept?.(key, value, 'default')) {
+          btn._keyData[key] = value;
+        }
+      }
+    }
+
+    // Then override with user config
+    if (btnConfig && typeof btnConfig === 'object') {
+      for (const [key, value] of Object.entries(btnConfig)) {
+        if (accept?.(key, value, 'user')) {
+          btn._keyData[key] = value;
+        }
+      }
+    }
+  }
+
   // Set listeners on a clickable button
   addClickableListeners(btn) {
     this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
@@ -392,7 +416,7 @@ class ArrowPadCard extends HTMLElement {
     // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
     this._referenceBtn = btn;
 
-    if (this.hasButtonOverride(btn)) {
+    if (this._layoutManager.hasButtonOverride(btn)) {
       // Override detected: do nothing (override action will be executed on button up)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", btn.id));
     } else {
@@ -427,7 +451,7 @@ class ArrowPadCard extends HTMLElement {
       return;
     }
 
-    if (this.hasButtonOverride(btn)) {
+    if (this._layoutManager.hasButtonOverride(btn)) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to detected override on ${btn.id}`));
       this.executeButtonOverride(btn);
     } else {
@@ -441,16 +465,8 @@ class ArrowPadCard extends HTMLElement {
     this._eventManager.hapticFeedback();
   }
 
-  getButtonsOverrides() {
-    return this._config?.['buttons_overrides'] || this.getStubConfig()['buttons_overrides'];
-  }
-
-  hasButtonOverride(btn) {
-    return (btn.id && this.getButtonsOverrides()[btn.id]);
-  }
-
   executeButtonOverride(btn) {
-    const overrideConfig = this.getButtonsOverrides()[btn.id];
+    const overrideConfig = this._layoutManager.getButtonOverride(btn.id);
 
     // When sensor detected in override configuration, 
     // choose override action to execute according to current sensor state (on/off)
