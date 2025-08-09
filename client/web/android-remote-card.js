@@ -16,6 +16,7 @@ class AndroidRemoteCard extends HTMLElement {
   _defaultCellConfigs = androidRemoteCardConfig;
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
+  _allowedDataFields = new Set(['code']);
 
   // private properties
   _config;
@@ -919,7 +920,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Set key data
   addClickableData(btn, defaultBtnConfig, btnConfig) {
-    this.addClickableFilteredData(btn, defaultBtnConfig, btnConfig, (key, value, source) => key === 'code');
+    this.addClickableFilteredData(btn, defaultBtnConfig, btnConfig, (key, value, source) => this._allowedDataFields.has(key));
   }
 
   addClickableFilteredData(btn, defaultBtnConfig, btnConfig, accept) {

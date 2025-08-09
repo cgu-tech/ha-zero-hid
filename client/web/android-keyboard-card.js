@@ -22,6 +22,7 @@ class AndroidKeyboardCard extends HTMLElement {
   _ALT_PAGE_ONE = 0; // Alt state 1: Alternative symbols page 1
   _ALT_PAGE_TWO = 1; // Alt state 2: Alternative symbols page 2
   _triggerPopin = 500;
+  _allowedDataFields = new Set(['code', 'special', 'popinKeys', 'label', 'fallback']);
 
   // private properties
   _config;
@@ -366,7 +367,7 @@ class AndroidKeyboardCard extends HTMLElement {
   doCell(rowConfig, cellConfig) {
     const cell = document.createElement("button");
     this._elements.cells.push(cell);
-    cell.classList.add("squarekey");
+    cell.classList.add("key");
     if (cellConfig.special) cell.classList.add("special");
     if (cellConfig.width) cell.classList.add(cellConfig.width);
     if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
@@ -443,7 +444,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
   // Set key data
   addClickableData(btn, defaultBtnConfig, btnConfig) {
-    this.addClickableFilteredData(btn, defaultBtnConfig, btnConfig, (key, value, source) => key === 'code');
+    this.addClickableFilteredData(btn, defaultBtnConfig, btnConfig, (key, value, source) => this._allowedDataFields.has(key));
   }
 
   addClickableFilteredData(btn, defaultBtnConfig, btnConfig, accept) {
