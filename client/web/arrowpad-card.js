@@ -11,6 +11,10 @@ console.info("Loading arrowpad-card");
 
 class ArrowPadCard extends HTMLElement {
 
+  // private constants
+  _keycodes = new KeyCodes().getMapping();
+  _consumercodes = new ConsumerCodes().getMapping();
+
   // private properties
   _config;
   _hass;
@@ -22,10 +26,6 @@ class ArrowPadCard extends HTMLElement {
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
-
-  // private constants
-  _keycodes = new KeyCodes().getMapping();
-  _consumercodes = new ConsumerCodes().getMapping();
 
   constructor() {
     super();
@@ -190,7 +190,7 @@ class ArrowPadCard extends HTMLElement {
 
   doQueryElements() {
     const card = this._elements.card;
-    this._elements.wrapper = card.querySelector(".keyboard-container")
+    this._elements.wrapper = card.querySelector(".keyboard-container");
   }
 
   doListen() {
@@ -346,7 +346,7 @@ class ArrowPadCard extends HTMLElement {
       haptic: true,
       log_level: "warn",
       log_pushback: false,
-      buttons_overrides: {},
+      buttons_overrides: {}
     }
   }
 

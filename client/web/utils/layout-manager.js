@@ -29,8 +29,28 @@ export class LayoutManager {
     return this._origin.constructor.getStubConfig();
   }
 
+  getFromConfig(configName) {
+    return this.getConfig()?.[configName];
+  }
+
+  getFromDefaultConfig(configName) {
+    return this.getStubConfig()[configName];
+  }
+
+  getFromConfigOrDefaultConfig(configName) {
+    return this.getFromConfig(configName) || this.getFromDefaultConfig(configName);
+  }
+
+  getFontScale() {
+    return this.getFromConfigOrDefaultConfig('font_scale');
+  }
+
+  static getSafeFontScale() {
+    return this.getScaleOrDefault(this.getFontScale(), '1rem');
+  }
+
   getButtonsOverrides() {
-    return this.getConfig()?.['buttons_overrides'] || this.getStubConfig()['buttons_overrides'];
+    return this.getFromConfigOrDefaultConfig('buttons_overrides');
   }
 
   getButtonOverride(btn) {
@@ -45,12 +65,12 @@ export class LayoutManager {
     return this._layoutsNames;
   }
 
-  getConfiguredLayoutName() {
-    return this.getConfig()?.['layout'];
+  getLayoutNameFromConfig() {
+    return this.getFromConfig('layout');
   }
 
   getLayoutName() {
-    return this.getConfiguredLayoutName() || this.getStubConfig()['layout'];
+    return this.getFromConfigOrDefault('layout');
   }
 
   getLayout() {
@@ -70,8 +90,8 @@ export class LayoutManager {
   }
 
   checkConfiguredLayout() {
-    if (this.getConfiguredLayoutName() && !this.hasLayout(this.getConfiguredLayoutName())) {
-      throw new Error(`Unknown layout "${this.getConfiguredLayoutName()}". Please define a known layout (${this.getLayoutsNames()}).`);
+    if (this.getLayoutNameFromConfig() && !this.hasLayout(this.getLayoutNameFromConfig())) {
+      throw new Error(`Unknown layout "${this.getLayoutNameFromConfig()}". Please define a known layout (${this.getLayoutsNames()}).`);
     }
   }
 
@@ -85,6 +105,53 @@ export class LayoutManager {
 
   configuredLayoutChanged() {
     return this.getLayoutName() !== this.getAttachedLayoutName();
+  }
+
+  static getScaleOrDefault(scale, defaultScale) {
+    let scaleOrDefault;
+    if (this.isValidScale(scale)) {
+      scaleOrDefault = this.toScale(scale);
+    } else {
+      scaleOrDefault = defaultScale;
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Invalid scale ${scale}, falling back to default scale ${defaultScale}`));
+    }
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`getScaleOrDefault(${scale}):`, scaleOrDefault));
+    return scaleOrDefault;
+  }
+
+  static toScale(value) {
+    let scale;
+    if (this.isNumber(value) || this.isStringNumber(value)) {
+      scale = value + 'rem';
+    } else if (this.isRelativeUnit(value) || this.isAbsoluteUnit(value)) {
+      scale = value;
+    } else {
+      throw new Error(`Invalid value ${value} for scale`);
+    }
+    return scale;
+  }
+
+  static isNumber(value) {
+    return typeof value === 'number' && Number.isFinite(value);
+  }
+
+  static isStringNumber(value) {
+    const num = Number(value);
+    return typeof num === 'number' && Number.isFinite(num);
+  }
+
+  static isRelativeUnit(value) {
+    const RELATIVE_UNIT_REGEX = /^\s*\d+(\.\d+)?\s*(%|em|rem|vw|vh|vmin|vmax|svw|svh|lvw|lvh)\s*$/i;
+    return typeof value === "string" && RELATIVE_UNIT_REGEX.test(value);
+  }
+
+  static isAbsoluteUnit(value) {
+    const ABSOLUTE_UNIT_REGEX = /^\s*\d+(\.\d+)?\s*(px|cm|mm|in|pt|pc|ex|ch)\s*$/i;
+    return typeof value === "string" && ABSOLUTE_UNIT_REGEX.test(value);
+  }
+
+  static isValidScale(value) {
+    return this.isNumber(value) || this.isStringNumber(value) || this.isRelativeUnit(value) || this.isAbsoluteUnit(value);
   }
 
   static getLayoutsByNames(layouts) {
