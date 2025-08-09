@@ -2,6 +2,7 @@ import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
+import { ConsumerCodes } from './utils/consumercodes.js';
 import * as layoutsArrowpad from './layouts/arrowpad/index.js';
 
 console.info("Loading arrowpad-card");
@@ -18,8 +19,8 @@ class ArrowPadCard extends HTMLElement {
   _pressedConsumers = new Set();
 
   // private constants
-  _defaultCellConfigs = androidRemoteCardConfig;
   _keycodes = new KeyCodes().getMapping();
+  _consumercodes = new ConsumerCodes().getMapping();
 
   constructor() {
     super();
