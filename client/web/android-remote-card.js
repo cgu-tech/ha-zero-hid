@@ -67,11 +67,11 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getLayout() {
-    return this._layoutsByNames[this.getLayoutName()];
+    return this._layoutsByNames.get(this.getLayoutName());
   }
 
   getLayoutsNames() {
-    return Object.keys(this._layoutsByNames);
+    return Array.from(this._layoutsByNames.keys());
   }
 
   // jobs
@@ -899,9 +899,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   static getLayoutsByNames(layouts) {
-    const layoutsByNames = {};
+    const layoutsByNames = new Map();
     for (const layout of Object.values(layouts)) {
-      layoutsByNames[layout.Name] = layout;
+      layoutsByNames.set(layout.Name, layout);
     }
     return layoutsByNames;
   }
@@ -980,7 +980,7 @@ class AndroidRemoteCard extends HTMLElement {
       // Default action
 
       // Release HID key
-      this.removeCode(hass, code);
+      this.removeCode(code);
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
@@ -1040,7 +1040,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.sendKeyboardUpdate();
   }
 
-  appendConsumerCode(hass, code) {
+  appendConsumerCode(code) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Consumer pressed:", code));
     if (code) {
       const intCode = this._consumercodes[code];
@@ -1049,19 +1049,19 @@ class AndroidRemoteCard extends HTMLElement {
     this.sendConsumerUpdate();
   }
 
-  removeCode(hass, code) {
+  removeCode(code) {
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
-        this.removeKeyCode(hass, code);
+        this.removeKeyCode(code);
       } else if (this.isConsumer(code)) {
-        this.removeConsumerCode(hass, code);
+        this.removeConsumerCode(code);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
     }
   }
 
-  removeKeyCode(hass, code) {
+  removeKeyCode(code) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Key released:", code));
     if (code) {
       const intCode = this._keycodes[code];
@@ -1076,7 +1076,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.sendKeyboardUpdate();
   }
 
-  removeConsumerCode(hass, code) {
+  removeConsumerCode(code) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Consumer released:", code));
     if (code) {
       const intCode = this._consumercodes[code];
