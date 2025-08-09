@@ -152,6 +152,40 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
 
+  getlLabelNormal(keyData) {
+    return keyData.label.normal;
+  }
+
+  getLabelAlternativeShift(keyData) {
+    return this.getLabelAlternative(keyData, keyData.label.shift);
+  }
+
+  getLabelAlternativeAlt1(keyData) {
+    return this.getLabelAlternative(keyData, keyData.label.alt1);
+  }
+
+  getLabelAlternativeAlt2(keyData) {
+    return this.getLabelAlternative(keyData, keyData.label.alt2);
+  }
+
+  // Given:
+  // - keyData: a <button>.keyData object
+  // - alternativeLabel: an alternative label
+  // When:
+  // - alternativeLabel is defined, then alternativeLabel is returned
+  // - keyData.special is truthy, then normal label from keyData is returned
+  // - otherwise, empty label is returned
+  getLabelAlternative(keyData, alternativeLabel) {
+    let modifiedLabel = "";
+    if (alternativeLabel != null) {
+      modifiedLabel = alternativeLabel;
+    } else if (keyData.special) {
+      modifiedLabel = this.getlLabelNormal(keyData);
+    }
+    return modifiedLabel;
+  }
+
+
   // jobs
   doCheckConfig() {
     this._layoutManager.checkConfiguredLayout();
@@ -449,7 +483,6 @@ class AndroidKeyboardCard extends HTMLElement {
     if (cellConfig.width) cell.classList.add(cellConfig.width);
     if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
     this.addClickableData(cell, null, cellConfig);
-    cell._usedPopin = false;
 
     // Create cell content
     const cellContent = this.doCellContent(cellConfig);
@@ -556,10 +589,12 @@ class AndroidKeyboardCard extends HTMLElement {
 
   addPopinTimeout(evt) {
     return setTimeout(() => {
-      const btn = this._popinTimeouts.get(evt.pointerId)?.["source"];
-      if (btn) { // Button is still pressed
-        btn._usedPopin = true; // Safe-guard against popin race-condition
-        this.showPopin(e, hass, card, btn);
+      const popinEntry = this._popinTimeouts.get(evt.pointerId);
+      if (popinEntry && !popinEntry["popin-detected"]) {
+        // Button is still pressed and popin as not been already been shown
+        popinEntry["popin-detected"] = true; // Mark popin as shown
+        const btn = popinEntry?.["source"];
+        this.showPopin(e, hass, card, btn); //TODO: treat this function
       }
     }, this.triggerLongClick); // long-press duration
   }
@@ -621,7 +656,7 @@ class AndroidKeyboardCard extends HTMLElement {
         
         } else {
           // Normal key pressed: add popin timeout
-          this._popinTimeouts.set(evt.pointerId, { "source": btn , "popin-timeout": this.addPopinTimeout(evt) } );
+          this._popinTimeouts.set(evt.pointerId, { "popin-detected": false, "source": btn , "popin-timeout": this.addPopinTimeout(evt) } );
         }
       }
     }
@@ -631,11 +666,12 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doKeyRelease(evt, btn) {
+    // Retrieve popin entry (when existing)
+    const popinEntry = this._popinTimeouts.get(evt.pointerId);
+
+    // Remove popin timeout (when set before)
     this.clearPopinTimeout(evt);
     this._popinTimeouts.delete(evt.pointerId);
-
-    // Unmark clickable button active for visual feedback
-    btn.classList.remove("active");
 
     // Retrieve clickable button data
     const keyData = btn._keyData;
@@ -645,6 +681,21 @@ class AndroidKeyboardCard extends HTMLElement {
     const code = keyData.code;
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
 
+    // Suppress this clickable button release if toggable virtual modifier
+    if (code === "MOD_LEFT_SHIFT") {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (toggable virtual modifier)`));
+      return;
+    }
+
+    // Unmark clickable button active for visual feedback
+    btn.classList.remove("active");
+
+    // Suppress this clickable button release if used to trigger popin for extended chars
+    if (popinEntry && popinEntry["popin-detected"]) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (button was used to trigger popin for extended chars)`));
+      return;
+    }
+
     // Suppress this clickable button release if reference pointer down event was originated from a different clickable button
     const referenceCode = this._referenceBtn?._keyData?.code;
     if (referenceCode !== code) {
@@ -653,14 +704,48 @@ class AndroidKeyboardCard extends HTMLElement {
       return;
     }
 
-    if (this._layoutManager.hasButtonOverride(btn)) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to detected override on ${btn.id}`));
-      this.executeButtonOverride(btn);
-    } else {
-      // Default action
+    // Do not send virtual modifier keys
+    if (this.isVirtualModifier(code)) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (virtual modifier)`));
+      return;
+    }
 
-      // Release HID key
-      this.removeCode(code);
+    // Special but not virtual key released
+    if (btn._keyData.special) {
+
+      if (this._layoutManager.hasButtonOverride(btn)) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to detected override on ${btn.id}`));
+        this.executeButtonOverride(btn);
+      } else {
+        // Default action
+      
+        // Release HID key
+        this.removeCode(code);
+      }
+
+    } else {
+
+      // Suppress the unwanted post-poppin base key release event fired by poppin release front button
+      if (this._currentPopinBaseKey && this._currentPopinBaseKey._keyData.code === keyData.code) {
+        this._currentPopinBaseKey = null;
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (release transmitted to popin base button when releasing extended char)`));
+        return; 
+      }
+
+      // Non-special and not virtual key clicked
+      const charToSend = btn._lowerLabel.textContent || "";
+      if (charToSend) {
+
+        // Click HID key
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("key-normal-clicked:", code, "char:", charToSend));
+        this.sendKeyboardChar(charToSend);
+      }
+    }
+
+    // Switch back to normal when "shift-once" was set and a key different from SHIFT was pressed
+    if (this._shiftState === this._SHIFT_STATE_ONCE) {
+      this._shiftState = this._SHIFT_STATE_NORMAL;
+      this.updateLabels();
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
@@ -792,6 +877,13 @@ class AndroidKeyboardCard extends HTMLElement {
     });
   }
 
+  // Send clicked char symbols to HID keyboard 
+  // and let it handle the right key-press combination using current kb layout
+  sendKeyboardChar(charToSend) {
+    this._eventManager.callComponentService("chartap", {
+      sendChars: charToSend,
+    });
+  }
 }
 
 customElements.define("android-keyboard-card", AndroidKeyboardCard);
