@@ -66,6 +66,10 @@ class AndroidRemoteCard extends HTMLElement {
     return this._config?.['layout'] || this.constructor.getStubConfig()['layout'];
   }
 
+  getButtonsOverrides() {
+    return this._config?.['buttons_overrides'] || this.constructor.getStubConfig()['buttons_overrides'];
+  }
+
   getLayout() {
     return this._layoutsByNames.get(this.getLayoutName());
   }
@@ -163,7 +167,7 @@ class AndroidRemoteCard extends HTMLElement {
         fill: #bfbfbf;
         stroke: #bfbfbf;
       }
-      .highlight-yellow {
+      .sensor-on {
         fill: #ffc107;
         stroke: #ffc107;
       }
@@ -436,7 +440,46 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateHass() {
-    // TODO: update overriden cells bounds to sensors
+
+    // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
+    Object.keys(this.getButtonsOverrides()).forEach((btnId) => {
+
+      // Search if current override configuration does have a declared sensor
+      const overrideConfig = this.getButtonsOverrides()[btnId];
+      const sensorEntityId = overrideConfig['sensor'];
+      if (sensorEntityId) {
+
+        // Search if current override configuration matches an element from DOM
+        const btn = this.content.querySelector(`#${btnId}`);
+        if (btn) {
+
+          // The current override configuration does have a declared sensor and matches an element from DOM
+
+          // Update overriden button with up-to-date sensor state
+          const sensorState = this._hass.states[sensorEntityId];
+          if (sensorState) {
+            btn._sensorState = sensorState.state;
+          } else {
+            btn._sensorState = sensorState;
+          }
+
+          // Set overriden button content classes relative to sensor current state, for visual feedback
+          if (btn.children) {
+            const children = Array.from(btn.children);
+            const isSensorOn = btn._sensorState && btn._sensorState === 'on';
+            children.forEach(child => {
+              if (isSensorOn) {
+                child.classList.add("sensor-on");
+              } else {
+                child.classList.remove("sensor-on");
+              }
+            });
+          }
+          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Updated ${btnId} with ${sensorEntityId} state:`, btn._sensorState));
+        }
+      }
+    });
+
   }
 
   doUpdateLayout() {
@@ -883,14 +926,15 @@ class AndroidRemoteCard extends HTMLElement {
   // configuration defaults
   static getStubConfig() {
     return {
-      log_level: "warn",
-      log_pushback: false,
       layout: "classic",
       haptic: true,
+      auto_scroll: true,
+      log_level: "warn",
+      log_pushback: false,
+      buttons_override: {}
       keyboard: {},
       mouse: {},
-      activities: {},
-      auto_scroll: true
+      activities: {}
     }
   }
 
@@ -938,7 +982,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
     this._referenceBtn = btn;
 
-    if (this.hasOverrideAction(btn)) {
+    if (this.hasButtonOverride(btn)) {
       // Override detected: do nothing (override action will be executed on button up)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", btn.id));
     } else {
@@ -973,9 +1017,9 @@ class AndroidRemoteCard extends HTMLElement {
       return;
     }
 
-    if (this.hasOverrideAction(btn)) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key release:", btn.id));
-      this.executeOverrideAction(btn);
+    if (this.hasButtonOverride(btn)) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to detected override on ${btn.id}`));
+      this.executeButtonOverride(btn);
     } else {
       // Default action
 
@@ -987,29 +1031,28 @@ class AndroidRemoteCard extends HTMLElement {
     this.eventManager.hapticFeedback();
   }
 
-  hasOverrideAction(btn) {
-    const overridesConfig = this._config['buttons-override'];
-    return (btn.id && overridesConfig && overridesConfig[btn.id]);
+  hasButtonOverride(btn) {
+    return (btn.id && this.getButtonsOverrides()[btn.id]);
   }
 
-  executeOverrideAction(btn) {
-    const btnId = btn.id;
-    const overridesConfig = this._config['buttons-override'][btnId];
+  executeButtonOverride(btn) {
+    const overrideConfig = this.getButtonsOverrides()[btn.id];
 
-    // Select override action
+    // When sensor detected in override configuration, 
+    // choose override action to execute according to current sensor state (on/off)
     let overrideAction;
-    if (overridesConfig['sensor']) {
+    if (overrideConfig['sensor']) {
       if (btn._sensorState && btn._sensorState.toLowerCase() === "on") {
-        overrideAction = overridesConfig['action-when-on'];
+        overrideAction = overrideConfig['action_when_on'];
       } else {
-        overrideAction = overridesConfig['action-when-off'];
+        overrideAction = overrideConfig['action_when_off'];
       }
     } else {
-      overrideAction = overridesConfig['action'];
+      overrideAction = overrideConfig['action'];
     }
 
-    // Trigger override action
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Triggering override action for:", btnId, overrideAction));
+    // Execute override action
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
     this.eventManager.triggerHaosTapAction(btn, overrideAction);
   }
 
