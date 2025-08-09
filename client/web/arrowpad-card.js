@@ -252,7 +252,7 @@ class ArrowPadCard extends HTMLElement {
       this.doStyleCell();
       this.doAttachCell(row, cell);
       this.doQueryCellElements();
-      this.doListenCell();
+      this.doListenCell(cell);
     }
 
     return row;
@@ -288,7 +288,7 @@ class ArrowPadCard extends HTMLElement {
     this.doStyleCellContent();
     this.doAttachCellContent(cell, cellContent);
     this.doQueryCellContentElements(cell, cellContent);
-    this.doListenCellContent(cellContent);
+    this.doListenCellContent();
 
     return cell;
   }
@@ -305,8 +305,8 @@ class ArrowPadCard extends HTMLElement {
     // Nothing to do here: element already referenced and sub-elements are not needed
   }
 
-  doListenCell() {
-    // Nothing to do here: no listener on element and sub-elements listeners are included by them
+  doListenCell(cell) {
+    this.addClickableListeners(cell);
   }
 
   doCellContent(cellConfig) {
@@ -332,8 +332,8 @@ class ArrowPadCard extends HTMLElement {
     cell._lowerLabel = cellContent;
   }
 
-  doListenCellContent(cellContent) {
-    this.addClickableListeners(cellContent);
+  doListenCellContent() {
+    // Nothing to do: only parent is clickable
   }
 
   // configuration defaults

@@ -261,7 +261,7 @@ export class EventManager {
     if (navigator.vibrate) {
       navigator.vibrate(duration);
     } else {
-      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug('Vibration not supported on this device.'));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Vibration not supported on this device.'));
     }
   }
 
