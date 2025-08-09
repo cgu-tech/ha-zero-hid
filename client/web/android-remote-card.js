@@ -1,6 +1,7 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
+import { ResourceManager } from './utils/resource-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 import { androidRemoteCardConfig } from './configs/android-remote-card-config.js';
@@ -21,7 +22,6 @@ class AndroidRemoteCard extends HTMLElement {
   _pressedConsumers = new Set();
 
   // private constants
-  _layoutsByNames = this.constructor.getLayoutsByNames(layoutsRemote);
   _defaultCellConfigs = androidRemoteCardConfig;
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
@@ -30,7 +30,8 @@ class AndroidRemoteCard extends HTMLElement {
     super();
 
     this._logger = new Logger("android-remote-card.js", this);
-    this.eventManager = new EventManager(this);
+    this._eventManager = new EventManager(this);
+    this._resourceManager = new ResourceManager(import.meta.url, layoutsRemote, this);
 
     this.doCard();
     this.doStyle();
@@ -58,31 +59,13 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateHass()
   }
 
-  getAttachedLayoutName() {
-    return this._elements.wrapper._layoutData?.name;
-  }
-
-  getLayoutName() {
-    return this._config?.['layout'] || this.constructor.getStubConfig()['layout'];
-  }
-
   getButtonsOverrides() {
-    return this._config?.['buttons_overrides'] || this.constructor.getStubConfig()['buttons_overrides'];
-  }
-
-  getLayout() {
-    return this._layoutsByNames.get(this.getLayoutName());
-  }
-
-  getLayoutsNames() {
-    return Array.from(this._layoutsByNames.keys());
+    return this._config?.['buttons_overrides'] || this.getStubConfig()['buttons_overrides'];
   }
 
   // jobs
   doCheckConfig() {
-    if (this._config['layout'] && !this._layoutsByNames.has(this._config['layout'])) {
-      throw new Error(`Unknown layout "${this._config['layout']}". Please define a known layout (${this.getLayoutsNames()}).`);
-    }
+    this._resourceManager.checkConfiguredLayout();
   }
 
   doCard() {
@@ -434,7 +417,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateConfig() {
-    if (this.getLayoutName() !== this.getAttachedLayoutName()) {
+    if (this._resourceManager.configuredLayoutChanged()) {
       this.doUpdateLayout();
     }
   }
@@ -500,17 +483,17 @@ class AndroidRemoteCard extends HTMLElement {
     // Reset rows elements (if any)
     this._elements.rows = []
     
-    // Reset layout name
-    this._elements.wrapper._layoutData = { name: null };
+    // Reset attached layout
+    this._resourceManager.resetAttachedLayout();
   }
 
   doCreateLayout() {
-    
-    // Define layout name
-    this._elements.wrapper._layoutData = { name: this.getLayoutName() };
-    
+
+    // Mark configured layout as attached
+    this._resourceManager.configuredLayoutAttached();
+
     // Create rows
-    for (const rowConfig of this.getLayout().rows) {
+    for (const rowConfig of this._resourceManager.getLayout().rows) {
       const row = this.doRow(rowConfig);
       this.doStyleRow();
       this.doAttachRow(row);
@@ -620,7 +603,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Build cell content using previously defined tag + style + inner html
     let cellContent;
     if (cellContentTag === "svg") {
-      cellContent = document.createElementNS(this.constructor.getSvgNamespace(), "svg");
+      cellContent = document.createElementNS(Globals.SVG_NAMESPACE, "svg");
       // Create Dpad content
       if (!cellContentHtml && cellName === "dpad") {
         const dpad = cellContent;
@@ -681,7 +664,7 @@ class AndroidRemoteCard extends HTMLElement {
     dpad.style.flex = dpadConfig.weight;
     dpad.style["aspect-ratio"] = "1 / 1";
 
-    const defs = document.createElementNS(this.constructor.getSvgNamespace(), "defs");
+    const defs = document.createElementNS(Globals.SVG_NAMESPACE, "defs");
     dpad.appendChild(defs);
 
     // Dpad quarters config
@@ -734,20 +717,20 @@ class AndroidRemoteCard extends HTMLElement {
     const quarterId = quarterConfig.quarterId;
 
     const quarterPath = this.createQuarterPath(angleStart, center, rOuter, rInner);
-    const clip = document.createElementNS(this.constructor.getSvgNamespace(), "clipPath");
+    const clip = document.createElementNS(Globals.SVG_NAMESPACE, "clipPath");
     clip.setAttribute("id", clipId);
-    const clipShape = document.createElementNS(this.constructor.getSvgNamespace(), "path");
+    const clipShape = document.createElementNS(Globals.SVG_NAMESPACE, "path");
     clipShape.setAttribute("d", quarterPath);
     clip.appendChild(clipShape);
     defs.appendChild(clip);
 
-    const bg = document.createElementNS(this.constructor.getSvgNamespace(), "path");
+    const bg = document.createElementNS(Globals.SVG_NAMESPACE, "path");
     bg.setAttribute("d", quarterPath);
     bg.setAttribute("fill", "#4a4a4a");
     bg.setAttribute("clip-path", `url(#${clipId})`);
     dpad.appendChild(bg);
 
-    const btn = document.createElementNS(this.constructor.getSvgNamespace(), "path");
+    const btn = document.createElementNS(Globals.SVG_NAMESPACE, "path");
     btn.setAttribute("d", quarterPath);
     btn.setAttribute("fill", "#3a3a3a");
     btn.setAttribute("clip-path", `url(#${clipId})`);
@@ -782,7 +765,7 @@ class AndroidRemoteCard extends HTMLElement {
     const scaleY = (baseSize / vbHeight) * arrowScale;
 
     // Create a group to wrap and position the arrow
-    const iconGroup = document.createElementNS(this.constructor.getSvgNamespace(), "g");
+    const iconGroup = document.createElementNS(Globals.SVG_NAMESPACE, "g");
 
     // Centered position in D-Pad arc
     const angle = (angleStart + 45) % 360;
@@ -822,14 +805,14 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doDpadCenter(dpad, center, centerRadius) {
-    const centerCircle = document.createElementNS(this.constructor.getSvgNamespace(), "circle");
+    const centerCircle = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
     centerCircle.setAttribute("cx", center);
     centerCircle.setAttribute("cy", center);
     centerCircle.setAttribute("r", centerRadius);
     centerCircle.setAttribute("fill", "#4a4a4a");
     dpad.appendChild(centerCircle);
 
-    const btn = document.createElementNS(this.constructor.getSvgNamespace(), "circle");
+    const btn = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
     btn.setAttribute("cx", center);
     btn.setAttribute("cy", center);
     btn.setAttribute("r", centerRadius);
@@ -839,7 +822,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.addClickableData(btn, this._defaultCellConfigs[btn.id]);
     dpad.appendChild(btn);
 
-    const centerLabel = document.createElementNS(this.constructor.getSvgNamespace(), "text");
+    const centerLabel = document.createElementNS(Globals.SVG_NAMESPACE, "text");
     centerLabel.setAttribute("x", center);
     centerLabel.setAttribute("y", center);
     centerLabel.setAttribute("text-anchor", "middle");
@@ -875,9 +858,9 @@ class AndroidRemoteCard extends HTMLElement {
   
   // Set listeners on a clickable button
   addClickableListeners(btn) {
-    this.eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
-    this.eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
-    this.eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
+    this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
+    this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
+    this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
   }
 
   degToRad(deg) {
@@ -938,18 +921,6 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  static getSvgNamespace() {
-    return "http://www.w3.org/2000/svg";
-  }
-
-  static getLayoutsByNames(layouts) {
-    const layoutsByNames = new Map();
-    for (const layout of Object.values(layouts)) {
-      layoutsByNames.set(layout.Name, layout);
-    }
-    return layoutsByNames;
-  }
-
   getCardSize() {
     return 4;
   }
@@ -993,7 +964,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
-    this.eventManager.hapticFeedback();
+    this._eventManager.hapticFeedback();
   }
 
   doKeyRelease(btn) {
@@ -1028,7 +999,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
-    this.eventManager.hapticFeedback();
+    this._eventManager.hapticFeedback();
   }
 
   hasButtonOverride(btn) {
@@ -1053,7 +1024,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Execute override action
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
-    this.eventManager.triggerHaosTapAction(btn, overrideAction);
+    this._eventManager.triggerHaosTapAction(btn, overrideAction);
   }
 
   appendCode(code) {
@@ -1142,7 +1113,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate() {
-    this.eventManager.callComponentService(this._hass, "keypress", {
+    this._eventManager.callComponentService("keypress", {
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
     });
@@ -1150,7 +1121,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate() {
-    this.eventManager.callComponentService(this._hass, "conpress", {
+    this._eventManager.callComponentService("conpress", {
       sendCons: Array.from(this._pressedConsumers),
     });
   }

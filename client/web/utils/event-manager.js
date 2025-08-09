@@ -14,6 +14,10 @@ export class EventManager {
     return this._origin?._logger;
   }
 
+  getHass() {
+    return this._origin?._hass;
+  }
+
   getHaptic() {
     return !!this._origin?._config?.['haptic'];
   }
@@ -35,27 +39,25 @@ export class EventManager {
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
   // 
   // Parameters:
-  //  - hass: the HAOS object to use to fire the service
   //  - name: the service name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
   // 
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
-  callComponentService(hass, name, args) {
-    hass.callService(Globals.COMPONENT_NAME, name, args);
+  callComponentService(name, args) {
+    this.getHass().callService(Globals.COMPONENT_NAME, name, args);
   }
   
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
   // 
   // Parameters:
-  //  - hass: the HAOS object to use to fire the command
   //  - name: the command name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
   // 
   // Returns:
   //  A promyze :
   //   - on command success: ".then((response) => {...})"
   //   - on command error: ".catch((err) => {...})"
-  callComponentCommand(hass, name) {
-    return hass.connection.sendMessagePromise({
+  callComponentCommand(name) {
+    return this.getHass().connection.sendMessagePromise({
       type: `${Globals.COMPONENT_NAME}/${name}`
     });
   }

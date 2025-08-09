@@ -22,6 +22,10 @@ export class Logger {
     this._origin = origin;
   }
 
+  getHass() {
+    return this._origin?._hass;
+  }
+
   getLevel() {
     const level = this._origin?._config?.['log_level'] || 'warn';
     return this._levels[level] ?? -1;
@@ -29,10 +33,6 @@ export class Logger {
 
   getPushback() {
     return !!this._origin?._config?.['log_pushback'];
-  }
-
-  getHass() {
-    return this._origin?._hass;
   }
 
   isLevelEnabled(level) { return (level <= this.getLevel()); }

@@ -1,41 +1,76 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
-import { ResourceManager } from './utils/resource-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
+import * as layoutsArrowpad from './layouts/arrowpad/index.js';
 
 console.info("Loading arrowpad-card");
 
 class ArrowPadCard extends HTMLElement {
+
+  // private properties
+  _config;
+  _hass;
+  _elements = {};
+  _logger;
+  _pressedModifiers = new Set();
+  _pressedKeys = new Set();
+
+  // private constants
+  _layoutsByNames = this.constructor.getLayoutsByNames(layoutsArrowpad);
+  _defaultCellConfigs = androidRemoteCardConfig;
+  _keycodes = new KeyCodes().getMapping();
+
   constructor() {
     super();
-    this.attachShadow({ mode: "open" }); // Create shadow root
+    
+    this._logger = new Logger("arrowpad-card.js", this);
+    this.eventManager = new EventManager(this);
 
-    this._keycodes = new KeyCodes().getMapping();
+    this.doCard();
+    this.doStyle();
+    this.doAttach();
+    this.doQueryElements();
+    this.doListen();
 
-    this._hass = null;
-    this._uiBuilt = false;
+    this.doUpdateLayout();
+  }
 
-    // Configs
-    this.config = null;
-    this.loglevel = 'warn';
-    this.logpushback = false;
-    this.logger = new Logger("arrowpad-card.js", this.loglevel, this._hass, this.logpushback);
-    this.eventManager = new EventManager(this.logger);
-    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
-    this.layout = 'common';
-    this.layoutUrl = `${Globals.DIR_LAYOUTS}/arrowpad/${this.layout}.json`;
+  getLogger() {
+    return this._logger;
+  }
 
-    // Layout loading flags
-    this._layoutReady = false;
-    this._layoutLoaded = {};
+  setConfig(config) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
+    this._config = config;
+    this.doCheckConfig();
+    this.doUpdateConfig();
+  }
 
-    // To track pressed modifiers and keys
-    this.pressedModifiers = new Set();
-    this.pressedKeys = new Set();
+  set hass(hass) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
+    this._hass = hass;
+    this.doUpdateHass()
+  }
 
-    // Handle out of bounds mouse releases
-    this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
+  getAttachedLayoutName() {
+    return this._elements.wrapper._layoutData?.name;
+  }
+
+  getLayoutName() {
+    return this._config?.['layout'] || this.constructor.getStubConfig()['layout'];
+  }
+
+  getButtonsOverrides() {
+    return this._config?.['buttons_overrides'] || this.constructor.getStubConfig()['buttons_overrides'];
+  }
+
+  getLayout() {
+    return this._layoutsByNames.get(this.getLayoutName());
+  }
+
+  getLayoutsNames() {
+    return Array.from(this._layoutsByNames.keys());
   }
 
   setConfig(config) {
