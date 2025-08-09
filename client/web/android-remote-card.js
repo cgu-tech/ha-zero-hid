@@ -63,7 +63,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getLayoutName() {
-    return this._config?.['layout'] || this.constructor.getStubConfig().['layout'];
+    return this._config?.['layout'] || this.constructor.getStubConfig()['layout'];
   }
 
   getLayout() {
