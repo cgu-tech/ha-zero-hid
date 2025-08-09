@@ -608,7 +608,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doAttachCellContent(cell, cellContent) {
-    cell.appendChild(cellContent);
+    if (cellContent) cell.appendChild(cellContent); // Fillers does not have any content
   }
 
   doQueryCellContentElements() {
@@ -616,7 +616,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doListenCellContent(cellContent) {
-    this.addClickableListeners(cellContent);
+    if (cellContent) this.addClickableListeners(cellContent); // Fillers does not have any content
   }
 
   doDpad(dpad, dpadConfig) {
