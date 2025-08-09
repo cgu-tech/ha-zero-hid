@@ -239,9 +239,6 @@ class ArrowPadCard extends HTMLElement {
       this.doQueryRowElements();
       this.doListenRow();
     }
-
-    // TODO: to refactor
-    this.updateLabels();
   }
 
   doRow(rowConfig) {
@@ -317,6 +314,7 @@ class ArrowPadCard extends HTMLElement {
 
     const cellContent = document.createElement("span");
     cellContent.className = "label-lower";
+    cellContent.textContent = cellConfig.label.normal || "";
 
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
     return cellContent;
@@ -336,16 +334,6 @@ class ArrowPadCard extends HTMLElement {
 
   doListenCellContent(cellContent) {
     this.addClickableListeners(cellContent);
-  }
-
-  updateLabels() {
-    for (const btn of this.content.querySelectorAll("button.squarekey")) {
-      const keyData = btn._keyData;
-      if (!keyData) continue;
-
-      // Set displayed labels
-      btn._lowerLabel.textContent = keyData.label.normal || "";
-    }
   }
 
   // configuration defaults
