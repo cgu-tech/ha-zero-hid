@@ -1,4 +1,4 @@
-{
+export const layoutWindowsUs = {
     "Name": "US",
     "layoutName": "QWERTY",
     "Description": "Contains key mappings for windows keyboard QWERTY (United States)",
@@ -87,4 +87,4 @@
       { "code": "KEY_PROPS", "label": { "normal": "\u2630" }, "special": true },
       { "code": "MOD_RIGHT_CONTROL", "label": { "normal": "Ctrl" }, "special": true, "width": "wide" }
     ]
-}
+};

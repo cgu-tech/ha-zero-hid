@@ -1,9 +1,20 @@
-{
+export const layoutAndroidFr = {
     "Name": "FR",
     "layoutName": "AZERTY",
     "Description": "Contains key mappings for android keyboard AZERTY (French)",
-    "rowsConfig": [10, 10, 10, 9, 5],
+    "rowsConfig": [9, 10, 10, 10, 9, 5],
     "keys": [
+
+      { "code": "KEY_ESC",                 "label": { "normal": "Échap"        }, "special": true },
+      { "code": "CON_AC_BACK",             "label": { "normal": "\u2B8C"       }, "special": true, "width": "android" },
+      { "code": "CON_AC_HOME",             "label": { "normal": "\u2302"       }, "special": true, "width": "android" },
+      { "code": "KEY_ALT_TAB",             "label": { "normal": "🗗"           }, "special": true, "width": "android" },
+      { "code": "KEY_COMPOSE",             "label": { "normal": "\u2699"       }, "special": true },
+      { "code": "CON_SCAN_PREVIOUS_TRACK", "label": { "normal": "\u23EE"       }, "special": true },
+      { "code": "CON_PLAY_PAUSE",          "label": { "normal": "\u23EF"       }, "special": true },
+      { "code": "CON_SCAN_NEXT_TRACK",     "label": { "normal": "\u23ED"       }, "special": true },
+      { "code": "KEY_DELETE",              "label": { "normal": "Suppr"        }, "special": true },
+
 
       { "code": "KEY_1", "label": { "normal": "1" }, "fallback": "normal" },
       { "code": "KEY_2", "label": { "normal": "2" }, "fallback": "normal", 
@@ -106,4 +117,4 @@
       { "code": "KEY_DOT",        "label": { "normal": "." }, "fallback": "normal" },
       { "code": "KEY_ENTER",      "label": { "normal": "Entrée" }, "special": true, "width": "altkey" }
     ]
-}
+};

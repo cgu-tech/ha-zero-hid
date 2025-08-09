@@ -1,4 +1,4 @@
-{
+export const layoutAndroidUs = {
     "Name": "US",
     "layoutName": "QWERTY",
     "Description": "Contains key mappings for android keyboard QWERTY (United States)",
@@ -117,4 +117,4 @@
       { "code": "KEY_DOT",        "label": { "normal": "." }, "fallback": "normal" },
       { "code": "KEY_ENTER",      "label": { "normal": "Entrée" }, "special": true, "width": "altkey" }
     ]
-}
+};

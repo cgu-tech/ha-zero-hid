@@ -1,8 +1,8 @@
-{
-    "Name": "US",
-    "layoutName": "QWERTY",
-    "Description": "Contains key mappings for android keyboard QWERTY (United States)",
-    "rowsConfig": [10, 10, 11, 9, 5],
+export const layoutAndroidFrRemote = {
+    "Name": "FR-remote",
+    "layoutName": "AZERTY",
+    "Description": "Contains key mappings for android keyboard AZERTY (French)",
+    "rowsConfig": [10, 10, 10, 9, 5],
     "keys": [
 
       { "code": "KEY_1", "label": { "normal": "1" }, "fallback": "normal" },
@@ -21,8 +21,15 @@
       { "code": "KEY_0", "label": { "normal": "0" }, "fallback": "normal" },
 
 
-      { "code": "KEY_Q", "label": { "normal": "q", "shift": "Q", "alt1": "+",  "alt2": "`" }   },
-      { "code": "KEY_W", "label": { "normal": "w", "shift": "W", "alt1": "x",  "alt2": "~" }  },
+      { "code": "KEY_Q", "label": { "normal": "a", "shift": "A", "alt1": "+", "alt2": "`" }, 
+        "popinKeys": [
+          { "code": "KEY_Q_GRAVE", "label": { "normal": "à", "shift": "À" } },
+          { "code": "KEY_Q_CIRC",  "label": { "normal": "â", "shift": "Â" } },
+          { "code": "KEY_Q_TILDE", "label": { "normal": "ã", "shift": "Ã" } },
+          { "code": "KEY_Q_UMLAUT","label": { "normal": "ä", "shift": "Ä" } }
+        ]
+      },
+      { "code": "KEY_W", "label": { "normal": "z", "shift": "Z", "alt1": "x",  "alt2": "~" }  },
       { "code": "KEY_E", "label": { "normal": "e", "shift": "E", "alt1": "\\", "alt2": "\\"}, 
         "popinKeys": [
           { "code": "KEY_E_ACUTE", "label": { "normal": "é" } },
@@ -64,15 +71,7 @@
       { "code": "KEY_P", "label": { "normal": "p", "shift": "P", "alt1": "]" }  },
 
 
-      { "code": "SPACER_LEFT", "label": { "normal": "" }, "special": true, "width": "half" },
-      { "code": "KEY_A",         "label": { "normal": "a", "shift": "A", "alt1": "!" }, 
-        "popinKeys": [
-          { "code": "KEY_A_GRAVE", "label": { "normal": "à", "shift": "À" } },
-          { "code": "KEY_A_CIRC",  "label": { "normal": "â", "shift": "Â" } },
-          { "code": "KEY_A_TILDE", "label": { "normal": "ã", "shift": "Ã" } },
-          { "code": "KEY_A_UMLAUT","label": { "normal": "ä", "shift": "Ä" } }
-        ]
-      },
+      { "code": "KEY_A",         "label": { "normal": "q", "shift": "Q", "alt1": "!" } },
       { "code": "KEY_S",         "label": { "normal": "s", "shift": "S", "alt1": "@" } },
       { "code": "KEY_D",         "label": { "normal": "d", "shift": "D", "alt1": "#" } },
       { "code": "KEY_F",         "label": { "normal": "f", "shift": "F", "alt1": "€" } },
@@ -81,7 +80,8 @@
       { "code": "KEY_J",         "label": { "normal": "j", "shift": "J", "alt1": "&" } },
       { "code": "KEY_K",         "label": { "normal": "k", "shift": "K", "alt1": "*" } },
       { "code": "KEY_L",         "label": { "normal": "l", "shift": "L", "alt1": "(" } },
-      { "code": "SPACER_RIGHT", "label": { "normal": "" }, "special": true, "width": "half" },
+      { "code": "KEY_M",         "label": { "normal": "m", "shift": "M", "alt1": ")" } },
+
 
 
       { "code": "MOD_LEFT_SHIFT", "label": { "normal": "\u21EA", "shift": "\u21EA", "alt1": "1/2", "alt2": "2/2" }, "special": true, "width": "altkey" },
@@ -95,7 +95,7 @@
           { "code": "KEY_N_TILDE", "label": { "normal": "ñ", "shift": "Ñ" } }
         ]
       },
-      { "code": "KEY_M",          "label": { "normal": "m", "shift": "M", "alt1": ")" } },
+      { "code": "KEY_QUOTE",      "label": { "normal": "'", "shift": "'", "alt1": "?" } },
       { "code": "KEY_BACKSPACE",  "label": { "normal": "\u232B" }, "special": true, "width": "altkey" },
 
 
@@ -106,4 +106,4 @@
       { "code": "KEY_DOT",        "label": { "normal": "." }, "fallback": "normal" },
       { "code": "KEY_ENTER",      "label": { "normal": "Entrée" }, "special": true, "width": "altkey" }
     ]
-}
+};

@@ -1,4 +1,4 @@
-{
+export const layoutArrowpadCommon = {
     "Name": "common",
     "layoutName": "UNIVERSAL",
     "Description": "Contains key mappings for arrowpad keyboard",
@@ -13,4 +13,4 @@
       { "code": "KEY_DOWN",  "label": { "normal": "▼" }, "special": true },
       { "code": "KEY_RIGHT", "label": { "normal": "▶" }, "special": true }
     ]
-}
+};

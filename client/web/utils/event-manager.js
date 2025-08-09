@@ -241,17 +241,17 @@ export class EventManager {
 
   // vibrate the device like a long haptic feedback (ex: button long-click)
   hapticFeedbackLong() {
-    if (this.haptic) this.vibrateDevice(20);
+    if (this.getHaptic()) this.vibrateDevice(20);
   }
 
   // vibrate the device like a standard haptic feedback (ex: button click)
   hapticFeedback() {
-    if (this.haptic) this.vibrateDevice(10);
+    if (this.getHaptic()) this.vibrateDevice(10);
   }
 
   // vibrate the device like a short haptic feedback (ex: mouse move)
   hapticFeedbackShort() {
-    if (this.haptic) this.vibrateDevice(5);
+    if (this.getHaptic()) this.vibrateDevice(5);
   }
 
   // vibrate the device during specified duration (in milliseconds)
