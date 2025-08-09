@@ -32,7 +32,7 @@ class ArrowPadCard extends HTMLElement {
 
     this._logger = new Logger(this, "arrowpad-card.js");
     this._eventManager = new EventManager(this);
-    this._layoutManager = new ResourceManager(this, layoutsArrowpad);
+    this._layoutManager = new LayoutManager(this, layoutsArrowpad);
     this._resourceManager = new ResourceManager(this, import.meta.url);
 
     this.doCard();
