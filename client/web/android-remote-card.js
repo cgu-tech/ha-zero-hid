@@ -450,7 +450,7 @@ class AndroidRemoteCard extends HTMLElement {
       if (sensorEntityId) {
 
         // Search if current override configuration matches an element from DOM
-        const btn = this.content.querySelector(`#${btnId}`);
+        const btn = this._elements.wrapper.querySelector(`#${btnId}`);
         if (btn) {
 
           // The current override configuration does have a declared sensor and matches an element from DOM
