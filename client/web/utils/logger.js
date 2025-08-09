@@ -17,9 +17,9 @@ export class Logger {
   _originName;
   _origin;
 
-  constructor(originName, origin) {
-    this._originName = originName;
+  constructor(origin, originName) {
     this._origin = origin;
+    this._originName = originName;
   }
 
   getHass() {

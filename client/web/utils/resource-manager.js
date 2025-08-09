@@ -10,10 +10,10 @@ export class ResourceManager {
   _attachedLayoutName;
 
   // Usage:
-  // const resources_manager = new ResourceManager(import.meta.url, layouts, this);
-  constructor(importMetaUrl, origin, layouts) {
-    this._importMetaUrl = importMetaUrl;
+  // const resources_manager = new ResourceManager(this, import.meta.url, layouts);
+  constructor(origin, importMetaUrl, layouts) {
     this._origin = origin;
+    this._importMetaUrl = importMetaUrl;
     this._layouts = layouts || {};
     this._layoutsByNames = this.constructor.getLayoutsByNames(this._layouts);
     this._layoutsNames = Array.from(this._layoutsByNames.keys());

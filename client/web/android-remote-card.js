@@ -29,9 +29,9 @@ class AndroidRemoteCard extends HTMLElement {
   constructor() {
     super();
 
-    this._logger = new Logger("android-remote-card.js", this);
+    this._logger = new Logger(this, "android-remote-card.js");
     this._eventManager = new EventManager(this);
-    this._resourceManager = new ResourceManager(import.meta.url, layoutsRemote, this);
+    this._resourceManager = new ResourceManager(this, import.meta.url, layoutsRemote);
 
     this.doCard();
     this.doStyle();
