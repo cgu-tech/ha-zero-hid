@@ -39,8 +39,12 @@ export class ResourceManager {
     return this._layoutsNames;
   }
 
+  getConfiguredLayoutName() {
+    return this.getConfig()?.['layout'];
+  }
+
   getLayoutName() {
-    return this.getConfig()?.['layout'] || this.getStubConfig()['layout'];
+    return this.getConfiguredLayoutName() || this.getStubConfig()['layout'];
   }
 
   getLayout() {
