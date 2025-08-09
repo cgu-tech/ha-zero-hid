@@ -401,8 +401,8 @@ class AndroidKeyboardCard extends HTMLElement {
     this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
     this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
     this._eventManager.addPointerUpListener(popinCell, (e) => {
-      this.handleKeyPress(hass, popinCell);
-      this.handleKeyRelease(hass, popinCell);
+      this.handleKeyPress(popinCell);
+      this.handleKeyRelease(popinCell);
       this.closePopin();
     });
 
