@@ -63,7 +63,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getLayoutName() {
-    return this._config?.layout || this.constructor.getStubConfig().layout;
+    return this._config?.['layout'] || this.constructor.getStubConfig().['layout'];
   }
 
   getLayout() {
@@ -76,8 +76,8 @@ class AndroidRemoteCard extends HTMLElement {
 
   // jobs
   doCheckConfig() {
-    if (this._config.layout && !this._layoutsByNames.has(this._config.layout)) {
-      throw new Error(`Unknown layout "${this._config.layout}". Please define a known layout (${this.getLayoutsNames()}).`);
+    if (this._config.['layout'] && !this._layoutsByNames.has(this._config.['layout'])) {
+      throw new Error(`Unknown layout "${this._config.['layout']}". Please define a known layout (${this.getLayoutsNames()}).`);
     }
   }
 

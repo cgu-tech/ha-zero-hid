@@ -15,7 +15,7 @@ export class EventManager {
   }
 
   getHaptic() {
-    return !!this._origin?._config?["haptic"];
+    return !!this._origin?._config?.['haptic'];
   }
 
   addGlobalPointerUpHandlers(handleGlobalPointerUp) {

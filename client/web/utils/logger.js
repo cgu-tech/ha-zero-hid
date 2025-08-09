@@ -23,12 +23,12 @@ export class Logger {
   }
 
   getLevel() {
-    const level = this._origin?._config?["log_level"] || "warn";
+    const level = this._origin?._config?.['log_level'] || 'warn';
     return this._levels[level] ?? -1;
   }
 
   getPushback() {
-    return !!this._origin?._config?["log_pushback"];
+    return !!this._origin?._config?.['log_pushback'];
   }
 
   getHass() {
