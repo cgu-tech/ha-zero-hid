@@ -348,11 +348,7 @@ class AndroidKeyboardCard extends HTMLElement {
     //TODO
   }
 
-  doPopinCell(cellConfig) {
-    // Determine displayed label on key
-    // Note: contrary to keyboard keys, when popin keys don't have a label 
-    // for the current combination of currentMode / shiftState / altState,
-    // then they do not fallback to normal label: they are simply skipped
+  getPopinCellLabel(cellConfig) {
     let cellLabel = null;
     if (this._currentMode === this._MODE_NORMAL) {
       if (this._shiftState === this._SHIFT_STATE_NORMAL) {
@@ -369,47 +365,52 @@ class AndroidKeyboardCard extends HTMLElement {
         cellLabel = cellConfig.label.alt2;
       }
     }
-    if (!cellLabel) return; // When label is missing, skip the whole key
+    return cellLabel;
+  }
 
-    // When label exists: 
-    // create and add the popin key (ie popinBtn) into the popin content 
-    const popinBtn = document.createElement("button");
-    popinBtn.classList.add("key");
+  doPopinCell(cellConfig) {
+    // Determine displayed label on key
+    const cellLabel = this.getPopinCellLabel(cellConfig);
 
-    if (cellConfig.width) popinBtn.classList.add(cellConfig.width);
+    // When label is missing, skip the whole key
+    if (!cellLabel) return null;
 
-    popinBtn.dataset.code = cellConfig.code;
+    // create and add the popin key (ie popinCell) into the popin content 
+    const popinCell = document.createElement("button");
+    popinCell.classList.add("key");
+
+    if (cellConfig.width) popinCell.classList.add(cellConfig.width);
 
     const lowerLabel = document.createElement("span");
     lowerLabel.className = "label-lower";
     lowerLabel.textContent = cellConfig.label.normal || "";
 
-    popinBtn.appendChild(lowerLabel);
+    popinCell.appendChild(lowerLabel);
 
-    popinBtn._lowerLabel = lowerLabel;
-    popinBtn._keyData = cellConfig;
+    popinCell._lowerLabel = lowerLabel;
+    popinCell._keyData = cellConfig;
 
     // Set displayed labels
-    popinBtn._lowerLabel.textContent = cellLabel;
+    popinCell._lowerLabel.textContent = cellLabel;
 
     // Make same width than base button
     const baseBtnWidth = btn.getBoundingClientRect().width;
-    popinBtn.style.width = `${baseBtnWidth}px`;
+    popinCell.style.width = `${baseBtnWidth}px`;
 
     // Handle events on button
-    this._eventManager.addPointerEnterListener(popinBtn, () => popinBtn.classList.add("active"));
-    this._eventManager.addPointerLeaveListener(popinBtn, () => popinBtn.classList.remove("active"));
-    this._eventManager.addPointerUpListener(popinBtn, (e) => {
-      this.handleKeyPress(hass, popinBtn);
-      this.handleKeyRelease(hass, popinBtn);
+    this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
+    this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
+    this._eventManager.addPointerUpListener(popinCell, (e) => {
+      this.handleKeyPress(hass, popinCell);
+      this.handleKeyRelease(hass, popinCell);
       this.closePopin();
     });
 
-    popinRow.appendChild(popinBtn);
+    popinRow.appendChild(popinCell);
 
     // trigger animation after the element is attached
     requestAnimationFrame(() => {
-      popinBtn.classList.add("enter-active");
+      popinCell.classList.add("enter-active");
     });
   }
   doStylePopinCell() {
