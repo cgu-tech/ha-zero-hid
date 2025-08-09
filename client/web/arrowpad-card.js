@@ -187,7 +187,7 @@ class ArrowPadCard extends HTMLElement {
 
   doQueryElements() {
     const card = this._elements.card;
-    this._elements.container = card.querySelector(".keyboard-container")
+    this._elements.wrapper = card.querySelector(".keyboard-container")
   }
 
   doListen() {
@@ -266,7 +266,7 @@ class ArrowPadCard extends HTMLElement {
   }
 
   doAttachRow(row) {
-    this._elements.container.appendChild(row);
+    this._elements.wrapper.appendChild(row);
   }
 
   doQueryRowElements() {
