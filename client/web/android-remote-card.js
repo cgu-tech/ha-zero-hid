@@ -913,17 +913,16 @@ class AndroidRemoteCard extends HTMLElement {
   onButtonPointerDown(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.handleKeyPress(btn);
+    this.doKeyPress(btn);
   }
 
   onButtonPointerUp(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.handleKeyRelease(btn);
+    this.doKeyRelease(btn);
   }
 
-  // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyPress(btn) {
+  doKeyPress(btn) {
 
     // Mark clickable button active for visual feedback
     btn.classList.add("active");
@@ -953,8 +952,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.eventManager.hapticFeedback();
   }
 
-  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyRelease(btn) {
+  doKeyRelease(btn) {
 
     // Unmark clickable button active for visual feedback
     btn.classList.remove("active");
