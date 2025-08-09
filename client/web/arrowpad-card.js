@@ -15,17 +15,18 @@ class ArrowPadCard extends HTMLElement {
   _logger;
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
+  _pressedConsumers = new Set();
 
   // private constants
-  _layoutsByNames = this.constructor.getLayoutsByNames(layoutsArrowpad);
   _defaultCellConfigs = androidRemoteCardConfig;
   _keycodes = new KeyCodes().getMapping();
 
   constructor() {
     super();
     
-    this._logger = new Logger("arrowpad-card.js", this);
-    this.eventManager = new EventManager(this);
+    this._logger = new Logger(this, "arrowpad-card.js");
+    this._eventManager = new EventManager(this);
+    this._resourceManager = new ResourceManager(this, import.meta.url, layoutsArrowpad);
 
     this.doCard();
     this.doStyle();
@@ -53,139 +54,22 @@ class ArrowPadCard extends HTMLElement {
     this.doUpdateHass()
   }
 
-  getAttachedLayoutName() {
-    return this._elements.wrapper._layoutData?.name;
+  // jobs
+  doCheckConfig() {
+    this._resourceManager.checkConfiguredLayout();
   }
 
-  getLayoutName() {
-    return this._config?.['layout'] || this.constructor.getStubConfig()['layout'];
+  doCard() {
+    this._elements.card = document.createElement("ha-card");
+    this._elements.card.innerHTML = `
+      <div class="keyboard-container">
+      </div>
+    `;
   }
 
-  getButtonsOverrides() {
-    return this._config?.['buttons_overrides'] || this.constructor.getStubConfig()['buttons_overrides'];
-  }
-
-  getLayout() {
-    return this._layoutsByNames.get(this.getLayoutName());
-  }
-
-  getLayoutsNames() {
-    return Array.from(this._layoutsByNames.keys());
-  }
-
-  setConfig(config) {
-    this.config = config;
-
-    if (config) {
-      // Set log level
-      const oldLoglevel = this.loglevel;
-      if (config['log_level']) {
-        this.loglevel = config['log_level'];
-      }
-
-      // Set log pushback
-      const oldLogpushback = this.logpushback;
-      if (config['log_pushback']) {
-        this.logpushback = config['log_pushback'];
-      }
-
-      // Update logger when needed
-      if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
-        this.logger.update(this.loglevel, this._hass, this.logpushback);
-      }
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
-
-      // Set haptic feedback
-      if (config['haptic']) {
-        this.eventManager.setHaptic(config['haptic']);
-      }
-
-      // Set layout
-      if (config['layout']) {
-        this.layout = config['layout'];
-      }
-
-      // Set layout URL
-      if (config['layout_url']) {
-        this.layoutUrl = config['layout_url'];
-      } else {
-        this.layoutUrl = `${Globals.DIR_LAYOUTS}/arrowpad/${this.layout}.json`;
-      }
-    }
-  }
-
-  getCardSize() {
-    return 3;
-  }
-
-  async connectedCallback() {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
-
-    // Check if layout needs loading
-    if (!this._layoutLoaded.layoutUrl || this._layoutLoaded.layoutUrl !== this.layoutUrl) {
-      this._layoutReady = false;
-
-      // Load layout
-      await this.loadLayout(this.layoutUrl);
-
-      // Update loaded layout
-      this._layoutLoaded.layoutUrl = this.layoutUrl;
-      this._layoutReady = true;
-    }
-
-    // Only build UI if hass is already set
-    if (this._hass) {
-      this.resourceManager.synchronizeResources(this._hass);
-      this.buildUi(this._hass);
-    }
-  }
-
-  async loadLayout(layoutUrl) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(layoutUrl):", layoutUrl));
-    try {
-      const response = await fetch(layoutUrl);
-      const layout = await response.json();
-      this.keys = layout.keys;
-      this.rowsConfig = layout.rowsConfig;
-    } catch (e) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load layout ${layoutUrl}`, e));
-      this.keys = [];
-      this.rowsConfig = [];
-    }
-  }
-
-  set hass(hass) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
-    this._hass = hass;
-    if (this._layoutReady && !this._uiBuilt) {
-      // Render UI
-      this.buildUi(this._hass);
-    }
-  }
-
-  buildUi(hass) {
-    if (this._uiBuilt) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
-      return;
-    }
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
-
-    // Clear existing content (if any)
-    this.shadowRoot.innerHTML = '';
-
-    this._uiBuilt = true;
-
-    // Re-add global handlers to ensure proper out-of-bound handling
-    this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
-    this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
-
-    // Update the logger
-    //this.logger.update(this.loglevel, hass, this.logpushback);
-
-    const card = document.createElement("ha-card");
-
-    const style = document.createElement("style");
-    style.textContent = `
+  doStyle() {
+    this._elements.style = document.createElement("style");
+    this._elements.style.textContent = `
       :host {
         --squarekey-bg: #3b3a3a;
         --squarekey-hover-bg: #4a4a4a;
@@ -290,56 +174,164 @@ class ArrowPadCard extends HTMLElement {
         user-select: none;
       }
     `;
-    this.shadowRoot.appendChild(style);
+  }
 
-    const container = document.createElement("div");
-    container.className = "keyboard-container";
+  doAttach() {
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.append(this._elements.style, this._elements.card);
+  }
 
-    let keyIndex = 0;
-    this.rowsConfig.forEach((rowCount) => {
-      const row = document.createElement("div");
-      row.className = "keyboard-row";
+  doQueryElements() {
+    const card = this._elements.card;
+    this._elements.container = card.querySelector(".keyboard-container")
+  }
 
-      for (let i = 0; i < rowCount; i++, keyIndex++) {
-        const keyData = this.keys[keyIndex];
-        if (!keyData) continue;
+  doListen() {
+    //TODO: add global PointerUp listener?
+  }
 
-        const btn = document.createElement("button");
-        btn.classList.add("squarekey");
-        if (keyData.special) btn.classList.add("special");
-        if (keyData.width) btn.classList.add(keyData.width);
+  doUpdateConfig() {
+    if (this._resourceManager.configuredLayoutChanged()) {
+      this.doUpdateLayout();
+    }
+  }
 
-        // Disable actions on spacers
-        if (keyData.code.startsWith("SPACER_")) {
-          btn.classList.add("spacer");
-        }
+  doUpdateHass() {
+    //TODO
+  }
 
-        btn.dataset.code = keyData.code;
+  doUpdateLayout() {
+    this.doResetLayout();
+    this.doCreateLayout();
+  }
 
-        const lowerLabel = document.createElement("span");
-        lowerLabel.className = "label-lower";
+  doResetLayout() {
+    // Detach existing layout from DOM
+    this._elements.wrapper.innerHTML = '';
 
-        btn.appendChild(lowerLabel);
+    // Reset cells contents elements (if any)
+    this._elements.cellContents = []
 
-        btn._lowerLabel = lowerLabel;
-        btn._keyData = keyData;
+    // Reset cells elements (if any)
+    this._elements.cells = []
 
-        // Add pointer and touch events:
-        this.eventManager.addPointerDownListener(btn, (e) => this.handlePointerDown(e, hass, btn));
-        this.eventManager.addPointerUpListener(btn, (e) => this.handlePointerUp(e, hass, btn));
-        this.eventManager.addPointerCancelListener(btn, (e) => this.handlePointerUp(e, hass, btn));
+    // Reset rows elements (if any)
+    this._elements.rows = []
+    
+    // Reset attached layout
+    this._resourceManager.resetAttachedLayout();
+  }
 
-        row.appendChild(btn);
-      }
+  doCreateLayout() {
 
-      container.appendChild(row);
-    });
+    // Mark configured layout as attached
+    this._resourceManager.configuredLayoutAttached();
 
-    card.appendChild(container);
-    this.shadowRoot.appendChild(card);
+    // Create rows
+    for (const rowConfig of this._resourceManager.getLayout().rows) {
+      const row = this.doRow(rowConfig);
+      this.doStyleRow();
+      this.doAttachRow(row);
+      this.doQueryRowElements();
+      this.doListenRow();
+    }
 
-    this.content = container;
+    // TODO: to refactor
     this.updateLabels();
+  }
+
+  doRow(rowConfig) {
+    const row = document.createElement("div");
+    this._elements.rows.push(row);
+    row.className = "keyboard-row";
+
+    // Create cells
+    for (const cellConfig of rowConfig.cells) {
+      const cell = this.doCell(rowConfig, cellConfig);
+      this.doStyleCell();
+      this.doAttachCell(row, cell);
+      this.doQueryCellElements();
+      this.doListenCell();
+    }
+
+    return row;
+  }
+
+  doStyleRow() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachRow(row) {
+    this._elements.container.appendChild(row);
+  }
+
+  doQueryRowElements() {
+    // Nothing to do here: element already referenced and sub-elements already are included by them
+  }
+
+  doListenRow() {
+    // Nothing to do here: no listener on element and sub-elements listeners are included by them
+  }
+
+  doCell(rowConfig, cellConfig) {
+    const cell = document.createElement("button");
+    this._elements.cells.push(cell);
+    cell.classList.add("squarekey");
+    if (cellConfig.special) cell.classList.add("special");
+    if (cellConfig.width) cell.classList.add(cellConfig.width);
+    if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
+    cell._keyData = cellConfig;
+
+    // Create cell content
+    const cellContent = this.doCellContent(cellConfig);
+    this.doStyleCellContent();
+    this.doAttachCellContent(cell, cellContent);
+    this.doQueryCellContentElements(cell, cellContent);
+    this.doListenCellContent(cellContent);
+
+    return cell;
+  }
+
+  doStyleCell() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachCell(row, cell) {
+    row.appendChild(cell);
+  }
+
+  doQueryCellElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenCell() {
+    // Nothing to do here: no listener on element and sub-elements listeners are included by them
+  }
+
+  doCellContent(cellConfig) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("doCellContent(cellConfig):", cellConfig));
+
+    const cellContent = document.createElement("span");
+    cellContent.className = "label-lower";
+
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
+    return cellContent;
+  }
+
+  doStyleCellContent() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachCellContent(cell, cellContent) {
+    cell.appendChild(cellContent);
+  }
+
+  doQueryCellContentElements(cell, cellContent) {
+    cell._lowerLabel = cellContent;
+  }
+
+  doListenCellContent(cellContent) {
+    this.addClickableListeners(cellContent);
   }
 
   updateLabels() {
@@ -352,89 +344,232 @@ class ArrowPadCard extends HTMLElement {
     }
   }
 
-  handleGlobalPointerUp(evt) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp(evt):", evt));
-    if (this.content && this._hass) {
-      for (const btn of this.content.querySelectorAll("button.squarekey.active")) {
-        this.handleKeyRelease(this._hass, btn);
+  // configuration defaults
+  static getStubConfig() {
+    return {
+      layout: "common",
+      haptic: true,
+      log_level: "warn",
+      log_pushback: false,
+      buttons_overrides: {},
+    }
+  }
+
+  getCardSize() {
+    return 1;
+  }
+
+  // Set key data with code to send when a button is clicked
+  addClickableData(btn, btnConfig) {
+    if (btnConfig && btnConfig.code) btn._keyData = { code: btnConfig.code };
+    if (!btn._keyData) btn._keyData = {};
+  }
+  
+  // Set listeners on a clickable button
+  addClickableListeners(btn) {
+    this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
+    this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
+    this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
+  }
+
+  onButtonPointerDown(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    this.doKeyPress(btn);
+  }
+
+  onButtonPointerUp(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    this.doKeyRelease(btn);
+  }
+
+  doKeyPress(btn) {
+
+    // Mark clickable button active for visual feedback
+    btn.classList.add("active");
+
+    // Retrieve clickable button data
+    const keyData = btn._keyData;
+    if (!keyData) return;
+
+    // Key code to press
+    const code = keyData.code;
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to press:", code));
+
+    // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
+    this._referenceBtn = btn;
+
+    if (this.hasButtonOverride(btn)) {
+      // Override detected: do nothing (override action will be executed on button up)
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", btn.id));
+    } else {
+      // Default action
+
+      // Press HID key
+      this.appendCode(code);
+    }
+
+    // Send haptic feedback to make user acknownledgable of succeeded press event
+    this._eventManager.hapticFeedback();
+  }
+
+  doKeyRelease(btn) {
+
+    // Unmark clickable button active for visual feedback
+    btn.classList.remove("active");
+
+    // Retrieve clickable button data
+    const keyData = btn._keyData;
+    if (!keyData) return;
+
+    // Key code to release
+    const code = keyData.code;
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
+
+    // Suppress this clickable button release if reference pointer down event was originated from a different clickable button
+    const referenceCode = this._referenceBtn?._keyData?.code;
+    if (referenceCode !== code) {
+      //TODO: foolproof multiples buttons with same code, by using unique ID per button for reference and comparison, instead of key code
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to existing reference key code ${referenceCode}`));
+      return;
+    }
+
+    if (this.hasButtonOverride(btn)) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to detected override on ${btn.id}`));
+      this.executeButtonOverride(btn);
+    } else {
+      // Default action
+
+      // Release HID key
+      this.removeCode(code);
+    }
+
+    // Send haptic feedback to make user acknownledgable of succeeded release event
+    this._eventManager.hapticFeedback();
+  }
+
+  hasButtonOverride(btn) {
+    return (btn.id && this.getButtonsOverrides()[btn.id]);
+  }
+
+  executeButtonOverride(btn) {
+    const overrideConfig = this.getButtonsOverrides()[btn.id];
+
+    // When sensor detected in override configuration, 
+    // choose override action to execute according to current sensor state (on/off)
+    let overrideAction;
+    if (overrideConfig['sensor']) {
+      if (btn._sensorState && btn._sensorState.toLowerCase() === "on") {
+        overrideAction = overrideConfig['action_when_on'];
+      } else {
+        overrideAction = overrideConfig['action_when_off'];
+      }
+    } else {
+      overrideAction = overrideConfig['action'];
+    }
+
+    // Execute override action
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
+    this._eventManager.triggerHaosTapAction(btn, overrideAction);
+  }
+
+  appendCode(code) {
+    if (code) {
+      if (this.isKey(code) || this.isModifier(code)) {
+        this.appendKeyCode(code);
+      } else if (this.isConsumer(code)) {
+        this.appendConsumerCode(code);
+      } else {
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
     }
   }
 
-  handlePointerDown(evt, hass, btn) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
-    this.handleKeyPress(hass, btn);
-  }
-
-  handlePointerUp(evt, hass, btn) {
-    evt.preventDefault();
-    this.handleKeyRelease(hass, btn);
-  }
-
-  // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyPress(hass, btn) {
-    this.handleKeyPressInternal(hass, btn);
-
-    // Send haptic feedback to make user acknownledgable of succeeded press event
-    this.eventManager.hapticFeedback();
-  }
-
-  handleKeyPressInternal(hass, btn) {
-    // Mark button active visually
-    btn.classList.add("active");
-
-    // Retrieve key data
-    const keyData = btn._keyData;
-    if (!keyData) return;
-
-    // Send keyboard changes
-    this.appendKeyCode(hass, keyData.code);
-  }
-
-  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyRelease(hass, btn) {
-    this.handleKeyReleaseInternal(hass, btn);
-
-    // Send haptic feedback to make user acknownledgable of succeeded release event
-    this.eventManager.hapticFeedback();
-  }
-
-  handleKeyReleaseInternal(hass, btn) {
-    const keyData = btn._keyData;
-    if (!keyData) return;
-
-    // Remove active visual for all other keys / states
-    btn.classList.remove("active");
-
-    // Release modifier or key through websockets
-    this.removeKeyCode(hass, keyData.code);
-  }
-
-  appendKeyCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
+  appendKeyCode(code) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Key pressed:", code));
     if (code) {
       const intCode = this._keycodes[code];
-      // Standard key pressed
-      this.pressedKeys.add(intCode);
+      if (this.isModifier(code)) {
+        // Modifier key pressed
+        this._pressedModifiers.add(intCode);
+      } else {
+        // Standard key pressed
+        this._pressedKeys.add(intCode);
+      }
     }
-    this.sendKeyboardUpdate(hass);
+    this.sendKeyboardUpdate();
   }
 
-  removeKeyCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
+  appendConsumerCode(code) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Consumer pressed:", code));
+    if (code) {
+      const intCode = this._consumercodes[code];
+      this._pressedConsumers.add(intCode);
+    }
+    this.sendConsumerUpdate();
+  }
+
+  removeCode(code) {
+    if (code) {
+      if (this.isKey(code) || this.isModifier(code)) {
+        this.removeKeyCode(code);
+      } else if (this.isConsumer(code)) {
+        this.removeConsumerCode(code);
+      } else {
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
+      }
+    }
+  }
+
+  removeKeyCode(code) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Key released:", code));
     if (code) {
       const intCode = this._keycodes[code];
-      // Standard key released
-      this.pressedKeys.delete(intCode);
+      if (this.isModifier(code)) {
+        // Modifier key released
+        this._pressedModifiers.delete(intCode);
+      } else {
+        // Standard key released
+        this._pressedKeys.delete(intCode);
+      }
     }
-    this.sendKeyboardUpdate(hass);
+    this.sendKeyboardUpdate();
+  }
+
+  removeConsumerCode(code) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Consumer released:", code));
+    if (code) {
+      const intCode = this._consumercodes[code];
+      this._pressedConsumers.delete(intCode);
+    }
+    this.sendConsumerUpdate();
+  }
+
+  isKey(code) {
+    return code && code.startsWith("KEY_");
+  }
+
+  isModifier(code) {
+    return code && code.startsWith("MOD_");
+  }
+
+  isConsumer(code) {
+    return code && code.startsWith("CON_");
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
-  sendKeyboardUpdate(hass) {
-    this.eventManager.callComponentService(hass, "keypress", {
-      sendModifiers: Array.from(this.pressedModifiers),
-      sendKeys: Array.from(this.pressedKeys),
+  sendKeyboardUpdate() {
+    this._eventManager.callComponentService("keypress", {
+      sendModifiers: Array.from(this._pressedModifiers),
+      sendKeys: Array.from(this._pressedKeys),
+    });
+  }
+
+  // Send all current pressed modifiers and keys to HID keyboard
+  sendConsumerUpdate() {
+    this._eventManager.callComponentService("conpress", {
+      sendCons: Array.from(this._pressedConsumers),
     });
   }
 

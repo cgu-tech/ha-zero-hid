@@ -569,7 +569,7 @@ class AndroidRemoteCard extends HTMLElement {
   doListenCell() {
     // Nothing to do here: no listener on element and sub-elements listeners are included by them
   }
-  
+
   doCellContent(cellConfig) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("doCellContent(cellConfig):", cellConfig));
 
@@ -850,19 +850,6 @@ class AndroidRemoteCard extends HTMLElement {
     this.addClickableListeners(dpadCenter);
   }
 
-  // Set key data with code to send when a button is clicked
-  addClickableData(btn, btnConfig) {
-    if (btnConfig && btnConfig.code) btn._keyData = { code: btnConfig.code };
-    if (!btn._keyData) btn._keyData = {};
-  }
-  
-  // Set listeners on a clickable button
-  addClickableListeners(btn) {
-    this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
-    this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
-    this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
-  }
-
   degToRad(deg) {
     return (deg * Math.PI) / 180;
   }
@@ -923,6 +910,19 @@ class AndroidRemoteCard extends HTMLElement {
 
   getCardSize() {
     return 4;
+  }
+
+  // Set key data with code to send when a button is clicked
+  addClickableData(btn, btnConfig) {
+    if (btnConfig && btnConfig.code) btn._keyData = { code: btnConfig.code };
+    if (!btn._keyData) btn._keyData = {};
+  }
+  
+  // Set listeners on a clickable button
+  addClickableListeners(btn) {
+    this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
+    this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
+    this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
   }
 
   onButtonPointerDown(evt) {
