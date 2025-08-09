@@ -931,7 +931,7 @@ class AndroidRemoteCard extends HTMLElement {
       auto_scroll: true,
       log_level: "warn",
       log_pushback: false,
-      buttons_override: {}
+      buttons_overrides: {},
       keyboard: {},
       mouse: {},
       activities: {}
