@@ -1,6 +1,7 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
+import { ResourceManager } from './utils/resource-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 import * as layoutsArrowpad from './layouts/arrowpad/index.js';
@@ -14,6 +15,8 @@ class ArrowPadCard extends HTMLElement {
   _hass;
   _elements = {};
   _logger;
+  _eventManager;
+  _resourceManager;
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
@@ -24,7 +27,7 @@ class ArrowPadCard extends HTMLElement {
 
   constructor() {
     super();
-    
+
     this._logger = new Logger(this, "arrowpad-card.js");
     this._eventManager = new EventManager(this);
     this._resourceManager = new ResourceManager(this, import.meta.url, layoutsArrowpad);

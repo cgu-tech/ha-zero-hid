@@ -16,6 +16,8 @@ class AndroidRemoteCard extends HTMLElement {
   _hass;
   _elements = {};
   _logger;
+  _eventManager;
+  _resourceManager;
   _dynamicStyleNames = new Set();
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
