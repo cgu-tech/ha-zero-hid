@@ -155,24 +155,8 @@ class AndroidKeyboardCard extends HTMLElement {
     for (const cellAction of cellActions) {
       const actionName = cellAction["action"];
       const actionClassList = cellAction["class_list"];
-      if (actionName === "add") {
-        if (this.getLogger().isTraceEnabled()) console.debug(
-          ...this.getLogger().trace(
-            "doUpdateCellVisuals(cell, cellConfig, statusActions) + cellAction, actionName, actionClassList -> add(actionClassList):", 
-            cell, cellConfig, statusActions, cellAction, actionName, actionClassList
-          )
-        );
-        cell.classList.add(...actionClassList);
-      }
-      if (actionName === "remove") {
-        if (this.getLogger().isTraceEnabled()) console.debug(
-          ...this.getLogger().trace(
-            "doUpdateCellVisuals(cell, cellConfig, statusActions) + cellAction, actionName, actionClassList -> remove(actionClassList):", 
-            cell, cellConfig, statusActions, cellAction, actionName, actionClassList
-          )
-        );
-        cell.classList.remove(...actionClassList);
-      }
+      if (actionName === "add") cell.classList.add(...actionClassList);
+      if (actionName === "remove") cell.classList.remove(...actionClassList);
     }
   }
 
@@ -296,11 +280,18 @@ class AndroidKeyboardCard extends HTMLElement {
         background: #5a5a5a !important;
         color: #fff !important;
       }
+      /* Fix: Ensure shift-once state is visually dominant */
+      button.key.shift-once,
+      button.key:hover.shift-once,
+      button.key:active.shift-once {
+        color: #3399ff !important; /* blue */
+        font-weight: bold;
+      }
       /* Fix: Ensure locked state is visually dominant */
       button.key.locked,
       button.key:hover.locked,
       button.key:active.locked {
-        background: #7d2c2c !important;
+        background: #3399ff !important; /* blue */
         color: #fff !important;
         font-weight: bold;
       }
