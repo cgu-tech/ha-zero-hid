@@ -11,49 +11,51 @@ console.info("Loading android-keyboard-card");
 
 class AndroidKeyboardCard extends HTMLElement {
 
+  // private init required constants
+  static _MODE_NORMAL = "normal";
+  static _STATE_NORMAL = "normal";
+  static _STATE_SHIFT_ONCE = "shift_once";
+  static _STATE_SHIFT_LOCKED = "shift_locked";
+  static _MODE_ALT = "alt";
+  static _STATE_ALT_PAGE_ONE = "alt_page_one";
+  static _STATE_ALT_PAGE_TWO = "alt_page_two";
+
   // private constants
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _MODE_NORMAL = "normal";
-  _MODE_ALT = "alt";
-  _STATE_NORMAL = "normal";
-  _STATE_SHIFT_ONCE = "shift_once";
-  _STATE_SHIFT_LOCKED = "shift_locked";
-  _STATE_ALT_PAGE_ONE = "alt_page_one";
-  _STATE_ALT_PAGE_TWO = "alt_page_two";
   _statusMap = {
-    "init": { "mode": _MODE_NORMAL, "state": _STATE_NORMAL },
+    "init": { "mode": this.constructor._MODE_NORMAL, "state": this.constructor._STATE_NORMAL },
     "modes": {
-      [_MODE_NORMAL]: {
-        "next": { "mode": _MODE_ALT, "state": _STATE_ALT_PAGE_ONE },
+      [this.constructor._MODE_NORMAL]: {
+        "next": { "mode": this.constructor._MODE_ALT, "state": this.constructor._STATE_ALT_PAGE_ONE },
         "states": {
-          [_STATE_NORMAL]: {
-            "next": _STATE_SHIFT_ONCE,
+          [this.constructor._STATE_NORMAL]: {
+            "next": this.constructor._STATE_SHIFT_ONCE,
             "label": "normal",
             "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
           },
-          [_STATE_SHIFT_ONCE]: {
-            "next": _STATE_SHIFT_LOCKED,
+          [this.constructor._STATE_SHIFT_ONCE]: {
+            "next": this.constructor._STATE_SHIFT_LOCKED,
             "label": "shift",
             "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["active" ] } ] }
           },
-          [_STATE_SHIFT_LOCKED]: {
-            "next": _STATE_NORMAL,
+          [this.constructor._STATE_SHIFT_LOCKED]: {
+            "next": this.constructor._STATE_NORMAL,
             "label": "shift",
             "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["locked" ] } ] }
           }
         }
       },
-      [_MODE_ALT]: {
-        "next": { "mode": _MODE_NORMAL, "state": _STATE_NORMAL },
+      [this.constructor._MODE_ALT]: {
+        "next": { "mode": this.constructor._MODE_NORMAL, "state": this.constructor._STATE_NORMAL },
         "states": {
-          [_STATE_ALT_PAGE_ONE]: {
-            "next": _STATE_ALT_PAGE_TWO,
+          [this.constructor._STATE_ALT_PAGE_ONE]: {
+            "next": this.constructor._STATE_ALT_PAGE_TWO,
             "label": "alt1",
             "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
           },
-          [_STATE_ALT_PAGE_TWO]: {
-            "next": _STATE_ALT_PAGE_ONE,
+          [this.constructor._STATE_ALT_PAGE_TWO]: {
+            "next": this.constructor._STATE_ALT_PAGE_ONE,
             "label": "alt2",
             "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
           }
