@@ -16,50 +16,54 @@ class AndroidKeyboardCard extends HTMLElement {
   static _STATE_NORMAL = "normal";
   static _STATE_SHIFT_ONCE = "shift_once";
   static _STATE_SHIFT_LOCKED = "shift_locked";
-  
+
   static _MODE_ALT = "alt";
   static _STATE_ALT_PAGE_ONE = "alt_page_one";
   static _STATE_ALT_PAGE_TWO = "alt_page_two";
-  
-  static _STATUS_MAP = {
-    "init": { "mode": this.constructor._MODE_NORMAL, "state": this.constructor._STATE_NORMAL },
-    "modes": {
-      [this.constructor._MODE_NORMAL]: {
-        "next": { "mode": this.constructor._MODE_ALT, "state": this.constructor._STATE_ALT_PAGE_ONE },
-        "states": {
-          [this.constructor._STATE_NORMAL]: {
-            "next": this.constructor._STATE_SHIFT_ONCE,
-            "label": "normal",
-            "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
-          },
-          [this.constructor._STATE_SHIFT_ONCE]: {
-            "next": this.constructor._STATE_SHIFT_LOCKED,
-            "label": "shift",
-            "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["active" ] } ] }
-          },
-          [this.constructor._STATE_SHIFT_LOCKED]: {
-            "next": this.constructor._STATE_NORMAL,
-            "label": "shift",
-            "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["locked" ] } ] }
+
+  static _STATUS_MAP;
+  static {
+    // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
+    this._STATUS_MAP = {
+      "init": { "mode": this.constructor._MODE_NORMAL, "state": this.constructor._STATE_NORMAL },
+      "modes": {
+        [this.constructor._MODE_NORMAL]: {
+          "next": { "mode": this.constructor._MODE_ALT, "state": this.constructor._STATE_ALT_PAGE_ONE },
+          "states": {
+            [this.constructor._STATE_NORMAL]: {
+              "next": this.constructor._STATE_SHIFT_ONCE,
+              "label": "normal",
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+            },
+            [this.constructor._STATE_SHIFT_ONCE]: {
+              "next": this.constructor._STATE_SHIFT_LOCKED,
+              "label": "shift",
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["active" ] } ] }
+            },
+            [this.constructor._STATE_SHIFT_LOCKED]: {
+              "next": this.constructor._STATE_NORMAL,
+              "label": "shift",
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["locked" ] } ] }
+            }
           }
-        }
-      },
-      [this.constructor._MODE_ALT]: {
-        "next": { "mode": this.constructor._MODE_NORMAL, "state": this.constructor._STATE_NORMAL },
-        "states": {
-          [this.constructor._STATE_ALT_PAGE_ONE]: {
-            "next": this.constructor._STATE_ALT_PAGE_TWO,
-            "label": "alt1",
-            "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
-          },
-          [this.constructor._STATE_ALT_PAGE_TWO]: {
-            "next": this.constructor._STATE_ALT_PAGE_ONE,
-            "label": "alt2",
-            "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+        },
+        [this.constructor._MODE_ALT]: {
+          "next": { "mode": this.constructor._MODE_NORMAL, "state": this.constructor._STATE_NORMAL },
+          "states": {
+            [this.constructor._STATE_ALT_PAGE_ONE]: {
+              "next": this.constructor._STATE_ALT_PAGE_TWO,
+              "label": "alt1",
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+            },
+            [this.constructor._STATE_ALT_PAGE_TWO]: {
+              "next": this.constructor._STATE_ALT_PAGE_ONE,
+              "label": "alt2",
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+            }
           }
         }
       }
-    }
+    };
   }
 
   static {
