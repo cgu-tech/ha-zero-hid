@@ -77,7 +77,6 @@ class AndroidKeyboardCard extends HTMLElement {
   _pressedConsumers = new Set();
   _currentMode = _statusMap["init"]["mode"];
   _currentState = _statusMap["init"]["state"];
-  _popin = null;
   _popinTimeouts = new Map();
 
   constructor() {
@@ -691,7 +690,7 @@ class AndroidKeyboardCard extends HTMLElement {
     if (this._popin?.parentElement) this._popin.remove();
 
     // nullify popin reference
-    this._popin = null;
+    this._elements.popin = null;
   }
 
   doCreatePopin(evt, cell) {
@@ -707,23 +706,16 @@ class AndroidKeyboardCard extends HTMLElement {
     // Create popin
     const popin = document.createElement("div");
     popin.className = "key-popin";
-    popin.style.position = "absolute"; // relative to card
 
     for (const rowConfig of popinConfig) {
       const row = this.doPopinRow(rowConfig);
       this.doStylePopinRow();
       this.doAttachPopinRow(popin, row);
-      this.doQueryPopinElements();
-      this.doListenPopin();
+      this.doQueryPopinRowElements();
+      this.doListenPopinRow();
     }
 
-    // Here we know for sure that popin needs to be displayed
-    this._currentPopinBaseKey = cell; // set the base key when we are sure poppin will be displayed
-
-    this._popin = popin;
-
-    // 1. Add to card and get its bounding box
-    card.appendChild(popin);
+    // 1. Get popin bounding box
     const cardRect = card.getBoundingClientRect();
     const popinRect = popin.getBoundingClientRect();
 
@@ -756,26 +748,25 @@ class AndroidKeyboardCard extends HTMLElement {
     popin.style.left = `${left}px`;
     popin.style.top = `${top}px`;
 
-    // Close on pointerup anywhere
-    const close = () => this.doClosePopin();
-    this._eventManager.addPointerUpListener(document, close, { once: true });
-
   }
 
   doStylePopin() {
-    // Nothing to do here: style is required and treated as soon as popin is created to compute popin position
+    popin.style.position = "absolute"; // relative to card
   }
 
   doAttachPopin(popin) {
-    //TODO
+    const card = this._elements.card;
+    card.appendChild(popin);
   }
 
   doQueryPopinElements() {
-    //TODO
+    const card = this._elements.card;
+    this._elements.popin = card.querySelector(".keyboard-container");
   }
 
   doListenPopin() {
-    //TODO
+    // When any pointer is up anywhere: close popin
+    this._eventManager.addPointerUpListener(document, () => this.doClosePopin(), { once: true });
   }
 
   doPopinRow(rowConfig) {
@@ -1050,13 +1041,6 @@ class AndroidKeyboardCard extends HTMLElement {
       }
 
     } else {
-
-      // Suppress the unwanted post-poppin base key release event fired by poppin release front button
-      if (this._currentPopinBaseKey && this._currentPopinBaseKey._keyData.code === cellConfig.code) {
-        this._currentPopinBaseKey = null;
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (release transmitted to popin base button when releasing extended char)`));
-        return; 
-      }
 
       // Non-special and not virtual key clicked
       const charToSend = btn._label.textContent || "";
