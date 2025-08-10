@@ -13,11 +13,12 @@ import { parse, stringify, toJSON, fromJSON } from '../libs/flatted_3.3.3_min.js
 export class Logger {
 
   _levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
-  _guid = this.constructor.generateUUID();
-  _originName;
+  _guid;
   _origin;
+  _originName;
 
   constructor(origin, originName) {
+    this._guid = this.constructor.generateUUID();
     this._origin = origin;
     this._originName = originName;
   }

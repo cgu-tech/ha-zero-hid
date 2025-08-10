@@ -79,8 +79,6 @@ class AndroidKeyboardCard extends HTMLElement {
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
-  _currentMode = this.constructor._STATUS_MAP["init"]["mode"];
-  _currentState = this.constructor._STATUS_MAP["init"]["state"];
   _popinTimeouts = new Map();
 
   constructor() {
@@ -90,6 +88,9 @@ class AndroidKeyboardCard extends HTMLElement {
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, layoutsAndroid);
     this._resourceManager = new ResourceManager(this, import.meta.url);
+
+    this._currentMode = this.constructor._STATUS_MAP["init"]["mode"];
+    this._currentState = this.constructor._STATUS_MAP["init"]["state"];
 
     this.doCard();
     this.doStyle();
