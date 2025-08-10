@@ -719,6 +719,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Create popin
     const popin = document.createElement("div");
+    this._elements.popin = popin;
     popin.className = "key-popin";
 
     // Create popin rows
@@ -743,8 +744,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doQueryPopinElements() {
-    const card = this._elements.card;
-    this._elements.popin = card.querySelector(".key-popin");
+    // nothing to do: element already attached during creation
   }
 
   doListenPopin() {
@@ -799,6 +799,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Create popin row
     const popinRow = document.createElement("div");
+    this._elements.popinRows.push(popinRow);
     popinRow.className = "key-popin-row";
 
     // Create popin row cells
@@ -820,7 +821,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doQueryPopinRowElements() {
-    // nothing to do: no needs to retrieve this element reference
+    // nothing to do: element already attached during creation
   }
 
   doListenPopinRow() {
@@ -831,6 +832,7 @@ class AndroidKeyboardCard extends HTMLElement {
     
     // Create popin cell 
     const popinCell = document.createElement("button");
+    this._elements.popinCells.push(popinCell);
     popinCell.classList.add("key");
     if (cellConfig.width) popinCell.classList.add(cellConfig.width);
     this.addClickableData(popinCell, defaultCellConfig, cellConfig);
@@ -841,15 +843,6 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doAttachPopinCellContent(popinRow);
     this.doQueryPopinCellContentElements();
     this.doListenPopinCellContent();
-
-    // Handle events on button
-    this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
-    this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
-    this._eventManager.addPointerUpListener(popinCell, (e) => {
-      this.handleKeyPress(popinCell);
-      this.handleKeyRelease(popinCell);
-      this.doClosePopin();
-    });
   }
 
   doStylePopinCell() {
@@ -863,11 +856,26 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doQueryPopinCellElements(popinCell) {
-    this._elements.popinCells = card.querySelector(".key-popin");
+    // nothing to do: element already attached during creation
   }
 
-  doListenPopinCell() {
-    //TODO
+  doListenPopinCell(popinCell) {
+
+    // Style events
+    this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
+    this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
+
+    //TODO: proper treatment of popin action events
+
+    // Action events
+    this.addClickableListeners(popinCell);
+    
+    // Handle events on button
+    this._eventManager.addPointerUpListener(popinCell, (e) => {
+      this.handleKeyPress(popinCell);
+      this.handleKeyRelease(popinCell);
+      this.doClosePopin();
+    });
   }
 
   doPopinCellContent(cellConfig) {
