@@ -130,6 +130,7 @@ class AndroidKeyboardCard extends HTMLElement {
   doUpdateCells() {
     const statusActions = this.getStatusCurrentActions();
     const statusLabel = this.getStatusCurrentLabel();
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCells(statusActions, statusLabel):", statusActions, statusLabel));
 
     for (const cell of this._elements.cells) {
 
@@ -142,9 +143,6 @@ class AndroidKeyboardCard extends HTMLElement {
 
   // Synchronize cell visuals and label with given mode and state
   doUpdateCell(cell, cellConfig, statusActions, statusLabel) {
-    if (this.getLogger().isTraceEnabled()) console.debug(
-      ...this.getLogger().trace("doUpdateCell(cell, cellConfig, statusActions, statusLabel):", cell, cellConfig, statusActions, statusLabel)
-    );
     this.doUpdateCellVisuals(cell, cellConfig, statusActions);
     this.doUpdateCellLabel(cell, cellConfig, statusLabel);
   }
