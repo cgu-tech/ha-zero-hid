@@ -152,13 +152,27 @@ class AndroidKeyboardCard extends HTMLElement {
   // using per-matching-cell-code configured actions
   doUpdateCellVisuals(cell, cellConfig, statusActions) {
     const cellActions = statusActions?.[cellConfig.code] || [];
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCellVisuals(cell, cellConfig, statusActions) + cellActions:", cell, cellConfig, statusActions, cellActions));
     for (const cellAction of cellActions) {
       const actionName = cellAction["action"];
       const actionClassList = cellAction["class_list"];
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCellVisuals(cell, cellConfig, statusActions) + cellAction, actionName, actionClassList:", cellAction, actionName, actionClassList));
-      if (actionName === "add") cell.classList.add(actionClassList);
-      if (actionName === "remove") cell.classList.remove(actionClassList);
+      if (actionName === "add") {
+        if (this.getLogger().isTraceEnabled()) console.debug(
+          ...this.getLogger().trace(
+            "doUpdateCellVisuals(cell, cellConfig, statusActions) + cellAction, actionName, actionClassList -> add(actionClassList):", 
+            cell, cellConfig, statusActions, cellAction, actionName, actionClassList
+          )
+        );
+        cell.classList.add(actionClassList);
+      }
+      if (actionName === "remove") {
+        if (this.getLogger().isTraceEnabled()) console.debug(
+          ...this.getLogger().trace(
+            "doUpdateCellVisuals(cell, cellConfig, statusActions) + cellAction, actionName, actionClassList -> remove(actionClassList):", 
+            cell, cellConfig, statusActions, cellAction, actionName, actionClassList
+          )
+        );
+        cell.classList.remove(actionClassList);
+      }
     }
   }
 
@@ -392,10 +406,9 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doUpdateLayout() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()->before(this._currentMode, this._currentState, this._pressedConsumers)", this._currentMode, this._currentState, this._pressedConsumers));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout() + this._currentMode, this._currentState", this._currentMode, this._currentState));
     this.doResetLayout();
     this.doCreateLayout();
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()->after(this._currentMode, this._currentState)", this._currentMode, this._currentState));
   }
 
   doResetLayout() {
@@ -509,13 +522,9 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doCellContent(cellConfig) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("doCellContent(cellConfig):", cellConfig));
-
     const cellContent = document.createElement("span");
     cellContent.className = "label-lower";
     cellContent.textContent = "";
-
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
     return cellContent;
   }
 
@@ -560,7 +569,6 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   getStatusCurrentState() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getStatusCurrentState():", this.getStatusCurrentMode()["states"][this._currentState]));
     return this.getStatusCurrentMode()["states"][this._currentState];
   }
 
@@ -569,7 +577,6 @@ class AndroidKeyboardCard extends HTMLElement {
   }
   
   getStatusCurrentActions() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getStatusCurrentActions():", this.getStatusCurrentState()["actions"]));
     return this.getStatusCurrentState()["actions"];
   }
   
