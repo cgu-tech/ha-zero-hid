@@ -162,7 +162,7 @@ class AndroidKeyboardCard extends HTMLElement {
             cell, cellConfig, statusActions, cellAction, actionName, actionClassList
           )
         );
-        cell.classList.add(actionClassList);
+        cell.classList.add(...actionClassList);
       }
       if (actionName === "remove") {
         if (this.getLogger().isTraceEnabled()) console.debug(
@@ -171,7 +171,7 @@ class AndroidKeyboardCard extends HTMLElement {
             cell, cellConfig, statusActions, cellAction, actionName, actionClassList
           )
         );
-        cell.classList.remove(actionClassList);
+        cell.classList.remove(...actionClassList);
       }
     }
   }
