@@ -62,6 +62,10 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
 
+  static {
+    console.debug("STATUS_MAP.init", this._STATUS_MAP);
+  }
+
   // private constants
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
