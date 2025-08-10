@@ -294,6 +294,7 @@ class AndroidKeyboardCard extends HTMLElement {
         background: #3399ff !important; /* blue */
         color: #fff !important;
         font-weight: bold;
+        font-size: 1.6rem;
       }
       .label-upper {
         position: absolute;
