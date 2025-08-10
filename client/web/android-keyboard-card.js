@@ -114,6 +114,48 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doUpdateHass()
   }
 
+  doUpdateModeAndState(code) {
+    if (code === "KEY_MODE") this.activateNextMode();
+    if (code === "MOD_LEFT_SHIFT") this.activateNextState();
+  }
+
+  doUpdateCells() {
+    const statusActions = this.getStatusCurrentActions();
+    const statusLabel = this.getStatusCurrentLabel();
+
+    for (const cell of this._elements.cells) {
+
+      const cellConfig = cell._keyData;
+      if (!cellConfig) continue;
+
+      this.doUpdateCell(cell, cellConfig, statusActions, statusLabel);
+    }
+  }
+
+  // Synchronize cell visuals and label with given mode and state
+  doUpdateCell(cell, cellConfig, statusActions, statusLabel) {
+    this.doUpdateCellVisuals(cell, cellConfig, statusActions);
+    this.doUpdateCellLabel(cell, cellConfig, statusLabel);
+  }
+
+  // Synchronize cell visuals with given mode and state
+  // using per-matching-cell-code configured actions
+  doUpdateCellVisuals(cell, cellConfig, statusActions) {
+    const cellActions = statusActions?.[cellConfig.code] || [];
+    for (const cellAction in cellActions) {
+      const actionName = cellAction["action"];
+      const actionClassList = cellAction["class_list"];
+      if (actionName === "add") cell.classList.add(actionClassList);
+      if (actionName === "remove") cell.classList.remove(actionClassList);
+    }
+  }
+
+  // Synchronize cell label with given mode and state
+  // using configured given label selection mode
+  doUpdateCellLabel(cell, cellConfig, statusLabel) {
+    cell._label.textContent = this.getLabel(cellConfig, statusLabel);
+  }
+
   // jobs
   doCheckConfig() {
     this._layoutManager.checkConfiguredLayout();
@@ -404,8 +446,11 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doCell(rowConfig, cellConfig) {
-    const defaultCellConfig = { "popinConfig": this.createPopinConfig(cellConfig) }; // Create popin config
 
+    // Create cell popin config
+    const defaultCellConfig = { "popinConfig": this.createPopinConfig(cellConfig) };
+
+    // Create cell
     const cell = document.createElement("button");
     this._elements.cells.push(cell);
     cell.classList.add("key");
@@ -420,6 +465,9 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doAttachCellContent(cell, cellContent);
     this.doQueryCellContentElements(cell, cellContent);
     this.doListenCellContent();
+
+    // Update cell visuals and content label (to match current mode and state)
+    this.doUpdateCell(cell, cellConfig, this.getStatusCurrentActions(), this.getStatusCurrentLabel());
 
     return cell;
   }
@@ -445,7 +493,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     const cellContent = document.createElement("span");
     cellContent.className = "label-lower";
-    cellContent.textContent = cellConfig.label.normal || "";
+    cellContent.textContent = "";
 
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
     return cellContent;
@@ -467,61 +515,6 @@ class AndroidKeyboardCard extends HTMLElement {
     // Nothing to do: only parent is clickable
   }
 
-  activateNextMode() {
-    this._currentMode = this._statusMap["modes"][this._currentMode]["next"]["mode"];
-    this._currentState = this._statusMap["modes"][this._currentMode]["next"]["state"];
-  }
-
-  activateNextState() {
-    this._currentState = this._statusMap["modes"][this._currentMode]["states"][this._currentState]["next"];
-  }
-
-  doUpdateModeAndState(code) {
-    if (code === "KEY_MODE") this.activateNextMode();
-    if (code === "MOD_LEFT_SHIFT") this.activateNextState();
-  }
-
-  doUpdateLayoutLabels() {
-    const currentStatus = this._statusMap["modes"][this._currentMode]["states"][this._currentState];
-    const currentLabel = currentStatus["label"];
-    const currentActions = currentStatus["actions"];
-
-    for (const cell of this._elements.cells) {
-
-      const cellConfig = cell._keyData;
-      if (!cellConfig) continue;
-
-      // Cell HID code
-      const code = cellConfig.code;
-
-      // Add / remove classes when needed
-      const codeActions = currentActions?.[code] || [];
-      for (const codeAction in codeActions) {
-        const actionName = codeAction["action"];
-        const actionClassList = codeAction["class_list"];
-        if (actionName === "add") cell.classList.add(actionClassList);
-        if (actionName === "remove") cell.classList.remove(actionClassList);
-      }
-
-      // Update cell displayed label
-      cell._label.textContent = this.getLabel(cellConfig, currentLabel);
-    }
-  }
-
-  getStandardLabel(cellConfig, state) {
-    return cellConfig?.label?.[state] || "";
-  }
-
-  getSpecialLabel(cellConfig, state) {
-    return cellConfig?.label?.[state] || this.getStandardLabel(cellConfig, "normal");
-  }
-
-  getLabel(cellConfig, state) {
-    const label = cellConfig.special 
-      ? this.getSpecialLabel(cellConfig, state) 
-      : this.getStandardLabel(cellConfig, state);
-    return label ? label : (cellConfig.fallback || "")
-  }
 
   hasPopinKeyToDisplay(popinRows) {
     return popinRows.some(rowKeys => {
@@ -784,6 +777,55 @@ class AndroidKeyboardCard extends HTMLElement {
 
   getCardSize() {
     return 1;
+  }
+
+  getStatusCurrentMode() {
+    return this._statusMap["modes"][this._currentMode];
+  }
+
+  getStatusNextMode() {
+    return this.getStatusCurrentMode()["next"];
+  }
+
+  getStatusCurrentState() {
+    return this.getStatusCurrentMode()["states"][this._currentState];
+  }
+
+  getStatusNextState() {
+    return this.getStatusCurrentState()["next"];
+  }
+  
+  getStatusCurrentActions() {
+    return this.getStatusCurrentState()["actions"];
+  }
+  
+  getStatusCurrentLabel() {
+    return this.getStatusCurrentState()["label"];
+  }
+
+  activateNextMode() {
+    const nextMode = this.getStatusNextMode();
+    this._currentMode = nextMode["mode"];
+    this._currentState = nextMode["state"];
+  }
+
+  activateNextState() {
+    this._currentState = this.getStatusNextState();
+  }
+
+  getStandardLabel(cellConfig, statusLabel) {
+    return cellConfig?.label?.[statusLabel] || "";
+  }
+
+  getSpecialLabel(cellConfig, statusLabel) {
+    return cellConfig?.label?.[statusLabel] || this.getStandardLabel(cellConfig, "normal");
+  }
+
+  getLabel(cellConfig, statusLabel) {
+    const label = cellConfig.special 
+      ? this.getSpecialLabel(cellConfig, statusLabel) 
+      : this.getStandardLabel(cellConfig, statusLabel);
+    return label ? label : (cellConfig.fallback || "")
   }
 
   // Transform user popin config per (rows/)cell/label
