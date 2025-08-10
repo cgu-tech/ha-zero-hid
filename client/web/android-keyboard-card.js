@@ -12,18 +12,16 @@ console.info("Loading android-keyboard-card");
 class AndroidKeyboardCard extends HTMLElement {
 
   // private init required constants
-  static _MODE_NORMAL = "normal";
+  static _MODE_NORMAL = "normal";  
   static _STATE_NORMAL = "normal";
   static _STATE_SHIFT_ONCE = "shift_once";
   static _STATE_SHIFT_LOCKED = "shift_locked";
+  
   static _MODE_ALT = "alt";
   static _STATE_ALT_PAGE_ONE = "alt_page_one";
   static _STATE_ALT_PAGE_TWO = "alt_page_two";
-
-  // private constants
-  _keycodes = new KeyCodes().getMapping();
-  _consumercodes = new ConsumerCodes().getMapping();
-  _statusMap = {
+  
+  static _STATUS_MAP = {
     "init": { "mode": this.constructor._MODE_NORMAL, "state": this.constructor._STATE_NORMAL },
     "modes": {
       [this.constructor._MODE_NORMAL]: {
@@ -63,6 +61,10 @@ class AndroidKeyboardCard extends HTMLElement {
       }
     }
   }
+
+  // private constants
+  _keycodes = new KeyCodes().getMapping();
+  _consumercodes = new ConsumerCodes().getMapping();
   _triggerPopin = 500;
   _allowedDataFields = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
 
@@ -77,8 +79,8 @@ class AndroidKeyboardCard extends HTMLElement {
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
-  _currentMode = _statusMap["init"]["mode"];
-  _currentState = _statusMap["init"]["state"];
+  _currentMode = this.constructor._STATUS_MAP["init"]["mode"];
+  _currentState = this.constructor._STATUS_MAP["init"]["state"];
   _popinTimeouts = new Map();
 
   constructor() {
@@ -531,7 +533,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   getStatusCurrentMode() {
-    return this._statusMap["modes"][this._currentMode];
+    return this.constructor._STATUS_MAP["modes"][this._currentMode];
   }
 
   getStatusNextMode() {
