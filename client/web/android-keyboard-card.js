@@ -378,7 +378,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doUpdateLayout() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()->before(this._currentMode, this._currentState)", this._currentMode, this._currentState));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()->before(this._currentMode, this._currentState, this._pressedConsumers)", this._currentMode, this._currentState, this._pressedConsumers));
     this.doResetLayout();
     this.doCreateLayout();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()->after(this._currentMode, this._currentState)", this._currentMode, this._currentState));
