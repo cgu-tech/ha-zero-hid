@@ -114,11 +114,6 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doUpdateHass()
   }
 
-  doUpdateModeAndState(code) {
-    if (code === "KEY_MODE") this.activateNextMode();
-    if (code === "MOD_LEFT_SHIFT") this.activateNextState();
-  }
-
   doUpdateCells() {
     const statusActions = this.getStatusCurrentActions();
     const statusLabel = this.getStatusCurrentLabel();
@@ -515,254 +510,6 @@ class AndroidKeyboardCard extends HTMLElement {
     // Nothing to do: only parent is clickable
   }
 
-
-  hasPopinKeyToDisplay(popinRows) {
-    return popinRows.some(rowKeys => {
-        return rowKeys.some(popinKeyData => {
-          if (this._currentMode === this._MODE_NORMAL) {
-            if (this._shiftState === this._STATE_NORMAL) {
-              return popinKeyData.label?.normal?.length > 0;
-            } else if (this._shiftState === this._STATE_SHIFT_ONCE) {
-              return popinKeyData.label?.shift?.length > 0;
-            } else if (this._shiftState === this._STATE_SHIFT_LOCKED) {
-              return popinKeyData.label?.shift?.length > 0;
-            }
-          } else if (this._currentMode === this._MODE_ALT) {
-            if (this._altState === this._STATE_ALT_PAGE_ONE) {
-              return popinKeyData.label?.alt1?.length > 0;
-            } else if (this._altState === this._STATE_ALT_PAGE_TWO) {
-              return popinKeyData.label?.alt2?.length > 0;
-            }
-          }
-          return false;
-        });
-    });
-
-  getPopinRowsToDisplay(cellConfig) {
-    const firstPopinKeysConfig = cellConfig.popinKeys?.[0];    
-    // Normalize popinKeys to always be an array of arrays
-    if (!firstPopinKeysConfig) return [];
-    return Array.isArray(firstPopinKeysConfig) ? popinKeys : [popinKeys];
-  }
-
-  canShowPopin(evt, btn) {
-    // Retrieve key data
-    const keyData = btn._keyData;
-    if (!keyData) return false; // abort popin when no KeyData
-
-    const popinKeys = keyData.popinKeys;
-    if (!popinKeys) return false; // abort popin when no popin keys at all
-
-    // Normalize popinKeys to always be an array of arrays
-    const popinRows = Array.isArray(popinKeys[0]) ? popinKeys : [popinKeys];
-    if (!this.hasPopinKeyToDisplay(popinRows)) return false; // abort popin when all popin keys are not displayable
-
-    return true;
-  }
-
-  doShowPopin(evt, btn) {
-    this.doResetPopin();
-    this.doCreatePopin(evt, btn);
-  }
-
-  doResetPopin() {
-    // Detach existing popin from DOM
-    this.closePopin();
-  }
-
-  doCreatePopin(evt, btn) {
-    const popin = this.doPopin(evt, btn);
-    this.doStylePopin();
-    this.doAttachPopin(popin);
-    this.doQueryPopinElements();
-    this.doListenPopin();
-  }
-
-  doPopin(evt, btn) {
-
-    // Popin is a special beast.
-    // To be displayed, we first need to find at least one key that is displayble in current keyboard mode and states.
-    // 
-    // Here is the pseudo-code to handle this:
-    // - For each row of the normalized popinKeys config
-    //     - For each key of the row
-    //       - if key is displayable into current keyboard mode and state, then: <-- we only know here for sure that popin will be shown
-    //          - key can be displayed in the row
-    //          - row can be displayed in the popin
-    //          - popin can be displayed to user 
-
-    // Check for layout config defined "popinKeys" for the popin source button
-    const cellConfig = btn._keyData;
-    if (!cellConfig) return null; // No layout config defined for the source button
-    if (!cellConfig.popinKeys) return null; // No layout config defined "popinKeys" for the popin source button
-    if (!cellConfig.popinKeys.length < 1;) return null; // Empty layout config defined "popinKeys" for the popin source button
-
-    // Prepare popinConfig: normalize popinKeys to always be an array of array(s) (row and cells)
-    popinConfig = Array.isArray(cellConfig.popinKeys[0]) ? popinKeys : [popinKeys];
-
-    // Create popin in advance
-    const popin = document.createElement("div");
-    popin.className = "key-popin";
-    popin.style.position = "absolute"; // relative to card
-    card.style.position = "relative"; // ensure card is anchor
-
-    for (const rowConfig of popinConfig) {
-      const row = this.doPopinRow(rowConfig);
-      this.doStylePopinRow();
-      this.doAttachPopinRow(popin, row);
-      this.doQueryPopinElements();
-      this.doListenPopin();
-    }
-
-    // Here we know for sure that popin needs to be displayed
-    this._currentPopinBaseKey = btn; // set the base key when we are sure poppin will be displayed
-
-    this._popin = popin;
-
-    // 1. Add to card and get its bounding box
-    card.appendChild(popin);
-    const cardRect = card.getBoundingClientRect();
-    const popinRect = popin.getBoundingClientRect();
-
-    // 2. Compute initial popin position relative to card
-    let left = evt.clientX - cardRect.left - popinRect.width / 2;
-    let top = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
-
-    // 3. Clamp horizontally (inside card)
-    if (left < 0) {
-      left = 0;
-    } else if (left + popinRect.width > cardRect.width) {
-      left = cardRect.width - popinRect.width;
-    }
-
-    // 4. Clamp vertically (inside card)
-    if (top < 0) {
-      // If not enough space above, show below
-      top = evt.clientY - cardRect.top + 8;
-      // If that too overflows bottom, clamp
-      if (top + popinRect.height > cardRect.height) {
-        top = cardRect.height - popinRect.height;
-      }
-    }
-
-    // 5. Apply style
-    popin.style.left = `${left}px`;
-    popin.style.top = `${top}px`;
-    popin.style.position = "absolute";
-
-    popin.style.left = `${left}px`;
-    popin.style.top = `${top}px`;
-
-    // Close on pointerup anywhere
-    const close = () => this.closePopin();
-    this._eventManager.addPointerUpListener(document, close, { once: true });
-
-  }
-
-  doStylePopin() {
-    //TODO
-  }
-
-  doAttachPopin(popin) {
-    //TODO
-  }
-
-  doQueryPopinElements() {
-    //TODO
-  }
-
-  doListenPopin() {
-    //TODO
-  }
-
-  doPopinRow(rowConfig) {
-    // Create popin row in advance
-    const popinRow = document.createElement("div");
-    popinRow.className = "key-popin-row";
-
-    for (const cellConfig of rowConfig) {
-      const row = this.doPopinCell(cellConfig);
-      this.doStylePopinCell();
-      this.doAttachPopinCell(popinRow);
-      this.doQueryPopinElements();
-      this.doListenPopin();
-    }
-  }
-
-  doStylePopinRow() {
-    //TODO
-  }
-
-  doAttachPopinRow(popin, row) {
-    popin.appendChild(row);
-  }
-
-  doQueryPopinRowElements() {
-    //TODO
-  }
-
-  doListenPopinRow() {
-    //TODO
-  }
-
-  doPopinCell(cellConfig) {
-    // Determine displayed label on popin cell
-    const cellLabel = this.getPopinCellLabel(cellConfig);
-
-    // When label is missing, skip the whole key
-    if (!cellLabel) return null;
-
-    // create and add the popin key (ie popinCell) into the popin content 
-    const popinCell = document.createElement("button");
-    popinCell.classList.add("key");
-
-    if (cellConfig.width) popinCell.classList.add(cellConfig.width);
-
-    const label = document.createElement("span");
-    label.className = "label-lower";
-    label.textContent = cellConfig.label.normal || "";
-
-    popinCell.appendChild(label);
-
-    popinCell._label = label;
-    popinCell._keyData = cellConfig;
-
-    // Set displayed labels
-    popinCell._label.textContent = cellLabel;
-
-    // Make same width than base button
-    const baseBtnWidth = btn.getBoundingClientRect().width;
-    popinCell.style.width = `${baseBtnWidth}px`;
-
-    // Handle events on button
-    this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
-    this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
-    this._eventManager.addPointerUpListener(popinCell, (e) => {
-      this.handleKeyPress(popinCell);
-      this.handleKeyRelease(popinCell);
-      this.closePopin();
-    });
-
-    popinRow.appendChild(popinCell);
-
-    // trigger animation after the element is attached
-    requestAnimationFrame(() => {
-      popinCell.classList.add("enter-active");
-    });
-  }
-  doStylePopinCell() {
-    //TODO
-  }
-  doAttachPopinCell(popinRow) {
-    //TODO
-  }
-  doQueryPopinCellElements() {
-    //TODO
-  }
-  doListenPopinCell() {
-    //TODO
-  }
-
   // configuration defaults
   static getStubConfig() {
     return {
@@ -903,24 +650,23 @@ class AndroidKeyboardCard extends HTMLElement {
     return popinConfig;
   }
 
-  closePopin() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("closePopin()"));
-    
-    // Popin attached to a parent element in DOM
-    if (this._popin?.parentElement) {
-      this._popin.remove(); // Remove popin from DOM
-      this._popin = null;
-    }
-  }
-
   addPopinTimeout(evt) {
     return setTimeout(() => {
       const popinEntry = this._popinTimeouts.get(evt.pointerId);
-      if (popinEntry && !popinEntry["popin-detected"]) {
-        // Button is still pressed and popin as not been already been shown
-        popinEntry["popin-detected"] = true; // Mark popin as shown
-        const btn = popinEntry?.["source"];
-        this.showPopin(evt, btn); //TODO: treat this function
+
+      // When no poppin entry: key has been released before timeout
+      if (popinEntry && popinEntry["popin-can-show"] && !popinEntry["popin-shown"]) {
+        const cell = popinEntry["source"];
+        
+        // Check whether or not popin can be shown in current mode and state
+        popinEntry["popin-can-show"] = this.canShowPopin(cell);
+        if (!popinEntry["popin-can-show"]) return;
+
+        // Mark popin as shown
+        popinEntry["popin-shown"] = true;
+        
+        // Show popin
+        this.doShowPopin(evt, cell);
       }
     }, this.triggerLongClick); // long-press duration
   }
@@ -928,6 +674,201 @@ class AndroidKeyboardCard extends HTMLElement {
   clearPopinTimeout(evt) {
     const popinTimeout = this._popinTimeouts.get(evt.pointerId)?.["popin-timeout"];
     if (popinTimeout) clearTimeout(popinTimeout);
+  }
+
+  // Popin can be shown when its config exists and contains current status label
+  canShowPopin(cell) {
+    return !!cell?._keyData?.cellConfig?.["popinConfig"]?.[this.getStatusCurrentLabel()];
+  }
+
+  doShowPopin(evt, cell) {
+    this.doResetPopin();
+    this.doCreatePopin(evt, cell);
+  }
+
+  doResetPopin() {
+    // Detach existing popin from DOM
+    if (this._popin?.parentElement) this._popin.remove();
+
+    // nullify popin reference
+    this._popin = null;
+  }
+
+  doCreatePopin(evt, cell) {
+    const popin = this.doPopin(evt, cell);
+    this.doStylePopin();
+    this.doAttachPopin(popin);
+    this.doQueryPopinElements();
+    this.doListenPopin();
+  }
+
+  doPopin(evt, cell) {
+
+    // Create popin
+    const popin = document.createElement("div");
+    popin.className = "key-popin";
+    popin.style.position = "absolute"; // relative to card
+
+    for (const rowConfig of popinConfig) {
+      const row = this.doPopinRow(rowConfig);
+      this.doStylePopinRow();
+      this.doAttachPopinRow(popin, row);
+      this.doQueryPopinElements();
+      this.doListenPopin();
+    }
+
+    // Here we know for sure that popin needs to be displayed
+    this._currentPopinBaseKey = cell; // set the base key when we are sure poppin will be displayed
+
+    this._popin = popin;
+
+    // 1. Add to card and get its bounding box
+    card.appendChild(popin);
+    const cardRect = card.getBoundingClientRect();
+    const popinRect = popin.getBoundingClientRect();
+
+    // 2. Compute initial popin position relative to card
+    let left = evt.clientX - cardRect.left - popinRect.width / 2;
+    let top = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
+
+    // 3. Clamp horizontally (inside card)
+    if (left < 0) {
+      left = 0;
+    } else if (left + popinRect.width > cardRect.width) {
+      left = cardRect.width - popinRect.width;
+    }
+
+    // 4. Clamp vertically (inside card)
+    if (top < 0) {
+      // If not enough space above, show below
+      top = evt.clientY - cardRect.top + 8;
+      // If that too overflows bottom, clamp
+      if (top + popinRect.height > cardRect.height) {
+        top = cardRect.height - popinRect.height;
+      }
+    }
+
+    // 5. Apply style
+    popin.style.left = `${left}px`;
+    popin.style.top = `${top}px`;
+    popin.style.position = "absolute";
+
+    popin.style.left = `${left}px`;
+    popin.style.top = `${top}px`;
+
+    // Close on pointerup anywhere
+    const close = () => this.doClosePopin();
+    this._eventManager.addPointerUpListener(document, close, { once: true });
+
+  }
+
+  doStylePopin() {
+    // Nothing to do here: style is required and treated as soon as popin is created to compute popin position
+  }
+
+  doAttachPopin(popin) {
+    //TODO
+  }
+
+  doQueryPopinElements() {
+    //TODO
+  }
+
+  doListenPopin() {
+    //TODO
+  }
+
+  doPopinRow(rowConfig) {
+    // Create popin row in advance
+    const popinRow = document.createElement("div");
+    popinRow.className = "key-popin-row";
+
+    for (const cellConfig of rowConfig) {
+      const row = this.doPopinCell(cellConfig);
+      this.doStylePopinCell();
+      this.doAttachPopinCell(popinRow);
+      this.doQueryPopinElements();
+      this.doListenPopin();
+    }
+  }
+
+  doStylePopinRow() {
+    //TODO
+  }
+
+  doAttachPopinRow(popin, row) {
+    popin.appendChild(row);
+  }
+
+  doQueryPopinRowElements() {
+    //TODO
+  }
+
+  doListenPopinRow() {
+    //TODO
+  }
+
+  doPopinCell(cellConfig) {
+    // Determine displayed label on popin cell
+    const cellLabel = this.getPopinCellLabel(cellConfig);
+
+    // When label is missing, skip the whole key
+    if (!cellLabel) return null;
+
+    // create and add the popin key (ie popinCell) into the popin content 
+    const popinCell = document.createElement("button");
+    popinCell.classList.add("key");
+
+    if (cellConfig.width) popinCell.classList.add(cellConfig.width);
+
+    const label = document.createElement("span");
+    label.className = "label-lower";
+    label.textContent = cellConfig.label.normal || "";
+
+    popinCell.appendChild(label);
+
+    popinCell._label = label;
+    popinCell._keyData = cellConfig;
+
+    // Set displayed labels
+    popinCell._label.textContent = cellLabel;
+
+    // Make same width than base button
+    const baseBtnWidth = btn.getBoundingClientRect().width;
+    popinCell.style.width = `${baseBtnWidth}px`;
+
+    // Handle events on button
+    this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
+    this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
+    this._eventManager.addPointerUpListener(popinCell, (e) => {
+      this.handleKeyPress(popinCell);
+      this.handleKeyRelease(popinCell);
+      this.doClosePopin();
+    });
+
+    popinRow.appendChild(popinCell);
+
+    // trigger animation after the element is attached
+    requestAnimationFrame(() => {
+      popinCell.classList.add("enter-active");
+    });
+  }
+  doStylePopinCell() {
+    //TODO
+  }
+  doAttachPopinCell(popinRow) {
+    //TODO
+  }
+  doQueryPopinCellElements() {
+    //TODO
+  }
+  doListenPopinCell() {
+    //TODO
+  }
+
+  doClosePopin() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doClosePopin()"));
+    this.doResetPopin();
   }
 
   getPopinCellLabel(cellConfig) {
@@ -1002,11 +943,11 @@ class AndroidKeyboardCard extends HTMLElement {
     btn.classList.add("active");
 
     // Retrieve clickable button data
-    const keyData = btn._keyData;
-    if (!keyData) return;
+    const cellConfig = btn._keyData;
+    if (!cellConfig) return;
 
     // Key code to press
-    const code = keyData.code;
+    const code = cellConfig.code;
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to press:", code));
 
     // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
@@ -1014,30 +955,34 @@ class AndroidKeyboardCard extends HTMLElement {
 
     if (this.isVirtualModifier(code)) {
       // Virtual modifier key press
-      this.updateModeAndStates(code);
+      
+      // change to next mode
+      if (code === "KEY_MODE") this.activateNextMode();
+      if (code === "MOD_LEFT_SHIFT") this.activateNextState();
+
+      // Update all cells labels and visuals
+      this.doUpdateCells();
     } else {
       // Non-virtual modifier key press
-      
-      if (this._layoutManager.hasButtonOverride(btn)) {
-        // Override detected: do nothing (override action will be executed on button up)
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", btn.id));
+
+      // Special key pressed
+      if (btn._keyData.special) {
+
+        // Send special key press to HID
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-special-pressed:", code));
+        this.appendCode(hass, code);
       } else {
-        // Default action
+        // Normal key pressed
+        
+        // Do not send pressed key to HID (key will be send to HID on release)
 
-        // Special key pressed
-        if (btn._keyData.special) {
-
-          // Send special key press to HID
-          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-special-pressed:", code));
-          this.appendCode(hass, code);
-
-        } else {
-
-          // Normal key pressed: do not press the key into HID (key will be pressed on release)
-          
-          // add popin timeout
-          this._popinTimeouts.set(evt.pointerId, { "popin-detected": false, "source": btn , "popin-timeout": this.addPopinTimeout(evt) } );
-        }
+        // add popin timeout
+        this._popinTimeouts.set(evt.pointerId, { 
+          "popin-can-show": true,                     // until proven wrong, popin can be shown
+          "popin-shown": false,                       // true when popin was shown
+          "source": btn ,                             // popin source button
+          "popin-timeout": this.addPopinTimeout(evt)  // when it expires, triggers the associated inner callback to show (or not) popin
+        });
       }
     }
 
@@ -1058,11 +1003,11 @@ class AndroidKeyboardCard extends HTMLElement {
     btn.classList.remove("active");
 
     // Retrieve clickable button data
-    const keyData = btn._keyData;
-    if (!keyData) return;
+    const cellConfig = btn._keyData;
+    if (!cellConfig) return;
 
     // Key code to release
-    const code = keyData.code;
+    const code = cellConfig.code;
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
 
     // Suppress when toggable virtual modifier press
@@ -1072,7 +1017,7 @@ class AndroidKeyboardCard extends HTMLElement {
     }
 
     // Suppress when pointer triggered a popin with extended chars
-    if (popinEntry && popinEntry["popin-detected"]) {
+    if (popinEntry && popinEntry["popin-shown"]) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (button was used to trigger popin for extended chars)`));
       return;
     }
@@ -1107,7 +1052,7 @@ class AndroidKeyboardCard extends HTMLElement {
     } else {
 
       // Suppress the unwanted post-poppin base key release event fired by poppin release front button
-      if (this._currentPopinBaseKey && this._currentPopinBaseKey._keyData.code === keyData.code) {
+      if (this._currentPopinBaseKey && this._currentPopinBaseKey._keyData.code === cellConfig.code) {
         this._currentPopinBaseKey = null;
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (release transmitted to popin base button when releasing extended char)`));
         return; 
