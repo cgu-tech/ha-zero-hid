@@ -284,7 +284,8 @@ class AndroidKeyboardCard extends HTMLElement {
       button.key.shift-once,
       button.key:hover.shift-once,
       button.key:active.shift-once {
-        color: #3399ff !important; /* blue */
+        background: #374553 !important; /* grey-blue */
+        color: #fff !important;
         font-weight: bold;
       }
       /* Fix: Ensure locked state is visually dominant */
@@ -294,7 +295,6 @@ class AndroidKeyboardCard extends HTMLElement {
         background: #3399ff !important; /* blue */
         color: #fff !important;
         font-weight: bold;
-        font-size: 1.6rem;
       }
       .label-upper {
         position: absolute;
