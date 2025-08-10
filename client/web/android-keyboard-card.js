@@ -1038,7 +1038,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
         // Send special key press to HID
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-special-pressed:", code));
-        this.appendCode(hass, code);
+        this.appendCode(code);
       } else {
         // Normal key pressed
         
