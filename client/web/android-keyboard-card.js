@@ -11,55 +11,58 @@ console.info("Loading android-keyboard-card");
 
 class AndroidKeyboardCard extends HTMLElement {
 
-  static _LABEL_NORMAL = "normal";
-
   // private init required constants
   static _STATUS_MAP;
+  static _MODE_NORMAL = "normal";  
+  static _MODE_ALT = "alt";
+
+  static _STATE_NORMAL = "normal";
+  static _STATE_SHIFT_ONCE = "shift_once";
+  static _STATE_SHIFT_LOCKED = "shift_locked";
+  static _STATE_ALT_PAGE_ONE = "alt_page_one";
+  static _STATE_ALT_PAGE_TWO = "alt_page_two";
+
+  static _LABEL_NORMAL = "normal";
+  static _LABEL_SHIFT = "shift";
+  static _LABEL_ALT1 = "alt1";
+  static _LABEL_ALT2 = "alt2";
+
+  // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
-    // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
-    const MODE_NORMAL = "normal";  
-    const MODE_ALT = "alt";
-
-    const STATE_NORMAL = "normal";
-    const STATE_SHIFT_ONCE = "shift_once";
-    const STATE_SHIFT_LOCKED = "shift_locked";
-    const STATE_ALT_PAGE_ONE = "alt_page_one";
-    const STATE_ALT_PAGE_TWO = "alt_page_two";
-
     this._STATUS_MAP = {
-      "init": { "mode": MODE_NORMAL, "state": STATE_NORMAL },
+      "init": { "mode": this._MODE_NORMAL, "state": this._STATE_NORMAL },
       "modes": {
-        [MODE_NORMAL]: {
-          "next": { "mode": MODE_ALT, "state": STATE_ALT_PAGE_ONE },
+        [this._MODE_NORMAL]: {
+          "next": { "mode": this._MODE_ALT, "state": this._STATE_ALT_PAGE_ONE },
           "states": {
-            [STATE_NORMAL]: {
-              "next": STATE_SHIFT_ONCE,
+            [this._STATE_NORMAL]: {
+              "next": this._STATE_SHIFT_ONCE,
               "label": this._LABEL_NORMAL,
               "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
             },
-            [STATE_SHIFT_ONCE]: {
-              "next": STATE_SHIFT_LOCKED,
-              "label": "shift",
+            [this._STATE_SHIFT_ONCE]: {
+              "next": this._STATE_SHIFT_LOCKED,
+              "label": this._LABEL_SHIFT,
               "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["active" ] } ] }
             },
-            [STATE_SHIFT_LOCKED]: {
-              "next": STATE_NORMAL,
-              "label": "shift",
+            [this._STATE_SHIFT_LOCKED]: {
+              "next": this._STATE_NORMAL,
+              "label": this._LABEL_SHIFT,
               "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["locked" ] } ] }
             }
           }
         },
-        [MODE_ALT]: {
-          "next": { "mode": MODE_NORMAL, "state": STATE_NORMAL },
+        [this._MODE_ALT]: {
+          "next": { "mode": this._MODE_NORMAL, "state": this._STATE_NORMAL },
           "states": {
-            [STATE_ALT_PAGE_ONE]: {
-              "next": STATE_ALT_PAGE_TWO,
-              "label": "alt1",
+            [this._STATE_ALT_PAGE_ONE]: {
+              "next": this._STATE_ALT_PAGE_TWO,
+              "label": this._LABEL_ALT1,
               "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
             },
-            [STATE_ALT_PAGE_TWO]: {
-              "next": STATE_ALT_PAGE_ONE,
-              "label": "alt2",
+            [this._STATE_ALT_PAGE_TWO]: {
+              "next": this._STATE_ALT_PAGE_ONE,
+              "label": this._LABEL_ALT2,
               "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
             }
           }
@@ -569,11 +572,9 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   activateNextMode() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("activateNextMode()->before(this._currentMode, this._currentState)", this._currentMode, this._currentState));
     const nextMode = this.getStatusNextMode();
     this._currentMode = nextMode["mode"];
     this._currentState = nextMode["state"];
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("activateNextMode()->after(this._currentMode, this._currentState)", this._currentMode, this._currentState));
   }
 
   activateNextState() {
@@ -1022,7 +1023,7 @@ class AndroidKeyboardCard extends HTMLElement {
     if (this.isVirtualModifier(code)) {
       // Virtual modifier key press
       
-      // change to next mode
+      // change to next mode and/or state
       if (code === "KEY_MODE") this.activateNextMode();
       if (code === "MOD_LEFT_SHIFT") this.activateNextState();
 
@@ -1127,10 +1128,10 @@ class AndroidKeyboardCard extends HTMLElement {
       }
     }
 
-    // Switch back to normal when "shift-once" was set and a key different from SHIFT was pressed
-    if (this._shiftState === this._STATE_SHIFT_ONCE) {
-      this._shiftState = this._STATE_NORMAL;
-      this.updateLabels();
+    // Switch to next state when "shift-once" was set and a key was pressed (other than MOD_LEFT_SHIFT, previously debounced)
+    if (this.constructor._STATE_SHIFT_ONCE) {
+      this.activateNextState();
+      this.doUpdateCells();
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
