@@ -860,22 +860,14 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doListenPopinCell(popinCell) {
+    // Visual events
+    this._eventManager.addPointerEnterListener(popinCell, this.onPopinButtonPointerEnter.bind(this));
+    this._eventManager.addPointerLeaveListener(popinCell, this.onPopinButtonPointerLeave.bind(this));
 
-    // Style events
-    this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
-    this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
-
-    //TODO: proper treatment of popin action events
-
-    // Action events
-    this.addClickableListeners(popinCell);
-    
-    // Handle events on button
-    this._eventManager.addPointerUpListener(popinCell, (e) => {
-      this.handleKeyPress(popinCell);
-      this.handleKeyRelease(popinCell);
-      this.doClosePopin();
-    });
+    // Action and visual events
+    this._eventManager.addPointerDownListener(popinCell, this.onPopinButtonPointerDown.bind(this));
+    this._eventManager.addPointerUpListener(popinCell, this.onPopinButtonPointerUp.bind(this));
+    this._eventManager.addPointerCancelListener(popinCell, this.onPopinButtonPointerUp.bind(this));
   }
 
   doPopinCellContent(cellConfig) {
@@ -911,6 +903,38 @@ class AndroidKeyboardCard extends HTMLElement {
   doClosePopin() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doClosePopin()"));
     this.doResetPopin();
+  }
+
+  onPopinButtonPointerEnter(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    btn.classList.add("active");
+  }
+
+  onPopinButtonPointerLeave(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    btn.classList.remove("active");
+  }
+
+  onPopinButtonPointerDown(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    btn.classList.add("active");
+    this._eventManager.hapticFeedback();
+  }
+
+  onPopinButtonPointerUp(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    btn.classList.remove("active");
+    this.handleKeyPress(btn);
+    this.handleKeyRelease(btn);
+    this.doClosePopin();
   }
 
   // Set key data
