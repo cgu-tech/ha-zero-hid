@@ -932,8 +932,8 @@ class AndroidKeyboardCard extends HTMLElement {
     const btn = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
     btn.classList.remove("active");
-    this.handleKeyPress(btn);
-    this.handleKeyRelease(btn);
+    //this.handleKeyPress(btn);
+    //this.handleKeyRelease(btn);
     this.doClosePopin();
   }
 
