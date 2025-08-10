@@ -153,7 +153,7 @@ class AndroidKeyboardCard extends HTMLElement {
   doUpdateCellVisuals(cell, cellConfig, statusActions) {
     const cellActions = statusActions?.[cellConfig.code] || [];
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCellVisuals(cell, cellConfig, statusActions) + cellActions:", cell, cellConfig, statusActions, cellActions));
-    for (const cellAction in cellActions) {
+    for (const cellAction of cellActions) {
       const actionName = cellAction["action"];
       const actionClassList = cellAction["class_list"];
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCellVisuals(cell, cellConfig, statusActions) + cellAction, actionName, actionClassList:", cellAction, actionName, actionClassList));
