@@ -378,8 +378,10 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doUpdateLayout() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()->before(this._currentMode, this._currentState)", this._currentMode, this._currentState));
     this.doResetLayout();
     this.doCreateLayout();
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()->after(this._currentMode, this._currentState)", this._currentMode, this._currentState));
   }
 
   doResetLayout() {
@@ -560,9 +562,11 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   activateNextMode() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("activateNextMode()->before(this._currentMode, this._currentState)", this._currentMode, this._currentState));
     const nextMode = this.getStatusNextMode();
     this._currentMode = nextMode["mode"];
     this._currentState = nextMode["state"];
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("activateNextMode()->after(this._currentMode, this._currentState)", this._currentMode, this._currentState));
   }
 
   activateNextState() {
