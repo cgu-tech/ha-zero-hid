@@ -53,8 +53,8 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
     this._config = config;
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
     this.doCheckConfig();
     this.doUpdateConfig();
   }
