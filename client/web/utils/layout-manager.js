@@ -70,7 +70,7 @@ export class LayoutManager {
   }
 
   getLayoutName() {
-    return this.getFromConfigOrDefault('layout');
+    return this.getFromConfigOrDefaultConfig('layout');
   }
 
   getLayout() {
