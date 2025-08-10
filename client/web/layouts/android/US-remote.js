@@ -111,7 +111,7 @@ export const layoutAndroidUsRemote = {
           { "code": "KEY_COMMA",      "label": { "normal": "," }, "fallback": "normal" },
           { "code": "KEY_SPACE",      "label": { "normal": " " }, "fallback": "normal", "width": "spacebar" },
           { "code": "KEY_DOT",        "label": { "normal": "." }, "fallback": "normal" },
-          { "code": "KEY_ENTER",      "label": { "normal": "Entrée" }, "special": true, "width": "altkey" }
+          { "code": "KEY_ENTER",      "label": { "normal": "Enter" }, "special": true, "width": "altkey" }
         ]
       }
     ]
