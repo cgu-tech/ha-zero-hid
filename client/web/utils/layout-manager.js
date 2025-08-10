@@ -45,8 +45,8 @@ export class LayoutManager {
     return this.getFromConfigOrDefaultConfig('font_scale');
   }
 
-  static getSafeFontScale() {
-    return this.getScaleOrDefault(this.getFontScale(), '1rem');
+  getSafeFontScale() {
+    return this.constructor.getScaleOrDefault(this.getFontScale(), '1rem');
   }
 
   getButtonsOverrides() {
