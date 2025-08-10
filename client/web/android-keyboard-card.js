@@ -14,13 +14,53 @@ class AndroidKeyboardCard extends HTMLElement {
   // private constants
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _MODE_NORMAL = 0; // Mode state 1: normal/shift mode
-  _MODE_ALT = 1;    // Mode state 2: alternative mode
-  _SHIFT_STATE_NORMAL = 0; // Shift state 1: Normal
-  _SHIFT_STATE_ONCE = 1;   // Shift state 2: Shift-once
-  _SHIFT_STATE_LOCKED = 2; // Shift state 3: Shift-locked
-  _ALT_PAGE_ONE = 0; // Alt state 1: Alternative symbols page 1
-  _ALT_PAGE_TWO = 1; // Alt state 2: Alternative symbols page 2
+  _MODE_NORMAL = "normal";
+  _MODE_ALT = "alt";
+  _STATE_NORMAL = "normal";
+  _STATE_SHIFT_ONCE = "shift_once";
+  _STATE_SHIFT_LOCKED = "shift_locked";
+  _STATE_ALT_PAGE_ONE = "alt_page_one";
+  _STATE_ALT_PAGE_TWO = "alt_page_two";
+  _statusMap = {
+    "init": { "mode": _MODE_NORMAL, "state": _STATE_NORMAL },
+    "modes": {
+      [_MODE_NORMAL]: {
+        "next": { "mode": _MODE_ALT, "state": _STATE_ALT_PAGE_ONE },
+        "states": {
+          [_STATE_NORMAL]: {
+            "next": _STATE_SHIFT_ONCE,
+            "label": "normal",
+            "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+          },
+          [_STATE_SHIFT_ONCE]: {
+            "next": _STATE_SHIFT_LOCKED,
+            "label": "shift",
+            "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["active" ] } ] }
+          },
+          [_STATE_SHIFT_LOCKED]: {
+            "next": _STATE_NORMAL,
+            "label": "shift",
+            "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["locked" ] } ] }
+          }
+        }
+      },
+      [_MODE_ALT]: {
+        "next": { "mode": _MODE_NORMAL, "state": _STATE_NORMAL },
+        "states": {
+          [_STATE_ALT_PAGE_ONE]: {
+            "next": _STATE_ALT_PAGE_TWO,
+            "label": "alt1",
+            "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+          },
+          [_STATE_ALT_PAGE_TWO]: {
+            "next": _STATE_ALT_PAGE_ONE,
+            "label": "alt2",
+            "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+          }
+        }
+      }
+    }
+  }
   _triggerPopin = 500;
   _allowedDataFields = new Set(['code', 'special', 'popinKeys', 'label', 'fallback']);
 
@@ -31,13 +71,12 @@ class AndroidKeyboardCard extends HTMLElement {
   _logger;
   _eventManager;
   _layoutManager;
-  _layoutManager;
+  _resourceManager;
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
-  _currentMode = _MODE_NORMAL;
-  _shiftState = _SHIFT_STATE_NORMAL;
-  _altState = _ALT_PAGE_ONE;
+  _currentMode = _statusMap["init"]["mode"];
+  _currentState = _statusMap["init"]["state"];
   _popin = null;
   _popinTimeouts = new Map();
 
@@ -74,401 +113,6 @@ class AndroidKeyboardCard extends HTMLElement {
     this._hass = hass;
     this.doUpdateHass()
   }
-
-  updateModeAndStates(code) {
-    if (code === "KEY_MODE") {
-      // Switch current mode
-      if (this._currentMode === this._MODE_NORMAL) {
-        this._currentMode = this._MODE_ALT;
-        this._altState = this._ALT_PAGE_ONE;
-      } else if (this._currentMode === this._MODE_ALT) {
-        this._currentMode = this._MODE_NORMAL;
-      }
-    }
-    if (code === "MOD_LEFT_SHIFT") {
-      // Normal mode: switch shift state
-      if (this._currentMode === this._MODE_NORMAL) {
-        if (this._shiftState === this._SHIFT_STATE_NORMAL) {
-          this._shiftState = this._SHIFT_STATE_ONCE;
-        } else if (this._shiftState === this._SHIFT_STATE_ONCE) {
-          this._shiftState = this._SHIFT_STATE_LOCKED;
-        } else if (this._shiftState === this._SHIFT_STATE_LOCKED) {
-          this._shiftState = this._SHIFT_STATE_NORMAL;
-        }
-      } else if (this._currentMode === this._MODE_ALT) {
-        // Alternative mode: switch alternative page
-        if (this._altState === this._ALT_PAGE_ONE) {
-          this._altState = this._ALT_PAGE_TWO;
-        } else if (this._altState === this._ALT_PAGE_TWO) {
-          this._altState = this._ALT_PAGE_ONE;
-        }
-      }
-    }
-
-    // Update visual layout with modified virtual modifiers
-    this.updateLabels();
-  }
-
-  updateLabels() {
-    for (const btn of this._elements.cells) {
-
-      const keyData = btn._keyData;
-      if (!keyData) continue;
-
-      // Pressed key code (keyboard layout independant, later send to remote keyboard)
-      const code = keyData.code;
-
-      // Special handling of virtual shift key
-
-      // Determine displayed labels
-      let cellLabel = "";
-
-      if (this._currentMode === this._MODE_NORMAL) {
-        if (this._shiftState === this._SHIFT_STATE_NORMAL) {
-          if (code === "MOD_LEFT_SHIFT") btn.classList.remove("active", "locked");
-          cellLabel = this.getlLabelNormal(keyData);
-        } else if (this._shiftState === this._SHIFT_STATE_ONCE) {
-          if (code === "MOD_LEFT_SHIFT") btn.classList.add("active");
-          cellLabel = this.getLabelAlternativeShift(keyData);
-        } else if (this._shiftState === this._SHIFT_STATE_LOCKED) {
-          if (code === "MOD_LEFT_SHIFT") btn.classList.add("locked");
-          cellLabel = this.getLabelAlternativeShift(keyData);
-        }
-      } else if (this._currentMode === this._MODE_ALT) {
-        if (code === "MOD_LEFT_SHIFT") btn.classList.remove("active", "locked");
-        if (this._altState === this._ALT_PAGE_ONE) {
-          cellLabel = this.getLabelAlternativeAlt1(keyData);
-        } else if (this._altState === this._ALT_PAGE_TWO) {
-          cellLabel = this.getLabelAlternativeAlt2(keyData);
-        }
-      }
-
-      if (!cellLabel && keyData.fallback) {
-        cellLabel = keyData.label[keyData.fallback] || "";
-      }
-
-      // Set displayed labels
-      btn._lowerLabel.textContent = cellLabel;
-    }
-  }
-
-  hasPopinKeyToDisplay(popinRows) {
-    return popinRows.some(rowKeys => {
-        return rowKeys.some(popinKeyData => {
-          if (this._currentMode === this._MODE_NORMAL) {
-            if (this._shiftState === this._SHIFT_STATE_NORMAL) {
-              return popinKeyData.label?.normal?.length > 0;
-            } else if (this._shiftState === this._SHIFT_STATE_ONCE) {
-              return popinKeyData.label?.shift?.length > 0;
-            } else if (this._shiftState === this._SHIFT_STATE_LOCKED) {
-              return popinKeyData.label?.shift?.length > 0;
-            }
-          } else if (this._currentMode === this._MODE_ALT) {
-            if (this._altState === this._ALT_PAGE_ONE) {
-              return popinKeyData.label?.alt1?.length > 0;
-            } else if (this._altState === this._ALT_PAGE_TWO) {
-              return popinKeyData.label?.alt2?.length > 0;
-            }
-          }
-          return false;
-        });
-    });
-
-  getPopinRowsConfig(cellConfig) {
-    const firstPopinKeysConfig = cellConfig.popinKeys?.[0];    
-    // Normalize popinKeys to always be an array of arrays
-    if (!firstPopinKeysConfig) return [];
-    return Array.isArray(firstPopinKeysConfig) ? popinKeys : [popinKeys];
-  }
-
-  getPopinRowsToDisplay(cellConfig) {
-    const firstPopinKeysConfig = cellConfig.popinKeys?.[0];    
-    // Normalize popinKeys to always be an array of arrays
-    if (!firstPopinKeysConfig) return [];
-    return Array.isArray(firstPopinKeysConfig) ? popinKeys : [popinKeys];
-  }
-
-  canShowPopin(evt, btn) {
-    // Retrieve key data
-    const keyData = btn._keyData;
-    if (!keyData) return false; // abort popin when no KeyData
-
-    const popinKeys = keyData.popinKeys;
-    if (!popinKeys) return false; // abort popin when no popin keys at all
-
-    // Normalize popinKeys to always be an array of arrays
-    const popinRows = Array.isArray(popinKeys[0]) ? popinKeys : [popinKeys];
-    if (!this.hasPopinKeyToDisplay(popinRows)) return false; // abort popin when all popin keys are not displayable
-
-    return true;
-  }
-
-  doShowPopin(evt, btn) {
-    this.doResetPopin();
-    this.doCreatePopin(evt, btn);
-  }
-
-  doResetPopin() {
-    // Detach existing popin from DOM
-    this.closePopin();
-  }
-
-  doCreatePopin(evt, btn) {
-    const popin = this.doPopin(evt, btn);
-    this.doStylePopin();
-    this.doAttachPopin(popin);
-    this.doQueryPopinElements();
-    this.doListenPopin();
-  }
-
-  doPopin(evt, btn) {
-
-    // Popin is a special beast.
-    // To be displayed, we first need to find at least one key that is displayble in current keyboard mode and states.
-    // 
-    // Here is the pseudo-code to handle this:
-    // - For each row of the normalized popinKeys config
-    //     - For each key of the row
-    //       - if key is displayable into current keyboard mode and state, then: <-- we only know here for sure that popin will be shown
-    //          - key can be displayed in the row
-    //          - row can be displayed in the popin
-    //          - popin can be displayed to user 
-
-    // Check for layout config defined "popinKeys" for the popin source button
-    const cellConfig = btn._keyData;
-    if (!cellConfig) return null; // No layout config defined for the source button
-    if (!cellConfig.popinKeys) return null; // No layout config defined "popinKeys" for the popin source button
-    if (!cellConfig.popinKeys.length < 1;) return null; // Empty layout config defined "popinKeys" for the popin source button
-
-    // Prepare popinConfig: normalize popinKeys to always be an array of array(s) (row and cells)
-    popinConfig = Array.isArray(cellConfig.popinKeys[0]) ? popinKeys : [popinKeys];
-
-    // Create popin in advance
-    const popin = document.createElement("div");
-    popin.className = "key-popin";
-    popin.style.position = "absolute"; // relative to card
-    card.style.position = "relative"; // ensure card is anchor
-
-    for (const rowConfig of popinConfig) {
-      const row = this.doPopinRow(rowConfig);
-      this.doStylePopinRow();
-      this.doAttachPopinRow(popin, row);
-      this.doQueryPopinElements();
-      this.doListenPopin();
-    }
-
-    // Here we know for sure that popin needs to be displayed
-    this._currentPopinBaseKey = btn; // set the base key when we are sure poppin will be displayed
-
-    this._popin = popin;
-
-    // 1. Add to card and get its bounding box
-    card.appendChild(popin);
-    const cardRect = card.getBoundingClientRect();
-    const popinRect = popin.getBoundingClientRect();
-
-    // 2. Compute initial popin position relative to card
-    let left = evt.clientX - cardRect.left - popinRect.width / 2;
-    let top = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
-
-    // 3. Clamp horizontally (inside card)
-    if (left < 0) {
-      left = 0;
-    } else if (left + popinRect.width > cardRect.width) {
-      left = cardRect.width - popinRect.width;
-    }
-
-    // 4. Clamp vertically (inside card)
-    if (top < 0) {
-      // If not enough space above, show below
-      top = evt.clientY - cardRect.top + 8;
-      // If that too overflows bottom, clamp
-      if (top + popinRect.height > cardRect.height) {
-        top = cardRect.height - popinRect.height;
-      }
-    }
-
-    // 5. Apply style
-    popin.style.left = `${left}px`;
-    popin.style.top = `${top}px`;
-    popin.style.position = "absolute";
-
-    popin.style.left = `${left}px`;
-    popin.style.top = `${top}px`;
-
-    // Close on pointerup anywhere
-    const close = () => this.closePopin();
-    this._eventManager.addPointerUpListener(document, close, { once: true });
-
-  }
-
-  doStylePopin() {
-    //TODO
-  }
-  
-  doAttachPopin(popin) {
-    //TODO
-  }
-  
-  doQueryPopinElements() {
-    //TODO
-  }
-  
-  doListenPopin() {
-    //TODO
-  }
-
-  doPopinRow(rowConfig) {
-    // Create popin row in advance
-    const popinRow = document.createElement("div");
-    popinRow.className = "key-popin-row";
-
-    for (const cellConfig of rowConfig) {
-      const row = this.doPopinCell(cellConfig);
-      this.doStylePopinCell();
-      this.doAttachPopinCell(popinRow);
-      this.doQueryPopinElements();
-      this.doListenPopin();
-    }
-  }
-  
-  doStylePopinRow() {
-    //TODO
-  }
-  
-  doAttachPopinRow(popin, row) {
-    popin.appendChild(row);
-  }
-  
-  doQueryPopinRowElements() {
-    //TODO
-  }
-  
-  doListenPopinRow() {
-    //TODO
-  }
-
-  getPopinCellLabel(cellConfig) {
-    let cellLabel = null;
-    if (this._currentMode === this._MODE_NORMAL) {
-      if (this._shiftState === this._SHIFT_STATE_NORMAL) {
-        cellLabel = cellConfig.label.normal;
-      } else if (this._shiftState === this._SHIFT_STATE_ONCE) {
-        cellLabel = cellConfig.label.shift;
-      } else if (this._shiftState === this._SHIFT_STATE_LOCKED) {
-        cellLabel = cellConfig.label.shift;
-      }
-    } else if (this._currentMode === this._MODE_ALT) {
-      if (this._altState === this._ALT_PAGE_ONE) {
-        cellLabel = cellConfig.label.alt1;
-      } else if (this._altState === this._ALT_PAGE_TWO) {
-        cellLabel = cellConfig.label.alt2;
-      }
-    }
-    return cellLabel;
-  }
-
-  doPopinCell(cellConfig) {
-    // Determine displayed label on key
-    const cellLabel = this.getPopinCellLabel(cellConfig);
-
-    // When label is missing, skip the whole key
-    if (!cellLabel) return null;
-
-    // create and add the popin key (ie popinCell) into the popin content 
-    const popinCell = document.createElement("button");
-    popinCell.classList.add("key");
-
-    if (cellConfig.width) popinCell.classList.add(cellConfig.width);
-
-    const lowerLabel = document.createElement("span");
-    lowerLabel.className = "label-lower";
-    lowerLabel.textContent = cellConfig.label.normal || "";
-
-    popinCell.appendChild(lowerLabel);
-
-    popinCell._lowerLabel = lowerLabel;
-    popinCell._keyData = cellConfig;
-
-    // Set displayed labels
-    popinCell._lowerLabel.textContent = cellLabel;
-
-    // Make same width than base button
-    const baseBtnWidth = btn.getBoundingClientRect().width;
-    popinCell.style.width = `${baseBtnWidth}px`;
-
-    // Handle events on button
-    this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
-    this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
-    this._eventManager.addPointerUpListener(popinCell, (e) => {
-      this.handleKeyPress(popinCell);
-      this.handleKeyRelease(popinCell);
-      this.closePopin();
-    });
-
-    popinRow.appendChild(popinCell);
-
-    // trigger animation after the element is attached
-    requestAnimationFrame(() => {
-      popinCell.classList.add("enter-active");
-    });
-  }
-  doStylePopinCell() {
-    //TODO
-  }
-  doAttachPopinCell(popinRow) {
-    //TODO
-  }
-  doQueryPopinCellElements() {
-    //TODO
-  }
-  doListenPopinCell() {
-    //TODO
-  }
-
-  closePopin() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("closePopin()"));
-    
-    // Popin attached to a parent element in DOM
-    if (this._popin?.parentElement) {
-      this._popin.remove(); // Remove popin from DOM
-      this._popin = null;
-    }
-  }
-
-  getlLabelNormal(keyData) {
-    return keyData.label.normal;
-  }
-
-  getLabelAlternativeShift(keyData) {
-    return this.getLabelAlternative(keyData, keyData.label.shift);
-  }
-
-  getLabelAlternativeAlt1(keyData) {
-    return this.getLabelAlternative(keyData, keyData.label.alt1);
-  }
-
-  getLabelAlternativeAlt2(keyData) {
-    return this.getLabelAlternative(keyData, keyData.label.alt2);
-  }
-
-  // Given:
-  // - keyData: a <button>.keyData object
-  // - alternativeLabel: an alternative label
-  // When:
-  // - alternativeLabel is defined, then alternativeLabel is returned
-  // - keyData.special is truthy, then normal label from keyData is returned
-  // - otherwise, empty label is returned
-  getLabelAlternative(keyData, alternativeLabel) {
-    let modifiedLabel = "";
-    if (alternativeLabel != null) {
-      modifiedLabel = alternativeLabel;
-    } else if (keyData.special) {
-      modifiedLabel = this.getlLabelNormal(keyData);
-    }
-    return modifiedLabel;
-  }
-
 
   // jobs
   doCheckConfig() {
@@ -689,7 +333,7 @@ class AndroidKeyboardCard extends HTMLElement {
   doUpdateHass() {
     //TODO
   }
-  
+
   doUpdateLayout() {
     this.doResetLayout();
     this.doCreateLayout();
@@ -768,6 +412,10 @@ class AndroidKeyboardCard extends HTMLElement {
     if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
     this.addClickableData(cell, null, cellConfig);
 
+    // Create cell popin config
+    const popinConfig = this.doPopinConfig(cellConfig);
+    this.doAttachPopinConfig(cell, popinConfig);
+
     // Create cell content
     const cellContent = this.doCellContent(cellConfig);
     this.doStyleCellContent();
@@ -794,6 +442,44 @@ class AndroidKeyboardCard extends HTMLElement {
     this.addClickableListeners(cell);
   }
 
+  doPopinConfig(cellConfig) {
+
+    // Create new popin config
+    const popinConfig = {};
+
+    // Retrieve raw popin config rows
+    let popinRows;
+    const firstPopinKeysConfig = cellConfig.popinKeys?.[0];
+    if (firstPopinKeysConfig) {
+      popinRows = firstPopinKeysConfig;
+    } else {
+      popinRows = Array.isArray(firstPopinKeysConfig) ? popinKeys : [popinKeys];
+    }
+
+    for (const row of popinRows) {
+      const modeToRow = {};
+    
+      for (const { code, label } of row) {
+        for (const [mode, char] of Object.entries(label)) {
+          if (!modeToRow[mode]) modeToRow[mode] = [];
+          modeToRow[mode].push({ code, label: char });
+        }
+      }
+    
+      // Push each row to the corresponding mode
+      for (const [mode, rowItems] of Object.entries(modeToRow)) {
+        if (!popinConfig[mode]) popinConfig[mode] = [];
+        popinConfig[mode].push(rowItems);
+      }
+    }
+    
+    return popinConfig;
+  }
+
+  doAttachPopinConfig(cell, cellPopinConfig) {
+    cell._popinConfig = cellPopinConfig;
+  }
+
   doCellContent(cellConfig) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("doCellContent(cellConfig):", cellConfig));
 
@@ -814,11 +500,341 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doQueryCellContentElements(cell, cellContent) {
-    cell._lowerLabel = cellContent;
+    cell._label = cellContent;
   }
 
   doListenCellContent() {
     // Nothing to do: only parent is clickable
+  }
+
+  activateNextMode() {
+    this._currentMode = this._statusMap["modes"][this._currentMode]["next"]["mode"];
+    this._currentState = this._statusMap["modes"][this._currentMode]["next"]["state"];
+  }
+
+  activateNextState() {
+    this._currentState = this._statusMap["modes"][this._currentMode]["states"][this._currentState]["next"];
+  }
+
+  doUpdateModeAndState(code) {
+    if (code === "KEY_MODE") this.activateNextMode();
+    if (code === "MOD_LEFT_SHIFT") this.activateNextState();
+  }
+
+  doUpdateLayoutLabels() {
+    const currentStatus = this._statusMap["modes"][this._currentMode]["states"][this._currentState];
+    const currentLabel = currentStatus["label"];
+    const currentActions = currentStatus["actions"];
+
+    for (const cell of this._elements.cells) {
+
+      const cellConfig = cell._keyData;
+      if (!cellConfig) continue;
+
+      // Cell HID code
+      const code = cellConfig.code;
+
+      // Add / remove classes when needed
+      const codeActions = currentActions?.[code] || [];
+      for (const codeAction in codeActions) {
+        const actionName = codeAction["action"];
+        const actionClassList = codeAction["class_list"];
+        if (actionName === "add") cell.classList.add(actionClassList);
+        if (actionName === "remove") cell.classList.remove(actionClassList);
+      }
+
+      // Update cell displayed label
+      cell._label.textContent = this.getLabel(cellConfig, currentLabel);
+    }
+  }
+
+  getStandardLabel(cellConfig, state) {
+    return cellConfig?.label?.[state] || "";
+  }
+
+  getSpecialLabel(cellConfig, state) {
+    return cellConfig?.label?.[state] || this.getStandardLabel(cellConfig, "normal");
+  }
+
+  getLabel(cellConfig, state) {
+    const label = cellConfig.special 
+      ? this.getSpecialLabel(cellConfig, state) 
+      : this.getStandardLabel(cellConfig, state);
+    return label ? label : (cellConfig.fallback || "")
+  }
+
+  hasPopinKeyToDisplay(popinRows) {
+    return popinRows.some(rowKeys => {
+        return rowKeys.some(popinKeyData => {
+          if (this._currentMode === this._MODE_NORMAL) {
+            if (this._shiftState === this._STATE_NORMAL) {
+              return popinKeyData.label?.normal?.length > 0;
+            } else if (this._shiftState === this._STATE_SHIFT_ONCE) {
+              return popinKeyData.label?.shift?.length > 0;
+            } else if (this._shiftState === this._STATE_SHIFT_LOCKED) {
+              return popinKeyData.label?.shift?.length > 0;
+            }
+          } else if (this._currentMode === this._MODE_ALT) {
+            if (this._altState === this._STATE_ALT_PAGE_ONE) {
+              return popinKeyData.label?.alt1?.length > 0;
+            } else if (this._altState === this._STATE_ALT_PAGE_TWO) {
+              return popinKeyData.label?.alt2?.length > 0;
+            }
+          }
+          return false;
+        });
+    });
+
+  getPopinRowsToDisplay(cellConfig) {
+    const firstPopinKeysConfig = cellConfig.popinKeys?.[0];    
+    // Normalize popinKeys to always be an array of arrays
+    if (!firstPopinKeysConfig) return [];
+    return Array.isArray(firstPopinKeysConfig) ? popinKeys : [popinKeys];
+  }
+
+  canShowPopin(evt, btn) {
+    // Retrieve key data
+    const keyData = btn._keyData;
+    if (!keyData) return false; // abort popin when no KeyData
+
+    const popinKeys = keyData.popinKeys;
+    if (!popinKeys) return false; // abort popin when no popin keys at all
+
+    // Normalize popinKeys to always be an array of arrays
+    const popinRows = Array.isArray(popinKeys[0]) ? popinKeys : [popinKeys];
+    if (!this.hasPopinKeyToDisplay(popinRows)) return false; // abort popin when all popin keys are not displayable
+
+    return true;
+  }
+
+  doShowPopin(evt, btn) {
+    this.doResetPopin();
+    this.doCreatePopin(evt, btn);
+  }
+
+  doResetPopin() {
+    // Detach existing popin from DOM
+    this.closePopin();
+  }
+
+  doCreatePopin(evt, btn) {
+    const popin = this.doPopin(evt, btn);
+    this.doStylePopin();
+    this.doAttachPopin(popin);
+    this.doQueryPopinElements();
+    this.doListenPopin();
+  }
+
+  doPopin(evt, btn) {
+
+    // Popin is a special beast.
+    // To be displayed, we first need to find at least one key that is displayble in current keyboard mode and states.
+    // 
+    // Here is the pseudo-code to handle this:
+    // - For each row of the normalized popinKeys config
+    //     - For each key of the row
+    //       - if key is displayable into current keyboard mode and state, then: <-- we only know here for sure that popin will be shown
+    //          - key can be displayed in the row
+    //          - row can be displayed in the popin
+    //          - popin can be displayed to user 
+
+    // Check for layout config defined "popinKeys" for the popin source button
+    const cellConfig = btn._keyData;
+    if (!cellConfig) return null; // No layout config defined for the source button
+    if (!cellConfig.popinKeys) return null; // No layout config defined "popinKeys" for the popin source button
+    if (!cellConfig.popinKeys.length < 1;) return null; // Empty layout config defined "popinKeys" for the popin source button
+
+    // Prepare popinConfig: normalize popinKeys to always be an array of array(s) (row and cells)
+    popinConfig = Array.isArray(cellConfig.popinKeys[0]) ? popinKeys : [popinKeys];
+
+    // Create popin in advance
+    const popin = document.createElement("div");
+    popin.className = "key-popin";
+    popin.style.position = "absolute"; // relative to card
+    card.style.position = "relative"; // ensure card is anchor
+
+    for (const rowConfig of popinConfig) {
+      const row = this.doPopinRow(rowConfig);
+      this.doStylePopinRow();
+      this.doAttachPopinRow(popin, row);
+      this.doQueryPopinElements();
+      this.doListenPopin();
+    }
+
+    // Here we know for sure that popin needs to be displayed
+    this._currentPopinBaseKey = btn; // set the base key when we are sure poppin will be displayed
+
+    this._popin = popin;
+
+    // 1. Add to card and get its bounding box
+    card.appendChild(popin);
+    const cardRect = card.getBoundingClientRect();
+    const popinRect = popin.getBoundingClientRect();
+
+    // 2. Compute initial popin position relative to card
+    let left = evt.clientX - cardRect.left - popinRect.width / 2;
+    let top = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
+
+    // 3. Clamp horizontally (inside card)
+    if (left < 0) {
+      left = 0;
+    } else if (left + popinRect.width > cardRect.width) {
+      left = cardRect.width - popinRect.width;
+    }
+
+    // 4. Clamp vertically (inside card)
+    if (top < 0) {
+      // If not enough space above, show below
+      top = evt.clientY - cardRect.top + 8;
+      // If that too overflows bottom, clamp
+      if (top + popinRect.height > cardRect.height) {
+        top = cardRect.height - popinRect.height;
+      }
+    }
+
+    // 5. Apply style
+    popin.style.left = `${left}px`;
+    popin.style.top = `${top}px`;
+    popin.style.position = "absolute";
+
+    popin.style.left = `${left}px`;
+    popin.style.top = `${top}px`;
+
+    // Close on pointerup anywhere
+    const close = () => this.closePopin();
+    this._eventManager.addPointerUpListener(document, close, { once: true });
+
+  }
+
+  doStylePopin() {
+    //TODO
+  }
+
+  doAttachPopin(popin) {
+    //TODO
+  }
+
+  doQueryPopinElements() {
+    //TODO
+  }
+
+  doListenPopin() {
+    //TODO
+  }
+
+  doPopinRow(rowConfig) {
+    // Create popin row in advance
+    const popinRow = document.createElement("div");
+    popinRow.className = "key-popin-row";
+
+    for (const cellConfig of rowConfig) {
+      const row = this.doPopinCell(cellConfig);
+      this.doStylePopinCell();
+      this.doAttachPopinCell(popinRow);
+      this.doQueryPopinElements();
+      this.doListenPopin();
+    }
+  }
+
+  doStylePopinRow() {
+    //TODO
+  }
+
+  doAttachPopinRow(popin, row) {
+    popin.appendChild(row);
+  }
+
+  doQueryPopinRowElements() {
+    //TODO
+  }
+
+  doListenPopinRow() {
+    //TODO
+  }
+
+  doPopinCell(cellConfig) {
+    // Determine displayed label on key
+    const cellLabel = this.getPopinCellLabel(cellConfig);
+
+    // When label is missing, skip the whole key
+    if (!cellLabel) return null;
+
+    // create and add the popin key (ie popinCell) into the popin content 
+    const popinCell = document.createElement("button");
+    popinCell.classList.add("key");
+
+    if (cellConfig.width) popinCell.classList.add(cellConfig.width);
+
+    const label = document.createElement("span");
+    label.className = "label-lower";
+    label.textContent = cellConfig.label.normal || "";
+
+    popinCell.appendChild(label);
+
+    popinCell._label = label;
+    popinCell._keyData = cellConfig;
+
+    // Set displayed labels
+    popinCell._label.textContent = cellLabel;
+
+    // Make same width than base button
+    const baseBtnWidth = btn.getBoundingClientRect().width;
+    popinCell.style.width = `${baseBtnWidth}px`;
+
+    // Handle events on button
+    this._eventManager.addPointerEnterListener(popinCell, () => popinCell.classList.add("active"));
+    this._eventManager.addPointerLeaveListener(popinCell, () => popinCell.classList.remove("active"));
+    this._eventManager.addPointerUpListener(popinCell, (e) => {
+      this.handleKeyPress(popinCell);
+      this.handleKeyRelease(popinCell);
+      this.closePopin();
+    });
+
+    popinRow.appendChild(popinCell);
+
+    // trigger animation after the element is attached
+    requestAnimationFrame(() => {
+      popinCell.classList.add("enter-active");
+    });
+  }
+  doStylePopinCell() {
+    //TODO
+  }
+  doAttachPopinCell(popinRow) {
+    //TODO
+  }
+  doQueryPopinCellElements() {
+    //TODO
+  }
+  doListenPopinCell() {
+    //TODO
+  }
+
+  closePopin() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("closePopin()"));
+    
+    // Popin attached to a parent element in DOM
+    if (this._popin?.parentElement) {
+      this._popin.remove(); // Remove popin from DOM
+      this._popin = null;
+    }
+  }
+
+  addPopinTimeout(evt) {
+    return setTimeout(() => {
+      const popinEntry = this._popinTimeouts.get(evt.pointerId);
+      if (popinEntry && !popinEntry["popin-detected"]) {
+        // Button is still pressed and popin as not been already been shown
+        popinEntry["popin-detected"] = true; // Mark popin as shown
+        const btn = popinEntry?.["source"];
+        this.showPopin(evt, btn); //TODO: treat this function
+      }
+    }, this.triggerLongClick); // long-press duration
+  }
+
+  clearPopinTimeout(evt) {
+    const popinTimeout = this._popinTimeouts.get(evt.pointerId)?.["popin-timeout"];
+    if (popinTimeout) clearTimeout(popinTimeout);
   }
 
   // configuration defaults
@@ -835,6 +851,26 @@ class AndroidKeyboardCard extends HTMLElement {
 
   getCardSize() {
     return 1;
+  }
+
+  getPopinCellLabel(cellConfig) {
+    let cellLabel = null;
+    if (this._currentMode === this._MODE_NORMAL) {
+      if (this._shiftState === this._STATE_NORMAL) {
+        cellLabel = cellConfig.label.normal;
+      } else if (this._shiftState === this._STATE_SHIFT_ONCE) {
+        cellLabel = cellConfig.label.shift;
+      } else if (this._shiftState === this._STATE_SHIFT_LOCKED) {
+        cellLabel = cellConfig.label.shift;
+      }
+    } else if (this._currentMode === this._MODE_ALT) {
+      if (this._altState === this._STATE_ALT_PAGE_ONE) {
+        cellLabel = cellConfig.label.alt1;
+      } else if (this._altState === this._STATE_ALT_PAGE_TWO) {
+        cellLabel = cellConfig.label.alt2;
+      }
+    }
+    return cellLabel;
   }
 
   // Set key data
@@ -871,23 +907,6 @@ class AndroidKeyboardCard extends HTMLElement {
     this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
   }
 
-  addPopinTimeout(evt) {
-    return setTimeout(() => {
-      const popinEntry = this._popinTimeouts.get(evt.pointerId);
-      if (popinEntry && !popinEntry["popin-detected"]) {
-        // Button is still pressed and popin as not been already been shown
-        popinEntry["popin-detected"] = true; // Mark popin as shown
-        const btn = popinEntry?.["source"];
-        this.showPopin(evt, btn); //TODO: treat this function
-      }
-    }, this.triggerLongClick); // long-press duration
-  }
-
-  clearPopinTimeout(evt) {
-    const popinTimeout = this._popinTimeouts.get(evt.pointerId)?.["popin-timeout"];
-    if (popinTimeout) clearTimeout(popinTimeout);
-  }
-
   onButtonPointerDown(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
@@ -901,9 +920,6 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doKeyPress(evt, btn) {
-    // reset the poppin base key unconditionally to ensure 
-    // it does not stay stuck forever in odd conditions
-    this._currentPopinBaseKey = null;
 
     // Mark clickable button active for visual feedback
     btn.classList.add("active");
@@ -933,13 +949,16 @@ class AndroidKeyboardCard extends HTMLElement {
 
         // Special key pressed
         if (btn._keyData.special) {
-        
-          // Press HID special key
+
+          // Send special key press to HID
           if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-special-pressed:", code));
           this.appendCode(hass, code);
-        
+
         } else {
-          // Normal key pressed: add popin timeout
+
+          // Normal key pressed: do not press the key into HID (key will be pressed on release)
+          
+          // add popin timeout
           this._popinTimeouts.set(evt.pointerId, { "popin-detected": false, "source": btn , "popin-timeout": this.addPopinTimeout(evt) } );
         }
       }
@@ -950,12 +969,16 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doKeyRelease(evt, btn) {
+
     // Retrieve popin entry (when existing)
     const popinEntry = this._popinTimeouts.get(evt.pointerId);
 
     // Remove popin timeout (when set before)
     this.clearPopinTimeout(evt);
     this._popinTimeouts.delete(evt.pointerId);
+
+    // Unmark clickable button active for visual feedback
+    btn.classList.remove("active");
 
     // Retrieve clickable button data
     const keyData = btn._keyData;
@@ -965,22 +988,19 @@ class AndroidKeyboardCard extends HTMLElement {
     const code = keyData.code;
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
 
-    // Suppress this clickable button release if toggable virtual modifier
+    // Suppress when toggable virtual modifier press
     if (code === "MOD_LEFT_SHIFT") {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (toggable virtual modifier)`));
       return;
     }
 
-    // Unmark clickable button active for visual feedback
-    btn.classList.remove("active");
-
-    // Suppress this clickable button release if used to trigger popin for extended chars
+    // Suppress when pointer triggered a popin with extended chars
     if (popinEntry && popinEntry["popin-detected"]) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (button was used to trigger popin for extended chars)`));
       return;
     }
 
-    // Suppress this clickable button release if reference pointer down event was originated from a different clickable button
+    // Suppress when pointer was originated from a different button
     const referenceCode = this._referenceBtn?._keyData?.code;
     if (referenceCode !== code) {
       //TODO: foolproof multiples buttons with same code, by using unique ID per button for reference and comparison, instead of key code
@@ -988,7 +1008,7 @@ class AndroidKeyboardCard extends HTMLElement {
       return;
     }
 
-    // Do not send virtual modifier keys
+    // Suppress virtual modifier key
     if (this.isVirtualModifier(code)) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (virtual modifier)`));
       return;
@@ -1017,7 +1037,7 @@ class AndroidKeyboardCard extends HTMLElement {
       }
 
       // Non-special and not virtual key clicked
-      const charToSend = btn._lowerLabel.textContent || "";
+      const charToSend = btn._label.textContent || "";
       if (charToSend) {
 
         // Click HID key
@@ -1027,8 +1047,8 @@ class AndroidKeyboardCard extends HTMLElement {
     }
 
     // Switch back to normal when "shift-once" was set and a key different from SHIFT was pressed
-    if (this._shiftState === this._SHIFT_STATE_ONCE) {
-      this._shiftState = this._SHIFT_STATE_NORMAL;
+    if (this._shiftState === this._STATE_SHIFT_ONCE) {
+      this._shiftState = this._STATE_NORMAL;
       this.updateLabels();
     }
 
