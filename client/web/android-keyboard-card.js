@@ -581,7 +581,7 @@ class AndroidKeyboardCard extends HTMLElement {
     const label = cellConfig.special 
       ? this.getSpecialLabel(cellConfig, statusLabel) 
       : this.getStandardLabel(cellConfig, statusLabel);
-    return label ? label : (cellConfig.fallback || "")
+    return label ? label : this.getStandardLabel(cellConfig, cellConfig.fallback || "");
   }
 
   // Transform user popin config per (rows/)cell/label
