@@ -689,11 +689,13 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doResetPopin() {
+    const popin = this._elements.popin;
+
     // Detach existing popin from DOM
-    if (this._elements.popin?.parentElement) this._elements.popin.remove();
+    if (popin?.parentElement) this._elements.popin.remove();
 
     // Clear existing popin content from DOM
-    this._elements.popin?.innerHTML = '';
+    if (popin) popin.innerHTML = '';
 
     // Reset popin cells elements (if any)
     this._elements.popinCells = [];
