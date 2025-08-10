@@ -279,9 +279,6 @@ class AndroidKeyboardCard extends HTMLElement {
         background: #5a5a5a !important;
         color: #fff !important;
       }
-      button.key:locked {
-        background: var(--key-active-bg);
-      }
       /* Fix: Ensure locked state is visually dominant */
       button.key.locked,
       button.key:hover.locked,
