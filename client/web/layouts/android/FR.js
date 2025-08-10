@@ -20,7 +20,7 @@ export const layoutAndroidFr = {
         "cells": [
           { "code": "KEY_1", "label": { "normal": "1" }, "fallback": "normal" },
           { "code": "KEY_2", "label": { "normal": "2" }, "fallback": "normal", 
-            "popinKeys": [
+            "popin": [
               { "code": "KEY_GRAVE", "label": { "normal": "²", "shift": "²" } }
             ]
           },
@@ -37,7 +37,7 @@ export const layoutAndroidFr = {
       {
         "cells": [
           { "code": "KEY_Q", "label": { "normal": "a", "shift": "A", "alt1": "+", "alt2": "`" }, 
-            "popinKeys": [
+            "popin": [
               { "code": "KEY_Q_GRAVE", "label": { "normal": "à", "shift": "À" } },
               { "code": "KEY_Q_CIRC",  "label": { "normal": "â", "shift": "Â" } },
               { "code": "KEY_Q_TILDE", "label": { "normal": "ã", "shift": "Ã" } },
@@ -46,7 +46,7 @@ export const layoutAndroidFr = {
           },
           { "code": "KEY_W", "label": { "normal": "z", "shift": "Z", "alt1": "x",  "alt2": "~" }  },
           { "code": "KEY_E", "label": { "normal": "e", "shift": "E", "alt1": "\\", "alt2": "\\"}, 
-            "popinKeys": [
+            "popin": [
               { "code": "KEY_E_ACUTE", "label": { "normal": "é" } },
               { "code": "KEY_E_GRAVE", "label": { "normal": "è", "shift": "È" } },
               { "code": "KEY_E_CIRC",  "label": { "normal": "ê", "shift": "Ê" } },
@@ -56,12 +56,12 @@ export const layoutAndroidFr = {
           { "code": "KEY_R", "label": { "normal": "r", "shift": "R", "alt1": "=", "alt2": "|" }  },
           { "code": "KEY_T", "label": { "normal": "t", "shift": "T", "alt1": "/", "alt2": "{" }  },
           { "code": "KEY_Y", "label": { "normal": "y", "shift": "Y", "alt1": "_", "alt2": "}" }, 
-            "popinKeys": [
+            "popin": [
               { "code": "KEY_Y_UMLAUT","label": { "normal": "ÿ" } }
             ]
           },
           { "code": "KEY_U", "label": { "normal": "u", "shift": "U", "alt1": "<", "alt2": "$" }, 
-            "popinKeys": [
+            "popin": [
               { "code": "KEY_U_GRAVE", "label": { "normal": "ù", "shift": "Ù" } },
               { "code": "KEY_U_CIRC",  "label": { "normal": "û", "shift": "Û" } },
               { "code": "KEY_U_UMLAUT","label": { "normal": "ü", "shift": "Ü" } },
@@ -69,14 +69,14 @@ export const layoutAndroidFr = {
             ]
           },
           { "code": "KEY_I", "label": { "normal": "i", "shift": "I", "alt1": ">", "alt2": "£" }, 
-            "popinKeys": [
+            "popin": [
               { "code": "KEY_I_CIRC",  "label": { "normal": "î", "shift": "Î" } },
               { "code": "KEY_I_UMLAUT","label": { "normal": "ï", "shift": "Ï" } },
               { "code": "KEY_I_GRAVE", "label": { "normal": "ì", "shift": "Ì" } }
             ]
           },
           { "code": "KEY_O", "label": { "normal": "o", "shift": "O", "alt1": "[", "alt2": "°" }, 
-            "popinKeys": [
+            "popin": [
               { "code": "KEY_O_CIRC",  "label": { "normal": "ô", "shift": "Ô" } },
               { "code": "KEY_O_GRAVE", "label": { "normal": "ò", "shift": "Ò" } },
               { "code": "KEY_O_TILDE", "label": { "normal": "õ", "shift": "Õ" } },
@@ -109,7 +109,7 @@ export const layoutAndroidFr = {
           { "code": "KEY_V",          "label": { "normal": "v",      "shift": "V",      "alt1": ":" } },
           { "code": "KEY_B",          "label": { "normal": "b",      "shift": "B",      "alt1": ";" } },
           { "code": "KEY_N",          "label": { "normal": "n",      "shift": "N",      "alt1": "," }, 
-            "popinKeys": [
+            "popin": [
               { "code": "KEY_N_TILDE", "label": { "normal": "ñ", "shift": "Ñ" } }
             ]
           },

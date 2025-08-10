@@ -62,7 +62,7 @@ class AndroidKeyboardCard extends HTMLElement {
     }
   }
   _triggerPopin = 500;
-  _allowedDataFields = new Set(['code', 'special', 'popinKeys', 'label', 'fallback']);
+  _allowedDataFields = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
 
   // private properties
   _config;
@@ -404,17 +404,15 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doCell(rowConfig, cellConfig) {
+    const defaultCellConfig = { "popinConfig": this.createPopinConfig(cellConfig) }; // Create popin config
+
     const cell = document.createElement("button");
     this._elements.cells.push(cell);
     cell.classList.add("key");
     if (cellConfig.special) cell.classList.add("special");
     if (cellConfig.width) cell.classList.add(cellConfig.width);
     if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
-    this.addClickableData(cell, null, cellConfig);
-
-    // Create cell popin config
-    const popinConfig = this.doPopinConfig(cellConfig);
-    this.doAttachPopinConfig(cell, popinConfig);
+    this.addClickableData(cell, defaultCellConfig, cellConfig);
 
     // Create cell content
     const cellContent = this.doCellContent(cellConfig);
@@ -440,44 +438,6 @@ class AndroidKeyboardCard extends HTMLElement {
 
   doListenCell(cell) {
     this.addClickableListeners(cell);
-  }
-
-  doPopinConfig(cellConfig) {
-
-    // Create new popin config
-    const popinConfig = {};
-
-    // Retrieve raw popin config rows
-    let popinRows;
-    const firstPopinKeysConfig = cellConfig.popinKeys?.[0];
-    if (firstPopinKeysConfig) {
-      popinRows = firstPopinKeysConfig;
-    } else {
-      popinRows = Array.isArray(firstPopinKeysConfig) ? popinKeys : [popinKeys];
-    }
-
-    for (const row of popinRows) {
-      const modeToRow = {};
-    
-      for (const { code, label } of row) {
-        for (const [mode, char] of Object.entries(label)) {
-          if (!modeToRow[mode]) modeToRow[mode] = [];
-          modeToRow[mode].push({ code, label: char });
-        }
-      }
-    
-      // Push each row to the corresponding mode
-      for (const [mode, rowItems] of Object.entries(modeToRow)) {
-        if (!popinConfig[mode]) popinConfig[mode] = [];
-        popinConfig[mode].push(rowItems);
-      }
-    }
-    
-    return popinConfig;
-  }
-
-  doAttachPopinConfig(cell, cellPopinConfig) {
-    cell._popinConfig = cellPopinConfig;
   }
 
   doCellContent(cellConfig) {
@@ -753,7 +713,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doPopinCell(cellConfig) {
-    // Determine displayed label on key
+    // Determine displayed label on popin cell
     const cellLabel = this.getPopinCellLabel(cellConfig);
 
     // When label is missing, skip the whole key
@@ -810,6 +770,97 @@ class AndroidKeyboardCard extends HTMLElement {
     //TODO
   }
 
+  // configuration defaults
+  static getStubConfig() {
+    return {
+      layout: "US",
+      haptic: true,
+      log_level: "warn",
+      log_pushback: false,
+      buttons_overrides: {},
+      font_scale: 1.4
+    }
+  }
+
+  getCardSize() {
+    return 1;
+  }
+
+  // Transform user popin config per (rows/)cell/label
+  //
+  // "popin": [
+  //   [                                                                      <-- [optional] rows. When absent, all cells will form a single row.
+  //     { "code": "KEY_E_ACUTE", "label": { "normal": "é" } },               <-- cells / labels
+  //     { "code": "KEY_E_GRAVE", "label": { "normal": "è", "shift": "È" } },
+  //   ],
+  //   [
+  //     { "code": "KEY_E_CIRC",  "label": { "normal": "ê", "shift": "Ê" } }
+  //   ]
+  // ]
+  //
+  // Into popin config per label/row/cell:
+  //
+  // "popinConfig": {
+  //   "normal": [                                                            <-- labels
+  //     [                                                                    <-- rows
+  //       { "code": "KEY_E_ACUTE", "label": "é" },                           <-- cells
+  //       { "code": "KEY_E_GRAVE", "label": "è" },
+  //     ],
+  //     [
+  //       { "code": "KEY_E_CIRC",  "label": "ê" }
+  //     ]
+  //   ],
+  //   "shift": [
+  //     [
+  //       { "code": "KEY_E_GRAVE",  "label": "È" },
+  //       { "code": "KEY_E_CIRC",   "label": "Ê" },
+  //     ]
+  //   ]
+  // }
+  createPopinConfig(cellConfig) {
+
+    // Unlike static keyboard layout cells that always display and figure their label relative to current combination mode of code/mode/state,
+    // popin layout cells are not displayed when their is no content for current combination of code/mode/state.
+    // So to decide whether or not a popin is displayable on a key, 
+    // we need to figure out in advance whether or not there is at least one cell to display 
+    // in the future popin to come (or not) for the combination of code/mode/state.
+    
+    // We use this function to help serving this goal: a popin 
+
+    // Create new popin config
+    const popinConfig = {};
+
+    // Retrieve user popin config per (rows/)cell/label
+    let popinRows;
+    const rawPopinConfig = cellConfig["popin"];
+    const firstPopinKeysConfig = rawPopinConfig?.[0];
+    if (firstPopinKeysConfig) {
+      // single implicit row assumed when only one array of cells defined by user
+      popinRows = Array.isArray(firstPopinKeysConfig) ? rawPopinConfig : [rawPopinConfig];
+    } else {
+      popinRows = [];
+    }
+
+    for (const row of popinRows) {
+      const modeToRow = {};
+
+      for (const { code, label } of row) {
+        for (const [mode, char] of Object.entries(label)) {
+          if (!modeToRow[mode]) modeToRow[mode] = [];
+          modeToRow[mode].push({ code, label: char });
+        }
+      }
+
+      // Push each row to the corresponding mode
+      for (const [mode, rowItems] of Object.entries(modeToRow)) {
+        if (!popinConfig[mode]) popinConfig[mode] = [];
+        popinConfig[mode].push(rowItems);
+      }
+    }
+
+    return popinConfig;
+  }
+
   closePopin() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("closePopin()"));
     
@@ -835,22 +886,6 @@ class AndroidKeyboardCard extends HTMLElement {
   clearPopinTimeout(evt) {
     const popinTimeout = this._popinTimeouts.get(evt.pointerId)?.["popin-timeout"];
     if (popinTimeout) clearTimeout(popinTimeout);
-  }
-
-  // configuration defaults
-  static getStubConfig() {
-    return {
-      layout: "US",
-      haptic: true,
-      log_level: "warn",
-      log_pushback: false,
-      buttons_overrides: {},
-      font_scale: 1.4
-    }
-  }
-
-  getCardSize() {
-    return 1;
   }
 
   getPopinCellLabel(cellConfig) {
