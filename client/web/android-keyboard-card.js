@@ -38,17 +38,17 @@ class AndroidKeyboardCard extends HTMLElement {
             [this._STATE_NORMAL]: {
               "next": this._STATE_SHIFT_ONCE,
               "label": this._LABEL_NORMAL,
-              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["shift-once", "locked"] } ] }
             },
             [this._STATE_SHIFT_ONCE]: {
               "next": this._STATE_SHIFT_LOCKED,
               "label": this._LABEL_SHIFT,
-              "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["active" ] } ] }
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["shift-once"] } ] }
             },
             [this._STATE_SHIFT_LOCKED]: {
               "next": this._STATE_NORMAL,
               "label": this._LABEL_SHIFT,
-              "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["locked" ] } ] }
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["shift-once"] }, { "action": "add", "class_list": ["locked"] } ] }
             }
           }
         },
