@@ -105,7 +105,6 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   setConfig(config) {
-    //throw new Error('Debug error before');
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
     this._config = config;
     this.doCheckConfig();

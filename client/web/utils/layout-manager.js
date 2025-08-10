@@ -46,7 +46,7 @@ export class LayoutManager {
   }
 
   getSafeFontScale() {
-    return this.constructor.getScaleOrDefault(this.getFontScale(), '1rem');
+    return this.getScaleOrDefault(this.getFontScale(), '1rem');
   }
 
   getButtonsOverrides() {
@@ -107,9 +107,9 @@ export class LayoutManager {
     return this.getLayoutName() !== this.getAttachedLayoutName();
   }
 
-  static getScaleOrDefault(scale, defaultScale) {
+  getScaleOrDefault(scale, defaultScale) {
     let scaleOrDefault;
-    if (this.isValidScale(scale)) {
+    if (this.constructor.isValidScale(scale)) {
       scaleOrDefault = this.toScale(scale);
     } else {
       scaleOrDefault = defaultScale;
@@ -119,11 +119,11 @@ export class LayoutManager {
     return scaleOrDefault;
   }
 
-  static toScale(value) {
+  toScale(value) {
     let scale;
-    if (this.isNumber(value) || this.isStringNumber(value)) {
+    if (this.constructor.isNumber(value) || this.constructor.isStringNumber(value)) {
       scale = value + 'rem';
-    } else if (this.isRelativeUnit(value) || this.isAbsoluteUnit(value)) {
+    } else if (this.constructor.isRelativeUnit(value) || this.constructor.isAbsoluteUnit(value)) {
       scale = value;
     } else {
       throw new Error(`Invalid value ${value} for scale`);
