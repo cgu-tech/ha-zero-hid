@@ -699,6 +699,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doAttachPopin(popin);
     this.doQueryPopinElements();
     this.doListenPopin();
+    this.doPositionPopin();
   }
 
   doPopin(evt, cell) {
@@ -714,44 +715,11 @@ class AndroidKeyboardCard extends HTMLElement {
       this.doQueryPopinRowElements();
       this.doListenPopinRow();
     }
-
-    // 1. Get popin bounding box
-    const cardRect = card.getBoundingClientRect();
-    const popinRect = popin.getBoundingClientRect();
-
-    // 2. Compute initial popin position relative to card
-    let left = evt.clientX - cardRect.left - popinRect.width / 2;
-    let top = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
-
-    // 3. Clamp horizontally (inside card)
-    if (left < 0) {
-      left = 0;
-    } else if (left + popinRect.width > cardRect.width) {
-      left = cardRect.width - popinRect.width;
-    }
-
-    // 4. Clamp vertically (inside card)
-    if (top < 0) {
-      // If not enough space above, show below
-      top = evt.clientY - cardRect.top + 8;
-      // If that too overflows bottom, clamp
-      if (top + popinRect.height > cardRect.height) {
-        top = cardRect.height - popinRect.height;
-      }
-    }
-
-    // 5. Apply style
-    popin.style.left = `${left}px`;
-    popin.style.top = `${top}px`;
-    popin.style.position = "absolute";
-
-    popin.style.left = `${left}px`;
-    popin.style.top = `${top}px`;
-
   }
 
   doStylePopin() {
-    popin.style.position = "absolute"; // relative to card
+    // Make popin position absolute (relative to card)
+    popin.style.position = "absolute";
   }
 
   doAttachPopin(popin) {
@@ -766,11 +734,47 @@ class AndroidKeyboardCard extends HTMLElement {
 
   doListenPopin() {
     // When any pointer is up anywhere: close popin
-    this._eventManager.addPointerUpListener(document, () => this.doClosePopin(), { once: true });
+    this._eventManager.addPointerUpListener(document, this.onClosingPopin.bind(this), { once: true });
+  }
+  
+  doPositionPopin() {
+    // Absolute positionning computation and style of popin (requires popin to already be added into DOM as card child)
+    const card = this._elements.card;
+    const popin = this._elements.popin;
+    
+    // 1. Get popin bounding box
+    const cardRect = card.getBoundingClientRect();
+    const popinRect = popin.getBoundingClientRect();
+
+    // 2. Compute initial popin position relative to card
+    let popinLeft = evt.clientX - cardRect.left - popinRect.width / 2;
+    let popinTop = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
+
+    // 3. Clamp horizontally (inside card)
+    if (popinLeft < 0) {
+      popinLeft = 0;
+    } else if (popinLeft + popinRect.width > cardRect.width) {
+      popinLeft = cardRect.width - popinRect.width;
+    }
+
+    // 4. Clamp vertically (inside card)
+    if (popinTop < 0) {
+      // If not enough space above, show below
+      popinTop = evt.clientY - cardRect.top + 8;
+      // If that too overflows bottom, clamp
+      if (popinTop + popinRect.height > cardRect.height) {
+        popinTop = cardRect.height - popinRect.height;
+      }
+    }
+
+    // 5. Set popin absolute position
+    popin.style.position = "absolute";
+    popin.style.left = `${popinLeft}px`;
+    popin.style.top = `${popinTop}px`;
   }
 
   doPopinRow(rowConfig) {
-    // Create popin row in advance
+    // Create popin row
     const popinRow = document.createElement("div");
     popinRow.className = "key-popin-row";
 
@@ -855,6 +859,10 @@ class AndroidKeyboardCard extends HTMLElement {
   }
   doListenPopinCell() {
     //TODO
+  }
+
+  onClosingPopin(evt) {
+    this.doClosePopin();
   }
 
   doClosePopin() {
