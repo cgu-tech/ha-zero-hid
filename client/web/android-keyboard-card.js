@@ -560,7 +560,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   getStatusCurrentState() {
-    if (this.getLogger().isTracEnabled()) console.debug(...this.getLogger().trace("getStatusCurrentState():", this.getStatusCurrentMode()["states"][this._currentState]));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getStatusCurrentState():", this.getStatusCurrentMode()["states"][this._currentState]));
     return this.getStatusCurrentMode()["states"][this._currentState];
   }
 
@@ -569,7 +569,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
   
   getStatusCurrentActions() {
-    if (this.getLogger().isTracEnabled()) console.debug(...this.getLogger().trace("getStatusCurrentActions():", this.getStatusCurrentState()["actions"]));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getStatusCurrentActions():", this.getStatusCurrentState()["actions"]));
     return this.getStatusCurrentState()["actions"];
   }
   
