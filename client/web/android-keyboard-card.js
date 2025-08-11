@@ -1134,7 +1134,7 @@ class AndroidKeyboardCard extends HTMLElement {
     }
 
     // Switch to next state when "shift-once" was set and a key was pressed (other than MOD_LEFT_SHIFT, previously debounced)
-    if (this.constructor._STATE_SHIFT_ONCE) {
+    if (this._currentState === this.constructor._STATE_SHIFT_ONCE) {
       this.activateNextState();
       this.doUpdateCells();
     }
