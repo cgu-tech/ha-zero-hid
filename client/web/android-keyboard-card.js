@@ -575,6 +575,18 @@ class AndroidKeyboardCard extends HTMLElement {
     return this.getStatusCurrentState()["label"];
   }
 
+  isStatusTriggerForMode(trigger) {
+    return !!this.getStatusCurrentMode()["nexts"].find(next => next["trigger"].test(trigger));
+  }
+
+  isStatusTriggerForState(trigger) {
+    return !!this.getStatusCurrentState()["nexts"].find(next => next["trigger"].test(trigger));
+  }
+
+  isStatusTrigger(trigger) {
+    return this.isStatusTriggerForState(trigger) || this.isStatusTriggerForMode(trigger);
+  }
+
   activateNextStatusMode(trigger) {
     const nextMode = this.getStatusCurrentMode()["nexts"].find(next => next["trigger"].test(trigger));
     if (nextMode) {
@@ -1036,8 +1048,13 @@ class AndroidKeyboardCard extends HTMLElement {
     // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
     this._referenceBtn = btn;
 
-    if (!this.isVirtualModifier(code)) {
-      // Non-virtual modifier key press
+    if (this.activateNextStatus(code)) {
+      // Pressed key code triggered keyboard status change
+
+      // Update all cells labels and visuals
+      this.doUpdateCells();
+    } else {
+      // Pressed key code does not triggered keyboard status change
 
       // Special key pressed
       if (btn._keyData.special) {
@@ -1057,13 +1074,6 @@ class AndroidKeyboardCard extends HTMLElement {
           "popin-timeout": this.addPopinTimeout(evt)  // when it expires, triggers the associated inner callback to show (or not) popin
         });
       }
-    }
-
-    if (this.activateNextStatus(code)) {
-      // Pressed key code triggered keyboard status change
-
-      // Update all cells labels and visuals
-      this.doUpdateCells();
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
@@ -1090,18 +1100,6 @@ class AndroidKeyboardCard extends HTMLElement {
     const code = cellConfig.code;
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
 
-    // Suppress when toggable virtual modifier press
-    if (code === "MOD_LEFT_SHIFT") {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (toggable virtual modifier)`));
-      return;
-    }
-
-    // Suppress when pointer triggered a popin with extended chars
-    if (popinEntry && popinEntry["popin-shown"]) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (button was used to trigger popin for extended chars)`));
-      return;
-    }
-
     // Suppress when pointer was originated from a different button
     const referenceCode = this._referenceBtn?._keyData?.code;
     if (referenceCode !== code) {
@@ -1110,9 +1108,15 @@ class AndroidKeyboardCard extends HTMLElement {
       return;
     }
 
-    // Suppress virtual modifier key
+    // Suppress when pointer released over a key code that is a virtual modifier (ie. not a real key to send to HID)
     if (this.isVirtualModifier(code)) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (virtual modifier)`));
+      return;
+    }
+
+    // Suppress when pointer triggered a popin with extended chars
+    if (popinEntry && popinEntry["popin-shown"]) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (button was used to trigger popin for extended chars)`));
       return;
     }
 
