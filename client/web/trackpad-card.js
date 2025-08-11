@@ -126,9 +126,42 @@ class TrackpadCard extends HTMLElement {
 
   doCard() {
     this._elements.card = document.createElement("ha-card");
-    const card = this._elements.card;
-    card.style.borderRadius = "10px";
-    
+    this._elements.card.innerHTML = `
+      <div class="trackpad-container">
+        <div class="trackpad-area">
+          <svg xmlns="http://www.w3.org/2000/svg" class="scroll-icon" viewBox="20 14.75 44 54.5">
+            <rect 
+              x="21" y="15.75"
+              width="42" height="52.5"
+              rx="15.75" ry="15.75"
+              stroke="currentColor" stroke-width="2" fill="none" />
+            <line 
+              x1="42" y1="26.25"
+              x2="42" y2="57.75"
+              stroke="currentColor" stroke-width="2" />
+            <polyline 
+              points="36.75,31.5 42,26.25 47.25,31.5"
+              fill="none" stroke="currentColor" stroke-width="2" />
+            <polyline 
+              points="36.75,52.5 42,57.75 47.25,52.5"
+              fill="none" stroke="currentColor" stroke-width="2" />
+            <line 
+              x1="26.25" y1="42"
+              x2="57.75" y2="42"
+              stroke="currentColor" stroke-width="2" />
+            <polyline 
+              points="31.5,36.75 26.25,42 31.5,47.25"
+              fill="none" stroke="currentColor" stroke-width="2" />
+            <polyline 
+              points="52.5,36.75 57.75,42 52.5,47.25"
+              fill="none" stroke="currentColor" stroke-width="2" />
+          </svg>
+        </div>
+        <div class="buttons">
+        </div>
+      </div>
+    `;
+
     const container = this.doContainer();
     this.doStyleContainer();
     this.doAttachContainer(card, container);
@@ -139,6 +172,16 @@ class TrackpadCard extends HTMLElement {
   doStyle() {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
+      .ha-card {
+        border-radius: 10px;
+      }
+      .trackpad-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
+        background-color: #00000000; /* transparent black */
+      }
       .trackpad-btn {
         height: 60px;
         background: #3b3a3a;
@@ -226,7 +269,6 @@ class TrackpadCard extends HTMLElement {
         z-index: 1;
         pointer-events: none; /* base layer is non-interactive */
       }
-      
       .scroll-zones .zone {
         display: flex;
         align-items: center;
@@ -239,7 +281,6 @@ class TrackpadCard extends HTMLElement {
         transition: background-color 0.2s ease;
         color: white; /* for currentColor */
       }
-      
       .scroll-zones .zone:hover {
         background-color: rgba(255, 255, 255, 0.12);
       }
@@ -291,88 +332,7 @@ class TrackpadCard extends HTMLElement {
     // TODO
   }
 
-  doContainer() {
-    const container = document.createElement("div");
-    container.className = "trackpad-container";
-    
-    const trackpad = this.doTrackpad();
-  }
-
-  doStyleContainer(container) {
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.alignItems = "center";
-    container.style.padding = "0";
-    container.style.backgroundColor = "#00000000";
-  }
-
-  doAttachContainer(card, container) {
-    card.appendChild(container);
-  }
-
-  doQueryContainerElements() {
-    //TODO
-  }
-
-  doListenContainer() {
-    //TODO
-  }
-
   doTrackpad() {
-
-    const trackpad = document.createElement("div");
-    trackpad.className = "trackpad-area";
-
-    // Scroll icon dimensions calculations
-    const strokeWidth = 2;
-    const halfStroke = strokeWidth / 2;
-
-    // Scroll icon bounding Box of Inner Content
-    const bbox = {
-      x: 21,
-      y: 15.75,
-      width: 42,
-      height: 52.5
-    };
-
-    // Scroll icon ViewBox with padding for Stroke
-    const viewBoxX = bbox.x - halfStroke;
-    const viewBoxY = bbox.y - halfStroke;
-    const viewBoxWidth = bbox.width + strokeWidth;
-    const viewBoxHeight = bbox.height + strokeWidth;
-
-    // Create scroll icon element
-    const svgNS = "http://www.w3.org/2000/svg";
-    const scrollIcon = document.createElementNS(svgNS, "svg");
-    scrollIcon.setAttribute("class", "scroll-icon");
-    scrollIcon.setAttribute("viewBox", `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
-    scrollIcon.innerHTML = `
-      <rect 
-        x="${bbox.x}" y="${bbox.y}"
-        width="${bbox.width}" height="${bbox.height}"
-        rx="15.75" ry="15.75"
-        stroke="currentColor" stroke-width="${strokeWidth}" fill="none" />
-      <line 
-        x1="42" y1="26.25"
-        x2="42" y2="57.75"
-        stroke="currentColor" stroke-width="${strokeWidth}" />
-      <polyline 
-        points="36.75,31.5 42,26.25 47.25,31.5"
-        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
-      <polyline 
-        points="36.75,52.5 42,57.75 47.25,52.5"
-        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
-      <line 
-        x1="26.25" y1="42"
-        x2="57.75" y2="42"
-        stroke="currentColor" stroke-width="${strokeWidth}" />
-      <polyline 
-        points="31.5,36.75 26.25,42 31.5,47.25"
-        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
-      <polyline 
-        points="52.5,36.75 57.75,42 52.5,47.25"
-        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
-    `;
 
     // Track scrollIcon toggle
     this.eventManager.addPointerDownListener(scrollIcon, (e) => {
@@ -598,49 +558,7 @@ class TrackpadCard extends HTMLElement {
     return 3;
   }
 
-  async connectedCallback() {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
-
-    // Check if layout needs loading
-    if (!this._layoutLoaded.buttonsMode || this._layoutLoaded.buttonsMode !== this.buttonsMode) {
-      this._layoutReady = false;
-
-      // Load layout
-      await this.loadLayout(this.buttonsMode);
-
-      // Update loaded layout
-      this._layoutLoaded.buttonsMode = this.buttonsMode;
-      this._layoutReady = true;
-    }
-
-    // Only build UI if hass is already set
-    if (this._hass) {
-      this.resourceManager.synchronizeResources(this._hass);
-      this.buildUi(this._hass);
-    }
-  }
-  
-  async loadLayout(buttonsMode) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(buttonsMode):", buttonsMode));
-    const buttonsFullLayout = this.constructor._LAYOUTS.find(buttonsLayout => buttonsLayout.mode === buttonsMode);
-    if (buttonsFullLayout) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Buttons layout found for buttons mode:${buttonsMode}:`, buttonsFullLayout.layout));
-      this.buttonsLayout = buttonsFullLayout.layout;
-    } else {
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`No buttons layout found for buttons mode:${buttonsMode}. Using default buttons layout:`, this.buttonsLayoutDefault.layout));
-      this.buttonsLayout = this.buttonsLayoutDefault.layout;
-    }
-  }
-
-  set hass(hass) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
-    this._hass = hass;
-    this.logger.setHass(hass);
-    if (this._layoutReady && !this._uiBuilt) {
-      this.buildUi(this._hass);
-    }
-  }
-
+// TODO: TO REMOVE
   buildUi(hass) {
     if (this._uiBuilt) {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
@@ -780,55 +698,36 @@ class TrackpadCard extends HTMLElement {
     const trackpad = document.createElement("div");
     trackpad.className = "trackpad-area";
 
-    // Scroll icon dimensions calculations
-    const strokeWidth = 2;
-    const halfStroke = strokeWidth / 2;
-
-    // Scroll icon bounding Box of Inner Content
-    const bbox = {
-      x: 21,
-      y: 15.75,
-      width: 42,
-      height: 52.5
-    };
-
-    // Scroll icon ViewBox with padding for Stroke
-    const viewBoxX = bbox.x - halfStroke;
-    const viewBoxY = bbox.y - halfStroke;
-    const viewBoxWidth = bbox.width + strokeWidth;
-    const viewBoxHeight = bbox.height + strokeWidth;
-
     // Create scroll icon element
-    const svgNS = "http://www.w3.org/2000/svg";
-    const scrollIcon = document.createElementNS(svgNS, "svg");
+    const scrollIcon = document.createElementNS(Globals.SVG_NAMESPACE, "svg");
     scrollIcon.setAttribute("class", "scroll-icon");
-    scrollIcon.setAttribute("viewBox", `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+    scrollIcon.setAttribute("viewBox", `20 14.75 44 54.5`);
     scrollIcon.innerHTML = `
       <rect 
-        x="${bbox.x}" y="${bbox.y}"
-        width="${bbox.width}" height="${bbox.height}"
+        x="21" y="15.75"
+        width="42" height="52.5"
         rx="15.75" ry="15.75"
-        stroke="currentColor" stroke-width="${strokeWidth}" fill="none" />
+        stroke="currentColor" stroke-width="2" fill="none" />
       <line 
         x1="42" y1="26.25"
         x2="42" y2="57.75"
-        stroke="currentColor" stroke-width="${strokeWidth}" />
+        stroke="currentColor" stroke-width="2" />
       <polyline 
         points="36.75,31.5 42,26.25 47.25,31.5"
-        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
+        fill="none" stroke="currentColor" stroke-width="2" />
       <polyline 
         points="36.75,52.5 42,57.75 47.25,52.5"
-        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
+        fill="none" stroke="currentColor" stroke-width="2" />
       <line 
         x1="26.25" y1="42"
         x2="57.75" y2="42"
-        stroke="currentColor" stroke-width="${strokeWidth}" />
+        stroke="currentColor" stroke-width="2" />
       <polyline 
         points="31.5,36.75 26.25,42 31.5,47.25"
-        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
+        fill="none" stroke="currentColor" stroke-width="2" />
       <polyline 
         points="52.5,36.75 57.75,42 52.5,47.25"
-        fill="none" stroke="currentColor" stroke-width="${strokeWidth}" />
+        fill="none" stroke="currentColor" stroke-width="2" />
     `;
 
     // Track scrollIcon toggle
@@ -1091,15 +990,14 @@ class TrackpadCard extends HTMLElement {
   }
 
   createArrowSvg(direction) {
-    const svgNS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(svgNS, "svg");
+    const svg = document.createElementNS(Globals.SVG_NAMESPACE, "svg");
     svg.setAttribute("viewBox", "0 0 24 24");
     svg.setAttribute("width", "24");
     svg.setAttribute("height", "24");
     svg.setAttribute("fill", "none");
 
-    const arrow1 = document.createElementNS(svgNS, "polyline");
-    const arrow2 = document.createElementNS(svgNS, "polyline");
+    const arrow1 = document.createElementNS(Globals.SVG_NAMESPACE, "polyline");
+    const arrow2 = document.createElementNS(Globals.SVG_NAMESPACE, "polyline");
 
     [arrow1, arrow2].forEach(arrow => {
       arrow.setAttribute("stroke", "currentColor");
