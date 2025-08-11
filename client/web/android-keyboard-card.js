@@ -27,45 +27,52 @@ class AndroidKeyboardCard extends HTMLElement {
   static _LABEL_ALT1 = "alt1";
   static _LABEL_ALT2 = "alt2";
 
+  static _TRIGGER_NEXT_SHIFT = /^MOD_LEFT_SHIFT$/; // MOD_LEFT_SHIFT pressed
+  static _TRIGGER_BACK_TO_NORMAL = /^(?!MOD_LEFT_SHIFT$).*/; // Anything except MOD_LEFT_SHIFT pressed
+  static _TRIGGER_NEXT_MODE = /^KEY_MODE$/; // KEY_MODE pressed
+
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
     this._STATUS_MAP = {
       "init": { "mode": this._MODE_NORMAL, "state": this._STATE_NORMAL },
       "modes": {
         [this._MODE_NORMAL]: {
-          "next": { "mode": this._MODE_ALT, "state": this._STATE_ALT_PAGE_ONE },
           "states": {
             [this._STATE_NORMAL]: {
-              "next": this._STATE_SHIFT_ONCE,
               "label": this._LABEL_NORMAL,
-              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["shift-once", "locked"] } ] }
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["shift-once", "locked"] } ] },
+              "nexts": [ { "trigger": this._TRIGGER_NEXT_SHIFT, "mode": this._MODE_NORMAL, "state": this._STATE_SHIFT_ONCE } ]
             },
             [this._STATE_SHIFT_ONCE]: {
-              "next": this._STATE_SHIFT_LOCKED,
               "label": this._LABEL_SHIFT,
-              "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["shift-once"] } ] }
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "add", "class_list": ["shift-once"] } ] },
+              "nexts": [ 
+                { "trigger": this._TRIGGER_NEXT_SHIFT, "mode": this._MODE_NORMAL, "state": this._STATE_SHIFT_LOCKED },
+                { "trigger": this._TRIGGER_BACK_TO_NORMAL, "mode": this._MODE_NORMAL, "state": this._STATE_NORMAL },
+              ]
             },
             [this._STATE_SHIFT_LOCKED]: {
-              "next": this._STATE_NORMAL,
               "label": this._LABEL_SHIFT,
-              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["shift-once"] }, { "action": "add", "class_list": ["locked"] } ] }
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["shift-once"] }, { "action": "add", "class_list": ["locked"] } ] },
+              "nexts": [ { "trigger": this._TRIGGER_NEXT_SHIFT, "mode": this._MODE_NORMAL, "state": this._STATE_NORMAL } ]
             }
-          }
+          },
+          "nexts": [ { "trigger": this._TRIGGER_NEXT_MODE, "mode": this._MODE_ALT, "state": this._STATE_ALT_PAGE_ONE } ]
         },
         [this._MODE_ALT]: {
-          "next": { "mode": this._MODE_NORMAL, "state": this._STATE_NORMAL },
           "states": {
             [this._STATE_ALT_PAGE_ONE]: {
-              "next": this._STATE_ALT_PAGE_TWO,
               "label": this._LABEL_ALT1,
-              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] },
+              "nexts": [ { "trigger": this._TRIGGER_NEXT_SHIFT, "mode": this._MODE_ALT, "state": this._STATE_ALT_PAGE_TWO } ]
             },
             [this._STATE_ALT_PAGE_TWO]: {
-              "next": this._STATE_ALT_PAGE_ONE,
               "label": this._LABEL_ALT2,
-              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] }
+              "actions": { "MOD_LEFT_SHIFT": [ { "action": "remove", "class_list": ["active", "locked"] } ] },
+              "nexts": [ { "trigger": this._TRIGGER_NEXT_SHIFT, "mode": this._MODE_ALT, "state": this._STATE_ALT_PAGE_ONE } ]
             }
-          }
+          },
+          "nexts": [ { "trigger": this._TRIGGER_NEXT_MODE, "mode": this._MODE_NORMAL, "state": this._STATE_NORMAL } ]
         }
       }
     };
@@ -556,18 +563,10 @@ class AndroidKeyboardCard extends HTMLElement {
     return this.constructor._STATUS_MAP["modes"][this._currentMode];
   }
 
-  getStatusNextMode() {
-    return this.getStatusCurrentMode()["next"];
-  }
-
   getStatusCurrentState() {
     return this.getStatusCurrentMode()["states"][this._currentState];
   }
 
-  getStatusNextState() {
-    return this.getStatusCurrentState()["next"];
-  }
-  
   getStatusCurrentActions() {
     return this.getStatusCurrentState()["actions"];
   }
@@ -576,14 +575,26 @@ class AndroidKeyboardCard extends HTMLElement {
     return this.getStatusCurrentState()["label"];
   }
 
-  activateNextMode() {
-    const nextMode = this.getStatusNextMode();
-    this._currentMode = nextMode["mode"];
-    this._currentState = nextMode["state"];
+  activateNextStatusMode(trigger) {
+    const nextMode = this.getStatusCurrentMode()["nexts"].find(next => next["trigger"].test(trigger));
+    if (nextMode) {
+      this._currentMode = nextMode["mode"];
+      this._currentState = nextMode["state"];
+    }
+    return !!nextMode;
   }
 
-  activateNextState() {
-    this._currentState = this.getStatusNextState();
+  activateNextStatusState(trigger) {
+    const nextState = this.getStatusCurrentState()["nexts"].find(next => next["trigger"].test(trigger));
+    if (nextState) {
+      this._currentMode = nextState["mode"];
+      this._currentState = nextState["state"];
+    }
+    return !!nextState;
+  }
+  
+  activateNextStatus(trigger) {
+    return this.activateNextStatusState(trigger) || this.activateNextStatusMode(trigger);
   }
 
   getStandardLabel(cellConfig, statusLabel) {
@@ -1025,27 +1036,17 @@ class AndroidKeyboardCard extends HTMLElement {
     // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
     this._referenceBtn = btn;
 
-    if (this.isVirtualModifier(code)) {
-      // Virtual modifier key press
-      
-      // change to next mode and/or state
-      if (code === "KEY_MODE") this.activateNextMode();
-      if (code === "MOD_LEFT_SHIFT") this.activateNextState();
-
-      // Update all cells labels and visuals
-      this.doUpdateCells();
-    } else {
+    if (!this.isVirtualModifier(code)) {
       // Non-virtual modifier key press
 
       // Special key pressed
       if (btn._keyData.special) {
 
         // Send special key press to HID
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("key-special-pressed:", code));
         this.appendCode(code);
       } else {
         // Normal key pressed
-        
+
         // Do not send pressed key to HID (key will be send to HID on release)
 
         // add popin timeout
@@ -1056,6 +1057,13 @@ class AndroidKeyboardCard extends HTMLElement {
           "popin-timeout": this.addPopinTimeout(evt)  // when it expires, triggers the associated inner callback to show (or not) popin
         });
       }
+    }
+
+    if (this.activateNextStatus(code)) {
+      // Pressed key code triggered keyboard status change
+
+      // Update all cells labels and visuals
+      this.doUpdateCells();
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
