@@ -382,7 +382,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
   doQueryElements() {
     const card = this._elements.card;
-    this._elements.wrapper = card.querySelector(".keyboard-container");
+    this._elements.container = card.querySelector(".keyboard-container");
   }
 
   doListen() {
@@ -415,7 +415,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doResetPopin();
 
     // Clear existing layout content from DOM
-    this._elements.wrapper.innerHTML = '';
+    this._elements.container.innerHTML = '';
 
     // Reset cells contents elements (if any)
     this._elements.cellContents = []
@@ -466,7 +466,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doAttachRow(row) {
-    this._elements.wrapper.appendChild(row);
+    this._elements.container.appendChild(row);
   }
 
   doQueryRowElements() {

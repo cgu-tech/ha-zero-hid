@@ -157,16 +157,10 @@ class TrackpadCard extends HTMLElement {
               fill="none" stroke="currentColor" stroke-width="2" />
           </svg>
         </div>
-        <div class="buttons">
+        <div class="buttons-area">
         </div>
       </div>
     `;
-
-    const container = this.doContainer();
-    this.doStyleContainer();
-    this.doAttachContainer(card, container);
-    this.doQueryContainerElements();
-    this.doListenContainer();
   }
 
   doStyle() {
@@ -294,45 +288,16 @@ class TrackpadCard extends HTMLElement {
 
   doQueryElements() {
     const card = this._elements.card;
-    this._elements.wrapper = card.querySelector(".keyboard-container");
+    this._elements.container = card.querySelector(".trackpad-container");
+    this._elements.trackpad = card.querySelector(".trackpad-area");
+    this._elements.scrollButton = card.querySelector(".scroll-icon");
+    this._elements.buttons = card.querySelector(".buttons-area");
   }
 
   doListen() {
     //TODO: add global PointerUp listener?
-  }
 
-  doUpdateConfig() {
-    if (this._layoutManager.configuredLayoutChanged()) {
-      this.doUpdateLayout();
-    }
-  }
-
-  doUpdateHass() {
-    //TODO
-  }
-
-  doUpdateLayout() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout() + this._currentMode, this._currentState", this._currentMode, this._currentState));
-    this.doResetLayout();
-    this.doCreateLayout();
-  }
-
-  doResetLayout() {
-    // Clear existing layout content from DOM
-    this._elements.container.innerHTML = '';
-
-    // Reset attached layout
-    this._layoutManager.resetAttachedLayout();
-  }
-
-  doCreateLayout() {
-    // Mark configured layout as attached
-    this._layoutManager.configuredLayoutAttached();
-
-    // TODO
-  }
-
-  doTrackpad() {
+    //TODO: setup instance bindings
 
     // Track scrollIcon toggle
     this.eventManager.addPointerDownListener(scrollIcon, (e) => {
@@ -340,47 +305,6 @@ class TrackpadCard extends HTMLElement {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scrollIcon pointerDown(e):", e));
       this.isToggleClick = true;
     });
-
-    this.scrollContainer = document.createElement("div");
-    this.scrollContainer.classList.add("scroll-zones");
-
-    for (const zone of ["top", "bottom", "left", "right"]) {
-      const el = document.createElement("div");
-      el.classList.add("zone", zone);
-      el.dataset.zone = zone;
-
-      this.eventManager.addPointerDownListener(el, (e) => {
-        e.stopImmediatePropagation();
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll pointerDown(e):", e));
-
-        // Scroll once
-        const zone = e.currentTarget.dataset.zone;
-        this.scrollZone(zone);
-
-        // Setup repeated scrolls for long-press of scroll button
-        this.scrollsClick.set(e.pointerId, { "event": e , "long-scroll-timeout": this.addLongScrollTimeout(zone, e, this.triggerLongScroll) } );
-      });
-      this.eventManager.addPointerUpListener(el, (e) => {
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll pointerUp(e):", e));
-        this.clearLongScrollTimeout(e);
-        this.scrollsClick.delete(e.pointerId);
-      });
-      this.eventManager.addPointerCancelListener(el, (e) => {
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll Cancel(e):", e));
-        this.clearLongScrollTimeout(e);
-        this.scrollsClick.delete(e.pointerId);
-      });
-      this.eventManager.addPointerLeaveListener(el, (e) => {
-        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll Leave(e):", e));
-        this.clearLongScrollTimeout(e);
-        this.scrollsClick.delete(e.pointerId);
-      });
-
-      const scrollArrowIcon = this.createArrowSvg(zone);
-      el.appendChild(scrollArrowIcon);
-
-      this.scrollContainer.appendChild(el);
-    }
 
     this.eventManager.addPointerUpListener(scrollIcon, (e) => {
       e.stopPropagation(); // Prevents underneath trackpad click
@@ -394,9 +318,7 @@ class TrackpadCard extends HTMLElement {
 
       this.updateScrollZones(trackpad);
     });
-
-    trackpad.appendChild(scrollIcon);
-
+    
     // Track touches
     this.eventManager.addPointerDownListener(trackpad, (e) => {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("touches pointerDown(e):", e));
@@ -479,8 +401,83 @@ class TrackpadCard extends HTMLElement {
         if (updateStartPoint) this.pointersStart.set(e.pointerId, e);
       }
     });
-    container.appendChild(trackpad);
+  }
 
+  doUpdateConfig() {
+    if (this._layoutManager.configuredLayoutChanged()) {
+      this.doUpdateLayout();
+    }
+  }
+
+  doUpdateHass() {
+    //TODO
+  }
+
+  doUpdateLayout() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout() + this._currentMode, this._currentState", this._currentMode, this._currentState));
+    this.doResetLayout();
+    this.doCreateLayout();
+  }
+
+  doResetLayout() {
+    // Clear existing layout content from DOM
+    this._elements.container.innerHTML = '';
+
+    // Reset attached layout
+    this._layoutManager.resetAttachedLayout();
+  }
+
+  doCreateLayout() {
+    // Mark configured layout as attached
+    this._layoutManager.configuredLayoutAttached();
+
+    // TODO
+  }
+
+  doScrollZones() {
+    this.scrollContainer = document.createElement("div");
+    this.scrollContainer.classList.add("scroll-zones");
+
+    for (const zone of ["top", "bottom", "left", "right"]) {
+      const el = document.createElement("div");
+      el.classList.add("zone", zone);
+      el.dataset.zone = zone;
+
+      this.eventManager.addPointerDownListener(el, (e) => {
+        e.stopImmediatePropagation();
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll pointerDown(e):", e));
+
+        // Scroll once
+        const zone = e.currentTarget.dataset.zone;
+        this.scrollZone(zone);
+
+        // Setup repeated scrolls for long-press of scroll button
+        this.scrollsClick.set(e.pointerId, { "event": e , "long-scroll-timeout": this.addLongScrollTimeout(zone, e, this.triggerLongScroll) } );
+      });
+      this.eventManager.addPointerUpListener(el, (e) => {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll pointerUp(e):", e));
+        this.clearLongScrollTimeout(e);
+        this.scrollsClick.delete(e.pointerId);
+      });
+      this.eventManager.addPointerCancelListener(el, (e) => {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll Cancel(e):", e));
+        this.clearLongScrollTimeout(e);
+        this.scrollsClick.delete(e.pointerId);
+      });
+      this.eventManager.addPointerLeaveListener(el, (e) => {
+        if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("scroll Leave(e):", e));
+        this.clearLongScrollTimeout(e);
+        this.scrollsClick.delete(e.pointerId);
+      });
+
+      const scrollArrowIcon = this.createArrowSvg(zone);
+      el.appendChild(scrollArrowIcon);
+
+      this.scrollContainer.appendChild(el);
+    }
+  }
+  
+  doButtons() {
     // Buttons
     if (this.buttonsLayout && this.buttonsLayout.length > 0) {
       if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating buttons for mode:${this.buttonsMode}`));
@@ -560,175 +557,6 @@ class TrackpadCard extends HTMLElement {
 
 // TODO: TO REMOVE
   buildUi(hass) {
-    if (this._uiBuilt) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
-      return;
-    }
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
-
-    // Clear existing content (if any)
-    this.shadowRoot.innerHTML = '';
-
-    // Mark UI as "built" to prevent re-enter
-    this._uiBuilt = true;
-
-    // Update the logger
-    //this.logger.update(this.loglevel, hass, this.logpushback);
-
-    const card = document.createElement("ha-card");
-    card.style.borderRadius = "10px";
-
-    const style = document.createElement("style");
-    style.textContent = `
-      .trackpad-btn {
-        height: 60px;
-        background: #3b3a3a;
-        border: none;
-        cursor: pointer;
-        transition: background 0.2s ease;
-      }
-      .trackpad-btn:hover {
-        background: #4a4a4a;
-      }
-      .trackpad-btn:active {
-        background: #2c2b2b;
-      }
-      .trackpad-left {
-        border-bottom-left-radius: 10px;
-        flex: 3;
-      }
-      .trackpad-middle {
-        flex: 1;
-      }
-      .trackpad-right {
-        border-bottom-right-radius: 10px;
-        flex: 3;
-      }
-      .trackpad-solo {
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-        flex: 7;
-      }
-      .btn-separator {
-        width: 1px;
-        background-color: #0a0a0a;
-      }
-      .trackpad-area {
-        cursor: crosshair;
-        background: #3b3a3a;
-        height: 200px;
-        width: 100%;
-        touch-action: none;
-        position: relative;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-        border-bottom: 1px solid #0a0a0a;
-        transition: background 0.2s ease;
-      }
-      .trackpad-area:active {
-        background: #2c2b2b !important;
-      }
-      .scroll-icon {
-        position: absolute;
-        top: 0px;
-        right: 0px;
-        padding-top: 2%;
-        padding-bottom: 3%;
-        padding-left: 3%;
-        padding-right: 3%;
-        width: auto;
-        height: 22.5%;
-        z-index: 2;
-        pointer-events: auto;
-        opacity: 0.7;
-        fill: #eee;
-        stroke: #eee;
-        cursor: pointer;
-        transition: stroke 0.3s ease, fill 0.3s ease;
-        filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.6));
-      }
-      .trackpad-area.dragging .scroll-icon {
-        cursor: crosshair;
-      }
-      .no-buttons {
-        height: 260px;
-        border-bottom: none; /* or your desired override */
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-      }
-      .scroll-icon.toggled-on {
-        stroke: #44739e !important;
-        fill: #44739e !important;
-        color: #44739e !important;
-      }
-      .scroll-zones {
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        pointer-events: none; /* base layer is non-interactive */
-      }
-      
-      .scroll-zones .zone {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        background-color: rgba(255, 255, 255, 0.05);
-        pointer-events: auto;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-sizing: border-box;
-        transition: background-color 0.2s ease;
-        color: white; /* for currentColor */
-      }
-      
-      .scroll-zones .zone:hover {
-        background-color: rgba(255, 255, 255, 0.12);
-      }
-    `;
-    this.shadowRoot.appendChild(style);
-
-    const container = document.createElement("div");
-    container.className = "trackpad-container";
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.alignItems = "center";
-    container.style.padding = "0";
-    container.style.backgroundColor = "#00000000";
-
-    const trackpad = document.createElement("div");
-    trackpad.className = "trackpad-area";
-
-    // Create scroll icon element
-    const scrollIcon = document.createElementNS(Globals.SVG_NAMESPACE, "svg");
-    scrollIcon.setAttribute("class", "scroll-icon");
-    scrollIcon.setAttribute("viewBox", `20 14.75 44 54.5`);
-    scrollIcon.innerHTML = `
-      <rect 
-        x="21" y="15.75"
-        width="42" height="52.5"
-        rx="15.75" ry="15.75"
-        stroke="currentColor" stroke-width="2" fill="none" />
-      <line 
-        x1="42" y1="26.25"
-        x2="42" y2="57.75"
-        stroke="currentColor" stroke-width="2" />
-      <polyline 
-        points="36.75,31.5 42,26.25 47.25,31.5"
-        fill="none" stroke="currentColor" stroke-width="2" />
-      <polyline 
-        points="36.75,52.5 42,57.75 47.25,52.5"
-        fill="none" stroke="currentColor" stroke-width="2" />
-      <line 
-        x1="26.25" y1="42"
-        x2="57.75" y2="42"
-        stroke="currentColor" stroke-width="2" />
-      <polyline 
-        points="31.5,36.75 26.25,42 31.5,47.25"
-        fill="none" stroke="currentColor" stroke-width="2" />
-      <polyline 
-        points="52.5,36.75 57.75,42 52.5,47.25"
-        fill="none" stroke="currentColor" stroke-width="2" />
-    `;
 
     // Track scrollIcon toggle
     this.eventManager.addPointerDownListener(scrollIcon, (e) => {
