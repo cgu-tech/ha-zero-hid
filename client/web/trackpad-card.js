@@ -244,8 +244,8 @@ class TrackpadCard extends HTMLElement {
         pointer-events: auto;
       }
       .scroll-icon {
-        width: auto;
         height: 22.5%;
+        aspect-ratio: 1 / 1.5;     /* width will be 2/3 of the height */
         opacity: 0.7;
         fill: #eee;
         stroke: #eee;
