@@ -134,7 +134,7 @@ class TrackpadCard extends HTMLElement {
           <div class="trackpad">
           </div>
           <div class="scroll-toggle">
-            <svg xmlns="http://www.w3.org/2000/svg" class="scroll-icon" viewBox="20 14.75 44 54.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="scroll-toggle-icon" viewBox="20 14.75 44 54.5">
               <rect 
                 x="21" y="15.75"
                 width="42" height="52.5"
@@ -214,7 +214,7 @@ class TrackpadCard extends HTMLElement {
       .trackpad:active {
         background: #2c2b2b !important;
       }
-      .trackpad.dragging .scroll-icon {
+      .trackpad.dragging .scroll-toggle-icon {
         cursor: crosshair;
       }
 
@@ -259,6 +259,7 @@ class TrackpadCard extends HTMLElement {
 
       .scroll-toggle {
         z-index: 2;
+        pointer-events: none;
         position: absolute;
         width: auto;
         height: 22.5%;
@@ -271,17 +272,17 @@ class TrackpadCard extends HTMLElement {
         padding-right: 3%;
         cursor: pointer;
       }
-      .scroll-icon {
+      .scroll-toggle-icon {
+        pointer-events: auto;
         height: 100%;
         width: auto;
-        pointer-events: none;
         opacity: 0.7;
         fill: #eee;
         stroke: #eee;
         transition: stroke 0.3s ease, fill 0.3s ease;
         filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.6));
       }
-      .scroll-icon.toggled-on {
+      .scroll-toggle-icon.toggled-on {
         stroke: #44739e !important;
         fill: #44739e !important;
         color: #44739e !important;
@@ -335,7 +336,7 @@ class TrackpadCard extends HTMLElement {
     this._elements.trackpadArea = card.querySelector(".trackpad-area");
     this._elements.trackpad = card.querySelector(".trackpad");
     this._elements.scrollZones = card.querySelector(".scroll-zones");
-    this._elements.scrollToggle = card.querySelector(".scroll-toggle");
+    this._elements.scrollToggle = card.querySelector(".scroll-toggle-icon");
   }
 
   doListen() {
