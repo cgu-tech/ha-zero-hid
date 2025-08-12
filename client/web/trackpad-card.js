@@ -562,9 +562,9 @@ class TrackpadCard extends HTMLElement {
 
   doStyleButtonsRow() {
     const buttonsRow = this._elements.buttonsRow;
-    buttonRow.style.display = "flex";
-    buttonRow.style.width = "100%";
-    buttonRow.style.background = "#00000000";
+    buttonsRow.style.display = "flex";
+    buttonsRow.style.width = "100%";
+    buttonsRow.style.background = "#00000000";
   }
 
   doAttachButtonsRow() {
