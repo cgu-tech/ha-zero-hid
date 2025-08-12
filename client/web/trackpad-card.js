@@ -41,7 +41,7 @@ class TrackpadCard extends HTMLElement {
   _resourceManager;
 
   _scrollPointers = new Map();
-  _isToggledOn = false;
+  _isScrollModeOn = false;
   _pointersClick = new Map();
   _pointersStart = new Map();
   _pointersEnd = new Map();
@@ -292,7 +292,7 @@ class TrackpadCard extends HTMLElement {
     const card = this._elements.card;
     this._elements.container = card.querySelector(".trackpad-container");
     this._elements.trackpad = card.querySelector(".trackpad-area");
-    this._elements.scrollButton = card.querySelector(".scroll-icon");
+    this._elements.scrollIcon = card.querySelector(".scroll-icon");
     this._elements.buttons = card.querySelector(".buttons-area");
   }
 
@@ -302,7 +302,8 @@ class TrackpadCard extends HTMLElement {
     this.doListenTrackpad();
   }
 
-  doListenScrollIcon(scrollIcon) {
+  doListenScrollIcon() {
+    const scrollIcon = this._elements.scrollIcon;
     this._eventManager.addPointerDownListener(scrollIcon, this.onScrollIconPointerDown.bind(this));
     this._eventManager.addPointerUpListener(scrollIcon, this.onScrollIconPointerUp.bind(this));
     this._eventManager.addPointerCancelListener(scrollIcon, this.onScrollIconPointerCancel.bind(this));
@@ -328,8 +329,8 @@ class TrackpadCard extends HTMLElement {
     if (scrollEntry) {
 
       // When pointer was pressed over scroll icon before this release event: toggle scroll icon state
-      this._isToggledOn = !this._isToggledOn;
-      scrollIcon.classList.toggle("toggled-on", this._isToggledOn);
+      this._isScrollModeOn = !this._isScrollModeOn;
+      scrollIcon.classList.toggle("toggled-on", this._isScrollModeOn);
     }
 
     this.updateScrollZones(trackpad);
@@ -342,6 +343,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   doListenTrackpad() {
+    const trackpad = this._elements.trackpad;
     this._eventManager.addPointerDownListener(trackpad, this.onTrackpadPointerDown.bind(this));
     this._eventManager.addPointerMoveListener(trackpad, this.onTrackpadPointerMove.bind(this));
     this._eventManager.addPointerUpListener(trackpad, this.onTrackpadPointerUp.bind(this));
@@ -646,7 +648,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   updateScrollZones(trackpad) {
-    if (this._isToggledOn) {      
+    if (this._isScrollModeOn) {      
       trackpad.appendChild(this.scrollContainer);
       const { width, height } = trackpad.getBoundingClientRect();
 
@@ -871,7 +873,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   getTrackpadMode() {
-    if (this._isToggledOn) {
+    if (this._isScrollModeOn) {
       return "scroll";
     } else {
       return "move";
