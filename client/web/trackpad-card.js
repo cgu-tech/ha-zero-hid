@@ -590,7 +590,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   doUpdateLayout() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout() + layout:", this._layoutManager.getLayoutName()));
+    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("doUpdateLayout() + layout:", this._layoutManager.getLayoutName()));
     this.doResetLayout();
     this.doCreateLayout();
     this.doAttachLayout();
