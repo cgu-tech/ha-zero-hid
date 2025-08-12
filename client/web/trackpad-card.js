@@ -333,7 +333,7 @@ class TrackpadCard extends HTMLElement {
       scrollIcon.classList.toggle("toggled-on", this._isScrollModeOn);
     }
 
-    this.updateScrollZones(trackpad);
+    this.doUpdateScrollZones();
   }
   
   onScrollIconPointerCancel(evt) {
@@ -437,9 +437,10 @@ class TrackpadCard extends HTMLElement {
   }
 
   doScrollZones() {
-    this._elements.scrollZonesContainer = document.createElement("div");
-    this._elements.scrollZonesContainer.classList.add("scroll-zones");
-    this._elements.scrollZonesContainer.innerHTML = `
+    const scrollZonesContainer = document.createElement("div");
+    this._elements.scrollZonesContainer = scrollZonesContainer;
+    scrollZonesContainer.classList.add("scroll-zones");
+    scrollZonesContainer.innerHTML = `
       <div class="zone top">
         <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-top" viewBox="0 0 24 24" width="24" height="24" fill="none">
           <polyline 
@@ -481,8 +482,8 @@ class TrackpadCard extends HTMLElement {
         </svg>
       </div>
     `;
-    
-    // Set zone data
+
+    // Set zones data
     scrollZonesContainer.querySelector(".zone.top")._keyData = {zone: "top"};
     scrollZonesContainer.querySelector(".zone.bottom")._keyData = {zone: "bottom"};
     scrollZonesContainer.querySelector(".zone.left")._keyData = {zone: "left"};
@@ -647,48 +648,61 @@ class TrackpadCard extends HTMLElement {
     return 3;
   }
 
-  updateScrollZones(trackpad) {
-    if (this._isScrollModeOn) {      
-      trackpad.appendChild(this.scrollContainer);
-      const { width, height } = trackpad.getBoundingClientRect();
+  doUpdateScrollZones() {
+    const trackpad = this._elements.trackpad;
 
-      const zoneStyles = {
+    if (this._isScrollModeOn) {
+      // Scroll mode is "on"
+      
+      // Append scroll zones into card to make their dimensions retrievables
+      trackpad.appendChild(this._elements.scrollZonesContainer);
+
+      //TODO: enhance this whole "scroll-zone layout" by making it using flex 
+      // instead of brute-forcing width and positions when adding them
+
+      // Retrieve trackpad visual dimensions 
+      const { trackpadWidth, trackpadHeight } = trackpad.getBoundingClientRect();
+
+      // Compute scroll zones dimensions
+      const scrollZoneStyles = {
         left: {
           left: 0,
           top: 0,
-          width: width / 6,
+          width: trackpadWidth / 6,
           height,
         },
         right: {
           right: 0,
           top: 0,
-          width: width / 6,
+          width: trackpadWidth / 6,
           height,
         },
         top: {
-          left: width / 6,
+          left: trackpadWidth / 6,
           top: 0,
-          width: (4 / 6) * width,
-          height: height / 2,
+          width: (4 / 6) * trackpadWidth,
+          height: trackpadHeight / 2,
         },
         bottom: {
-          left: width / 6,
+          left: trackpadWidth / 6,
           bottom: 0,
-          width: (4 / 6) * width,
-          height: height / 2,
+          width: (4 / 6) * trackpadWidth,
+          height: trackpadHeight / 2,
         },
       };
 
-      for (const [zoneName, style] of Object.entries(zoneStyles)) {
-        const zoneEl = this.scrollContainer.querySelector(`.zone.${zoneName}`);
-        if (!zoneEl) continue;
-        Object.assign(zoneEl.style, {
-          left: style.left !== undefined ? `${style.left}px` : '',
-          right: style.right !== undefined ? `${style.right}px` : '',
-          top: style.top !== undefined ? `${style.top}px` : '',
-          bottom: style.bottom !== undefined ? `${style.bottom}px` : '',
-          width: `${style.width}px`,
-          height: `${style.height}px`,
+      // Apply scroll zones dimensions, per scroll zone
+      for (const scrollZone of scrollZones) {
+        const zone = scrollZone._keyData.zone;
+        const zoneStyle = scrollZoneStyles[zone];
+
+        Object.assign(scrollZone.style, {
+          left: zoneStyle.left !== undefined ? `${zoneStyle.left}px` : '',
+          right: zoneStyle.right !== undefined ? `${zoneStyle.right}px` : '',
+          top: zoneStyle.top !== undefined ? `${zoneStyle.top}px` : '',
+          bottom: zoneStyle.bottom !== undefined ? `${zoneStyle.bottom}px` : '',
+          width: `${zoneStyle.width}px`,
+          height: `${zoneStyle.height}px`,
         });
       }
 
