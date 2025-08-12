@@ -133,7 +133,7 @@ class TrackpadCard extends HTMLElement {
         <div class="trackpad-area">
           <div class="trackpad">
           </div>
-          <div class="scroll-button">
+          <div class="scroll-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" class="scroll-icon" viewBox="20 14.75 44 54.5">
               <rect 
                 x="21" y="15.75"
