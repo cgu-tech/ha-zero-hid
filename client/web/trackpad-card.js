@@ -671,7 +671,7 @@ class TrackpadCard extends HTMLElement {
     this.doStyleTrackpadButton();
     this.doAttachTrackpadButton();
     this.doQueryTrackpadButtonElements();
-    this.doListenTrackpadButton();
+    this.doListenTrackpadButton(trackpadButton);
     return trackpadButton;
   }
 
@@ -694,9 +694,9 @@ class TrackpadCard extends HTMLElement {
     // Nothing to do: no needs for trackpad button elements
   }
 
-  doListenTrackpadButton() {
-    this._eventManager.addPointerDownListener(scrollZone, this.onTrackpadButtonPointerDown.bind(this));
-    this._eventManager.addPointerUpListener(scrollZone, this.onTrackpadButtonPointerUp.bind(this));
+  doListenTrackpadButton(trackpadButton) {
+    this._eventManager.addPointerDownListener(trackpadButton, this.onTrackpadButtonPointerDown.bind(this));
+    this._eventManager.addPointerUpListener(trackpadButton, this.onTrackpadButtonPointerUp.bind(this));
   }
   
   onTrackpadButtonPointerDown(evt) {
