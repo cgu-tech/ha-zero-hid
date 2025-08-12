@@ -22,6 +22,11 @@ export class EventManager {
     return !!this._origin?._config?.['haptic'];
   }
 
+  // Get elapsed time between a start event and an end event (in milliseconds)
+  getElapsedTime(evtStart, evtEnd) {
+    return evtEnd.timeStamp - evtStart.timeStamp;
+  }
+
   addGlobalPointerUpHandlers(handleGlobalPointerUp) {
     this.addPointerUpListener(window, handleGlobalPointerUp);
     this.addPointerLeaveListener(window, handleGlobalPointerUp);
