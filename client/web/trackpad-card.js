@@ -304,7 +304,7 @@ class TrackpadCard extends HTMLElement {
         border-top-left-radius: var(--trackpad-corner-radius);
       }
       .scroll-zone.right {
-        border-bottom-right-radius: var(--trackpad-corner-radius);
+        border-top-right-radius: var(--trackpad-corner-radius);
       }
       .scroll-zone:hover {
         background-color: rgba(255, 255, 255, 0.12);
