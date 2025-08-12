@@ -130,7 +130,7 @@ class TrackpadCard extends HTMLElement {
   }
   
   disableNoButtonsVisuals() {
-    const noButtonsClass = ".no-buttons";
+    const noButtonsClass = "no-buttons";
     this._elements.trackpadArea.classList.remove(noButtonsClass);
     this._elements.trackpad.classList.remove(noButtonsClass);
     this._elements.scrollZonesContainer.classList.remove(noButtonsClass);
@@ -141,7 +141,7 @@ class TrackpadCard extends HTMLElement {
   }
   
   enableNoButtonsVisuals() {
-    const noButtonsClass = ".no-buttons";
+    const noButtonsClass = "no-buttons";
     this._elements.trackpadArea.classList.add(noButtonsClass);
     this._elements.trackpad.classList.add(noButtonsClass);
     this._elements.scrollZonesContainer.classList.add(noButtonsClass);
