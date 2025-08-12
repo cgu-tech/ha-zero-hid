@@ -400,6 +400,7 @@ class TrackpadCard extends HTMLElement {
 
   onTrackpadPointerDown(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt):", evt));
+    this.disableScrollToggleEvents();
 
     // Track current pointer into trackpad pointers
     this._pointersClick.set(evt.pointerId, { "move-detected": false, "event": evt, "long-click-timeout": this.addTrackpadLongClickTimeout(evt) } );
@@ -409,7 +410,6 @@ class TrackpadCard extends HTMLElement {
 
   onTrackpadPointerMove(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
-    this.disableScrollToggleEvents();
 
     // Retrieve current pointer from tracked trackpad click pointers
     const clickEntry = this._pointersClick.get(evt.pointerId);
