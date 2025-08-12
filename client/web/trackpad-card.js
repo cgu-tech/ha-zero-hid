@@ -50,6 +50,7 @@ class TrackpadCard extends HTMLElement {
 
   _scrollContainer = null;
   _scrollsClick = new Map();
+  _scrollsMove = new Map();
 
   constructor() {
     super();
@@ -85,38 +86,35 @@ class TrackpadCard extends HTMLElement {
     this.doUpdateHass()
   }
 
+  // Trackpad short click/log click detection (with move debouncing)
   getTriggerMoveHorizontalDelta() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_move_horizontal_delta");
   }
-
   getTriggerMoveVerticalDelta() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_move_vertical_delta");
   }
-
   getTriggerLongClickDelay() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
   }
 
-  getTriggerScrollDelta() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_scroll_delta");
+  // When two pointers scroll
+  getTriggerScrollHorizontalDelta() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_scroll_horizontal_delta");
+  }
+  getTriggerScrollVerticalDelta() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_scroll_vertical_delta");
+  }
+  getTriggerScrollDelay() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_scroll_delay");
   }
 
-  getTriggerScrollMinValue() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_scroll_min_value");
-  }
-
-  getTriggerScrollMaxValue() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_scroll_max_value");
-  }
-
+  // When scroll toggle on
   getTriggerLongScrollDelay() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_scroll_delay");
   }
-
   getTriggerLongScrollDecreaseInterval() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_scroll_decrease_interval");
   }
-
   getTriggerLongScrollMinInterval() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_scroll_min_interval");
   }
@@ -124,7 +122,6 @@ class TrackpadCard extends HTMLElement {
   disableScrollToggleEvents() {
     this._elements.scrollToggle.classList.add("pass-through");
   }
-  
   enableScrollToggleEvents() {
     this._elements.scrollToggle.classList.remove("pass-through");
   }
@@ -488,10 +485,10 @@ class TrackpadCard extends HTMLElement {
 
       let updateStartPoint = true;
       if (this._pointersStart.size === 1) {
-        // Single touch: mouse move
+        // Single pointer move
         updateStartPoint = this.handleSinglePointerMove(evt);
       } else if (this._pointersStart.size === 2 && this._pointersEnd.size === 2) {
-        // Double-touch: mouse scroll
+        // Double pointers move
         updateStartPoint = this.handleDoublePointersMove(evt);
       }
 
@@ -875,13 +872,12 @@ class TrackpadCard extends HTMLElement {
       trigger_move_horizontal_delta: 2,
       trigger_move_vertical_delta: 2,
       trigger_long_click_delay: 500,
-      trigger_scroll_delta: 10,
-      trigger_scroll_min_value: -1,
-      trigger_scroll_max_value: 1,
+      trigger_scroll_horizontal_delta: 2,
+      trigger_scroll_vertical_delta: 2,
+      trigger_scroll_delay: 250,
       trigger_long_scroll_delay: 350,
       trigger_long_scroll_decrease_interval: 25,
       trigger_long_scroll_min_interval: 75
-    }
   }
 
   getCardSize() {
@@ -1019,33 +1015,49 @@ class TrackpadCard extends HTMLElement {
   handleMouseScroll(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleMouseScroll(evt):", evt));
 
+    // Check if pointer physically moved enough this time, to trigger "scroll-detection"
     const { dx, dy } = this.getDoublePointerDelta(this._pointersStart, this._pointersEnd);
-    const dxAbs = Math.abs(dx);
-    const dyAbs = Math.abs(dy);
-    const updateStartPoint = (dxAbs >= this.getTriggerScrollDelta() || dyAbs >= this.getTriggerScrollDelta());
-    if (updateStartPoint) {
-      // Scroll trigger reached
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Delta detected for two pointers:`, dx, dy));
+    const horizontalTrigger = Math.abs(dx) > this.getTriggerMoveHorizontalDelta();
+    const verticalTrigger = Math.abs(dy) > this.getTriggerMoveVerticalDelta();
+    if (horizontalTrigger || verticalTrigger) {
+      // Check if not already scrolling
+      if (this._scrollsMove.size === 0) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Scroll detected for evt:", evt));
 
-      let dxAdjusted = dx;
-      let dyAdjusted = dy;
+        // Determine scroll direction
+        const scrollZone = verticalTrigger ? (dy > 0 ? "bottom" : "top") : (dx > 0 ? "right" : "left");
+        const scrollZoneConfig = { "zone":  scrollZone };
 
-      // Trim axis where movement was minor than other axis
-      if (dyAbs >= dxAbs) {
-        dxAdjusted = 0;
-        dyAdjusted = Math.max(this.getTriggerScrollMinValue(), Math.min(this.getTriggerScrollMaxValue(), dyAdjusted)) * Math.round(dyAbs / this.getTriggerScrollDelta());
-      } else {
-        dxAdjusted = Math.max(this.getTriggerScrollMinValue(), Math.min(this.getTriggerScrollMaxValue(), dxAdjusted)) * Math.round(dxAbs / this.getTriggerScrollDelta());
-        dyAdjusted = 0;
+        // Scroll once using clicked scroll zone
+        this.doScrollOnce(scrollZoneConfig);
+        
+        // Setup repeated scrolls when scroll zone is long-press maintained
+        this._scrollsMove.set(evt.pointerId, { "event": evt , "scroll-timeout": this.addScrollZoneLongMoveTimeout(evt, scrollZoneConfig, this.getTriggerScrollDelay()) } );
       }
-
-      // Revert dy to get human natural gesture order
-      dyAdjusted = -dyAdjusted;
-
-      this.sendMouseScroll(dxAdjusted, dyAdjusted);
-      this._eventManager.hapticFeedbackShort();
+      return true;
     }
-    return updateStartPoint;
+    return false;
+  }
+  
+  addScrollZoneLongMoveTimeout(evt, scrollZoneConfig, triggerDelay) {
+    return setTimeout(() => {
+      const clickEntry = this._scrollsClick.get(evt.pointerId);
+      if (clickEntry) {
+
+        const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Scroll zone ${scrollZoneConfig.zone} long click of ${duration}ms detected for evt:`, evt));
+
+        // Scroll once into current scrollZoneConfig direction
+        this.doScrollOnce(scrollZoneConfig);
+
+        // Compute next trigger delay
+        const nextTriggerDelay = Math.max(this.getTriggerLongScrollMinInterval(), triggerDelay - this.getTriggerLongScrollDecreaseInterval())
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Next scroll zone long click ${scrollZoneConfig.zone} will be triggered in ${nextTriggerDelay}ms`));
+
+        // Add next scroll event
+        this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, nextTriggerDelay) } );
+      }
+    }, triggerDelay); // next long-scroll duration
   }
 
   sendMouseClickLeft() {
