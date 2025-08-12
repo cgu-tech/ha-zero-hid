@@ -121,6 +121,14 @@ class TrackpadCard extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_scroll_min_interval");
   }
 
+  disableScrollToggleEvents() {
+    this._elements.scrollToggle.classList.add("pass-through");
+  }
+  
+  enableScrollToggleEvents() {
+    this._elements.scrollToggle.classList.remove("pass-through");
+  }
+
   // jobs
   doCheckConfig() {
     this._layoutManager.checkConfiguredLayout();
@@ -478,14 +486,6 @@ class TrackpadCard extends HTMLElement {
     this._pointersClick.delete(evt.pointerId);
   }
 
-  disableScrollToggleEvents() {
-    this._elements.scrollToggle.classList.add("pass-through");
-  }
-  
-  enableScrollToggleEvents() {
-    this._elements.scrollToggle.classList.remove("pass-through");
-  }
-
   createScrollZones() {
     this.doScrollZones();
     this.doStyleScrollZones();
@@ -590,6 +590,7 @@ class TrackpadCard extends HTMLElement {
   onScrollZonePointerDown(evt) {
     evt.stopImmediatePropagation();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerDown(evt):", evt));
+    this.disableScrollToggleEvents();
 
     // Retrieve clicked scroll zone
     const scrollZone = evt.currentTarget;
@@ -604,6 +605,7 @@ class TrackpadCard extends HTMLElement {
 
   onScrollZonePointerCancel(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerCancel(evt):", evt));
+    this.enableScrollToggleEvents();
 
     this.clearScrollZoneLongClickTimeout(evt);
     this._scrollsClick.delete(evt.pointerId);
