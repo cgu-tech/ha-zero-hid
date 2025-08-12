@@ -412,11 +412,11 @@ class TrackpadCard extends HTMLElement {
       const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
       if (duration < this.triggerLongClick) {
         // Short click
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Click of ${duration}ms detected for evt:`, evt));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Trackpad short click of ${duration}ms detected for evt:`, evt));
         this.handleSinglePointerLeftClick(evt);
       } else {
         // Too long click
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Debounced click of ${duration}ms detected for evt:`, evt));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Trackpad debounced too-long click of ${duration}ms detected for evt:`, evt));
       }
     }
   }
@@ -791,13 +791,13 @@ class TrackpadCard extends HTMLElement {
         left: 0,
         top: 0,
         width: trackpadWidth / 6,
-        height,
+        height: trackpadHeight,
       },
       right: {
         right: 0,
         top: 0,
         width: trackpadWidth / 6,
-        height,
+        height: trackpadHeight,
       },
       top: {
         left: trackpadWidth / 6,
@@ -858,14 +858,14 @@ class TrackpadCard extends HTMLElement {
       if (clickEntry) {
 
         const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Scroll ${scrollZoneConfig.zone} long press of ${duration}ms detected for evt:`, evt));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Scroll zone ${scrollZoneConfig.zone} long click of ${duration}ms detected for evt:`, evt));
 
         // Scroll once into current scrollZoneConfig direction
         this.doScrollOnce(scrollZoneConfig);
 
         // Compute next trigger delay
         const nextTriggerDelay = Math.max(this.getTriggerLongScrollMinInterval(), triggerDelay - this.getTriggerLongScrollDecreaseInterval())
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Next ${scrollZoneConfig.zone} scroll will be triggered in ${nextTriggerDelay}ms`));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Next scroll zone long click ${scrollZoneConfig.zone} will be triggered in ${nextTriggerDelay}ms`));
 
         // Add next scroll event
         this.scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(zone, evt, nextTriggerDelay) } );
@@ -873,27 +873,23 @@ class TrackpadCard extends HTMLElement {
     }, triggerDelay); // next long-scroll duration
   }
 
-  clearScrollZoneLongClickTimeout(e) {
-    const clickEntry = this.scrollsClick.get(e.pointerId);
+  clearScrollZoneLongClickTimeout(evt) {
+    const clickEntry = this.scrollsClick.get(evt.pointerId);
     if (clickEntry && clickEntry["long-scroll-timeout"]) clearTimeout(clickEntry["long-scroll-timeout"]);
     return clickEntry;
   }
 
-  addTrackpadLongClickTimeout(e) {
+  addTrackpadLongClickTimeout(evt) {
     return setTimeout(() => {
 
       // Retrieve current pointer from tracked trackpad click pointers
-      const clickEntry = this._pointersClick.get(e.pointerId);
+      const clickEntry = this._pointersClick.get(evt.pointerId);
       if (clickEntry && !clickEntry["move-detected"]) {
 
-        // No move detected as-of now:
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("No move detected for:", e));
+        const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Trackpad long-click of ${duration}ms detected for evt:`, evt));
 
-        const startTime = clickEntry["event"].timeStamp;
-        const endTime = e.timeStamp;
-        const duration = endTime - startTime; // in milliseconds
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Long-click of ${duration}ms detected for:`, e));
-        this.handleSinglePointerLeftDblClick(e);
+        this.handleSinglePointerLeftDblClick(evt);
       }
     }, this.getTriggerLongClickDelay()); // long-press duration
   }
@@ -904,15 +900,15 @@ class TrackpadCard extends HTMLElement {
     return clickEntry;
   }
 
-  handleSinglePointerLeftClick(e) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerLeftClick(e):", e));
+  handleSinglePointerLeftClick(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerLeftClick(evt):", evt));
     this.sendMouseClickLeft();
     this.sendMouseClickRelease();
     this._eventManager.hapticFeedback();
   }
 
-  handleSinglePointerLeftDblClick(e) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerLeftDblClick(e):", e));
+  handleSinglePointerLeftDblClick(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerLeftDblClick(evt):", evt));
     this.sendMouseClickLeft();
     this.sendMouseClickRelease();
     this.sendMouseClickLeft();
@@ -920,29 +916,29 @@ class TrackpadCard extends HTMLElement {
     this._eventManager.hapticFeedbackLong();
   }
 
-  handleSinglePointerMove(e) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerMove(e):", e));
+  handleSinglePointerMove(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerMove(evt):", evt));
     let updateStartPoint = true;
     if (this.getTrackpadMode() === "move") {
-      updateStartPoint = this.handleMouseMove(e);
+      updateStartPoint = this.handleMouseMove(evt);
     } else if (this.getTrackpadMode() === "scroll") {
-      updateStartPoint = this.handleMouseScroll(e);
+      updateStartPoint = this.handleMouseScroll(evt);
     }
     return updateStartPoint;
   }
 
-  handleDoublePointersMove(e) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleDoublePointersMove(e):", e));
-    return this.handleMouseScroll(e);
+  handleDoublePointersMove(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleDoublePointersMove(evt):", evt));
+    return this.handleMouseScroll(evt);
   }
 
-  handleMouseMove(e) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleMouseMove(e):", e));
+  handleMouseMove(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleMouseMove(evt):", evt));
     const updateStartPoint = true;
-    const startEvent = this._pointersStart.get(e.pointerId);
-    const endEvent = this._pointersEnd.get(e.pointerId);
+    const startEvent = this._pointersStart.get(evt.pointerId);
+    const endEvent = this._pointersEnd.get(evt.pointerId);
     const { dx, dy } = this.getPointerDelta(startEvent, endEvent);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Delta detected for one pointer:${evt.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this.sendMouseMove(dx, dy);
       this._eventManager.hapticFeedbackShort();
@@ -950,8 +946,8 @@ class TrackpadCard extends HTMLElement {
     return updateStartPoint;
   }
 
-  handleMouseScroll(e) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleMouseScroll(e):", e));
+  handleMouseScroll(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleMouseScroll(evt):", evt));
 
     const { dx, dy } = this.getDoublePointerDelta(this._pointersStart, this._pointersEnd);
     const dxAbs = Math.abs(dx);
@@ -999,7 +995,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   sendMouse(serviceName, serviceArgs) {
-    this._eventManager.callComponentService(this._hass, serviceName, serviceArgs);
+    this._eventManager.callComponentService(serviceName, serviceArgs);
   }
 
   getTrackpadMode() {
