@@ -1054,11 +1054,11 @@ class TrackpadCard extends HTMLElement {
   }
 
   setTrackpadButtonData(btn, defaultConfig, overrideConfig) {
-    this.setElementData(btn, defaultConfig, overrideConfig, (key, value, source) => this._allowedTrackpadButtonData.has(key));
+    this._layoutManager.setElementData(btn, defaultConfig, overrideConfig, (key, value, source) => this._allowedTrackpadButtonData.has(key));
   }
 
   setScrollZoneData(scrollZone, defaultConfig, overrideConfig) {
-    this.setElementData(scrollZone, defaultConfig, overrideConfig, (key, value, source) => this._allowedScrollZoneData.has(key));
+    this._layoutManager.setElementData(scrollZone, defaultConfig, overrideConfig, (key, value, source) => this._allowedScrollZoneData.has(key));
   }
 
 }

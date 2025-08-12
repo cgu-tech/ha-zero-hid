@@ -919,7 +919,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   // Set key data
-  setClickableData(clickable, defaultBtnConfig, btnConfig) {
+  setClickableData(clickable, defaultConfig, overrideConfig) {
     this._layoutManager.setElementData(clickable, defaultConfig, overrideConfig, (key, value, source) => this._allowedClickableData.has(key));
   }
 
