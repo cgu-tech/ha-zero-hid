@@ -13,20 +13,20 @@ class TrackpadCard extends HTMLElement {
 
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
-    this._LAYOUTS = {
-        'buttons-hidden'           : [],
-        'buttons-left'             : [ {serviceCall: "clickleft"  , className: "trackpad-solo"  } ],
-        'buttons-middle'           : [ {serviceCall: "clickmiddle", className: "trackpad-solo"  } ],
-        'buttons-right'            : [ {serviceCall: "clickright" , className: "trackpad-solo"  } ],
-        'buttons-left-right'       : [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ],
-        'buttons-left-middle'      : [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ],
-        'buttons-middle-left'      : [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ],
-        'buttons-middle-right'     : [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ],
-        'buttons-right-left'       : [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ],
-        'buttons-right-middle'     : [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ],
-        'buttons-left-middle-right': [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickright" , className: "trackpad-right" } ],
-        'buttons-right-middle-left': [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickleft"  , className: "trackpad-right" } ]
-    };
+    this._LAYOUTS = [
+      { "Name": 'buttons-hidden'           , "buttons": [] },
+      { "Name": 'buttons-left'             , "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-solo"  } ] },
+      { "Name": 'buttons-middle'           , "buttons": [ {serviceCall: "clickmiddle", className: "trackpad-solo"  } ] },
+      { "Name": 'buttons-right'            , "buttons": [ {serviceCall: "clickright" , className: "trackpad-solo"  } ] },
+      { "Name": 'buttons-left-right'       , "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { "Name": 'buttons-left-middle'      , "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
+      { "Name": 'buttons-middle-left'      , "buttons": [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
+      { "Name": 'buttons-middle-right'     , "buttons": [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { "Name": 'buttons-right-left'       , "buttons": [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
+      { "Name": 'buttons-right-middle'     , "buttons": [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
+      { "Name": 'buttons-left-middle-right', "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
+      { "Name": 'buttons-right-middle-left', "buttons": [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] }
+    ];
     console.log(this._LAYOUTS);
   }
 
@@ -590,7 +590,6 @@ class TrackpadCard extends HTMLElement {
   }
 
   doUpdateLayout() {
-    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("doUpdateLayout() + layout:", this._layoutManager.getLayoutName()));
     this.doResetLayout();
     this.doCreateLayout();
     this.doAttachLayout();
@@ -617,7 +616,7 @@ class TrackpadCard extends HTMLElement {
     if (this._layoutManager.getLayoutName() === "buttons-hidden") trackpad.classList.add('no-buttons');
 
     // Create trackpad buttons parts
-    for (const [trackpadButtonIndex, trackpadButtonConfig] of this._layoutManager.getLayout().entries()) {
+    for (const [trackpadButtonIndex, trackpadButtonConfig] of this._layoutManager.getLayout()["buttons"].entries()) {
       const trackpadButtonParts = this.doTrackpadButtonParts(trackpadButtonIndex, trackpadButtonConfig);
       this.doStyleTrackpadButtonParts();
       this.doAttachTrackpadButtonParts(this._elements.buttonsRow, trackpadButtonParts);
