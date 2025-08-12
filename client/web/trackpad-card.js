@@ -231,6 +231,8 @@ class TrackpadCard extends HTMLElement {
         flex: 1;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
       }
       .scroll-zone-stack.left {
         flex: 1;
@@ -261,6 +263,7 @@ class TrackpadCard extends HTMLElement {
         position: absolute;
         width: auto;
         height: 22.5%;
+        aspect-ratio: 1 / 2.4;
         top: 0px;
         right: 0px;
         padding-top: 2%;
@@ -270,6 +273,8 @@ class TrackpadCard extends HTMLElement {
         cursor: pointer;
       }
       .scroll-icon {
+        height: 100%;
+        width: auto;
         pointer-events: none;
         opacity: 0.7;
         fill: #eee;
@@ -813,63 +818,8 @@ class TrackpadCard extends HTMLElement {
 
     if (this._isScrollModeOn) {
       trackpadArea.appendChild(scrollZonesContainer);
-      //this.doPositionAndScaleScrollZones();
     } else {
       trackpadArea.removeChild(scrollZonesContainer);
-    }
-  }
-  
-  doPositionAndScaleScrollZones() {
-    const trackpad = this._elements.trackpad;
-    const scrollZones = this._elements.scrollZones;
-
-    //TODO: enhance this whole "scroll-zone layout" by making it using flex 
-    // instead of brute-forcing width and positions when adding them
-
-    // Retrieve trackpad visual dimensions 
-    const { trackpadWidth, trackpadHeight } = trackpad.getBoundingClientRect();
-
-    // Compute scroll zones dimensions
-    const scrollZoneStyles = {
-      left: {
-        left: 0,
-        top: 0,
-        width: trackpadWidth / 6,
-        height: trackpadHeight,
-      },
-      right: {
-        right: 0,
-        top: 0,
-        width: trackpadWidth / 6,
-        height: trackpadHeight,
-      },
-      top: {
-        left: trackpadWidth / 6,
-        top: 0,
-        width: (4 / 6) * trackpadWidth,
-        height: trackpadHeight / 2,
-      },
-      bottom: {
-        left: trackpadWidth / 6,
-        bottom: 0,
-        width: (4 / 6) * trackpadWidth,
-        height: trackpadHeight / 2,
-      },
-    };
-
-    // Apply scroll zones dimensions, per scroll zone
-    for (const scrollZone of scrollZones) {
-      const zone = this._layoutManager.getElementData(scrollZone).zone;
-      const zoneStyle = scrollZoneStyles[zone];
-
-      Object.assign(scrollZone.style, {
-        left: zoneStyle.left !== undefined ? `${zoneStyle.left}px` : '',
-        right: zoneStyle.right !== undefined ? `${zoneStyle.right}px` : '',
-        top: zoneStyle.top !== undefined ? `${zoneStyle.top}px` : '',
-        bottom: zoneStyle.bottom !== undefined ? `${zoneStyle.bottom}px` : '',
-        width: `${zoneStyle.width}px`,
-        height: `${zoneStyle.height}px`,
-      });
     }
   }
 
