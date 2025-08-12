@@ -128,6 +128,28 @@ class TrackpadCard extends HTMLElement {
   enableScrollToggleEvents() {
     this._elements.scrollToggle.classList.remove("pass-through");
   }
+  
+  disableNoButtonsVisuals() {
+    const noButtonsClass = ".no-buttons";
+    this._elements.trackpadArea.classList.remove(noButtonsClass);
+    this._elements.trackpad.classList.remove(noButtonsClass);
+    this._elements.scrollZones.classList.remove(noButtonsClass);
+    this._elements.scrollZoneStackLeft.classList.remove(noButtonsClass);
+    this._elements.scrollZoneStackRight.classList.remove(noButtonsClass);
+    this._elements.scrollZoneLeft.classList.remove(noButtonsClass);
+    this._elements.scrollZoneRight.classList.remove(noButtonsClass);
+  }
+  
+  enableNoButtonsVisuals() {
+    const noButtonsClass = ".no-buttons";
+    this._elements.trackpadArea.classList.add(noButtonsClass);
+    this._elements.trackpad.classList.add(noButtonsClass);
+    this._elements.scrollZones.classList.add(noButtonsClass);
+    this._elements.scrollZoneStackLeft.classList.remove(noButtonsClass);
+    this._elements.scrollZoneStackRight.classList.remove(noButtonsClass);
+    this._elements.scrollZoneLeft.classList.add(noButtonsClass);
+    this._elements.scrollZoneRight.classList.add(noButtonsClass);
+  }
 
   // jobs
   doCheckConfig() {
@@ -182,8 +204,11 @@ class TrackpadCard extends HTMLElement {
   doStyle() {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
+      :host {
+        --trackpad-corner-radius: 10px;
+      }
       .ha-card {
-        border-radius: 10px;
+        border-radius: var(--trackpad-corner-radius);
       }
       .trackpad-container {
         display: flex;
@@ -197,16 +222,16 @@ class TrackpadCard extends HTMLElement {
         position: relative;
         width: 100%;
         height: 200px;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
+        border-top-left-radius: var(--trackpad-corner-radius);
+        border-top-right-radius: var(--trackpad-corner-radius);
         border-bottom: 1px solid #0a0a0a;
         padding: 0;
         background-color: #00000000; /* transparent black */
       }
       .trackpad-area.no-buttons {
         height: 260px;
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
+        border-bottom-left-radius: var(--trackpad-corner-radius);
+        border-bottom-right-radius: var(--trackpad-corner-radius);
         border-bottom: none;
       }
 
@@ -214,8 +239,8 @@ class TrackpadCard extends HTMLElement {
         z-index: 1;
         width: 100%;
         height: 100%;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
+        border-top-left-radius: var(--trackpad-corner-radius);
+        border-top-right-radius: var(--trackpad-corner-radius);
         cursor: crosshair;
         background: #3b3a3a;
         touch-action: auto;
@@ -227,17 +252,25 @@ class TrackpadCard extends HTMLElement {
       .trackpad.dragging .scroll-toggle-icon {
         cursor: crosshair;
       }
+      .trackpad.no-buttons {
+        border-bottom-left-radius: var(--trackpad-corner-radius);
+        border-bottom-right-radius: var(--trackpad-corner-radius);
+      }
 
       .scroll-zones {
         z-index: 2;
         width: 100%;
         height: 100%;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
+        border-top-left-radius: var(--trackpad-corner-radius);
+        border-top-right-radius: var(--trackpad-corner-radius);
         display: flex;
         flex-direction: row;
         padding: 0;
         background-color: #00000000; /* transparent black */
+      }
+      .scroll-zones.no-buttons {
+        border-bottom-left-radius: var(--trackpad-corner-radius);
+        border-bottom-right-radius: var(--trackpad-corner-radius);
       }
       .scroll-zone-stack {
         flex: 1;
@@ -246,14 +279,14 @@ class TrackpadCard extends HTMLElement {
       }
       .scroll-zone-stack.left {
         flex: 1;
-        border-top-left-radius: 10px;
+        border-top-left-radius: var(--trackpad-corner-radius);
       }
       .scroll-zone-stack.middle {
         flex: 4;
       }
-      .scroll-zone-stack-right {
+      .scroll-zone-stack.right {
         flex: 1;
-        border-top-right-radius: 10px;
+        border-top-right-radius: var(--trackpad-corner-radius);
       }
       .scroll-zone {
         flex: 1;
@@ -267,8 +300,20 @@ class TrackpadCard extends HTMLElement {
         transition: background-color 0.2s ease;
         color: white; /* for currentColor */
       }
+      .scroll-zone.left {
+        border-top-left-radius: var(--trackpad-corner-radius);
+      }
+      .scroll-zone.right {
+        border-bottom-right-radius: var(--trackpad-corner-radius);
+      }
       .scroll-zone:hover {
         background-color: rgba(255, 255, 255, 0.12);
+      }
+      .left.no-buttons {
+        border-bottom-left-radius: var(--trackpad-corner-radius);
+      }
+      .right.no-buttons {
+        border-bottom-right-radius: var(--trackpad-corner-radius);
       }
 
       .scroll-toggle {
@@ -319,19 +364,19 @@ class TrackpadCard extends HTMLElement {
         background: #2c2b2b;
       }
       .trackpad-button.left {
-        border-bottom-left-radius: 10px;
+        border-bottom-left-radius: var(--trackpad-corner-radius);
         flex: 3;
       }
       .trackpad-button.middle {
         flex: 1;
       }
       .trackpad-button.right {
-        border-bottom-right-radius: 10px;
+        border-bottom-right-radius: var(--trackpad-corner-radius);
         flex: 3;
       }
       .trackpad-button.single {
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
+        border-bottom-left-radius: var(--trackpad-corner-radius);
+        border-bottom-right-radius: var(--trackpad-corner-radius);
         flex: 7;
       }
 
@@ -576,6 +621,8 @@ class TrackpadCard extends HTMLElement {
 
   doQueryScrollZonesElements() {
     const scrollZonesContainer = this._elements.scrollZonesContainer;
+    this._elements.scrollZoneStackLeft = scrollZonesContainer.querySelector(".scroll-zone-stack.left");
+    this._elements.scrollZoneStackRight = scrollZonesContainer.querySelector(".scroll-zone-stack.right");
     this._elements.scrollZones = [
       this._elements.scrollZoneTop, 
       this._elements.scrollZoneBottom, 
@@ -675,6 +722,9 @@ class TrackpadCard extends HTMLElement {
     // Clear existing buttonsRow DOM content
     buttonsRow.innerHTML = '';
 
+    // No buttons anymore, so enable no-buttons visuals
+    this.enableNoButtonsVisuals();
+
     // Reset attached layout
     this._layoutManager.resetAttachedLayout();
   }
@@ -683,8 +733,12 @@ class TrackpadCard extends HTMLElement {
     // Mark configured layout as attached
     this._layoutManager.configuredLayoutAttached();
 
-    // Update trackpad according to current layout
-    if (this._layoutManager.getLayoutName() === "buttons-hidden") trackpad.classList.add('no-buttons');
+    // Update no-buttons style according to selected trackpad buttons layout
+    if (this._layoutManager.getLayoutName() === "buttons-hidden") {
+      this.enableNoButtonsVisuals();
+    } else {
+      this.disableNoButtonsVisuals();
+    }
 
     // Create trackpad buttons parts
     for (const [trackpadButtonIndex, trackpadButtonConfig] of this._layoutManager.getLayout()["buttons"].entries()) {
