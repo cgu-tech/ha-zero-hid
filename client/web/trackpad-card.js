@@ -231,8 +231,6 @@ class TrackpadCard extends HTMLElement {
         flex: 1;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
       }
       .scroll-zone-stack.left {
         flex: 1;
@@ -245,6 +243,7 @@ class TrackpadCard extends HTMLElement {
       }
       .scroll-zone {
         flex: 1;
+        display: flex;
         align-items: center;
         justify-content: center;
         background-color: rgba(255, 255, 255, 0.05);
