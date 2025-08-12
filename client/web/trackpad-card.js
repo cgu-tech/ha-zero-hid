@@ -504,7 +504,12 @@ class TrackpadCard extends HTMLElement {
     this._elements.scrollZoneBottom = scrollZonesContainer.querySelector(".zone.bottom");
     this._elements.scrollZoneLeft = scrollZonesContainer.querySelector(".zone.left");
     this._elements.scrollZoneRight = scrollZonesContainer.querySelector(".zone.right");
-    this._elements.scrollZones = [scrollZoneTop, scrollZoneBottom, scrollZoneLeft, scrollZoneRight];
+    this._elements.scrollZones = [
+      this._elements.scrollZoneTop, 
+      this._elements.scrollZoneBottom, 
+      this._elements.scrollZoneLeft, 
+      this._elements.scrollZoneRight
+    ];
   }
 
   doListenScrollZones() {
