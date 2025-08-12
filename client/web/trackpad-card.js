@@ -246,12 +246,14 @@ class TrackpadCard extends HTMLElement {
       }
       .scroll-zone-stack.left {
         flex: 1;
+        border-top-left-radius: 10px;
       }
       .scroll-zone-stack.middle {
         flex: 4;
       }
       .scroll-zone-stack-right {
         flex: 1;
+        border-top-right-radius: 10px;
       }
       .scroll-zone {
         flex: 1;
