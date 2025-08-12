@@ -341,19 +341,51 @@ class TrackpadCard extends HTMLElement {
 
   doListenTrackpad() {
     this._eventManager.addPointerDownListener(trackpad, this.onTrackpadPointerDown.bind(this));
+    this._eventManager.addPointerMoveListener(trackpad, this.onTrackpadPointerMove.bind(this));
     this._eventManager.addPointerUpListener(trackpad, this.onTrackpadPointerUp.bind(this));
     this._eventManager.addPointerCancelListener(trackpad, this.onTrackpadPointerCancel.bind(this));
     this._eventManager.addPointerLeaveListener(trackpad, this.onTrackpadPointerCancel.bind(this));
-    this._eventManager.addPointerMoveListener(trackpad, this.onTrackpadPointerMove.bind(this));
   }
 
   onTrackpadPointerDown(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt):", evt));
 
     // Track current pointer into trackpad pointers
-    this.pointersClick.set(evt.pointerId, { "move-detected": false, "event": evt, "long-click-timeout": this.addLongClickTimeout(evt) } );
-    this.pointersStart.set(evt.pointerId, evt);
-    this.pointersEnd.set(evt.pointerId);
+    this._pointersClick.set(evt.pointerId, { "move-detected": false, "event": evt, "long-click-timeout": this.addLongClickTimeout(evt) } );
+    this._pointersStart.set(evt.pointerId, evt);
+    this._pointersEnd.set(evt.pointerId);
+  }
+
+  onTrackpadPointerMove(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
+
+    // Retrieve current pointer from tracked trackpad click pointers
+    const clickEntry = this._pointersClick.get(evt.pointerId);
+    if (clickEntry && !clickEntry["move-detected"]) {
+      // No pointer "move-detection" triggered as-of-now
+
+      // Check if pointer physically moved enough this time, to trigger "move-detection"
+      const { dx, dy } = this.getPointerDelta(clickEntry["event"], evt);
+      if (Math.abs(dx) > this.triggerMoveDeltaX || Math.abs(dy) > this.triggerMoveDeltaY) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Move detected for evt:", evt));
+        clickEntry["move-detected"] = true;
+      }
+    }
+
+    if (this._pointersStart.has(evt.pointerId)) {
+      this._pointersEnd.set(evt.pointerId, evt);
+
+      let updateStartPoint = true;
+      if (this._pointersStart.size === 1) {
+        // Single touch: mouse move
+        updateStartPoint = this.handleSinglePointerMove(evt);
+      } else if (this._pointersStart.size === 2 && this._pointersEnd.size === 2) {
+        // Double-touch: mouse scroll
+        updateStartPoint = this.handleDoublePointersMove(evt);
+      }
+
+      if (updateStartPoint) this._pointersStart.set(evt.pointerId, evt);
+    }
   }
 
   onTrackpadPointerUp(evt) {
@@ -363,9 +395,9 @@ class TrackpadCard extends HTMLElement {
     const clickEntry = this.clearLongClickTimeout(evt);
 
     // Remove current pointer entry from tracked trackpad pointers (when existing)
-    this.pointersEnd.delete(evt.pointerId);
-    this.pointersStart.delete(evt.pointerId);
-    this.pointersClick.delete(evt.pointerId);
+    this._pointersEnd.delete(evt.pointerId);
+    this._pointersStart.delete(evt.pointerId);
+    this._pointersClick.delete(evt.pointerId);
 
     if (clickEntry && !clickEntry["move-detected"]) {
 
@@ -387,40 +419,9 @@ class TrackpadCard extends HTMLElement {
 
     // Remove current pointer from all trackpad pointers
     this.clearLongClickTimeout(evt);
-    this.pointersEnd.delete(evt.pointerId);
-    this.pointersStart.delete(evt.pointerId);
-    this.pointersClick.delete(evt.pointerId);
-  }
-
-  onTrackpadPointerMove(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
-
-    const clickEntry = this.pointersClick.get(evt.pointerId);
-    if (clickEntry && !clickEntry["move-detected"]) {
-      // No move detected as-of now:
-      // check if pointer moved enough this time to trigger move-detection
-      const { dx, dy } = this.getPointerDelta(clickEntry["event"], evt);
-
-      if (Math.abs(dx) > this.triggerMoveDeltaX || Math.abs(dy) > this.triggerMoveDeltaY) {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Move detected for evt:", evt));
-        clickEntry["move-detected"] = true;
-      }
-    }
-
-    if (this.pointersStart.has(evt.pointerId)) {
-      this.pointersEnd.set(evt.pointerId, evt);
-
-      let updateStartPoint = true;
-      if (this.pointersStart.size === 1) {
-        // Single touch: mouse move
-        updateStartPoint = this.handleSinglePointerMove(evt);
-      } else if (this.pointersStart.size === 2 && this.pointersEnd.size === 2) {
-        // Double-touch: mouse scroll
-        updateStartPoint = this.handleDoublePointersMove(evt);
-      }
-
-      if (updateStartPoint) this.pointersStart.set(evt.pointerId, evt);
-    }
+    this._pointersEnd.delete(evt.pointerId);
+    this._pointersStart.delete(evt.pointerId);
+    this._pointersClick.delete(evt.pointerId);
   }
 
   doUpdateConfig() {
@@ -455,10 +456,51 @@ class TrackpadCard extends HTMLElement {
   }
 
   doScrollZones() {
-    this.scrollContainer = document.createElement("div");
-    this.scrollContainer.classList.add("scroll-zones");
+    const scrollContainer = document.createElement("div");
+    scrollContainer.classList.add("scroll-zones");
+    scrollContainer.innerHTML = `
+      <div class="zone top">
+        <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-top" viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <polyline 
+            points="6,14 12,8 18,14"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          <polyline 
+            points="6,20 12,14 18,20"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+      </div>
+      <div class="zone bottom">
+        <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-bottom" viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <polyline 
+            points="6,4 12,10 18,4"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          <polyline 
+            points="6,10 12,16 18,10"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+      </div>
+      <div class="zone left">
+        <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-left" viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <polyline 
+            points="14,6 8,12 14,18"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          <polyline 
+            points="20,6 14,12 20,18"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+      </div>
+      <div class="zone right">
+        <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-right" viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <polyline 
+            points="10,6 16,12 10,18"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          <polyline 
+            points="4,6 10,12 4,18"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+      </div>
+    `;
 
-    for (const zone of ["top", "bottom", "left", "right"]) {
       const el = document.createElement("div");
       el.classList.add("zone", zone);
       el.dataset.zone = zone;
@@ -494,9 +536,9 @@ class TrackpadCard extends HTMLElement {
       el.appendChild(scrollArrowIcon);
 
       this.scrollContainer.appendChild(el);
-    }
+
   }
-  
+
   doButtons() {
     // Buttons
     if (this.buttonsLayout && this.buttonsLayout.length > 0) {
@@ -627,47 +669,6 @@ class TrackpadCard extends HTMLElement {
     }
   }
 
-  createArrowSvg(direction) {
-    const svg = document.createElementNS(Globals.SVG_NAMESPACE, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("width", "24");
-    svg.setAttribute("height", "24");
-    svg.setAttribute("fill", "none");
-
-    const arrow1 = document.createElementNS(Globals.SVG_NAMESPACE, "polyline");
-    const arrow2 = document.createElementNS(Globals.SVG_NAMESPACE, "polyline");
-
-    [arrow1, arrow2].forEach(arrow => {
-      arrow.setAttribute("stroke", "currentColor");
-      arrow.setAttribute("stroke-width", "2.25");
-      arrow.setAttribute("stroke-linecap", "round");
-      arrow.setAttribute("stroke-linejoin", "round");
-      arrow.setAttribute("fill", "none");
-    });
-
-    if (direction === "left") {
-      // Stylized << arrows
-      arrow1.setAttribute("points", "14,6 8,12 14,18");
-      arrow2.setAttribute("points", "20,6 14,12 20,18");
-    } else if (direction === "right") {
-      // Stylized >> arrows
-      arrow1.setAttribute("points", "10,6 16,12 10,18");
-      arrow2.setAttribute("points", "4,6 10,12 4,18");
-    } else if (direction === "top") {
-      // Stylized ^^ arrows stacked vertically
-      arrow1.setAttribute("points", "6,14 12,8 18,14");
-      arrow2.setAttribute("points", "6,20 12,14 18,20");
-    } else if (direction === "bottom") {
-      // Stylized vv arrows stacked vertically
-      arrow1.setAttribute("points", "6,4 12,10 18,4");
-      arrow2.setAttribute("points", "6,10 12,16 18,10");
-    }
-
-    svg.appendChild(arrow1);
-    svg.appendChild(arrow2);
-    return svg;
-  }
-
   scrollZone(zone) {
     switch (zone) {
       case "top":
@@ -720,7 +721,7 @@ class TrackpadCard extends HTMLElement {
 
   addLongClickTimeout(e) {
     return setTimeout(() => {
-      const clickEntry = this.pointersClick.get(e.pointerId);
+      const clickEntry = this._pointersClick.get(e.pointerId);
       if (clickEntry && !clickEntry["move-detected"]) {
         // No move detected as-of now:
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("No move detected for:", e));
@@ -735,7 +736,7 @@ class TrackpadCard extends HTMLElement {
   }
   
   clearLongClickTimeout(evt) {
-    const clickEntry = this.pointersClick.get(evt.pointerId);
+    const clickEntry = this._pointersClick.get(evt.pointerId);
     if (clickEntry && clickEntry["long-click-timeout"]) clearTimeout(clickEntry["long-click-timeout"]);
     return clickEntry;
   }
@@ -775,8 +776,8 @@ class TrackpadCard extends HTMLElement {
   handleMouseMove(e) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleMouseMove(e):", e));
     const updateStartPoint = true;
-    const startEvent = this.pointersStart.get(e.pointerId);
-    const endEvent = this.pointersEnd.get(e.pointerId);
+    const startEvent = this._pointersStart.get(e.pointerId);
+    const endEvent = this._pointersEnd.get(e.pointerId);
     const { dx, dy } = this.getPointerDelta(startEvent, endEvent);
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Delta detected for one pointer:${e.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
@@ -789,7 +790,7 @@ class TrackpadCard extends HTMLElement {
   handleMouseScroll(e) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleMouseScroll(e):", e));
 
-    const { dx, dy } = this.getDoublePointerDelta(this.pointersStart, this.pointersEnd);
+    const { dx, dy } = this.getDoublePointerDelta(this._pointersStart, this._pointersEnd);
     const dxAbs = Math.abs(dx);
     const dyAbs = Math.abs(dy);
     const updateStartPoint = (dxAbs >= this.getTriggerScrollDelta() || dyAbs >= this.getTriggerScrollDelta());
