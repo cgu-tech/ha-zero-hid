@@ -16,7 +16,7 @@ class AndroidRemoteCard extends HTMLElement {
   _defaultCellConfigs = androidRemoteCardConfig;
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _allowedDataFields = new Set(['code']);
+  _allowedClickableData = new Set(['code']);
 
   // private properties
   _config;
@@ -626,7 +626,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
 
     // Add cell content data when cell content is a button
-    if (cellContentTag === "button") this.addClickableData(cellContent, defaultCellConfig, cellConfig);
+    if (cellContentTag === "button") this.setClickableData(cellContent, defaultCellConfig, cellConfig);
 
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
     return cellContent;
@@ -740,7 +740,7 @@ class AndroidRemoteCard extends HTMLElement {
     btn.setAttribute("clip-path", `url(#${clipId})`);
     btn.setAttribute("class", "quarter");
     btn.setAttribute("id", quarterId);
-    this.addClickableData(btn, defaultQuarterConfig, null);
+    this.setClickableData(btn, defaultQuarterConfig, null);
     dpad.appendChild(btn);
 
     // Retrieve arrow content from default config
@@ -825,7 +825,7 @@ class AndroidRemoteCard extends HTMLElement {
     btn.setAttribute("fill", "#3a3a3a");
     btn.setAttribute("class", "quarter");
     btn.setAttribute("id", centerId);
-    this.addClickableData(btn, defaultCenterConfig, null);
+    this.setClickableData(btn, defaultCenterConfig, null);
     dpad.appendChild(btn);
 
     const centerLabel = document.createElementNS(Globals.SVG_NAMESPACE, "text");
@@ -919,30 +919,8 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   // Set key data
-  addClickableData(btn, defaultBtnConfig, btnConfig) {
-    this.addClickableFilteredData(btn, defaultBtnConfig, btnConfig, (key, value, source) => this._allowedDataFields.has(key));
-  }
-
-  addClickableFilteredData(btn, defaultBtnConfig, btnConfig, accept) {
-    if (!btn._keyData) btn._keyData = {};
-
-    // Process defaults first
-    if (defaultBtnConfig && typeof defaultBtnConfig === 'object') {
-      for (const [key, value] of Object.entries(defaultBtnConfig)) {
-        if (accept?.(key, value, 'default')) {
-          btn._keyData[key] = value;
-        }
-      }
-    }
-
-    // Then override with user config
-    if (btnConfig && typeof btnConfig === 'object') {
-      for (const [key, value] of Object.entries(btnConfig)) {
-        if (accept?.(key, value, 'user')) {
-          btn._keyData[key] = value;
-        }
-      }
-    }
+  setClickableData(clickable, defaultBtnConfig, btnConfig) {
+    this._layoutManager.setElementData(clickable, defaultConfig, overrideConfig, (key, value, source) => this._allowedClickableData.has(key));
   }
 
   // Set listeners on a clickable button
@@ -970,11 +948,11 @@ class AndroidRemoteCard extends HTMLElement {
     btn.classList.add("active");
 
     // Retrieve clickable button data
-    const keyData = btn._keyData;
-    if (!keyData) return;
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
 
     // Key code to press
-    const code = keyData.code;
+    const code = btnData.code;
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to press:", code));
 
     // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
@@ -1000,15 +978,15 @@ class AndroidRemoteCard extends HTMLElement {
     btn.classList.remove("active");
 
     // Retrieve clickable button data
-    const keyData = btn._keyData;
-    if (!keyData) return;
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
 
     // Key code to release
-    const code = keyData.code;
+    const code = btnData.code;
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
 
     // Suppress this clickable button release if reference pointer down event was originated from a different clickable button
-    const referenceCode = this._referenceBtn?._keyData?.code;
+    const referenceCode = this._layoutManager.getElementData(this._referenceBtn)?.code;
     if (referenceCode !== code) {
       //TODO: foolproof multiples buttons with same code, by using unique ID per button for reference and comparison, instead of key code
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to existing reference key code ${referenceCode}`));

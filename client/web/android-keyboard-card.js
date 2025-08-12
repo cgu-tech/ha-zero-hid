@@ -83,7 +83,7 @@ class AndroidKeyboardCard extends HTMLElement {
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _triggerPopin = 500;
-  _allowedDataFields = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
+  _allowedCellDataFields = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
 
   // private properties
   _config;
@@ -142,7 +142,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     for (const cell of this._elements.cells) {
 
-      const cellConfig = cell._keyData;
+      const cellConfig = this._layoutManager.getElementData(cell);
       if (!cellConfig) continue;
 
       this.doUpdateCell(cell, cellConfig, statusActions, statusLabel);
@@ -480,7 +480,7 @@ class AndroidKeyboardCard extends HTMLElement {
   doCell(rowConfig, cellConfig) {
 
     // Create cell popin config
-    const defaultCellConfig = { "popinConfig": this.createPopinConfig(cellConfig) };
+    const overrideCellConfig = { "popinConfig": this.createPopinConfig(cellConfig) };
 
     // Create cell
     const cell = document.createElement("button");
@@ -489,7 +489,7 @@ class AndroidKeyboardCard extends HTMLElement {
     if (cellConfig.special) cell.classList.add("special");
     if (cellConfig.width) cell.classList.add(cellConfig.width);
     if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
-    this.addClickableData(cell, defaultCellConfig, cellConfig);
+    this.setCellData(cell, cellConfig, overrideCellConfig);
 
     // Create cell content
     const cellContent = this.doCellContent(cellConfig);
@@ -727,7 +727,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
   // Popin can be shown when its config exists and contains current status label
   canShowPopin(cell) {
-    return !!cell?._keyData?.cellConfig?.["popinConfig"]?.[this.getStatusCurrentLabel()];
+    return !!this._layoutManager.getElementData(cell)?.cellConfig?.["popinConfig"]?.[this.getStatusCurrentLabel()];
   }
 
   doShowPopin(evt, cell) {
@@ -772,7 +772,7 @@ class AndroidKeyboardCard extends HTMLElement {
     popin.className = "key-popin";
 
     // Create popin rows
-    const popinConfig = cell._keyData["popinConfig"];
+    const popinConfig = this._layoutManager.getElementData(cell)["popinConfig"];
     for (const rowConfig of popinConfig) {
       const popinRow = this.doPopinRow(rowConfig);
       this.doStylePopinRow();
@@ -884,7 +884,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this._elements.popinCells.push(popinCell);
     popinCell.classList.add("key");
     if (cellConfig.width) popinCell.classList.add(cellConfig.width);
-    this.addClickableData(popinCell, defaultCellConfig, cellConfig);
+    this.setCellData(popinCell, defaultCellConfig, cellConfig);
 
     // Create popin cell content
     const row = this.doPopinCellContent(popinCell, popinCellContent);
@@ -986,31 +986,8 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doClosePopin();
   }
 
-  // Set key data
-  addClickableData(btn, defaultBtnConfig, btnConfig) {
-    this.addClickableFilteredData(btn, defaultBtnConfig, btnConfig, (key, value, source) => this._allowedDataFields.has(key));
-  }
-
-  addClickableFilteredData(btn, defaultBtnConfig, btnConfig, accept) {
-    if (!btn._keyData) btn._keyData = {};
-
-    // Process defaults first
-    if (defaultBtnConfig && typeof defaultBtnConfig === 'object') {
-      for (const [key, value] of Object.entries(defaultBtnConfig)) {
-        if (accept?.(key, value, 'default')) {
-          btn._keyData[key] = value;
-        }
-      }
-    }
-
-    // Then override with user config
-    if (btnConfig && typeof btnConfig === 'object') {
-      for (const [key, value] of Object.entries(btnConfig)) {
-        if (accept?.(key, value, 'user')) {
-          btn._keyData[key] = value;
-        }
-      }
-    }
+  setCellData(cell, defaultConfig, overrideConfig) {
+    this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedCellDataFields.has(key));
   }
 
   // Set listeners on a clickable button
@@ -1038,7 +1015,7 @@ class AndroidKeyboardCard extends HTMLElement {
     btn.classList.add("active");
 
     // Retrieve clickable button data
-    const cellConfig = btn._keyData;
+    const cellConfig = this._layoutManager.getElementData(btn);
     if (!cellConfig) return;
 
     // Key code to press
@@ -1057,7 +1034,7 @@ class AndroidKeyboardCard extends HTMLElement {
       // Pressed key code does not triggered keyboard status change
 
       // Special key pressed
-      if (btn._keyData.special) {
+      if (cellConfig.special) {
 
         // Send special key press to HID
         this.appendCode(code);
@@ -1093,7 +1070,7 @@ class AndroidKeyboardCard extends HTMLElement {
     btn.classList.remove("active");
 
     // Retrieve clickable button data
-    const cellConfig = btn._keyData;
+    const cellConfig = this._layoutManager.getElementData(btn);
     if (!cellConfig) return;
 
     // Key code to release
@@ -1101,7 +1078,7 @@ class AndroidKeyboardCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
 
     // Suppress when pointer was originated from a different button
-    const referenceCode = this._referenceBtn?._keyData?.code;
+    const referenceCode = this._layoutManager.getElementData(this._referenceBtn)?.code;
     if (referenceCode !== code) {
       //TODO: foolproof multiples buttons with same code, by using unique ID per button for reference and comparison, instead of key code
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to existing reference key code ${referenceCode}`));
@@ -1121,7 +1098,7 @@ class AndroidKeyboardCard extends HTMLElement {
     }
 
     // Special but not virtual key released
-    if (btn._keyData.special) {
+    if (cellConfig.special) {
 
       if (this._layoutManager.hasButtonOverride(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to detected override on ${btn.id}`));

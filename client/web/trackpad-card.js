@@ -30,6 +30,10 @@ class TrackpadCard extends HTMLElement {
     console.log(this._LAYOUTS);
   }
 
+  // private constants
+  _allowedTrackpadButtonData = new Set(['serviceCall', 'className']);
+  _allowedScrollZoneData = new Set(['zone']);
+
   // private properties
   _config;
   _hass;
@@ -483,10 +487,10 @@ class TrackpadCard extends HTMLElement {
     `;
 
     // Set zones data
-    scrollZonesContainer.querySelector(".zone.top")._keyData = {zone: "top"};
-    scrollZonesContainer.querySelector(".zone.bottom")._keyData = {zone: "bottom"};
-    scrollZonesContainer.querySelector(".zone.left")._keyData = {zone: "left"};
-    scrollZonesContainer.querySelector(".zone.right")._keyData = {zone: "right"};
+    this.setScrollZoneData(scrollZonesContainer.querySelector(".zone.top"), null, {zone: "top"});
+    this.setScrollZoneData(scrollZonesContainer.querySelector(".zone.bottom"), null, {zone: "bottom"});
+    this.setScrollZoneData(scrollZonesContainer.querySelector(".zone.left"), null, {zone: "left"});
+    this.setScrollZoneData(scrollZonesContainer.querySelector(".zone.right"), null, {zone: "right"});
   }
 
   doStyleScrollZones() {
@@ -526,7 +530,7 @@ class TrackpadCard extends HTMLElement {
 
     // Retrieve clicked scroll zone
     const scrollZone = evt.currentTarget;
-    const scrollZoneConfig = scrollZone._keyData;
+    const scrollZoneConfig = this._layoutManager.getElementData(scrollZone);
 
     // Scroll once using clicked scroll zone
     this.doScrollOnce(scrollZoneConfig);
@@ -615,62 +619,129 @@ class TrackpadCard extends HTMLElement {
     // Update trackpad according to current layout
     if (this._layoutManager.getLayoutName() === "buttons-hidden") trackpad.classList.add('no-buttons');
 
-    // Create trackpad buttons
+    // Create trackpad buttons parts
     for (const [trackpadButtonIndex, trackpadButtonConfig] of this._layoutManager.getLayout().entries()) {
-      const trackpadButton = this.doTrackpadButton(trackpadButtonIndex, trackpadButtonConfig);
-      this.doStyleTrackpadButton();
-      this.doAttachTrackpadButton(row);
-      this.doQueryTrackpadButtonElements();
-      this.doListenTrackpadButton();
+      const trackpadButtonParts = this.doTrackpadButtonParts(trackpadButtonIndex, trackpadButtonConfig);
+      this.doStyleTrackpadButtonParts();
+      this.doAttachTrackpadButtonParts(this._elements.buttonsRow, trackpadButtonParts);
+      this.doQueryTrackpadButtonPartsElements();
+      this.doListenTrackpadButtonParts();
     }
   }
-  
+
   doAttachLayout() {
     if (this._layoutManager.getLayoutName() !== "buttons-hidden") this._elements.container.appendChild(this._elements.buttonsRow);
   }
 
-  doTrackpadButton(trackpadButtonIndex, trackpadButtonConfig) {
+  doTrackpadButtonParts(trackpadButtonIndex, trackpadButtonConfig) {
     return trackpadButtonIndex === 0 ? 
-      this.createFirstButton(trackpadButtonConfig) :
-      this.createSecondaryButton(trackpadButtonConfig);
+      this.createFirstButtonParts(trackpadButtonConfig) :
+      this.createSecondaryButtonParts(trackpadButtonConfig);
+  }
+
+  doStyleTrackpadButtonParts() {
+    // Nothing to do: already carried by card style
+  }
+
+  doAttachTrackpadButtonParts(buttonsRow, trackpadButtonParts) {
+    for (const trackpadButtonPart of trackpadButtonParts) {
+      buttonsRow.appendChild(trackpadButtonPart);
+    }
+  }
+
+  doQueryTrackpadButtonPartsElements() {
+    // Nothing to do: elements references not needed
+  }
+
+  doListenTrackpadButtonParts() {
+    // Nothing to do: buttons interractions already handled at buttons level
+  }
+
+  createFirstButtonParts(trackpadButtonConfig) {
+    return [
+      this.createTrackpadButton(trackpadButtonConfig)
+    ];
+  }
+
+  createSecondaryButtonParts(trackpadButtonConfig) {
+    return [
+      this.createTrackpadButtonSeparator(),
+      this.createTrackpadButton(trackpadButtonConfig)
+    ];
+  }
+
+  createTrackpadButton(trackpadButtonConfig) {
+    const trackpadButton = this.doTrackpadButton(trackpadButtonConfig);
+    this.doStyleTrackpadButton();
+    this.doAttachTrackpadButton();
+    this.doQueryTrackpadButtonElements();
+    this.doListenTrackpadButton();
+    return trackpadButton;
+  }
+
+  doTrackpadButton(trackpadButtonConfig) {
+    const trackpadButton = document.createElement("button");
+    trackpadButton.className = `trackpad-btn ${trackpadButtonConfig.className}`;
+    this.setTrackpadButtonData(trackpadButton, null, trackpadButtonConfig);
+    return trackpadButton;
   }
 
   doStyleTrackpadButton() {
-    //TODO
+    // Nothing to do: already carried by card style
   }
-  doAttachTrackpadButton(row) {
-    //TODO
+
+  doAttachTrackpadButton() {
+    // Nothing to do: will be attached later into buttonsRow
   }
+
   doQueryTrackpadButtonElements() {
-    //TODO
+    // Nothing to do: no needs for trackpad button elements
   }
+
   doListenTrackpadButton() {
-    //TODO
+    this._eventManager.addPointerDownListener(scrollZone, this.onTrackpadButtonPointerDown.bind(this));
+    this._eventManager.addPointerUpListener(scrollZone, this.onTrackpadButtonPointerUp.bind(this));
+  }
+  
+  onTrackpadButtonPointerDown(evt) {
+    const trackpadButton = evt.currentTarget;
+    const trackpadButtonData = this._layoutManager.getElementData(trackpadButton);
+    this.sendMouse(trackpadButtonData.serviceCall, {});
   }
 
-  createButton(trackpadButtonConfig) {
-    const btn = document.createElement("button");
-    btn.className = `trackpad-btn ${trackpadButtonConfig.className}`;
-
-    this._eventManager.addPointerDownListener(btn, () => {
-      this.sendMouse(trackpadButtonConfig.serviceCall, {});
-    });
-    this._eventManager.addPointerUpListener(btn, () => {
-      this.sendMouseClickRelease();
-    });
-    return btn;
+  onTrackpadButtonPointerUp(evt) {
+    this.sendMouseClickRelease();
+  }
+  
+  createTrackpadButtonSeparator() {
+    const trackpadButtonSeparator = this.doTrackpadButtonSeparator();
+    this.doStyleTrackpadButtonSeparator();
+    this.doAttachTrackpadButtonSeparator();
+    this.doQueryTrackpadButtonSeparatorElements();
+    this.doListenTrackpadButtonSeparator();
+    return trackpadButtonSeparator;
   }
 
-  createFirstButton(trackpadButtonConfig) {
-    return this.createButton(trackpadButtonConfig);
+  doTrackpadButtonSeparator() {
+    const trackpadButtonSeparator = document.createElement("div");
+    trackpadButtonSeparator.className = "btn-separator";
+    return trackpadButtonSeparator;
   }
 
-  createSecondaryButton(trackpadButtonConfig) {
-    const sep = document.createElement("div");
-    sep.className = "btn-separator";
-    buttonsRow.appendChild(sep);
-    const bnt = this.createButton(trackpadButtonConfig);
-    buttonsRow.appendChild(bnt);
+  doStyleTrackpadButtonSeparator() {
+    // Nothing to do: already carried by card style
+  }
+
+  doAttachTrackpadButtonSeparator() {
+    // Nothing to do: will be attached later into buttonsRow
+  }
+
+  doQueryTrackpadButtonSeparatorElements() {
+    // Nothing to do: no needs for trackpad button elements
+  }
+
+  doListenTrackpadButtonSeparator() {
+    // Nothing to do: non-interactable object
   }
 
   // configuration defaults
@@ -748,7 +819,7 @@ class TrackpadCard extends HTMLElement {
 
     // Apply scroll zones dimensions, per scroll zone
     for (const scrollZone of scrollZones) {
-      const zone = scrollZone._keyData.zone;
+      const zone = this._layoutManager.getElementData(scrollZone).zone;
       const zoneStyle = scrollZoneStyles[zone];
 
       Object.assign(scrollZone.style, {
@@ -982,7 +1053,14 @@ class TrackpadCard extends HTMLElement {
     return { dx: dxRound, dy: dyRound };
   }
 
-}
+  setTrackpadButtonData(btn, defaultConfig, overrideConfig) {
+    this.setElementData(btn, defaultConfig, overrideConfig, (key, value, source) => this._allowedTrackpadButtonData.has(key));
+  }
 
+  setScrollZoneData(scrollZone, defaultConfig, overrideConfig) {
+    this.setElementData(scrollZone, defaultConfig, overrideConfig, (key, value, source) => this._allowedScrollZoneData.has(key));
+  }
+
+}
 
 customElements.define("trackpad-card", TrackpadCard);

@@ -107,6 +107,32 @@ export class LayoutManager {
     return this.getLayoutName() !== this.getAttachedLayoutName();
   }
 
+  getElementData(elt) {
+    return elt?._keyData;
+  }
+
+  setElementData(elt, defaultConfig, overrideConfig, accept) {
+    if (!elt._keyData) elt._keyData = {};
+
+    // Process defaults first
+    if (defaultConfig && typeof defaultConfig === 'object') {
+      for (const [key, value] of Object.entries(defaultConfig)) {
+        if (accept?.(key, value, 'default')) {
+          elt._keyData[key] = value;
+        }
+      }
+    }
+
+    // Then override
+    if (overrideConfig && typeof overrideConfig === 'object') {
+      for (const [key, value] of Object.entries(overrideConfig)) {
+        if (accept?.(key, value, 'user')) {
+          elt._keyData[key] = value;
+        }
+      }
+    }
+  }
+
   getScaleOrDefault(scale, defaultScale) {
     let scaleOrDefault;
     if (this.constructor.isValidScale(scale)) {
