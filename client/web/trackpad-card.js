@@ -161,6 +161,8 @@ class TrackpadCard extends HTMLElement {
         </div>
       </div>
     `;
+    
+    this.createScrollZones();
   }
 
   doStyle() {
@@ -351,7 +353,7 @@ class TrackpadCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt):", evt));
 
     // Track current pointer into trackpad pointers
-    this._pointersClick.set(evt.pointerId, { "move-detected": false, "event": evt, "long-click-timeout": this.addLongClickTimeout(evt) } );
+    this._pointersClick.set(evt.pointerId, { "move-detected": false, "event": evt, "long-click-timeout": this.addTrackpadLongClickTimeout(evt) } );
     this._pointersStart.set(evt.pointerId, evt);
     this._pointersEnd.set(evt.pointerId);
   }
@@ -392,7 +394,7 @@ class TrackpadCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerUp(evt):", evt));
 
     // Clear current pointer long click timeout and retrieve current pointer click entry (when existing)
-    const clickEntry = this.clearLongClickTimeout(evt);
+    const clickEntry = this.clearTrackpadLongClickTimeout(evt);
 
     // Remove current pointer entry from tracked trackpad pointers (when existing)
     this._pointersEnd.delete(evt.pointerId);
@@ -418,47 +420,24 @@ class TrackpadCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerCancel(evt):", evt));
 
     // Remove current pointer from all trackpad pointers
-    this.clearLongClickTimeout(evt);
+    this.clearTrackpadLongClickTimeout(evt);
     this._pointersEnd.delete(evt.pointerId);
     this._pointersStart.delete(evt.pointerId);
     this._pointersClick.delete(evt.pointerId);
   }
 
-  doUpdateConfig() {
-    if (this._layoutManager.configuredLayoutChanged()) {
-      this.doUpdateLayout();
-    }
-  }
-
-  doUpdateHass() {
-    //TODO
-  }
-
-  doUpdateLayout() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout() + this._currentMode, this._currentState", this._currentMode, this._currentState));
-    this.doResetLayout();
-    this.doCreateLayout();
-  }
-
-  doResetLayout() {
-    // Clear existing layout content from DOM
-    this._elements.container.innerHTML = '';
-
-    // Reset attached layout
-    this._layoutManager.resetAttachedLayout();
-  }
-
-  doCreateLayout() {
-    // Mark configured layout as attached
-    this._layoutManager.configuredLayoutAttached();
-
-    // TODO
+  createScrollZones() {
+    this.doScrollZones();
+    this.doStyleScrollZones();
+    this.doAttachScrollZones();
+    this.doQueryScrollZonesElements();
+    this.doListenScrollZones();
   }
 
   doScrollZones() {
-    const scrollContainer = document.createElement("div");
-    scrollContainer.classList.add("scroll-zones");
-    scrollContainer.innerHTML = `
+    this._elements.scrollZonesContainer = document.createElement("div");
+    this._elements.scrollZonesContainer.classList.add("scroll-zones");
+    this._elements.scrollZonesContainer.innerHTML = `
       <div class="zone top">
         <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-top" viewBox="0 0 24 24" width="24" height="24" fill="none">
           <polyline 
@@ -500,43 +479,92 @@ class TrackpadCard extends HTMLElement {
         </svg>
       </div>
     `;
+    
+    // Set zone data
+    scrollZonesContainer.querySelector(".zone.top")._keyData = {zone: "top"};
+    scrollZonesContainer.querySelector(".zone.bottom")._keyData = {zone: "bottom"};
+    scrollZonesContainer.querySelector(".zone.left")._keyData = {zone: "left"};
+    scrollZonesContainer.querySelector(".zone.right")._keyData = {zone: "right"};
+  }
 
-      const el = document.createElement("div");
-      el.classList.add("zone", zone);
-      el.dataset.zone = zone;
+  doStyleScrollZones() {
+    // Nothing to do: styles already included in card style
+  }
 
-      this._eventManager.addPointerDownListener(el, (e) => {
-        e.stopImmediatePropagation();
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("scroll pointerDown(e):", e));
+  doAttachScrollZones() {
+    // Nothing to do: scroll zones are dynamically attached on-demand during card runtime
+  }
 
-        // Scroll once
-        const zone = e.currentTarget.dataset.zone;
-        this.scrollZone(zone);
+  doQueryScrollZonesElements() {
+    const scrollZonesContainer = this._elements.scrollZonesContainer;
+    this._elements.scrollZoneTop = scrollZonesContainer.querySelector(".zone.top");
+    this._elements.scrollZoneBottom = scrollZonesContainer.querySelector(".zone.bottom");
+    this._elements.scrollZoneLeft = scrollZonesContainer.querySelector(".zone.left");
+    this._elements.scrollZoneRight = scrollZonesContainer.querySelector(".zone.right");
+    this._elements.scrollZones = [scrollZoneTop, scrollZoneBottom, scrollZoneLeft, scrollZoneRight];
+  }
 
-        // Setup repeated scrolls for long-press of scroll button
-        this.scrollsClick.set(e.pointerId, { "event": e , "long-scroll-timeout": this.addLongScrollTimeout(zone, e, this.triggerLongScroll) } );
-      });
-      this._eventManager.addPointerUpListener(el, (e) => {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("scroll pointerUp(e):", e));
-        this.clearLongScrollTimeout(e);
-        this.scrollsClick.delete(e.pointerId);
-      });
-      this._eventManager.addPointerCancelListener(el, (e) => {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("scroll Cancel(e):", e));
-        this.clearLongScrollTimeout(e);
-        this.scrollsClick.delete(e.pointerId);
-      });
-      this._eventManager.addPointerLeaveListener(el, (e) => {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("scroll Leave(e):", e));
-        this.clearLongScrollTimeout(e);
-        this.scrollsClick.delete(e.pointerId);
-      });
+  doListenScrollZones() {
+    for (const scrollZone of this._elements.scrollZones) {
+      this._eventManager.addPointerDownListener(scrollZone, this.onScrollZonePointerDown.bind(this));
+      this._eventManager.addPointerUpListener(scrollZone, this.onScrollZonePointerCancel.bind(this));
+      this._eventManager.addPointerCancelListener(scrollZone, this.onScrollZonePointerCancel.bind(this));
+      this._eventManager.addPointerLeaveListener(scrollZone, this.onScrollZonePointerCancel.bind(this));
+    }
+  }
 
-      const scrollArrowIcon = this.createArrowSvg(zone);
-      el.appendChild(scrollArrowIcon);
+  onScrollZonePointerDown(evt) {
+    evt.stopImmediatePropagation();
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerDown(evt):", evt));
 
-      this.scrollContainer.appendChild(el);
+    // Retrieve clicked scroll zone
+    const scrollZone = evt.currentTarget;
+    const scrollZoneConfig = scrollZone._keyData;
 
+    // Scroll once using clicked scroll zone
+    this.doScrollOnce(scrollZoneConfig);
+
+    // Setup repeated scrolls when scroll zone is long-press maintained
+    this.scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, this.getTriggerLongScrollDelay()) } );
+  }
+
+  onScrollZonePointerCancel(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerCancel(evt):", evt));
+
+    this.clearScrollZoneLongClickTimeout(evt);
+    this.scrollsClick.delete(evt.pointerId);
+  }
+
+
+  doUpdateConfig() {
+    if (this._layoutManager.configuredLayoutChanged()) {
+      this.doUpdateLayout();
+    }
+  }
+
+  doUpdateHass() {
+    //TODO
+  }
+
+  doUpdateLayout() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()"));
+    this.doResetLayout();
+    this.doCreateLayout();
+  }
+
+  doResetLayout() {
+    // Clear existing layout content from DOM
+    this._elements.container.innerHTML = '';
+
+    // Reset attached layout
+    this._layoutManager.resetAttachedLayout();
+  }
+
+  doCreateLayout() {
+    // Mark configured layout as attached
+    this._layoutManager.configuredLayoutAttached();
+
+    // TODO
   }
 
   doButtons() {
@@ -669,8 +697,10 @@ class TrackpadCard extends HTMLElement {
     }
   }
 
-  scrollZone(zone) {
-    switch (zone) {
+  doScrollOnce(scrollZoneConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doScrollOnce(scrollZoneConfig):`, scrollZoneConfig));
+    const scrollZone = scrollZoneConfig.zone;
+    switch (scrollZone) {
       case "top":
         this.sendMouseScroll(0, 1);
         this._eventManager.hapticFeedbackShort();
@@ -690,39 +720,40 @@ class TrackpadCard extends HTMLElement {
     }
   }
 
-  addLongScrollTimeout(zone, e, thisTriggerLongScroll) {
+  addScrollZoneLongClickTimeout(evt, scrollZoneConfig, triggerDelay) {
     return setTimeout(() => {
-      const clickEntry = this.scrollsClick.get(e.pointerId);
+      const clickEntry = this.scrollsClick.get(evt.pointerId);
       if (clickEntry) {
-        const startTime = clickEntry["event"].timeStamp;
-        const endTime = e.timeStamp;
-        const duration = endTime - startTime; // current long-scroll duration
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`startTime:${startTime}, endTime:${endTime}, duration:${duration}`));
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Long-scroll of ${duration}ms detected for:`, e));
 
-        // Scroll current direction
-        this.scrollZone(zone);
+        const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Scroll ${scrollZoneConfig.zone} long press of ${duration}ms detected for evt:`, evt));
 
-        // Compute next trigger time
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`this.getTriggerLongScrollMinInterval():${this.getTriggerLongScrollMinInterval()}, thisTriggerLongScroll:${thisTriggerLongScroll}, this.getTriggerLongScrollDecreaseInterval():${this.getTriggerLongScrollDecreaseInterval()}`));
-        const nextTriggerLongScroll = Math.max(this.getTriggerLongScrollMinInterval(), thisTriggerLongScroll - this.getTriggerLongScrollDecreaseInterval())
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`nextTriggerLongScroll:${nextTriggerLongScroll}`));
+        // Scroll once into current scrollZoneConfig direction
+        this.doScrollOnce(scrollZoneConfig);
+
+        // Compute next trigger delay
+        const nextTriggerDelay = Math.max(this.getTriggerLongScrollMinInterval(), triggerDelay - this.getTriggerLongScrollDecreaseInterval())
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Next ${scrollZoneConfig.zone} scroll will be triggered in ${nextTriggerDelay}ms`));
 
         // Add next scroll event
-        this.scrollsClick.set(e.pointerId, { "event": e , "long-scroll-timeout": this.addLongScrollTimeout(zone, e, nextTriggerLongScroll) } );
+        this.scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(zone, evt, nextTriggerDelay) } );
       }
-    }, thisTriggerLongScroll); // next long-scroll duration
+    }, triggerDelay); // next long-scroll duration
   }
 
-  clearLongScrollTimeout(e) {
+  clearScrollZoneLongClickTimeout(e) {
     const clickEntry = this.scrollsClick.get(e.pointerId);
     if (clickEntry && clickEntry["long-scroll-timeout"]) clearTimeout(clickEntry["long-scroll-timeout"]);
+    return clickEntry;
   }
 
-  addLongClickTimeout(e) {
+  addTrackpadLongClickTimeout(e) {
     return setTimeout(() => {
+
+      // Retrieve current pointer from tracked trackpad click pointers
       const clickEntry = this._pointersClick.get(e.pointerId);
       if (clickEntry && !clickEntry["move-detected"]) {
+
         // No move detected as-of now:
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("No move detected for:", e));
 
@@ -735,7 +766,7 @@ class TrackpadCard extends HTMLElement {
     }, this.getTriggerLongClickDelay()); // long-press duration
   }
   
-  clearLongClickTimeout(evt) {
+  clearTrackpadLongClickTimeout(evt) {
     const clickEntry = this._pointersClick.get(evt.pointerId);
     if (clickEntry && clickEntry["long-click-timeout"]) clearTimeout(clickEntry["long-click-timeout"]);
     return clickEntry;
