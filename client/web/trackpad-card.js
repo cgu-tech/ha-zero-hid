@@ -616,8 +616,8 @@ class TrackpadCard extends HTMLElement {
     if (this._layoutManager.getLayoutName() === "buttons-hidden") trackpad.classList.add('no-buttons');
 
     // Create trackpad buttons
-    for (const trackpadButtonConfig of this._layoutManager.getLayout()) {
-      const trackpadButton = this.doTrackpadButton(trackpadButtonConfig);
+    for (const [trackpadButtonIndex, trackpadButtonConfig] of this._layoutManager.getLayout().entries()) {
+      const trackpadButton = this.doTrackpadButton(trackpadButtonIndex, trackpadButtonConfig);
       this.doStyleTrackpadButton();
       this.doAttachTrackpadButton(row);
       this.doQueryTrackpadButtonElements();
@@ -629,45 +629,48 @@ class TrackpadCard extends HTMLElement {
     if (this._layoutManager.getLayoutName() !== "buttons-hidden") this._elements.container.appendChild(this._elements.buttonsRow);
   }
 
-  doTrackpadButton(trackpadButtonConfig) {
-    const createButton = (serviceCall, className) => {
-      const btn = document.createElement("button");
-      btn.className = `trackpad-btn ${className}`;
-      this._eventManager.addPointerDownListener(btn, () => {
-        this.sendMouse(serviceCall, {});
-      });
-      this._eventManager.addPointerUpListener(btn, () => {
-        this.sendMouseClickRelease();
-      });
-      return btn;
-    };
+  doTrackpadButton(trackpadButtonIndex, trackpadButtonConfig) {
+    return trackpadButtonIndex === 0 ? 
+      this.createFirstButton(trackpadButtonConfig) :
+      this.createSecondaryButton(trackpadButtonConfig);
+  }
 
-    const createFirstButton = (serviceCall, className) => {
-      const bnt = createButton(serviceCall, className);
-      buttonsRow.appendChild(bnt);
-    };
+  doStyleTrackpadButton() {
+    //TODO
+  }
+  doAttachTrackpadButton(row) {
+    //TODO
+  }
+  doQueryTrackpadButtonElements() {
+    //TODO
+  }
+  doListenTrackpadButton() {
+    //TODO
+  }
 
-    const createSecondaryButton = (serviceCall, className) => {
-      const sep = document.createElement("div");
-      sep.className = "btn-separator";
-      buttonsRow.appendChild(sep);
-      const bnt = createButton(serviceCall, className);
-      buttonsRow.appendChild(bnt);
-    };
+  createButton(trackpadButtonConfig) {
+    const btn = document.createElement("button");
+    btn.className = `trackpad-btn ${trackpadButtonConfig.className}`;
 
-    const buttonsQueue = [...this.buttonsLayout];
-    let isFirstButton = true;
+    this._eventManager.addPointerDownListener(btn, () => {
+      this.sendMouse(trackpadButtonConfig.serviceCall, {});
+    });
+    this._eventManager.addPointerUpListener(btn, () => {
+      this.sendMouseClickRelease();
+    });
+    return btn;
+  }
 
-    while (buttonsQueue.length > 0) {
-      const buttonLayout = buttonsQueue.shift(); // Retrieves and removes one button
-      if (isFirstButton) {
-        isFirstButton = false;
-        createFirstButton(buttonLayout.serviceCall, buttonLayout.className);
-      } else {
-        createSecondaryButton(buttonLayout.serviceCall, buttonLayout.className);
-      }
-    }
-    container.appendChild(buttonsRow);
+  createFirstButton(trackpadButtonConfig) {
+    return this.createButton(trackpadButtonConfig);
+  }
+
+  createSecondaryButton(trackpadButtonConfig) {
+    const sep = document.createElement("div");
+    sep.className = "btn-separator";
+    buttonsRow.appendChild(sep);
+    const bnt = this.createButton(trackpadButtonConfig);
+    buttonsRow.appendChild(bnt);
   }
 
   // configuration defaults
