@@ -287,6 +287,9 @@ class TrackpadCard extends HTMLElement {
         fill: #44739e !important;
         color: #44739e !important;
       }
+      .scroll-toggle-icon.pass-through {
+        pointer-events: none;
+      }
 
       .trackpad-button {
         height: 60px;
@@ -406,6 +409,7 @@ class TrackpadCard extends HTMLElement {
 
   onTrackpadPointerMove(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
+    this.disableScrollToggleEvents();
 
     // Retrieve current pointer from tracked trackpad click pointers
     const clickEntry = this._pointersClick.get(evt.pointerId);
@@ -438,6 +442,7 @@ class TrackpadCard extends HTMLElement {
 
   onTrackpadPointerUp(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerUp(evt):", evt));
+    this.enableScrollToggleEvents();
 
     // Clear current pointer long click timeout and retrieve current pointer click entry (when existing)
     const clickEntry = this.clearTrackpadLongClickTimeout(evt);
@@ -464,12 +469,21 @@ class TrackpadCard extends HTMLElement {
 
   onTrackpadPointerCancel(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerCancel(evt):", evt));
+    this.enableScrollToggleEvents();
 
     // Remove current pointer from all trackpad pointers
     this.clearTrackpadLongClickTimeout(evt);
     this._pointersEnd.delete(evt.pointerId);
     this._pointersStart.delete(evt.pointerId);
     this._pointersClick.delete(evt.pointerId);
+  }
+
+  disableScrollToggleEvents() {
+    this._elements.scrollToggle.classList.add("pass-through");
+  }
+  
+  enableScrollToggleEvents() {
+    this._elements.scrollToggle.classList.remove("pass-through");
   }
 
   createScrollZones() {
