@@ -808,12 +808,12 @@ class TrackpadCard extends HTMLElement {
   }
 
   doUpdateScrollZones() {
-    const trackpad = this._elements.trackpad;
+    const trackpadArea = this._elements.trackpad;
     const scrollZonesContainer = this._elements.scrollZonesContainer;
 
     if (this._isScrollModeOn) {
       trackpadArea.appendChild(scrollZonesContainer);
-      this.doPositionAndScaleScrollZones();
+      //this.doPositionAndScaleScrollZones();
     } else {
       trackpadArea.removeChild(scrollZonesContainer);
     }
