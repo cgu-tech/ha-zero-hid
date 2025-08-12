@@ -98,8 +98,8 @@ class TrackpadCard extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
   }
 
-  getTriggerScroll() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_scroll");
+  getTriggerScrollDelta() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_scroll_delta");
   }
 
   getTriggerScrollMinValue() {
@@ -332,7 +332,7 @@ class TrackpadCard extends HTMLElement {
 
       // When pointer was pressed over scroll icon before this release event: toggle scroll mode
       this._isScrollModeOn = !this._isScrollModeOn;
-      scrollIcon.classList.toggle("toggled-on", this._isScrollModeOn);
+      this._elements.scrollIcon.classList.toggle("toggled-on", this._isScrollModeOn);
 
       // Update scroll zones to reflect new scroll mode
       this.doUpdateScrollZones();
@@ -373,7 +373,7 @@ class TrackpadCard extends HTMLElement {
 
       // Check if pointer physically moved enough this time, to trigger "move-detection"
       const { dx, dy } = this.getPointerDelta(clickEntry["event"], evt);
-      if (Math.abs(dx) > this.triggerMoveDeltaX || Math.abs(dy) > this.triggerMoveDeltaY) {
+      if (Math.abs(dx) > this.getTriggerMoveHorizontalDelta() || Math.abs(dy) > this.getTriggerMoveVerticalDelta()) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Move detected for evt:", evt));
         clickEntry["move-detected"] = true;
       }
@@ -750,7 +750,7 @@ class TrackpadCard extends HTMLElement {
       trigger_move_horizontal_delta: 2,
       trigger_move_vertical_delta: 2,
       trigger_long_click_delay: 500,
-      trigger_scroll: 10,
+      trigger_scroll_delta: 10,
       trigger_scroll_min_value: -1,
       trigger_scroll_max_value: 1,
       trigger_long_scroll_delay: 350,
