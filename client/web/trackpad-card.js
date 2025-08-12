@@ -861,7 +861,7 @@ class TrackpadCard extends HTMLElement {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Next scroll zone long click ${scrollZoneConfig.zone} will be triggered in ${nextTriggerDelay}ms`));
 
         // Add next scroll event
-        this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(zone, evt, nextTriggerDelay) } );
+        this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, nextTriggerDelay) } );
       }
     }, triggerDelay); // next long-scroll duration
   }
