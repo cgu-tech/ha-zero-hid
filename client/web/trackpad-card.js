@@ -536,14 +536,14 @@ class TrackpadCard extends HTMLElement {
     this.doScrollOnce(scrollZoneConfig);
 
     // Setup repeated scrolls when scroll zone is long-press maintained
-    this.scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, this.getTriggerLongScrollDelay()) } );
+    this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, this.getTriggerLongScrollDelay()) } );
   }
 
   onScrollZonePointerCancel(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerCancel(evt):", evt));
 
     this.clearScrollZoneLongClickTimeout(evt);
-    this.scrollsClick.delete(evt.pointerId);
+    this._scrollsClick.delete(evt.pointerId);
   }
 
   createButtonsRow() {
@@ -854,7 +854,7 @@ class TrackpadCard extends HTMLElement {
 
   addScrollZoneLongClickTimeout(evt, scrollZoneConfig, triggerDelay) {
     return setTimeout(() => {
-      const clickEntry = this.scrollsClick.get(evt.pointerId);
+      const clickEntry = this._scrollsClick.get(evt.pointerId);
       if (clickEntry) {
 
         const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
@@ -868,13 +868,13 @@ class TrackpadCard extends HTMLElement {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Next scroll zone long click ${scrollZoneConfig.zone} will be triggered in ${nextTriggerDelay}ms`));
 
         // Add next scroll event
-        this.scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(zone, evt, nextTriggerDelay) } );
+        this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(zone, evt, nextTriggerDelay) } );
       }
     }, triggerDelay); // next long-scroll duration
   }
 
   clearScrollZoneLongClickTimeout(evt) {
-    const clickEntry = this.scrollsClick.get(evt.pointerId);
+    const clickEntry = this._scrollsClick.get(evt.pointerId);
     if (clickEntry && clickEntry["long-scroll-timeout"]) clearTimeout(clickEntry["long-scroll-timeout"]);
     return clickEntry;
   }
