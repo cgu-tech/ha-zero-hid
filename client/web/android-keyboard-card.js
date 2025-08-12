@@ -739,9 +739,9 @@ class AndroidKeyboardCard extends HTMLElement {
     const popin = this._elements.popin;
 
     // Detach existing popin from DOM
-    if (popin?.parentElement) this._elements.popin.remove();
+    if (popin?.parentElement) popin.remove();
 
-    // Clear existing popin content from DOM
+    // Clear existing popin DOM content
     if (popin) popin.innerHTML = '';
 
     // Reset popin cells elements (if any)

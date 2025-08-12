@@ -156,12 +156,12 @@ class TrackpadCard extends HTMLElement {
               fill="none" stroke="currentColor" stroke-width="2" />
           </svg>
         </div>
-        <div class="buttons-area">
-        </div>
       </div>
     `;
-    
+
+    // Create detached elements
     this.createScrollZones();
+    this.createButtonsRow();
   }
 
   doStyle() {
@@ -292,7 +292,6 @@ class TrackpadCard extends HTMLElement {
     this._elements.container = card.querySelector(".trackpad-container");
     this._elements.trackpad = card.querySelector(".trackpad-area");
     this._elements.scrollIcon = card.querySelector(".scroll-icon");
-    this._elements.buttons = card.querySelector(".buttons-area");
   }
 
   doListen() {
@@ -543,6 +542,41 @@ class TrackpadCard extends HTMLElement {
     this.scrollsClick.delete(evt.pointerId);
   }
 
+  createButtonsRow() {
+    this.doButtonsRow();
+    this.doStyleButtonsRow();
+    this.doAttachButtonsRow();
+    this.doQueryButtonsRowElements();
+    this.doListenButtonsRow();
+  }
+
+  doButtonsRow() {
+    const buttonsRow = document.createElement("div");
+    this._elements.buttonsRow = buttonsRow;
+    buttonsRow.classList.add("buttons-row");
+  }
+
+  doStyleButtonsRow() {
+    this._elements.style.textContent += `
+      .buttons-row {
+        display: flex;
+        width: 100%;
+        background: #00000000;
+      }
+    `;
+  }
+
+  doAttachButtonsRow() {
+    // Nothing to do: buttons row is dynamically attached at runtime
+  }
+
+  doQueryButtonsRowElements() {
+    // Nothing to do: buttons row elements reference is not needed
+  }
+
+  doListenButtonsRow() {
+    // Nothing to do: buttons row does not need to be listened
+  }
 
   doUpdateConfig() {
     if (this._layoutManager.configuredLayoutChanged()) {
@@ -558,11 +592,17 @@ class TrackpadCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout()"));
     this.doResetLayout();
     this.doCreateLayout();
+    this.doAttachLayout();
   }
 
   doResetLayout() {
-    // Clear existing layout content from DOM
-    this._elements.container.innerHTML = '';
+    const buttonsRow = this._elements.buttonsRow;
+
+    // Detach existing buttonsRow from DOM
+    if (buttonsRow.parentElement) buttonsRow.remove();
+
+    // Clear existing buttonsRow DOM content
+    buttonsRow.innerHTML = '';
 
     // Reset attached layout
     this._layoutManager.resetAttachedLayout();
@@ -572,62 +612,62 @@ class TrackpadCard extends HTMLElement {
     // Mark configured layout as attached
     this._layoutManager.configuredLayoutAttached();
 
-    // TODO
+    // Update trackpad according to current layout
+    if (this._layoutManager.getLayoutName() === "buttons-hidden") trackpad.classList.add('no-buttons');
+
+    // Create trackpad buttons
+    for (const trackpadButtonConfig of this._layoutManager.getLayout()) {
+      const trackpadButton = this.doTrackpadButton(trackpadButtonConfig);
+      this.doStyleTrackpadButton();
+      this.doAttachTrackpadButton(row);
+      this.doQueryTrackpadButtonElements();
+      this.doListenTrackpadButton();
+    }
+  }
+  
+  doAttachLayout() {
+    if (this._layoutManager.getLayoutName() !== "buttons-hidden") this._elements.container.appendChild(this._elements.buttonsRow);
   }
 
-  doButtons() {
-    // Buttons
-    if (this.buttonsLayout && this.buttonsLayout.length > 0) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Creating buttons for mode:${this.buttonsMode}`));
+  doTrackpadButton(trackpadButtonConfig) {
+    const createButton = (serviceCall, className) => {
+      const btn = document.createElement("button");
+      btn.className = `trackpad-btn ${className}`;
+      this._eventManager.addPointerDownListener(btn, () => {
+        this.sendMouse(serviceCall, {});
+      });
+      this._eventManager.addPointerUpListener(btn, () => {
+        this.sendMouseClickRelease();
+      });
+      return btn;
+    };
 
-      const buttonRow = document.createElement("div");
-      buttonRow.style.display = "flex";
-      buttonRow.style.width = "100%";
-      buttonRow.style.background = "#00000000";
+    const createFirstButton = (serviceCall, className) => {
+      const bnt = createButton(serviceCall, className);
+      buttonsRow.appendChild(bnt);
+    };
 
-      const createButton = (serviceCall, className) => {
-        const btn = document.createElement("button");
-        btn.className = `trackpad-btn ${className}`;
-        this._eventManager.addPointerDownListener(btn, () => {
-          this.sendMouse(serviceCall, {});
-        });
-        this._eventManager.addPointerUpListener(btn, () => {
-          this.sendMouseClickRelease();
-        });
-        return btn;
-      };
+    const createSecondaryButton = (serviceCall, className) => {
+      const sep = document.createElement("div");
+      sep.className = "btn-separator";
+      buttonsRow.appendChild(sep);
+      const bnt = createButton(serviceCall, className);
+      buttonsRow.appendChild(bnt);
+    };
 
-      const createFirstButton = (serviceCall, className) => {
-        const bnt = createButton(serviceCall, className);
-        buttonRow.appendChild(bnt);
-      };
+    const buttonsQueue = [...this.buttonsLayout];
+    let isFirstButton = true;
 
-      const createSecondaryButton = (serviceCall, className) => {
-        const sep = document.createElement("div");
-        sep.className = "btn-separator";
-        buttonRow.appendChild(sep);
-        const bnt = createButton(serviceCall, className);
-        buttonRow.appendChild(bnt);
-      };
-
-      const buttonsQueue = [...this.buttonsLayout];
-      let isFirstButton = true;
-
-      while (buttonsQueue.length > 0) {
-        const buttonLayout = buttonsQueue.shift(); // Retrieves and removes one button
-        if (isFirstButton) {
-          isFirstButton = false;
-          createFirstButton(buttonLayout.serviceCall, buttonLayout.className);
-        } else {
-          createSecondaryButton(buttonLayout.serviceCall, buttonLayout.className);
-        }
+    while (buttonsQueue.length > 0) {
+      const buttonLayout = buttonsQueue.shift(); // Retrieves and removes one button
+      if (isFirstButton) {
+        isFirstButton = false;
+        createFirstButton(buttonLayout.serviceCall, buttonLayout.className);
+      } else {
+        createSecondaryButton(buttonLayout.serviceCall, buttonLayout.className);
       }
-      container.appendChild(buttonRow);
-    } else {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Layout does not contain any buttons for mode:${this.buttonsMode}`));
-      // Add special no-buttons class
-      trackpad.classList.add('no-buttons');
     }
+    container.appendChild(buttonsRow);
   }
 
   // configuration defaults
