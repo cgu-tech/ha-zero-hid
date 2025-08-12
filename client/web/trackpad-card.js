@@ -15,22 +15,22 @@ class TrackpadCard extends HTMLElement {
   static {
     this._LAYOUTS = [
       { "Name": 'buttons-hidden'           , "buttons": [] },
-      { "Name": 'buttons-left'             , "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-solo"  } ] },
-      { "Name": 'buttons-middle'           , "buttons": [ {serviceCall: "clickmiddle", className: "trackpad-solo"  } ] },
-      { "Name": 'buttons-right'            , "buttons": [ {serviceCall: "clickright" , className: "trackpad-solo"  } ] },
-      { "Name": 'buttons-left-right'       , "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
-      { "Name": 'buttons-left-middle'      , "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
-      { "Name": 'buttons-middle-left'      , "buttons": [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
-      { "Name": 'buttons-middle-right'     , "buttons": [ {serviceCall: "clickmiddle", className: "trackpad-left"  }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
-      { "Name": 'buttons-right-left'       , "buttons": [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] },
-      { "Name": 'buttons-right-middle'     , "buttons": [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ] },
-      { "Name": 'buttons-left-middle-right', "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
-      { "Name": 'buttons-right-middle-left', "buttons": [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] }
+      { "Name": 'buttons-left'             , "buttons": [ {"button": "single", "event": "clickleft"  } ] },
+      { "Name": 'buttons-middle'           , "buttons": [ {"button": "single", "event": "clickmiddle"} ] },
+      { "Name": 'buttons-right'            , "buttons": [ {"button": "single", "event": "clickright" } ] },
+      { "Name": 'buttons-left-right'       , "buttons": [ {"button": "left"  , "event": "clickleft"  }, {"button": "right" , "event": "clickright" } ] },
+      { "Name": 'buttons-left-middle'      , "buttons": [ {"button": "left"  , "event": "clickleft"  }, {"button": "right" , "event": "clickmiddle"} ] },
+      { "Name": 'buttons-middle-left'      , "buttons": [ {"button": "left"  , "event": "clickmiddle"}, {"button": "right" , "event": "clickleft"  } ] },
+      { "Name": 'buttons-middle-right'     , "buttons": [ {"button": "left"  , "event": "clickmiddle"}, {"button": "right" , "event": "clickright" } ] },
+      { "Name": 'buttons-right-left'       , "buttons": [ {"button": "left"  , "event": "clickright" }, {"button": "right" , "event": "clickleft"  } ] },
+      { "Name": 'buttons-right-middle'     , "buttons": [ {"button": "left"  , "event": "clickright" }, {"button": "right" , "event": "clickmiddle"} ] },
+      { "Name": 'buttons-left-middle-right', "buttons": [ {"button": "left"  , "event": "clickleft"  }, {"button": "middle", "event": "clickmiddle"}, {"button": "right", "event": "clickright"} ] },
+      { "Name": 'buttons-right-middle-left', "buttons": [ {"button": "left"  , "event": "clickright" }, {"button": "middle", "event": "clickmiddle"}, {"button": "right", "event": "clickleft" } ] }
     ];
   }
 
   // private constants
-  _allowedTrackpadButtonData = new Set(['serviceCall', 'className']);
+  _allowedTrackpadButtonData = new Set(['button', 'event']);
   _allowedScrollZoneData = new Set(['zone']);
 
   // private properties
@@ -131,43 +131,44 @@ class TrackpadCard extends HTMLElement {
     this._elements.card.innerHTML = `
       <div class="trackpad-container">
         <div class="trackpad-area">
-          <!-- just trackpad stuff -->
-        </div>
-        <div class="scroll-icon-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" class="scroll-icon" viewBox="20 14.75 44 54.5">
-            <rect 
-              x="21" y="15.75"
-              width="42" height="52.5"
-              rx="15.75" ry="15.75"
-              stroke="currentColor" stroke-width="2" fill="none" />
-            <line 
-              x1="42" y1="26.25"
-              x2="42" y2="57.75"
-              stroke="currentColor" stroke-width="2" />
-            <polyline 
-              points="36.75,31.5 42,26.25 47.25,31.5"
-              fill="none" stroke="currentColor" stroke-width="2" />
-            <polyline 
-              points="36.75,52.5 42,57.75 47.25,52.5"
-              fill="none" stroke="currentColor" stroke-width="2" />
-            <line 
-              x1="26.25" y1="42"
-              x2="57.75" y2="42"
-              stroke="currentColor" stroke-width="2" />
-            <polyline 
-              points="31.5,36.75 26.25,42 31.5,47.25"
-              fill="none" stroke="currentColor" stroke-width="2" />
-            <polyline 
-              points="52.5,36.75 57.75,42 52.5,47.25"
-              fill="none" stroke="currentColor" stroke-width="2" />
-          </svg>
+          <div class="trackpad">
+          </div>
+          <div class="scroll-button">
+            <svg xmlns="http://www.w3.org/2000/svg" class="scroll-icon" viewBox="20 14.75 44 54.5">
+              <rect 
+                x="21" y="15.75"
+                width="42" height="52.5"
+                rx="15.75" ry="15.75"
+                stroke="currentColor" stroke-width="2" fill="none" />
+              <line 
+                x1="42" y1="26.25"
+                x2="42" y2="57.75"
+                stroke="currentColor" stroke-width="2" />
+              <polyline 
+                points="36.75,31.5 42,26.25 47.25,31.5"
+                fill="none" stroke="currentColor" stroke-width="2" />
+              <polyline 
+                points="36.75,52.5 42,57.75 47.25,52.5"
+                fill="none" stroke="currentColor" stroke-width="2" />
+              <line 
+                x1="26.25" y1="42"
+                x2="57.75" y2="42"
+                stroke="currentColor" stroke-width="2" />
+              <polyline 
+                points="31.5,36.75 26.25,42 31.5,47.25"
+                fill="none" stroke="currentColor" stroke-width="2" />
+              <polyline 
+                points="52.5,36.75 57.75,42 52.5,47.25"
+                fill="none" stroke="currentColor" stroke-width="2" />
+            </svg>
+          </div>
         </div>
       </div>
     `;
 
     // Create detached elements
     this.createScrollZones();
-    this.createButtonsRow();
+    this.createButtonsArea();
   }
 
   doStyle() {
@@ -180,104 +181,70 @@ class TrackpadCard extends HTMLElement {
         display: flex;
         flex-direction: column;
         align-items: center;
-        position: relative; /* Required for scroll-icon absolute positioning */
         padding: 0;
         background-color: #00000000; /* transparent black */
       }
-      .trackpad-btn {
-        height: 60px;
-        background: #3b3a3a;
-        border: none;
-        cursor: pointer;
-        transition: background 0.2s ease;
-      }
-      .trackpad-btn:hover {
-        background: #4a4a4a;
-      }
-      .trackpad-btn:active {
-        background: #2c2b2b;
-      }
-      .trackpad-left {
-        border-bottom-left-radius: 10px;
-        flex: 3;
-      }
-      .trackpad-middle {
-        flex: 1;
-      }
-      .trackpad-right {
-        border-bottom-right-radius: 10px;
-        flex: 3;
-      }
-      .trackpad-solo {
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-        flex: 7;
-      }
-      .btn-separator {
-        width: 1px;
-        background-color: #0a0a0a;
-      }
+
       .trackpad-area {
-        cursor: crosshair;
-        background: #3b3a3a;
-        height: 200px;
-        width: 100%;
-        touch-action: none;
         position: relative;
+        width: 100%;
+        height: 200px;
         border-top-left-radius: 10px;
         border-top-right-radius: 10px;
         border-bottom: 1px solid #0a0a0a;
-        transition: background 0.2s ease;
+        padding: 0;
+        background-color: #00000000; /* transparent black */
       }
-      .trackpad-area:active {
-        background: #2c2b2b !important;
-      }
-      .scroll-icon-wrapper {
-        position: absolute;
-        top: 0px;
-        right: 0px;
-        padding-top: 2%;
-        padding-bottom: 3%;
-        padding-left: 3%;
-        padding-right: 3%;
-        z-index: 2;
-        pointer-events: auto;
-      }
-      .scroll-icon {
-        height: 22.5%;
-        aspect-ratio: 1 / 1.5;     /* width will be 2/3 of the height */
-        opacity: 0.7;
-        fill: #eee;
-        stroke: #eee;
-        cursor: pointer;
-        transition: stroke 0.3s ease, fill 0.3s ease;
-        filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.6));
-      }
-      .trackpad-area.dragging .scroll-icon {
-        cursor: crosshair;
-      }
-      .no-buttons {
+      .trackpad-area.no-buttons {
         height: 260px;
-        border-bottom: none; /* or your desired override */
         border-bottom-left-radius: 10px;
         border-bottom-right-radius: 10px;
+        border-bottom: none;
       }
-      .scroll-icon.toggled-on {
-        stroke: #44739e !important;
-        fill: #44739e !important;
-        color: #44739e !important;
-      }
-      .scroll-zones {
-        position: absolute;
-        inset: 0;
+
+      .trackpad {
         z-index: 1;
-        pointer-events: none; /* base layer is non-interactive */
+        width: 100%;
+        height: 100%;
+        cursor: crosshair;
+        background: #3b3a3a;
+        touch-action: auto;
+        transition: background 0.2s ease;
       }
-      .scroll-zones .zone {
+      .trackpad:active {
+        background: #2c2b2b !important;
+      }
+      .trackpad.dragging .scroll-icon {
+        cursor: crosshair;
+      }
+
+      .scroll-zones {
+        z-index: 1;
+        width: 100%;
+        height: 100%;
         display: flex;
+        flex-direction: row;
+        padding: 0;
+        background-color: #00000000; /* transparent black */
+      }
+      .scroll-zone-stack {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .scroll-zone-stack.left {
+        flex: 1;
+      }
+      .scroll-zone-stack.middle {
+        flex: 4;
+      }
+      .scroll-zone-stack-right {
+        flex: 1;
+      }
+      .scroll-zone {
+        flex: 1;
         align-items: center;
         justify-content: center;
-        position: absolute;
         background-color: rgba(255, 255, 255, 0.05);
         pointer-events: auto;
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -285,8 +252,70 @@ class TrackpadCard extends HTMLElement {
         transition: background-color 0.2s ease;
         color: white; /* for currentColor */
       }
-      .scroll-zones .zone:hover {
+      .scroll-zone:hover {
         background-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .scroll-toggle {
+        z-index: 2;
+        position: absolute;
+        width: auto;
+        height: 22.5%;
+        top: 0px;
+        right: 0px;
+        padding-top: 2%;
+        padding-bottom: 3%;
+        padding-left: 3%;
+        padding-right: 3%;
+        cursor: pointer;
+      }
+      .scroll-icon {
+        pointer-events: none;
+        opacity: 0.7;
+        fill: #eee;
+        stroke: #eee;
+        transition: stroke 0.3s ease, fill 0.3s ease;
+        filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.6));
+      }
+      .scroll-icon.toggled-on {
+        stroke: #44739e !important;
+        fill: #44739e !important;
+        color: #44739e !important;
+      }
+
+      .trackpad-button {
+        height: 60px;
+        background: #3b3a3a;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      .trackpad-button:hover {
+        background: #4a4a4a;
+      }
+      .trackpad-button:active {
+        background: #2c2b2b;
+      }
+      .trackpad-button.left {
+        border-bottom-left-radius: 10px;
+        flex: 3;
+      }
+      .trackpad-button.middle {
+        flex: 1;
+      }
+      .trackpad-button.right {
+        border-bottom-right-radius: 10px;
+        flex: 3;
+      }
+      .trackpad-button.single {
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+        flex: 7;
+      }
+
+      .trackpad-button-separator {
+        width: 1px;
+        background-color: #0a0a0a;
       }
     `;
   }
@@ -299,35 +328,37 @@ class TrackpadCard extends HTMLElement {
   doQueryElements() {
     const card = this._elements.card;
     this._elements.container = card.querySelector(".trackpad-container");
-    this._elements.trackpad = card.querySelector(".trackpad-area");
-    this._elements.scrollIcon = card.querySelector(".scroll-icon");
+    this._elements.trackpadArea = card.querySelector(".trackpad-area");
+    this._elements.trackpad = card.querySelector(".trackpad");
+    this._elements.scrollZones = card.querySelector(".scroll-zones");
+    this._elements.scrollToggle = card.querySelector(".scroll-toggle");
   }
 
   doListen() {
     //TODO: add global PointerUp listener?
-    this.doListenScrollIcon();
+    this.doListenScrollToggle();
     this.doListenTrackpad();
   }
 
-  doListenScrollIcon() {
-    const scrollIcon = this._elements.scrollIcon;
-    this._eventManager.addPointerDownListener(scrollIcon, this.onScrollIconPointerDown.bind(this));
-    this._eventManager.addPointerUpListener(scrollIcon, this.onScrollIconPointerUp.bind(this));
-    this._eventManager.addPointerCancelListener(scrollIcon, this.onScrollIconPointerCancel.bind(this));
-    this._eventManager.addPointerLeaveListener(scrollIcon, this.onScrollIconPointerCancel.bind(this));
+  doListenScrollToggle() {
+    const scrollToggle = this._elements.scrollToggle;
+    this._eventManager.addPointerDownListener(scrollToggle, this.onScrollTogglePointerDown.bind(this));
+    this._eventManager.addPointerUpListener(scrollToggle, this.onScrollTogglePointerUp.bind(this));
+    this._eventManager.addPointerCancelListener(scrollToggle, this.onScrollTogglePointerCancel.bind(this));
+    this._eventManager.addPointerLeaveListener(scrollToggle, this.onScrollTogglePointerCancel.bind(this));
   }
 
-  onScrollIconPointerDown(evt) {
+  onScrollTogglePointerDown(evt) {
     evt.stopPropagation(); // Prevents underneath trackpad click
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollIconPointerDown(evt):", evt));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollTogglePointerDown(evt):", evt));
 
     // Track current pointer into scroll pointers
     this._scrollPointers.set(evt.pointerId, {});
   }
 
-  onScrollIconPointerUp(evt) {
+  onScrollTogglePointerUp(evt) {
     evt.stopPropagation(); // Prevents underneath trackpad click
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollIconPointerUp(evt):", evt));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollTogglePointerUp(evt):", evt));
 
     // Retrieve current pointer entry from tracked scroll pointers (when existing, then clear)
     const scrollEntry = this._scrollPointers.get(evt.pointerId);
@@ -335,16 +366,16 @@ class TrackpadCard extends HTMLElement {
 
     if (scrollEntry) {
 
-      // When pointer was pressed over scroll icon before this release event: toggle scroll mode
+      // When pointer was pressed over scroll toggle before this release event: toggle scroll mode
       this._isScrollModeOn = !this._isScrollModeOn;
-      this._elements.scrollIcon.classList.toggle("toggled-on", this._isScrollModeOn);
+      this._elements.scrollToggle.classList.toggle("toggled-on", this._isScrollModeOn);
 
       // Update scroll zones to reflect new scroll mode
       this.doUpdateScrollZones();
     }
   }
   
-  onScrollIconPointerCancel(evt) {
+  onScrollTogglePointerCancel(evt) {
 
     // Remove current pointer entry from tracked scroll pointers (when existing)
     this._scrollPointers.delete(evt.pointerId);
@@ -449,53 +480,65 @@ class TrackpadCard extends HTMLElement {
     this._elements.scrollZonesContainer = scrollZonesContainer;
     scrollZonesContainer.classList.add("scroll-zones");
     scrollZonesContainer.innerHTML = `
-      <div class="zone top">
-        <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-top" viewBox="0 0 24 24" width="24" height="24" fill="none">
-          <polyline 
-            points="6,14 12,8 18,14"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-          <polyline 
-            points="6,20 12,14 18,20"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-        </svg>
+      <div class="scroll-zone-stack left">
+        <div class="scroll-zone left">
+          <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-left" viewBox="0 0 24 24" width="24" height="24" fill="none">
+            <polyline 
+              points="14,6 8,12 14,18"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <polyline 
+              points="20,6 14,12 20,18"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
       </div>
-      <div class="zone bottom">
-        <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-bottom" viewBox="0 0 24 24" width="24" height="24" fill="none">
-          <polyline 
-            points="6,4 12,10 18,4"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-          <polyline 
-            points="6,10 12,16 18,10"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-        </svg>
+      <div class="scroll-zone-stack middle">
+        <div class="scroll-zone top">
+          <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-top" viewBox="0 0 24 24" width="24" height="24" fill="none">
+            <polyline 
+              points="6,14 12,8 18,14"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <polyline 
+              points="6,20 12,14 18,20"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
+        <div class="scroll-zone bottom">
+          <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-bottom" viewBox="0 0 24 24" width="24" height="24" fill="none">
+            <polyline 
+              points="6,4 12,10 18,4"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <polyline 
+              points="6,10 12,16 18,10"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
       </div>
-      <div class="zone left">
-        <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-left" viewBox="0 0 24 24" width="24" height="24" fill="none">
-          <polyline 
-            points="14,6 8,12 14,18"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-          <polyline 
-            points="20,6 14,12 20,18"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-        </svg>
-      </div>
-      <div class="zone right">
-        <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-right" viewBox="0 0 24 24" width="24" height="24" fill="none">
-          <polyline 
-            points="10,6 16,12 10,18"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-          <polyline 
-            points="4,6 10,12 4,18"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-        </svg>
+      <div class="scroll-zone-stack right">
+        <div class="scroll-zone right">
+          <svg xmlns="http://www.w3.org/2000/svg" class="scroll-arrow-right" viewBox="0 0 24 24" width="24" height="24" fill="none">
+            <polyline 
+              points="10,6 16,12 10,18"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <polyline 
+              points="4,6 10,12 4,18"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
       </div>
     `;
 
+    // Attach zones to elements (a bit derogatory to our design, but needed here)
+    this._elements.scrollZoneTop = scrollZonesContainer.querySelector(".scroll-zone.top");
+    this._elements.scrollZoneBottom = scrollZonesContainer.querySelector(".scroll-zone.bottom");
+    this._elements.scrollZoneLeft = scrollZonesContainer.querySelector(".scroll-zone.left");
+    this._elements.scrollZoneRight = scrollZonesContainer.querySelector(".scroll-zone.right");
+
     // Set zones data
-    this.setScrollZoneData(scrollZonesContainer.querySelector(".zone.top"), null, {zone: "top"});
-    this.setScrollZoneData(scrollZonesContainer.querySelector(".zone.bottom"), null, {zone: "bottom"});
-    this.setScrollZoneData(scrollZonesContainer.querySelector(".zone.left"), null, {zone: "left"});
-    this.setScrollZoneData(scrollZonesContainer.querySelector(".zone.right"), null, {zone: "right"});
+    this.setScrollZoneData(this._elements.scrollZoneTop, null, {zone: "top"});
+    this.setScrollZoneData(this._elements.scrollZoneBottom, null, {zone: "bottom"});
+    this.setScrollZoneData(this._elements.scrollZoneLeft, null, {zone: "left"});
+    this.setScrollZoneData(this._elements.scrollZoneRight, null, {zone: "right"});
   }
 
   doStyleScrollZones() {
@@ -508,10 +551,6 @@ class TrackpadCard extends HTMLElement {
 
   doQueryScrollZonesElements() {
     const scrollZonesContainer = this._elements.scrollZonesContainer;
-    this._elements.scrollZoneTop = scrollZonesContainer.querySelector(".zone.top");
-    this._elements.scrollZoneBottom = scrollZonesContainer.querySelector(".zone.bottom");
-    this._elements.scrollZoneLeft = scrollZonesContainer.querySelector(".zone.left");
-    this._elements.scrollZoneRight = scrollZonesContainer.querySelector(".zone.right");
     this._elements.scrollZones = [
       this._elements.scrollZoneTop, 
       this._elements.scrollZoneBottom, 
@@ -551,36 +590,36 @@ class TrackpadCard extends HTMLElement {
     this._scrollsClick.delete(evt.pointerId);
   }
 
-  createButtonsRow() {
-    this.doButtonsRow();
-    this.doStyleButtonsRow();
-    this.doAttachButtonsRow();
-    this.doQueryButtonsRowElements();
-    this.doListenButtonsRow();
+  createButtonsArea() {
+    this.doButtonsArea();
+    this.doStyleButtonsArea();
+    this.doAttachButtonsArea();
+    this.doQueryButtonsAreaElements();
+    this.doListenButtonsArea();
   }
 
-  doButtonsRow() {
+  doButtonsArea() {
     const buttonsRow = document.createElement("div");
     this._elements.buttonsRow = buttonsRow;
-    buttonsRow.classList.add("buttons-row");
+    buttonsRow.classList.add("buttons-area");
   }
 
-  doStyleButtonsRow() {
+  doStyleButtonsArea() {
     const buttonsRow = this._elements.buttonsRow;
     buttonsRow.style.display = "flex";
     buttonsRow.style.width = "100%";
     buttonsRow.style.background = "#00000000";
   }
 
-  doAttachButtonsRow() {
+  doAttachButtonsArea() {
     // Nothing to do: buttons row is dynamically attached at runtime
   }
 
-  doQueryButtonsRowElements() {
+  doQueryButtonsAreaElements() {
     // Nothing to do: buttons row elements reference is not needed
   }
 
-  doListenButtonsRow() {
+  doListenButtonsArea() {
     // Nothing to do: buttons row does not need to be listened
   }
 
@@ -682,7 +721,7 @@ class TrackpadCard extends HTMLElement {
 
   doTrackpadButton(trackpadButtonConfig) {
     const trackpadButton = document.createElement("button");
-    trackpadButton.className = `trackpad-btn ${trackpadButtonConfig.className}`;
+    trackpadButton.className = `trackpad-button ${trackpadButtonConfig["button"]}`;
     this.setTrackpadButtonData(trackpadButton, null, trackpadButtonConfig);
     return trackpadButton;
   }
@@ -707,7 +746,7 @@ class TrackpadCard extends HTMLElement {
   onTrackpadButtonPointerDown(evt) {
     const trackpadButton = evt.currentTarget;
     const trackpadButtonData = this._layoutManager.getElementData(trackpadButton);
-    this.sendMouse(trackpadButtonData.serviceCall, {});
+    this.sendMouse(trackpadButtonData["event"], {});
   }
 
   onTrackpadButtonPointerUp(evt) {
@@ -725,7 +764,7 @@ class TrackpadCard extends HTMLElement {
 
   doTrackpadButtonSeparator() {
     const trackpadButtonSeparator = document.createElement("div");
-    trackpadButtonSeparator.className = "btn-separator";
+    trackpadButtonSeparator.className = "trackpad-button-separator";
     return trackpadButtonSeparator;
   }
 
@@ -773,10 +812,10 @@ class TrackpadCard extends HTMLElement {
     const scrollZonesContainer = this._elements.scrollZonesContainer;
 
     if (this._isScrollModeOn) {
-      trackpad.appendChild(scrollZonesContainer);
+      trackpadArea.appendChild(scrollZonesContainer);
       this.doPositionAndScaleScrollZones();
     } else {
-      trackpad.removeChild(scrollZonesContainer);
+      trackpadArea.removeChild(scrollZonesContainer);
     }
   }
   
