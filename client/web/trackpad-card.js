@@ -131,6 +131,9 @@ class TrackpadCard extends HTMLElement {
     this._elements.card.innerHTML = `
       <div class="trackpad-container">
         <div class="trackpad-area">
+          <!-- just trackpad stuff -->
+        </div>
+        <div class="scroll-icon-wrapper">
           <svg xmlns="http://www.w3.org/2000/svg" class="scroll-icon" viewBox="20 14.75 44 54.5">
             <rect 
               x="21" y="15.75"
@@ -177,6 +180,7 @@ class TrackpadCard extends HTMLElement {
         display: flex;
         flex-direction: column;
         align-items: center;
+        position: relative; /* Required for scroll-icon absolute positioning */
         padding: 0;
         background-color: #00000000; /* transparent black */
       }
@@ -228,7 +232,7 @@ class TrackpadCard extends HTMLElement {
       .trackpad-area:active {
         background: #2c2b2b !important;
       }
-      .scroll-icon {
+      .scroll-icon-wrapper {
         position: absolute;
         top: 0px;
         right: 0px;
@@ -236,10 +240,12 @@ class TrackpadCard extends HTMLElement {
         padding-bottom: 3%;
         padding-left: 3%;
         padding-right: 3%;
-        width: auto;
-        height: 22.5%;
         z-index: 2;
         pointer-events: auto;
+      }
+      .scroll-icon {
+        width: auto;
+        height: 22.5%;
         opacity: 0.7;
         fill: #eee;
         stroke: #eee;
