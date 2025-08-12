@@ -229,9 +229,11 @@ class TrackpadCard extends HTMLElement {
       }
 
       .scroll-zones {
-        z-index: 1;
+        z-index: 2;
         width: 100%;
         height: 100%;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
         display: flex;
         flex-direction: row;
         padding: 0;
@@ -268,7 +270,7 @@ class TrackpadCard extends HTMLElement {
       }
 
       .scroll-toggle {
-        z-index: 2;
+        z-index: 3;
         pointer-events: none;
         position: absolute;
         width: auto;
