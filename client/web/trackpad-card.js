@@ -328,12 +328,13 @@ class TrackpadCard extends HTMLElement {
 
     if (scrollEntry) {
 
-      // When pointer was pressed over scroll icon before this release event: toggle scroll icon state
+      // When pointer was pressed over scroll icon before this release event: toggle scroll mode
       this._isScrollModeOn = !this._isScrollModeOn;
       scrollIcon.classList.toggle("toggled-on", this._isScrollModeOn);
-    }
 
-    this.doUpdateScrollZones();
+      // Update scroll zones to reflect new scroll mode
+      this.doUpdateScrollZones();
+    }
   }
   
   onScrollIconPointerCancel(evt) {
@@ -650,66 +651,67 @@ class TrackpadCard extends HTMLElement {
 
   doUpdateScrollZones() {
     const trackpad = this._elements.trackpad;
+    const scrollZonesContainer = this._elements.scrollZonesContainer;
 
     if (this._isScrollModeOn) {
-      // Scroll mode is "on"
-      
-      // Append scroll zones into card to make their dimensions retrievables
-      trackpad.appendChild(this._elements.scrollZonesContainer);
-
-      //TODO: enhance this whole "scroll-zone layout" by making it using flex 
-      // instead of brute-forcing width and positions when adding them
-
-      // Retrieve trackpad visual dimensions 
-      const { trackpadWidth, trackpadHeight } = trackpad.getBoundingClientRect();
-
-      // Compute scroll zones dimensions
-      const scrollZoneStyles = {
-        left: {
-          left: 0,
-          top: 0,
-          width: trackpadWidth / 6,
-          height,
-        },
-        right: {
-          right: 0,
-          top: 0,
-          width: trackpadWidth / 6,
-          height,
-        },
-        top: {
-          left: trackpadWidth / 6,
-          top: 0,
-          width: (4 / 6) * trackpadWidth,
-          height: trackpadHeight / 2,
-        },
-        bottom: {
-          left: trackpadWidth / 6,
-          bottom: 0,
-          width: (4 / 6) * trackpadWidth,
-          height: trackpadHeight / 2,
-        },
-      };
-
-      // Apply scroll zones dimensions, per scroll zone
-      for (const scrollZone of scrollZones) {
-        const zone = scrollZone._keyData.zone;
-        const zoneStyle = scrollZoneStyles[zone];
-
-        Object.assign(scrollZone.style, {
-          left: zoneStyle.left !== undefined ? `${zoneStyle.left}px` : '',
-          right: zoneStyle.right !== undefined ? `${zoneStyle.right}px` : '',
-          top: zoneStyle.top !== undefined ? `${zoneStyle.top}px` : '',
-          bottom: zoneStyle.bottom !== undefined ? `${zoneStyle.bottom}px` : '',
-          width: `${zoneStyle.width}px`,
-          height: `${zoneStyle.height}px`,
-        });
-      }
-
+      trackpad.appendChild(scrollZonesContainer);
+      this.doPositionAndScaleScrollZones();
     } else {
-      if (this.scrollContainer) {
-        trackpad.removeChild(this.scrollContainer);
-      }
+      trackpad.removeChild(scrollZonesContainer);
+    }
+  }
+  
+  doPositionAndScaleScrollZones() {
+    const trackpad = this._elements.trackpad;
+    const scrollZones = this._elements.scrollZones;
+
+    //TODO: enhance this whole "scroll-zone layout" by making it using flex 
+    // instead of brute-forcing width and positions when adding them
+
+    // Retrieve trackpad visual dimensions 
+    const { trackpadWidth, trackpadHeight } = trackpad.getBoundingClientRect();
+
+    // Compute scroll zones dimensions
+    const scrollZoneStyles = {
+      left: {
+        left: 0,
+        top: 0,
+        width: trackpadWidth / 6,
+        height,
+      },
+      right: {
+        right: 0,
+        top: 0,
+        width: trackpadWidth / 6,
+        height,
+      },
+      top: {
+        left: trackpadWidth / 6,
+        top: 0,
+        width: (4 / 6) * trackpadWidth,
+        height: trackpadHeight / 2,
+      },
+      bottom: {
+        left: trackpadWidth / 6,
+        bottom: 0,
+        width: (4 / 6) * trackpadWidth,
+        height: trackpadHeight / 2,
+      },
+    };
+
+    // Apply scroll zones dimensions, per scroll zone
+    for (const scrollZone of scrollZones) {
+      const zone = scrollZone._keyData.zone;
+      const zoneStyle = scrollZoneStyles[zone];
+
+      Object.assign(scrollZone.style, {
+        left: zoneStyle.left !== undefined ? `${zoneStyle.left}px` : '',
+        right: zoneStyle.right !== undefined ? `${zoneStyle.right}px` : '',
+        top: zoneStyle.top !== undefined ? `${zoneStyle.top}px` : '',
+        bottom: zoneStyle.bottom !== undefined ? `${zoneStyle.bottom}px` : '',
+        width: `${zoneStyle.width}px`,
+        height: `${zoneStyle.height}px`,
+      });
     }
   }
 
