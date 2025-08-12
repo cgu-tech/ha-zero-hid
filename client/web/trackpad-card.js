@@ -214,6 +214,8 @@ class TrackpadCard extends HTMLElement {
         z-index: 1;
         width: 100%;
         height: 100%;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
         cursor: crosshair;
         background: #3b3a3a;
         touch-action: auto;
