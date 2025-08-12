@@ -26,7 +26,6 @@ class TrackpadCard extends HTMLElement {
         'buttons-right-middle'     : [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-right" } ],
         'buttons-left-middle-right': [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickright" , className: "trackpad-right" } ],
         'buttons-right-middle-left': [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickleft"  , className: "trackpad-right" } ]
-      }
     };
     console.log(this._LAYOUTS);
   }
