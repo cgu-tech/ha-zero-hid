@@ -76,7 +76,6 @@ class AndroidKeyboardCard extends HTMLElement {
         }
       }
     };
-    console.log(this._STATUS_MAP);
   }
 
   // private constants

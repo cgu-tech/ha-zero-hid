@@ -27,7 +27,6 @@ class TrackpadCard extends HTMLElement {
       { "Name": 'buttons-left-middle-right', "buttons": [ {serviceCall: "clickleft"  , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickright" , className: "trackpad-right" } ] },
       { "Name": 'buttons-right-middle-left', "buttons": [ {serviceCall: "clickright" , className: "trackpad-left"  }, {serviceCall: "clickmiddle", className: "trackpad-middle" }, {serviceCall: "clickleft"  , className: "trackpad-right" } ] }
     ];
-    console.log(this._LAYOUTS);
   }
 
   // private constants
@@ -410,7 +409,7 @@ class TrackpadCard extends HTMLElement {
 
       // Check if short click or long click
       const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
-      if (duration < this.triggerLongClick) {
+      if (duration < this.getTriggerLongClickDelay()) {
         // Short click
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Trackpad short click of ${duration}ms detected for evt:`, evt));
         this.handleSinglePointerLeftClick(evt);
