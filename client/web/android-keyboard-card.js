@@ -1184,7 +1184,7 @@ class AndroidKeyboardCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} cancel done`));
   }
 
-  doPopinKeyRelease(evt, btn) {
+  doPopinKeyRelease(btn) {
 
     // Unmark clickable button active for visual feedback
     btn.classList.remove("active");
