@@ -231,7 +231,7 @@ class AndroidKeyboardCard extends HTMLElement {
         width: 100%;
         box-sizing: border-box;
         flex-shrink: 1;
-        gap: clamp(4px, 1vw, 5px);
+        gap: clamp(3px, 1vw, 6px);
       }
       button.key {
         border-radius: clamp(var(--key-min-corner-radius), 1vw, var(--key-max-corner-radius));
