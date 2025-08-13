@@ -171,7 +171,7 @@ export class EventManager {
   onManagedCallback(callback, evt) {
     if (evt?.pointerType === 'touch') {
       // handle touch-specific logic before delegating to unmanaged callback
-      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Touch device managed ${this._reversedEventsMap.get(event.type)} event (real event ${event.type})`));
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Touch device managed ${this._reversedEventsMap.get(evt.type)} event (real event ${evt.type})`));
     }
     // delegate to unmanaged callback
     callback(evt);
