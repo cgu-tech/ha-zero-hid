@@ -1146,14 +1146,8 @@ class AndroidKeyboardCard extends HTMLElement {
       }
     }
 
-    // Update all cells labels and visuals for non-virtual keys modifiers
+    // When current non-virtual key code triggers next status, update all cells labels and visuals
     if (this.activateNextStatus(code)) this.doUpdateCells();
-
-    // Switch to next state when "shift-once" was set and a key was pressed (other than MOD_LEFT_SHIFT, previously debounced)
-    //if (this._currentState === this.constructor._STATE_SHIFT_ONCE) {
-    //  this.activateNextState();
-    //  this.doUpdateCells();
-    //}
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release done`));
@@ -1203,6 +1197,9 @@ class AndroidKeyboardCard extends HTMLElement {
         this.sendKeyboardChar(charToSend);
       }
     }
+
+    // When current non-virtual key code triggers next status, update all cells labels and visuals
+    if (this.activateNextStatus(code)) this.doUpdateCells();
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key code ${code} release done`));
