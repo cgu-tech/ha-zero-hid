@@ -216,8 +216,12 @@ class AndroidKeyboardCard extends HTMLElement {
       }
       .keyboard-row {
         display: flex;
-        gap: 0.3em;
+        flex-wrap: nowrap;
         width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
+        flex-shrink: 1;
+        gap: 0.3em;
       }
       button.key {
         background: var(--key-bg);
@@ -227,8 +231,8 @@ class AndroidKeyboardCard extends HTMLElement {
         font-size: 1em;
         cursor: pointer;
         height: var(--key-height);
-        flex-grow: 1;
-        flex-basis: 0;
+        flex: 1 1 auto;
+        min-width: 0;
         display: flex;
         align-items: center;
         justify-content: center;
