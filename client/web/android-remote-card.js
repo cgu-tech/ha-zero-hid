@@ -946,7 +946,7 @@ class AndroidRemoteCard extends HTMLElement {
   onButtonPointerUp(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doKeyRelease(btn);
+    this.doKeyRelease(evt, btn);
   }
 
   doKeyPress(btn) {
@@ -979,7 +979,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.hapticFeedback();
   }
 
-  doKeyRelease(btn) {
+  doKeyRelease(evt, btn) {
 
     // Unmark clickable button active for visual feedback
     this._layoutManager.forceRefreshForTouchDevice(evt, btn);
