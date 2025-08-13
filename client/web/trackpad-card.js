@@ -305,7 +305,7 @@ class TrackpadCard extends HTMLElement {
         border-top-right-radius: var(--card-corner-radius);
       }
       .scroll-zone.active {
-        background-color: rgba(255, 255, 255, 0.12); }"
+        background-color: rgba(255, 255, 255, 0.12);
       }
       ${this._layoutManager.isTouchDevice() ? "" : ".scroll-zone:hover { background-color: rgba(255, 255, 255, 0.12); }" }
       .left.no-buttons {
