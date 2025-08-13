@@ -934,6 +934,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
     this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
     this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
+    this._eventManager.addPointerLeaveListener(btn, this.onButtonPointerUp.bind(this));
   }
 
   onButtonPointerDown(evt) {
