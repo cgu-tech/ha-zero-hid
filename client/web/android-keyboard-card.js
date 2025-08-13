@@ -251,6 +251,13 @@ class AndroidKeyboardCard extends HTMLElement {
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
         outline: none; /* Prevent focus ring override */
       }
+      button.key.special {
+        flex: 1 1 auto;
+        font-size: clamp(1px, 2.5vw, 20px);
+        font-weight: bold;
+        background: var(--key-special-bg);
+        color: var(--key-special-color);
+      }
       button.key.spacer {
         pointer-events: none;
         background: transparent;
@@ -276,12 +283,6 @@ class AndroidKeyboardCard extends HTMLElement {
       }
       button.key.spacebar {
         flex-grow: 7.4;
-      }
-      button.key.special {
-        font-size: clamp(1px, 2.5vw, 20px);
-        font-weight: bold;
-        background: var(--key-special-bg);
-        color: var(--key-special-color);
       }
       button.key:hover {
         background: var(--key-hover-bg);
