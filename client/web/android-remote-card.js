@@ -952,13 +952,13 @@ class AndroidRemoteCard extends HTMLElement {
   onButtonPointerCancel(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doKeyPress(btn);
+    this.doKeyRelease(btn);
   }
 
   onButtonPointerLeave(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doKeyPress(btn);
+    this.doKeyRelease(btn);
   }
 
   doKeyPress(btn) {
