@@ -895,7 +895,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this._elements.popinCells.push(popinCell);
     popinCell.classList.add("key");
     if (cellConfig.width) popinCell.classList.add(cellConfig.width);
-    this.setCellData(popinCell, defaultCellConfig, cellConfig);
+    this.setCellData(popinCell, null, cellConfig);
 
     // Create popin cell content
     const row = this.doPopinCellContent(popinCell, popinCellContent);
