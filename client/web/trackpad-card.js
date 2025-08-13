@@ -304,9 +304,7 @@ class TrackpadCard extends HTMLElement {
       .scroll-zone.right {
         border-top-right-radius: var(--card-corner-radius);
       }
-      .scroll-zone:hover {
-        background-color: rgba(255, 255, 255, 0.12);
-      }
+      ${this._layoutManager.isTouchDevice() ? "" : ".scroll-zone:hover { background-color: rgba(255, 255, 255, 0.12); }" }
       .left.no-buttons {
         border-bottom-left-radius: var(--card-corner-radius);
       }
@@ -360,9 +358,7 @@ class TrackpadCard extends HTMLElement {
         cursor: pointer;
         transition: background 0.2s ease;
       }
-      .trackpad-button:hover {
-        background: #4a4a4a;
-      }
+      ${this._layoutManager.isTouchDevice() ? "" : ".trackpad-button:hover { background: #4a4a4a; }" }
       .trackpad-button:active {
         background: #2c2b2b;
       }

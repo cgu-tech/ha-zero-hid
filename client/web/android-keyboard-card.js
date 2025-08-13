@@ -286,35 +286,33 @@ class AndroidKeyboardCard extends HTMLElement {
       button.key.spacebar {
         flex-grow: 7.4;
       }
-      button.key:hover {
-        background: var(--key-hover-bg);
-      }
+      ${this._layoutManager.isTouchDevice() ? "" : "button.key:hover { background: var(--key-hover-bg); }" }
       button.key:active {
         background: var(--key-active-bg);
       }
       /* Fix: Ensure active state is visually dominant */
       button.key.active,
-      button.key:hover.active,
       button.key:active.active {
         background: #5a5a5a !important;
         color: #fff !important;
       }
+      ${this._layoutManager.isTouchDevice() ? "" : "button.key:hover.active { background: #5a5a5a !important; color: #fff !important; }" }
       /* Fix: Ensure shift-once state is visually dominant */
       button.key.shift-once,
-      button.key:hover.shift-once,
       button.key:active.shift-once {
         background: #374553 !important; /* grey-blue */
         color: #fff !important;
         font-weight: bold;
       }
+      ${this._layoutManager.isTouchDevice() ? "" : "button.key:hover.shift-once { background: #374553 !important; color: #fff !important; font-weight: bold; }" }
       /* Fix: Ensure locked state is visually dominant */
       button.key.locked,
-      button.key:hover.locked,
       button.key:active.locked {
         background: #3399ff !important; /* blue */
         color: #fff !important;
         font-weight: bold;
       }
+      ${this._layoutManager.isTouchDevice() ? "" : "button.key:hover.locked { background: #3399ff !important; color: #fff !important; font-weight: bold; }" }
       .label-lower {
         font-size: 1em;
         font-weight: normal;
