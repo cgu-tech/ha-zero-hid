@@ -982,6 +982,7 @@ class AndroidRemoteCard extends HTMLElement {
   doKeyRelease(btn) {
 
     // Unmark clickable button active for visual feedback
+    this._layoutManager.forceRefreshForTouchDevice(evt, btn);
     btn.classList.remove("active");
 
     // Retrieve clickable button data

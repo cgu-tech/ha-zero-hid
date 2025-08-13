@@ -133,6 +133,18 @@ export class LayoutManager {
     }
   }
 
+  isTouchDevice(evt) {
+    return evt?.pointerType === 'touch'; // Force reflow
+  }
+
+  forceRefresh(target) {
+    target?.offsetHeight; // Force reflow
+  }
+
+  forceRefreshForTouchDevice(evt, target) {
+    if (isTouchDevice(evt)) this.forceRefresh(target);
+  }
+
   getScaleOrDefault(scale, defaultScale) {
     let scaleOrDefault;
     if (this.constructor.isValidScale(scale)) {

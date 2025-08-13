@@ -338,7 +338,6 @@ class TrackpadCard extends HTMLElement {
         opacity: 0.7;
         fill: #eee;
         stroke: #eee;
-        transition: stroke 0.3s ease, fill 0.3s ease;
         filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.6));
       }
       .scroll-toggle-icon.toggled-on {
