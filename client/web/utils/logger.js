@@ -50,11 +50,11 @@ export class Logger {
     if (hass && this.getPushback()) {
       const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.constructor.deepSerialize(arg)) : [];
       if (serializedArgs.length > 0) {
-        try {
-          hass.callService(Globals.COMPONENT_NAME, "log", { "level": header, "origin": this._originName, "logs": serializedArgs, });
-        } catch (e) {
-          console.warn("Unable to do log pushback:", e);
-        }
+        hass.callService(
+          Globals.COMPONENT_NAME, "log", { "level": header, "origin": this._originName, "logs": serializedArgs }
+        ).catch(err => {
+          console.warn("Unable to do log pushback (log might be too long or HA unresponsive):", err);
+        });
       }
     }
 
