@@ -241,7 +241,7 @@ class TrackpadCard extends HTMLElement {
         border-top-right-radius: var(--card-corner-radius);
         cursor: crosshair;
         background: #3b3a3a;
-        touch-action: auto;
+        touch-action: none;
         transition: background 0.2s ease;
       }
       .trackpad:active {
@@ -456,6 +456,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   onTrackpadPointerDown(evt) {
+    evt.preventDefault();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt):", evt));
     this.disableScrollToggleEvents();
 
@@ -466,6 +467,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   onTrackpadPointerMove(evt) {
+    evt.preventDefault();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
 
     // Retrieve current pointer from tracked trackpad click pointers
@@ -498,6 +500,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   onTrackpadPointerUp(evt) {
+    evt.preventDefault();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerUp(evt):", evt));
     this.enableScrollToggleEvents();
 
@@ -529,6 +532,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   onTrackpadPointerCancel(evt) {
+    evt.preventDefault();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerCancel(evt):", evt));
     this.enableScrollToggleEvents();
 
