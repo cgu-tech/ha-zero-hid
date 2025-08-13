@@ -328,6 +328,8 @@ class TrackpadCard extends HTMLElement {
         padding-left: 3%;
         padding-right: 3%;
         cursor: pointer;
+        background: transparent;
+        transition: none !important;
       }
       .scroll-toggle-icon {
         pointer-events: auto;
