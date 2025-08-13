@@ -261,6 +261,10 @@ class AndroidRemoteCard extends HTMLElement {
         transition: opacity 0.2s;
       }
       ${this._layoutManager.isTouchDevice() ? "" : ".quarter:hover { opacity: 0.0; }" }
+      .quarter.active {
+        background-color: #4a4a4a;
+        transition: opacity 0.2s;
+      }
       text {
         font-family: sans-serif;
         fill: #bfbfbf;
