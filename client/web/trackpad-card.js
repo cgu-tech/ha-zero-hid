@@ -313,12 +313,13 @@ class TrackpadCard extends HTMLElement {
       }
 
       .scroll-toggle {
-        --mdc-ripple-color: transparent;
-        --mdc-theme-primary: transparent;
-        --mdc-theme-on-primary: transparent;
-        --ha-card-border-radius: 0; /* optional: prevent rounded ripple */
-        z-index: 3;
+        background: transparent !important;
+        transition: none !important;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        user-select: none;
         pointer-events: none;
+        z-index: 3;
         position: absolute;
         width: auto;
         height: 22.5%;
@@ -329,15 +330,15 @@ class TrackpadCard extends HTMLElement {
         padding-bottom: 3%;
         padding-left: 3%;
         padding-right: 3%;
-        cursor: pointer;
         background: transparent !important;
         transition: none !important;
       }
       .scroll-toggle-icon {
-        --mdc-ripple-color: transparent;
-        --mdc-theme-primary: transparent;
-        --mdc-theme-on-primary: transparent;
-        --ha-card-border-radius: 0; /* optional: prevent rounded ripple */
+        background: transparent !important;
+        transition: none !important;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        user-select: none;
         pointer-events: auto;
         height: 100%;
         width: auto;
@@ -345,8 +346,7 @@ class TrackpadCard extends HTMLElement {
         fill: #eee;
         stroke: #eee;
         filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.6));
-        background: transparent !important;
-        transition: none !important;
+        cursor: pointer;
       }
       .scroll-toggle-icon.toggled-on {
         stroke: #44739e !important;
