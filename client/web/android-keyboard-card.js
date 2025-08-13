@@ -767,8 +767,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doAttachPopin();
     this.doQueryPopinElements();
     this.doListenPopin();
-    this.doPromptPopin();
-    this.doPositionPopin();
+    this.doPromptPopin(evt);
   }
 
   doPopin(evt, cell) {
@@ -813,14 +812,20 @@ class AndroidKeyboardCard extends HTMLElement {
     this._eventManager.addPointerUpListener(document, this.onClosingPopin.bind(this), { once: true });
   }
 
-  doPromptPopin() {
-    // Trigger cells animations to prompt popin (requires attached popin)
+  doPromptPopin(evt) {
     requestAnimationFrame(() => {
-      popinCell.classList.add("enter-active");
+      // Trigger cells animations to prompt popin (requires attached popin)
+      for (const popinCell of this._elements.popinCells) {
+        popinCell.classList.add("enter-active");
+      }
+
+      // Then position the popin according to its size and 
+      // cell base event coordinates that triggered the popin
+      this.doPositionPopin(evt);
     });
   }
 
-  doPositionPopin() {
+  doPositionPopin(evt) {
     // Absolute positionning computation and style of popin (requires popin to already be added into DOM as card child)
     const card = this._elements.card;
     const popin = this._elements.popin;
