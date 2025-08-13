@@ -685,17 +685,7 @@ class TrackpadCard extends HTMLElement {
   onScrollZonePointerDown(evt) {
     evt.stopImmediatePropagation();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerDown(evt):", evt));
-    this.disableScrollToggleEvents();
-
-    // Retrieve clicked scroll zone
-    const scrollZone = evt.currentTarget;
-    const scrollZoneConfig = this._layoutManager.getElementData(scrollZone);
-
-    // Scroll once using clicked scroll zone
-    this.doScrollOnce(scrollZoneConfig);
-
-    // Setup repeated scrolls when scroll zone is long-press maintained
-    this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, this.getTriggerLongScrollDelay()) } );
+    this.onScrollZonePointerIn(evt);
   }
 
   onScrollZonePointerUp(evt) {
@@ -712,9 +702,30 @@ class TrackpadCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerLeave(evt):", evt));
     this.onScrollZonePointersOut(evt);
   }
-  
-  onScrollZonePointersOut(evt) {
+
+  onScrollZonePointerIn(evt) {
+    this.disableScrollToggleEvents();
+
+    // Retrieve clicked scroll zone
+    const scrollZone = evt.currentTarget;
+    const scrollZoneConfig = this._layoutManager.getElementData(scrollZone);
+    
+    scrollZone.classList.add("active");
+
+    // Scroll once using clicked scroll zone
+    this.doScrollOnce(scrollZoneConfig);
+
+    // Setup repeated scrolls when scroll zone is long-press maintained
+    this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, this.getTriggerLongScrollDelay()) } );
+  }
+
+  onScrollZonePointersOut(evt, scrollZone) {
     this.enableScrollToggleEvents();
+
+    // Retrieve clicked scroll zone
+    const scrollZone = evt.currentTarget;
+
+    scrollZone.classList.remove("active");
 
     this.clearScrollZoneLongClickTimeout(evt);
     this._scrollsClick.delete(evt.pointerId);
