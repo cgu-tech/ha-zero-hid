@@ -255,6 +255,7 @@ class AndroidKeyboardCard extends HTMLElement {
         flex: 1 1 auto;
         font-size: clamp(1px, 2.5vw, 20px);
         font-weight: bold;
+        padding: 0 clamp(1px, 1vw, 6px);
         background: var(--key-special-bg);
         color: var(--key-special-color);
       }
