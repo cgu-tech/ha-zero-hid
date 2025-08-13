@@ -887,6 +887,7 @@ class TrackpadCard extends HTMLElement {
       trigger_long_scroll_delay: 350,
       trigger_long_scroll_decrease_interval: 25,
       trigger_long_scroll_min_interval: 75
+    };
   }
 
   getCardSize() {
