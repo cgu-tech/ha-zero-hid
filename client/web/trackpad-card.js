@@ -32,6 +32,7 @@ class TrackpadCard extends HTMLElement {
   // private constants
   _allowedTrackpadButtonData = new Set(['button', 'event']);
   _allowedScrollZoneData = new Set(['zone']);
+  _scrollMoveId = "0";
 
   // private properties
   _config;
@@ -508,6 +509,10 @@ class TrackpadCard extends HTMLElement {
     this._pointersStart.delete(evt.pointerId);
     this._pointersClick.delete(evt.pointerId);
 
+    // Remove any pointer from trackpad scroll pointers
+    this.clearScrollZoneLongMoveTimeout();
+    this._scrollsMove.delete(this._scrollMoveId);
+
     if (clickEntry && !clickEntry["move-detected"]) {
 
       // Check if short click or long click
@@ -532,6 +537,10 @@ class TrackpadCard extends HTMLElement {
     this._pointersEnd.delete(evt.pointerId);
     this._pointersStart.delete(evt.pointerId);
     this._pointersClick.delete(evt.pointerId);
+
+    // Remove any pointer from trackpad scroll pointers
+    this.clearScrollZoneLongMoveTimeout();
+    this._scrollsMove.delete(this._scrollMoveId);
   }
 
   createScrollZones() {
@@ -987,8 +996,6 @@ class TrackpadCard extends HTMLElement {
     let updateStartPoint = true;
     if (this.getTrackpadMode() === "move") {
       updateStartPoint = this.handleMouseMove(evt);
-    } else if (this.getTrackpadMode() === "scroll") {
-      updateStartPoint = this.handleMouseScroll(evt);
     }
     return updateStartPoint;
   }
@@ -1031,33 +1038,34 @@ class TrackpadCard extends HTMLElement {
         // Scroll once using clicked scroll zone
         this.doScrollOnce(scrollZoneConfig);
         
-        // Setup repeated scrolls when scroll zone is long-press maintained
-        this._scrollsMove.set(evt.pointerId, { "event": evt , "scroll-timeout": this.addScrollZoneLongMoveTimeout(evt, scrollZoneConfig, this.getTriggerScrollDelay()) } );
+        // Setup repeated scrolls when scroll zone is long-press maintained (with fixed single ID due to multiple pointers)
+        this._scrollsMove.set(this._scrollMoveId, { "scroll-timeout": this.addScrollZoneLongMoveTimeout(scrollZoneConfig, this.getTriggerScrollDelay()) } );
       }
       return true;
     }
     return false;
   }
-  
-  addScrollZoneLongMoveTimeout(evt, scrollZoneConfig, triggerDelay) {
+
+  addScrollZoneLongMoveTimeout(scrollZoneConfig, triggerDelay) {
     return setTimeout(() => {
-      const clickEntry = this._scrollsClick.get(evt.pointerId);
+      const clickEntry = this._scrollsMove.get(this._scrollMoveId); // Fixed single ID due to multiple pointers
       if (clickEntry) {
 
-        const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Scroll zone ${scrollZoneConfig.zone} long click of ${duration}ms detected for evt:`, evt));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Scroll zone ${scrollZoneConfig.zone} long move detected with delay of ${triggerDelay}ms`));
 
         // Scroll once into current scrollZoneConfig direction
         this.doScrollOnce(scrollZoneConfig);
 
-        // Compute next trigger delay
-        const nextTriggerDelay = Math.max(this.getTriggerLongScrollMinInterval(), triggerDelay - this.getTriggerLongScrollDecreaseInterval())
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Next scroll zone long click ${scrollZoneConfig.zone} will be triggered in ${nextTriggerDelay}ms`));
-
-        // Add next scroll event
-        this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, nextTriggerDelay) } );
+        // Add next move scroll event with the same delay
+        this._scrollsClick.set(evt.pointerId, { "scroll-timeout": this.addScrollZoneLongMoveTimeout(scrollZoneConfig, triggerDelay) } );
       }
-    }, triggerDelay); // next long-scroll duration
+    }, triggerDelay); // next move-scroll duration
+  }
+
+  clearScrollZoneLongMoveTimeout() {
+    const clickEntry = this._scrollsMove.get(this._scrollMoveId); // Fixed single ID due to multiple pointers
+    if (clickEntry && clickEntry["scroll-timeout"]) clearTimeout(clickEntry["scroll-timeout"]);
+    return clickEntry;
   }
 
   sendMouseClickLeft() {
