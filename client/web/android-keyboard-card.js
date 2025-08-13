@@ -191,7 +191,7 @@ class AndroidKeyboardCard extends HTMLElement {
       :host {
         --card-corner-radius: 10px;
         --key-max-corner-radius: 8px;
-        --base-font-size: 1.4rem; /* base scaling unit */
+        --base-font-size: 1rem; /* base scaling unit */
         --key-bg: #3b3a3a;
         --key-hover-bg: #4a4a4a;
         --key-active-bg: #2c2b2b;
@@ -199,7 +199,7 @@ class AndroidKeyboardCard extends HTMLElement {
         --key-special-color: #ccc;
         --key-height: clamp(1px, 7vw, 56px);
         --key-margin: 0.15rem;
-        font-size: clamp(1px, var(--base-font-size), var(--base-font-size));
+        font-size: var(--base-font-size);
         display: block;
         width: 100%;
         user-select: none;
@@ -233,7 +233,7 @@ class AndroidKeyboardCard extends HTMLElement {
         border-radius: clamp(1px, 1vw, var(--key-max-corner-radius));
         flex: 1 1 0;
         min-width: 0;      /* prevent content from forcing expansion */
-        font-size: clamp(1px, 1em, 1em);
+        font-size: clamp(1px, 1vw, 1em);
         padding: clamp(1px, 0.6vw, 4px); clamp(1px, 0.6vw, 4px);
         cursor: pointer;
         height: var(--key-height);
@@ -253,7 +253,7 @@ class AndroidKeyboardCard extends HTMLElement {
       }
       button.key.special {
         flex: 1 1 auto;
-        font-size: clamp(1px, 0.95em, 0.95em);
+        font-size: clamp(1px, 0.95vw, 0.95em);
         font-weight: bold;
         padding: clamp(1px, 0.6vw, 4px); clamp(0px, 0.3vw, 2px);
         background: var(--key-special-bg);
