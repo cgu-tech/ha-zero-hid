@@ -233,7 +233,7 @@ class AndroidKeyboardCard extends HTMLElement {
         border-radius: clamp(1px, 1vw, var(--key-max-corner-radius));
         flex: 1 1 0;
         min-width: 0;      /* prevent content from forcing expansion */
-        font-size: clamp(1px, 2.5vw, 20px);
+        font-size: clamp(1px, 1em, 1em);
         padding: 0 clamp(1px, 1.5vw, 10px);
         cursor: pointer;
         height: var(--key-height);
@@ -253,7 +253,7 @@ class AndroidKeyboardCard extends HTMLElement {
       }
       button.key.special {
         flex: 1 1 auto;
-        font-size: clamp(1px, 2.5vw, 20px);
+        font-size: clamp(1px, 0.95em, 0.95em);
         font-weight: bold;
         padding: 0 clamp(1px, 0.6vw, 4px);
         background: var(--key-special-bg);
