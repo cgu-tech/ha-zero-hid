@@ -719,7 +719,7 @@ class TrackpadCard extends HTMLElement {
     this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, this.getTriggerLongScrollDelay()) } );
   }
 
-  onScrollZonePointersOut(evt, scrollZone) {
+  onScrollZonePointersOut(evt) {
     this.enableScrollToggleEvents();
 
     // Retrieve clicked scroll zone
