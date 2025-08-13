@@ -154,7 +154,7 @@ export class EventManager {
 
   // Add the specified event listener
   addGivenEventListener(target, callback, options, eventName) {
-    const listener = { "eventName": eventName, "managedCallback": this.onManagedCallback.bind(this, callback), "callback": callback, "options": options };
+    const listener = { "eventName": eventName, "managedCallback": this.onManagedCallback.bind(this, target, callback), "callback": callback, "options": options };
     if (this.isTargetListenable(target)) {
       if (options) {
         if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding event listener ${eventName} on target with options:`, target, options));
@@ -168,10 +168,12 @@ export class EventManager {
   }
 
   // Manages the callback to handle erratic touch devices events
-  onManagedCallback(callback, evt) {
+  onManagedCallback(target, callback, evt) {
     if (evt?.pointerType === 'touch') {
       // handle touch-specific logic before delegating to unmanaged callback
-      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Touch device managed ${this._reversedEventsMap.get(evt.type)} event (real event ${evt.type})`));
+      const pointerEvent = evt.pointerId ? 'is' : 'is not';
+      const pointerCaptured = target && evt.pointerId && target.hasPointerCapture(evt.pointerId) ? 'is' : 'is not';
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Touch device managed event ${this._reversedEventsMap.get(evt.type)} (real event ${evt.type}, ${pointerEvent} pointer event, ${pointerCaptured} captured by ${target})`));
     }
     // delegate to unmanaged callback
     callback(evt);
