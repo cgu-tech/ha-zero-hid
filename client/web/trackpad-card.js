@@ -328,7 +328,7 @@ class TrackpadCard extends HTMLElement {
         padding-left: 3%;
         padding-right: 3%;
         cursor: pointer;
-        background: transparent;
+        background: transparent !important;
         transition: none !important;
       }
       .scroll-toggle-icon {
@@ -415,6 +415,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   onScrollTogglePointerDown(evt) {
+    evt.preventDefault();
     evt.stopPropagation(); // Prevents underneath trackpad click
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollTogglePointerDown(evt):", evt));
 
