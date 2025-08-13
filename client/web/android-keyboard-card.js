@@ -898,10 +898,10 @@ class AndroidKeyboardCard extends HTMLElement {
     this.setCellData(popinCell, null, cellConfig);
 
     // Create popin cell content
-    const row = this.doPopinCellContent(popinCell, popinCellContent);
+    const popinCellContent = this.doPopinCellContent(popinCell);
     this.doStylePopinCellContent();
-    this.doAttachPopinCellContent(popinRow);
-    this.doQueryPopinCellContentElements();
+    this.doAttachPopinCellContent(popinCell, popinCellContent);
+    this.doQueryPopinCellContentElements(popinCell, popinCellContent);
     this.doListenPopinCellContent();
   }
 
@@ -950,8 +950,12 @@ class AndroidKeyboardCard extends HTMLElement {
     popinCell.appendChild(popinCellContent);
   }
 
-  doQueryPopinCellContentElements() {
+  doQueryPopinCellContentElements(popinCell, popinCellContent) {
     popinCell._label = popinCellContent;
+  }
+
+  doListenPopinCellContent() {
+    // nothing to do: no needs to listen events for this element
   }
 
   doListenPopinCellContent() {
