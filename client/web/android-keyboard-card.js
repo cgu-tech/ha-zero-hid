@@ -1193,6 +1193,9 @@ class AndroidKeyboardCard extends HTMLElement {
     const cellConfig = this._layoutManager.getElementData(btn);
     if (!cellConfig) return;
 
+    // Key code to release
+    const code = cellConfig.code;
+
     if (this._layoutManager.hasButtonOverride(btn)) {
       // Override detected: bypass key release and execute override
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key code ${code} release will be executed: executing override ${btn.id}...`));
