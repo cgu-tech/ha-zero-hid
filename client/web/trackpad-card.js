@@ -334,6 +334,10 @@ class TrackpadCard extends HTMLElement {
         transition: none !important;
       }
       .scroll-toggle-icon {
+        --mdc-ripple-color: transparent;
+        --mdc-theme-primary: transparent;
+        --mdc-theme-on-primary: transparent;
+        --ha-card-border-radius: 0; /* optional: prevent rounded ripple */
         pointer-events: auto;
         height: 100%;
         width: auto;
