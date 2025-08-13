@@ -189,13 +189,13 @@ class AndroidKeyboardCard extends HTMLElement {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
       :host {
-        --base-font-size: 1rem; /* base scaling unit */
+        --base-font-size: clamp(1px, 3vw, var(--base-font-size)); /* base scaling unit */
         --key-bg: #3b3a3a;
         --key-hover-bg: #4a4a4a;
         --key-active-bg: #2c2b2b;
         --key-special-bg: #222;
         --key-special-color: #ccc;
-        --key-height: 3.5rem;
+        --key-height: clamp(1px, 7vw, 56px);
         --key-margin: 0.15rem;
         font-size: var(--base-font-size);
         display: block;
@@ -207,39 +207,39 @@ class AndroidKeyboardCard extends HTMLElement {
       .keyboard-container {
         display: flex;
         flex-direction: column;
-        gap: 0.5em;
-        padding: 0.5em 0.3em 1em;
+        gap: clamp(1px, 1vw, 8px);
+        padding: clamp(1px, 2vw, 16px) clamp(1px, 1vw, 8px) clamp(1px, 3vw, 24px);
         background: #1a1a1a;
-        border-radius: 0.5em;
+        border-radius: clamp(1px, 2vw, 16px);
         box-sizing: border-box;
         width: 100%;
       }
       .keyboard-row {
         display: flex;
-        flex-wrap: nowrap;
+        flex-wrap: nowrap;  /* prevent wrapping */
+        overflow: hidden;   /* prevent horizontal overflow */
         width: 100%;
-        overflow: hidden;
         box-sizing: border-box;
         flex-shrink: 1;
-        gap: 0.3em;
+        gap: clamp(1px, 1vw, 5px);
       }
       button.key {
-        background: var(--key-bg);
-        border: none;
-        border-radius: 0.4em;
-        color: #eee;
-        font-size: 1em;
+        flex: 1 1 auto;
+        min-width: 0;      /* prevent content from forcing expansion */
+        font-size: clamp(1px, 5vw, 30px);
+        padding: 0 clamp(1px, 1.5vw, 10px);
         cursor: pointer;
         height: var(--key-height);
-        flex: 1 1 auto;
-        min-width: 0;
+        background: var(--key-bg);
+        border: none;
+        border-radius: clamp(1px, 1.5vw, 12px);
+        color: #eee;
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
         box-sizing: border-box;
         transition: background 0.15s ease;
-        padding: 0 0.8em;
         white-space: nowrap;
         overflow: hidden;
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
@@ -272,10 +272,10 @@ class AndroidKeyboardCard extends HTMLElement {
         flex-grow: 7.4;
       }
       button.key.special {
+        font-size: 0.95em;
+        font-weight: bold;
         background: var(--key-special-bg);
         color: var(--key-special-color);
-        font-weight: 600;
-        font-size: 0.95em;
       }
       button.key:hover {
         background: var(--key-hover-bg);
@@ -306,17 +306,9 @@ class AndroidKeyboardCard extends HTMLElement {
         color: #fff !important;
         font-weight: bold;
       }
-      .label-upper {
-        position: absolute;
-        top: 0.3em;
-        right: 0.5em;
-        font-size: 0.6em;
-        opacity: 0.7;
-        user-select: none;
-      }
       .label-lower {
         font-size: 1em;
-        font-weight: 500;
+        font-weight: normal;
         user-select: none;
       }
       .key-popin {
