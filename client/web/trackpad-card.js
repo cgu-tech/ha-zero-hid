@@ -241,7 +241,7 @@ class TrackpadCard extends HTMLElement {
         border-top-right-radius: var(--card-corner-radius);
         cursor: crosshair;
         background: #3b3a3a;
-        touch-action: auto;
+        touch-action: none;
         transition: background 0.2s ease;
       }
       .trackpad:active {
