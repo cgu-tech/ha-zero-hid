@@ -701,18 +701,21 @@ class AndroidKeyboardCard extends HTMLElement {
   addPopinTimeout(evt) {
     return setTimeout(() => {
       const popinEntry = this._popinTimeouts.get(evt.pointerId);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`popinTimeout() + popinEntry:`, popinEntry));
 
       // When no poppin entry: key has been released before timeout
       if (popinEntry && popinEntry["popin-can-show"] && !popinEntry["popin-shown"]) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Poppin not shown and still has to be tested for show possibility`));
         const cell = popinEntry["source"];
-        
+
         // Check whether or not popin can be shown in current mode and state
         popinEntry["popin-can-show"] = this.canShowPopin(cell);
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Poppin tested: can not be shown. Leaving`));
         if (!popinEntry["popin-can-show"]) return;
 
         // Mark popin as shown
         popinEntry["popin-shown"] = true;
-        
+
         // Show popin
         this.doShowPopin(evt, cell);
       }
@@ -726,10 +729,12 @@ class AndroidKeyboardCard extends HTMLElement {
 
   // Popin can be shown when its config exists and contains current status label
   canShowPopin(cell) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`canShowPopin(cell) + cellConfig["popinConfig"] + this.getCurrentStatusLabel():`, cell, this._layoutManager.getElementData(cell)?.cellConfig?.["popinConfig"], this.getStatusCurrentLabel()));
     return !!this._layoutManager.getElementData(cell)?.cellConfig?.["popinConfig"]?.[this.getStatusCurrentLabel()];
   }
 
   doShowPopin(evt, cell) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doShowPopin(evt, cell):`, evt, cell));
     this.doResetPopin();
     this.doCreatePopin(evt, cell);
   }
@@ -764,6 +769,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doPopin(evt, cell) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopin(evt, cell):`, evt, cell));
 
     // Create popin
     const popin = document.createElement("div");
@@ -772,6 +778,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Create popin rows
     const popinConfig = this._layoutManager.getElementData(cell)["popinConfig"];
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopin(evt, cell) + popinConfig:`, evt, cell, popinConfig));
     for (const rowConfig of popinConfig) {
       const popinRow = this.doPopinRow(rowConfig);
       this.doStylePopinRow();
@@ -844,6 +851,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doPopinRow(rowConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinRow(rowConfig):`, rowConfig));
 
     // Create popin row
     const popinRow = document.createElement("div");
@@ -877,6 +885,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doPopinCell(cellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinCell(cellConfig):`, cellConfig));
     
     // Create popin cell 
     const popinCell = document.createElement("button");
@@ -919,6 +928,8 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doPopinCellContent(cellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinCellContent(cellConfig):`, cellConfig));
+
     // Create popin cell content
     const popinCellContent = document.createElement("span");
     popinCellContent.className = "label-lower";
