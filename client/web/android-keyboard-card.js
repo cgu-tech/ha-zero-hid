@@ -730,7 +730,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // Popin can be shown when its config exists and contains current status label
   canShowPopin(cell) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`canShowPopin(cell) + cellConfig["popinConfig"] + this.getCurrentStatusLabel():`, cell, this._layoutManager.getElementData(cell)?.["popinConfig"], this.getStatusCurrentLabel()));
-    return !!this._layoutManager.getElementData(cell)?.cellConfig?.["popinConfig"]?.[this.getStatusCurrentLabel()];
+    return !!this._layoutManager.getElementData(cell)?.["popinConfig"]?.[this.getStatusCurrentLabel()];
   }
 
   doShowPopin(evt, cell) {
