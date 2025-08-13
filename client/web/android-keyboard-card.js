@@ -189,6 +189,8 @@ class AndroidKeyboardCard extends HTMLElement {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
       :host {
+        --card-corner-radius: 10px;
+        --key-max-corner-radius: 8px;
         --base-font-size: clamp(1px, 3vw, var(--base-font-size)); /* base scaling unit */
         --key-bg: #3b3a3a;
         --key-hover-bg: #4a4a4a;
@@ -204,13 +206,17 @@ class AndroidKeyboardCard extends HTMLElement {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         box-sizing: border-box;
       }
+      ha-card {
+        border-radius: var(--card-corner-radius);
+        position: relative;
+      }
       .keyboard-container {
+        border-radius: var(--card-corner-radius);
         display: flex;
         flex-direction: column;
         gap: clamp(1px, 1vw, 8px);
         padding: clamp(1px, 2vw, 16px) clamp(1px, 1vw, 8px) clamp(1px, 3vw, 24px);
         background: #1a1a1a;
-        border-radius: clamp(1px, 2vw, 16px);
         box-sizing: border-box;
         width: 100%;
       }
@@ -224,6 +230,7 @@ class AndroidKeyboardCard extends HTMLElement {
         gap: clamp(1px, 1vw, 5px);
       }
       button.key {
+        border-radius: clamp(1px, 1vw, var(--key-max-corner-radius));
         flex: 1 1 auto;
         min-width: 0;      /* prevent content from forcing expansion */
         font-size: clamp(1px, 5vw, 30px);
@@ -232,7 +239,6 @@ class AndroidKeyboardCard extends HTMLElement {
         height: var(--key-height);
         background: var(--key-bg);
         border: none;
-        border-radius: clamp(1px, 1.5vw, 12px);
         color: #eee;
         display: flex;
         align-items: center;
@@ -314,7 +320,7 @@ class AndroidKeyboardCard extends HTMLElement {
       .key-popin {
         position: fixed; /* Use fixed instead of absolute for document.body */
         background: var(--key-bg, #3b3a3a); /* Fallback if var is missing */
-        border-radius: 0.5em;
+        border-radius: clamp(1px, 1vw, var(--key-max-corner-radius));
         padding: 0.3em;
         box-shadow: 0 0.2em 0.8em rgba(0,0,0,0.4);
         z-index: 9999;
@@ -363,9 +369,6 @@ class AndroidKeyboardCard extends HTMLElement {
         opacity: 0;
         transform: scale(0.8);
         transition: opacity 0.2s ease, transform 0.2s ease;
-      }
-      ha-card {
-        position: relative;
       }
     `;
   }

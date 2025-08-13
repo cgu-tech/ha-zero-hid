@@ -203,10 +203,10 @@ class TrackpadCard extends HTMLElement {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
       :host {
-        --trackpad-corner-radius: 10px;
+        --card-corner-radius: 10px;
       }
       .ha-card {
-        border-radius: var(--trackpad-corner-radius);
+        border-radius: var(--card-corner-radius);
       }
       .trackpad-container {
         display: flex;
@@ -220,16 +220,16 @@ class TrackpadCard extends HTMLElement {
         position: relative;
         width: 100%;
         height: 200px;
-        border-top-left-radius: var(--trackpad-corner-radius);
-        border-top-right-radius: var(--trackpad-corner-radius);
+        border-top-left-radius: var(--card-corner-radius);
+        border-top-right-radius: var(--card-corner-radius);
         border-bottom: 1px solid #0a0a0a;
         padding: 0;
         background-color: #00000000; /* transparent black */
       }
       .trackpad-area.no-buttons {
         height: 260px;
-        border-bottom-left-radius: var(--trackpad-corner-radius);
-        border-bottom-right-radius: var(--trackpad-corner-radius);
+        border-bottom-left-radius: var(--card-corner-radius);
+        border-bottom-right-radius: var(--card-corner-radius);
         border-bottom: none;
       }
 
@@ -237,8 +237,8 @@ class TrackpadCard extends HTMLElement {
         z-index: 1;
         width: 100%;
         height: 100%;
-        border-top-left-radius: var(--trackpad-corner-radius);
-        border-top-right-radius: var(--trackpad-corner-radius);
+        border-top-left-radius: var(--card-corner-radius);
+        border-top-right-radius: var(--card-corner-radius);
         cursor: crosshair;
         background: #3b3a3a;
         touch-action: auto;
@@ -251,24 +251,24 @@ class TrackpadCard extends HTMLElement {
         cursor: crosshair;
       }
       .trackpad.no-buttons {
-        border-bottom-left-radius: var(--trackpad-corner-radius);
-        border-bottom-right-radius: var(--trackpad-corner-radius);
+        border-bottom-left-radius: var(--card-corner-radius);
+        border-bottom-right-radius: var(--card-corner-radius);
       }
 
       .scroll-zones {
         z-index: 2;
         width: 100%;
         height: 100%;
-        border-top-left-radius: var(--trackpad-corner-radius);
-        border-top-right-radius: var(--trackpad-corner-radius);
+        border-top-left-radius: var(--card-corner-radius);
+        border-top-right-radius: var(--card-corner-radius);
         display: flex;
         flex-direction: row;
         padding: 0;
         background-color: #00000000; /* transparent black */
       }
       .scroll-zones.no-buttons {
-        border-bottom-left-radius: var(--trackpad-corner-radius);
-        border-bottom-right-radius: var(--trackpad-corner-radius);
+        border-bottom-left-radius: var(--card-corner-radius);
+        border-bottom-right-radius: var(--card-corner-radius);
       }
       .scroll-zone-stack {
         flex: 1;
@@ -277,14 +277,14 @@ class TrackpadCard extends HTMLElement {
       }
       .scroll-zone-stack.left {
         flex: 1;
-        border-top-left-radius: var(--trackpad-corner-radius);
+        border-top-left-radius: var(--card-corner-radius);
       }
       .scroll-zone-stack.middle {
         flex: 4;
       }
       .scroll-zone-stack.right {
         flex: 1;
-        border-top-right-radius: var(--trackpad-corner-radius);
+        border-top-right-radius: var(--card-corner-radius);
       }
       .scroll-zone {
         flex: 1;
@@ -299,19 +299,19 @@ class TrackpadCard extends HTMLElement {
         color: white; /* for currentColor */
       }
       .scroll-zone.left {
-        border-top-left-radius: var(--trackpad-corner-radius);
+        border-top-left-radius: var(--card-corner-radius);
       }
       .scroll-zone.right {
-        border-top-right-radius: var(--trackpad-corner-radius);
+        border-top-right-radius: var(--card-corner-radius);
       }
       .scroll-zone:hover {
         background-color: rgba(255, 255, 255, 0.12);
       }
       .left.no-buttons {
-        border-bottom-left-radius: var(--trackpad-corner-radius);
+        border-bottom-left-radius: var(--card-corner-radius);
       }
       .right.no-buttons {
-        border-bottom-right-radius: var(--trackpad-corner-radius);
+        border-bottom-right-radius: var(--card-corner-radius);
       }
 
       .scroll-toggle {
@@ -362,19 +362,19 @@ class TrackpadCard extends HTMLElement {
         background: #2c2b2b;
       }
       .trackpad-button.left {
-        border-bottom-left-radius: var(--trackpad-corner-radius);
+        border-bottom-left-radius: var(--card-corner-radius);
         flex: 3;
       }
       .trackpad-button.middle {
         flex: 1;
       }
       .trackpad-button.right {
-        border-bottom-right-radius: var(--trackpad-corner-radius);
+        border-bottom-right-radius: var(--card-corner-radius);
         flex: 3;
       }
       .trackpad-button.single {
-        border-bottom-left-radius: var(--trackpad-corner-radius);
-        border-bottom-right-radius: var(--trackpad-corner-radius);
+        border-bottom-left-radius: var(--card-corner-radius);
+        border-bottom-right-radius: var(--card-corner-radius);
         flex: 7;
       }
 
