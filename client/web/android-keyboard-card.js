@@ -764,7 +764,7 @@ class AndroidKeyboardCard extends HTMLElement {
   doCreatePopin(evt, cell) {
     const popin = this.doPopin(evt, cell);
     this.doStylePopin();
-    this.doAttachPopin(popin);
+    this.doAttachPopin();
     this.doQueryPopinElements();
     this.doListenPopin();
     this.doPromptPopin();
@@ -790,16 +790,18 @@ class AndroidKeyboardCard extends HTMLElement {
       this.doQueryPopinRowElements();
       this.doListenPopinRow();
     }
+
+    return popin;
   }
 
   doStylePopin() {
     // Make popin position absolute (relative to card)
-    popin.style.position = "absolute";
+    this._elements.popin.style.position = "absolute";
   }
 
-  doAttachPopin(popin) {
+  doAttachPopin() {
     const card = this._elements.card;
-    card.appendChild(popin);
+    card.appendChild(this._elements.popin);
   }
 
   doQueryPopinElements() {
@@ -870,6 +872,8 @@ class AndroidKeyboardCard extends HTMLElement {
       this.doQueryPopinCellElements();
       this.doListenPopinCell(popinCell);
     }
+
+    return popinRow;
   }
 
   doStylePopinRow() {
@@ -904,6 +908,8 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doAttachPopinCellContent(popinCell, popinCellContent);
     this.doQueryPopinCellContentElements(popinCell, popinCellContent);
     this.doListenPopinCellContent();
+    
+    return popinCell;
   }
 
   doStylePopinCell(popinCell, cellWidth) {
