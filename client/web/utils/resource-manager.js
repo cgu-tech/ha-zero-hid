@@ -92,4 +92,18 @@ export class ResourceManager {
       return null;
     }
   }
+  
+  isValidUrl(str) {
+    if (!str) return false;
+    try {
+      new URL(str);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+  
+  getLocalIconUrl(str) {
+    return `${Globals.DIR_ICONS}/${str}`;
+  }
 }

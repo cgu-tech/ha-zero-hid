@@ -2,160 +2,84 @@ import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
+import { LayoutManager } from './utils/layout-manager.js';
 
 console.info("Loading carrousel-card");
 
 class CarrouselCard extends HTMLElement {
+
+  // private constants
+  _cellImageModes = new Set(["img", "image", "ico", "icon", "pic", "picture", "photo"]);
+  _cellLabelModes = new Set(["txt", "text", "lbl", "label", "name"]);
+  _cellMixedModes = new Set(["mix", "mixed", "both", "all"]);
+
+  // private properties
+  _config;
+  _hass;
+  _elements = {};
+  _logger;
+  _eventManager;
+  _layoutManager;
+  _resourceManager;
+
   constructor() {
     super();    
-    this.attachShadow({ mode: "open" }); // Create shadow root
 
-    this._hass = null;
-    this._uiBuilt = false;
-    this.card = null;
-    
-    // Configs
-    this.config = null;
-    this.loglevel = 'warn';
-    this.logpushback = false;
-    this.logger = new Logger("carrousel-card.js", this.loglevel, this._hass, this.logpushback);
-    this.eventManager = new EventManager(this.logger);
-    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
-    this.cellsWidth = 60;
-    this.cellsHeight = 60;
-    this.cells = [];
+    this._logger = new Logger(this, "carrousel-card.js");
+    this._eventManager = new EventManager(this);
+    this._layoutManager = new LayoutManager(this, null);
+    this._resourceManager = new ResourceManager(this, import.meta.url);
 
-    this.cellImageModes = new Set(["img", "image", "ico", "icon", "pic", "picture", "photo"]);
-    this.cellLabelModes = new Set(["txt", "text", "lbl", "label", "name"]);
-    this.cellMixedModes = new Set(["mix", "mixed", "both", "all"]);
-    
-    // Layout loading flags
-    this._layoutReady = false;
-    this._layoutLoaded = {};
+    this.doCard();
+    this.doStyle();
+    this.doAttach();
+    this.doQueryElements();
+    this.doListen();
+  }
+
+  getLogger() {
+    return this._logger;
   }
 
   setConfig(config) {
-    this.config = config;
-
-    if (config) {
-      // Set log level
-      const oldLoglevel = this.loglevel;
-      if (config['log_level']) {
-        this.loglevel = config['log_level'];
-      }
-      
-      // Set log pushback
-      const oldLogpushback = this.logpushback;
-      if (config['log_pushback']) {
-        this.logpushback = config['log_pushback'];
-      }
-      
-      // Update logger when needed
-      if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
-        this.logger.update(this.loglevel, this._hass, this.logpushback);
-      }
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
-      
-      // Set haptic feedback
-      if (config['haptic']) {
-        this.eventManager.setHaptic(config['haptic']);
-      }
-      
-      // Set cells width
-      if (config['cell_width']) {
-        this.cellsWidth = config['cell_width'];
-      }
-      
-      // Set cells height
-      if (config['cell_height']) {
-        this.cellsHeight = config['cell_height'];
-      }
-      
-      // Set cells
-      if (config['cells']) {
-        this.cells = config['cells'];
-      }
-    }
-    
-  }
-
-  getCardSize() {
-    return 1;
-  }
-
-  async connectedCallback() {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
-
-    // Check if layout needs loading
-    if (!this._layoutLoaded.cellsWidth || this._layoutLoaded.cellsWidth !== this.cellsWidth
-         || !this._layoutLoaded.cellsHeight || this._layoutLoaded.cellsHeight !== this.cellsHeight
-         || !this._layoutLoaded.cells || (this.cells && !this.arraysEqual(this._layoutLoaded.cells, this.cells))
-       ) {
-      this._layoutReady = false;
-
-      // Load layout
-      await this.loadLayout();
-
-      // Update loaded layout
-      this._layoutLoaded.cellsWidth = this.cellsWidth;
-      this._layoutLoaded.cellsHeight = this.cellsHeight;
-      this._layoutLoaded.cells = this.cells;
-      this._layoutReady = true;
-    }
-
-    // Only build UI if hass is already set
-    if (this._hass) {
-      this.resourceManager.synchronizeResources(this._hass);
-      this.buildUi(this._hass);
-    }
-  }
-
-  async loadLayout() {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout():"));
-    if (this.cells) {
-      const allCells = Object.entries(this.cells);
-      for (const [id, cell] of allCells) {
-        const cellIconUrl = cell["icon-url"];
-        if (cellIconUrl) {
-          if (this.isValidUrl(cellIconUrl)) {
-            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found image URL:${cellIconUrl}`, id));
-          } else {
-            // Local image requested: create the relative URL dynamically
-            const newIconUrl = this.getLocalIconUrl(cellIconUrl);
-            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found local image:${cellIconUrl}, will set it to relative URL:${newIconUrl}`, id));
-          }
-        }
-      }
-    }
+    this._config = config;
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
+    this.doCheckConfig();
+    this.doUpdateConfig();
   }
 
   set hass(hass) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
-    if (!this._uiBuilt) {
-      this.buildUi(this._hass);
-    }
+    this.doUpdateHass()
   }
 
-  buildUi(hass) {
-    if (this._uiBuilt) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
-      return;
-    }
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
+  getCellWidth() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("cell_width");
+  }
+  getCellHeight() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("cell_height");
+  }
+  getCells() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("cells");
+  }
 
-    // Clear existing content (if any)
-    this.shadowRoot.innerHTML = '';
+  // jobs
+  doCheckConfig() {
+    //TODO: check config in details
+  }
 
-    // Mark UI as "built" to prevent re-enter
-    this._uiBuilt = true;
+  doCard() {
+    this._elements.card = document.createElement("ha-card");
+    this._elements.card.innerHTML = `
+      <div class="carrousel-container">
+      </div>
+    `;
+  }
 
-    // Update the logger
-    //this.logger.update(this.loglevel, hass, this.logpushback);
-
-    const card = document.createElement("ha-card");
-    const style = document.createElement("style");
-    style.textContent = `
+  doStyle() {
+    this._elements.style = document.createElement("style");
+    this._elements.style.textContent = `
       .carrousel-container {
         display: flex;
         width: 100%;
@@ -168,8 +92,8 @@ class CarrouselCard extends HTMLElement {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        width: ${this.cellsWidth};
-        height: ${this.cellsHeight};
+        width: ${this.getCellWidth()};
+        height: ${this.getCellHeight()};
         margin-left: 2px;
         margin-right: 2px;
         margin-top: 4px;
@@ -231,70 +155,163 @@ class CarrouselCard extends HTMLElement {
         height: 100%;
       }
     `;
-    this.shadowRoot.appendChild(style);
+  }
 
-    const container = document.createElement("div");
-    container.className = "carrousel-container";
+  doAttach() {
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.append(this._elements.style, this._elements.card);
+  }
 
-    Object.entries(this.cells).forEach(([id, cell]) => {
-      // Create a new cell
-      const cellDiv = document.createElement("div");
-      cellDiv.className = "carrousel-cell";
-      cellDiv.id = id;
-      cellDiv._keyData = { config: cell };
+  doQueryElements() {
+    const card = this._elements.card;
+    this._elements.container = card.querySelector(".carrousel-container");
+  }
 
-      // Retrieve cell user configurations
-      const cellId = id;
-      const cellLabel = cell["label"] || cellId;
+  doListen() {
+    // Nothing to do here: events are listened per sub-element
+  }
 
-      const cellDisplayMode = cell["display-mode"];
-      const cellBackgroundColor = cell["background-color"];
-      const cellBackground = cell["background"];
-      const targetDisplayMode = this.getDisplayMode(cellDisplayMode, cellId);
+  doUpdateConfig() {
+    // Layout is user defined complex structure: always rebuild
+    this.doUpdateLayout();
+  }
 
-      // Create cell content
-      const cellContent = document.createElement("div");
-      cellContent.className = "carrousel-cell-content";
+  doUpdateHass() {
+    // Nothing to do here: no specific HA entity state to listen for this card
+    //TODO: treat auto-refresh for all cards: this.resourceManager.synchronizeResources(this._hass);
+  }
 
-      // Set cell inner content (image, label)
-      if (targetDisplayMode === "image") {
-        // Image mode
-        const img = this.createImage(cellId, cellLabel, cell);
-        img.classList.add('img-full');
-        cellContent.appendChild(img);
+  doUpdateLayout() {
+    this.doResetLayout();
+    this.doCreateLayout();
+  }
 
-      } else if (targetDisplayMode === "label") {
-        // Label mode
-        const label = this.createLabel(cellId, cellLabel, cell);
-        label.classList.add('label-full');
-        cellContent.appendChild(label);
+  doResetLayout() {
+    // Clear existing container DOM content
+    this._elements.container.innerHTML = '';
+    
+    // Reset associated cells
+    this._elements.cells = [];
+  }
 
-      } else {
-        // Image and label mode
-        const img = this.createImage(cellId, cellLabel, cell);
-        img.classList.add('img-half');
-        const label = this.createLabel(cellId, cellLabel, cell);
-        label.classList.add('label-half');
-        cellContent.appendChild(img);
-        cellContent.appendChild(label);
+  doCreateLayout() {
 
-      }
+    // Create all cells
+    for (const [cellId, cellConfig] of this.getCells().entries()) {
+      const cell = this.doCell(cellId, cellConfig);
+      this.doStyleCell();
+      this.doAttachCell(cell);
+      this.doQueryCellElements();
+      this.doListenCell(cell);
+    }
+  }
 
-      // Apply user preferences over label style
-      if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
-      if (cellBackground) cellContent.style.background = cellBackground;
+  doCell(cellId, cellConfig) {
 
-      cellDiv.appendChild(cellContent);
+    // Create a new cell
+    const cellDiv = document.createElement("div");
+    cellDiv.className = "carrousel-cell";
+    cellDiv.id = id;
+    cellDiv._keyData = { config: cell };
 
-      this.eventManager.addPointerClickListener(cellDiv, (e) => {
-        this.handlePointerClick(e, hass, cellDiv);
-      });
+    // Retrieve cell user configurations
+    const cellLabel = cellConfig["label"] || cellId;
 
-      container.appendChild(cellDiv);
+    const cellDisplayMode = cellConfig["display-mode"];
+    const cellBackgroundColor = cellConfig["background-color"];
+    const cellBackground = cellConfig["background"];
+    const targetDisplayMode = this.getDisplayMode(cellDisplayMode, cellId);
+
+    // Create cell content
+    const cellContent = document.createElement("div");
+    cellContent.className = "carrousel-cell-content";
+
+    // Set cell inner content (image, label)
+    if (targetDisplayMode === "image") {
+      // Image mode
+      const img = this.createImage(cellId, cellLabel, cellConfig);
+      img.classList.add('img-full');
+      cellContent.appendChild(img);
+
+    } else if (targetDisplayMode === "label") {
+      // Label mode
+      const label = this.createLabel(cellId, cellLabel, cellConfig);
+      label.classList.add('label-full');
+      cellContent.appendChild(label);
+
+    } else {
+      // Image and label mode
+      const img = this.createImage(cellId, cellLabel, cellConfig);
+      img.classList.add('img-half');
+      const label = this.createLabel(cellId, cellLabel, cellConfig);
+      label.classList.add('label-half');
+      cellContent.appendChild(img);
+      cellContent.appendChild(label);
+
+    }
+
+    // Apply user preferences over label style
+    if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
+    if (cellBackground) cellContent.style.background = cellBackground;
+
+    cellDiv.appendChild(cellContent);
+
+    this.eventManager.addPointerClickListener(cellDiv, (e) => {
+      this.handlePointerClick(e, hass, cellDiv);
     });
 
-    card.appendChild(container);
-    this.shadowRoot.appendChild(card);
+    container.appendChild(cellDiv);
+  }
+
+  doStyleCell() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachCell(cell) {
+    this._elements.container.appendChild(cell);
+  }
+
+  doQueryCellElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenCell(cell) {
+    this.addClickableListeners(cell);
+  }
+
+  // configuration defaults
+  static getStubConfig() {
+    return {
+      haptic: true,
+      log_level: "warn",
+      log_pushback: false,
+      cell_width: 60,
+      cell_height: 60,
+      cells: []
+    };
+  }
+
+  getCardSize() {
+    return 1;
+  }
+
+  async loadLayout() {
+    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout():"));
+    if (this.cells) {
+      const allCells = Object.entries(this.cells);
+      for (const [id, cell] of allCells) {
+        const cellIconUrl = cell["icon-url"];
+        if (cellIconUrl) {
+          if (this.isValidUrl(cellIconUrl)) {
+            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found image URL:${cellIconUrl}`, id));
+          } else {
+            // Local image requested: create the relative URL dynamically
+            const newIconUrl = this.getLocalIconUrl(cellIconUrl);
+            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found local image:${cellIconUrl}, will set it to relative URL:${newIconUrl}`, id));
+          }
+        }
+      }
+    }
   }
 
   createImage(cellId, cellLabel, cell) {
@@ -396,11 +413,11 @@ class CarrouselCard extends HTMLElement {
     if (cellDisplayMode) {
       // Lowerize for equality comparizons
       let loweredDisplayMode = cellDisplayMode.toLowerCase();
-      if (this.cellImageModes.has(loweredDisplayMode)) {
+      if (this._cellImageModes.has(loweredDisplayMode)) {
         targetDisplayMode = "image";
-      } else if (this.cellLabelModes.has(loweredDisplayMode)) {
+      } else if (this._cellLabelModes.has(loweredDisplayMode)) {
         targetDisplayMode = "label";
-      } else if (this.cellMixedModes.has(loweredDisplayMode)) {
+      } else if (this._cellMixedModes.has(loweredDisplayMode)) {
         targetDisplayMode = "mixed";
       } else {
         const regex = /^\s*([^\s]+)\s*-\s*([^\s]+)\s*$/;
@@ -411,8 +428,8 @@ class CarrouselCard extends HTMLElement {
 
           // Both labels matches one then the other display mode: mixed mode
           if (
-              (this.cellImageModes.has(displayModeOne) && this.cellLabelModes.has(displayModeTwo)) ||
-              (this.cellLabelModes.has(displayModeOne) && this.cellImageModes.has(displayModeTwo))
+              (this._cellImageModes.has(displayModeOne) && this._cellLabelModes.has(displayModeTwo)) ||
+              (this._cellLabelModes.has(displayModeOne) && this._cellImageModes.has(displayModeTwo))
              ) {
             targetDisplayMode = "mixed";
           }
@@ -437,20 +454,6 @@ class CarrouselCard extends HTMLElement {
 
   isFiniteNumber(value) {
     return Number.isFinite(Number(value));
-  }
-
-  getLocalIconUrl(str) {
-    return `${Globals.DIR_ICONS}/${str}`;
-  }
-
-  isValidUrl(str) {
-    if (!str) return false;
-    try {
-      new URL(str);
-      return true;
-    } catch (_) {
-      return false;
-    }
   }
 
   arraysEqual(a, b) {
