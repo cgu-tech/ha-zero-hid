@@ -995,6 +995,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
     this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
     this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
+    this._eventManager.addPointerLeaveListener(btn, this.onButtonPointerCancel.bind(this));
   }
 
   onButtonPointerDown(evt) {
@@ -1007,6 +1008,12 @@ class AndroidKeyboardCard extends HTMLElement {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyRelease(evt, btn);
+  }
+
+  onButtonPointerCancel(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    this.doKeyAbort(evt, btn);
   }
 
   doKeyPress(evt, btn) {
@@ -1130,6 +1137,24 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
     this._eventManager.hapticFeedback();
+  }
+
+  doKeyAbort(evt, btn) {
+
+    // Remove popin timeout (when set before)
+    this.clearPopinTimeout(evt);
+    this._popinTimeouts.delete(evt.pointerId);
+
+    // Unmark clickable button active for visual feedback
+    btn.classList.remove("active");
+
+    // Retrieve clickable button data
+    const cellConfig = this._layoutManager.getElementData(btn);
+    if (!cellConfig) return;
+
+    // Key code to abort
+    const code = cellConfig.code;
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to abort:", code));
   }
 
   executeButtonOverride(btn) {
