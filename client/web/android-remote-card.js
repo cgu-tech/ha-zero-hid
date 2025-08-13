@@ -425,7 +425,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doListen() {
-    //TODO: add global PointerUp listener?
+    // Nothing to do here: events are listened per sub-element
   }
 
   doUpdateConfig() {
@@ -809,7 +809,6 @@ class AndroidRemoteCard extends HTMLElement {
 
   doAttachDpadQuarter() {
     // Nothing to do here: already attached during creation
-    //TODO refactor in the future
   }
 
   doQueryDpadQuarterElements() {
@@ -857,11 +856,10 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doAttachDpadCenter() {
-    //TODO
+    // Nothing to do here: dpad center already attached to dpad
   }
 
   doQueryDpadCenterElements() {
-    //TODO or 
     // Nothing to do here: element already referenced and sub-elements are not needed
   }
 
@@ -1002,7 +1000,6 @@ class AndroidRemoteCard extends HTMLElement {
     // Suppress this clickable button release if reference pointer down event was originated from a different clickable button
     const referenceCode = this._layoutManager.getElementData(this._referenceBtn)?.code;
     if (referenceCode !== code) {
-      //TODO: foolproof multiples buttons with same code, by using unique ID per button for reference and comparison, instead of key code
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to existing reference key code ${referenceCode}`));
       return;
     }

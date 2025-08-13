@@ -410,7 +410,6 @@ class TrackpadCard extends HTMLElement {
   }
 
   doListen() {
-    //TODO: add global PointerUp listener?
     this.doListenScrollToggle();
     this.doListenTrackpad();
   }
@@ -771,7 +770,7 @@ class TrackpadCard extends HTMLElement {
   }
 
   doUpdateHass() {
-    //TODO
+    // Nothing to do here: no specific HA entity state to listen for this card
   }
 
   doUpdateLayout() {

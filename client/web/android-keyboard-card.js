@@ -388,7 +388,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doListen() {
-    //TODO: add global PointerUp listener?
+    // Nothing to do here: events are listened per sub-element
   }
 
   doUpdateConfig() {
@@ -403,7 +403,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   doUpdateHass() {
-    //TODO
+    // Nothing to do here: no specific HA entity state to listen for this card
   }
 
   doUpdateLayout() {
@@ -1110,7 +1110,6 @@ class AndroidKeyboardCard extends HTMLElement {
     // Suppress when pointer was originated from a different button
     const referenceCode = this._layoutManager.getElementData(this._referenceBtn)?.code;
     if (referenceCode !== code) {
-      //TODO: foolproof multiples buttons with same code, by using unique ID per button for reference and comparison, instead of key code
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to existing reference key code ${referenceCode}`));
       return;
     }
