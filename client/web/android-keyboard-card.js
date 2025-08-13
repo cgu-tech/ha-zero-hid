@@ -198,7 +198,7 @@ class AndroidKeyboardCard extends HTMLElement {
         --key-active-bg: #2c2b2b;
         --key-special-bg: #222;
         --key-special-color: #ccc;
-        --key-height: 3.5rem;
+        --key-height: clamp(2rem, 9vh, 3.5rem);
         --key-margin: 0.15rem;
         font-size: var(--base-font-size);
         display: block;
