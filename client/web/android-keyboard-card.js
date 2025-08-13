@@ -781,9 +781,10 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Create popin rows
     const popinConfig = this.getPopinConfig(cell);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopin(evt, cell) + popinConfig:`, evt, cell, popinConfig));
+    const cellWidth = cell.getBoundingClientRect().width;
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopin(evt, cell) + popinConfig + cellWidth:`, evt, cell, popinConfig, cellWidth));
     for (const rowConfig of popinConfig) {
-      const popinRow = this.doPopinRow(rowConfig);
+      const popinRow = this.doPopinRow(rowConfig, cellWidth);
       this.doStylePopinRow();
       this.doAttachPopinRow(popin, popinRow);
       this.doQueryPopinRowElements();
@@ -853,7 +854,7 @@ class AndroidKeyboardCard extends HTMLElement {
     popin.style.top = `${popinTop}px`;
   }
 
-  doPopinRow(rowConfig) {
+  doPopinRow(rowConfig, cellWidth) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinRow(rowConfig):`, rowConfig));
 
     // Create popin row
@@ -863,11 +864,11 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Create popin row cells
     for (const cellConfig of rowConfig) {
-      const popinCell = this.doPopinCell(cellConfig);
-      this.doStylePopinCell();
+      const popinCell = this.doPopinCell(cellConfig, cellWidth);
+      this.doStylePopinCell(popinCell, cellWidth);
       this.doAttachPopinCell(popinRow, popinCell);
       this.doQueryPopinCellElements();
-      this.doListenPopinCell();
+      this.doListenPopinCell(popinCell);
     }
   }
 
@@ -905,17 +906,16 @@ class AndroidKeyboardCard extends HTMLElement {
     this.doListenPopinCellContent();
   }
 
-  doStylePopinCell() {
-    // Make popin cell the same width than popin base button
-    const baseBtnWidth = btn.getBoundingClientRect().width;
-    popinCell.style.width = `${baseBtnWidth}px`;
+  doStylePopinCell(popinCell, cellWidth) {
+    // Make popin cell the same width than base cell button
+    popinCell.style.width = `${cellWidth}px`;
   }
 
   doAttachPopinCell(popinRow, popinCell) {
     popinRow.appendChild(popinCell);
   }
 
-  doQueryPopinCellElements(popinCell) {
+  doQueryPopinCellElements() {
     // nothing to do: element already attached during creation
   }
 
