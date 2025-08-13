@@ -171,9 +171,23 @@ export class EventManager {
   onManagedCallback(target, callback, evt) {
     if (evt?.pointerType === 'touch') {
       // handle touch-specific logic before delegating to unmanaged callback
-      const pointerEvent = evt.pointerId ? 'is' : 'is not';
-      const pointerCaptured = target && evt.pointerId && target.hasPointerCapture(evt.pointerId) ? 'is' : 'is not';
-      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Touch device managed event ${this._reversedEventsMap.get(evt.type)} (real event ${evt.type}, ${pointerEvent} pointer event, ${pointerCaptured} captured by ${target})`));
+
+      const abstractEventName = this._reversedEventsMap.get(evt.type);
+      const isRealPointerEvent = !!evt.pointerId;
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Touch device managed event ${abstractEventName} (real event ${evt.type}, ${isRealPointerEvent ? 'is' : 'is not'} real pointer event)`));
+
+      // Handle proper element leave on touch devices
+      if (abstractEventName === "EVT_POINTER_MOVE" && isRealPointerEvent) {
+        const isPointerCapturedByTarget = target.hasPointerCapture(evt.pointerId);
+        if (isPointerCapturedByTarget) {
+          const hoveredTarget = document.elementFromPoint(evt.clientX, evt.clientY);
+          if (target !== hoveredTarget) {
+            if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Releasing touch device pointer capture for managed event ${abstractEventName}: event target differs from hovered target (real event ${evt.type})`));
+            target.releasePointerCapture(evt.pointerId);
+            return; // Do not call unmanaged callback
+          }
+        }
+      }
     }
     // delegate to unmanaged callback
     callback(evt);
