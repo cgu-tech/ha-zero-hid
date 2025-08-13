@@ -133,9 +133,9 @@ export class EventManager {
         target.addEventListener(eventName, listener["managedCallback"]);
       }
     }
-    return managedCallback;
+    return listener;
   }
-  
+
   // Manages the callback to handle erratic touch devices events
   onManagedCallback(callback, evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Hello, i'm a managed event`));
