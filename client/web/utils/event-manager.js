@@ -123,7 +123,7 @@ export class EventManager {
 
   // Add the specified event listener
   addGivenEventListener(target, callback, options, eventName) {
-    const listener = { "eventName": eventName, "managedCallback": managedCallback, "callback": this.onManagedCallback.bind(this, callback), "options": options };
+    const listener = { "eventName": eventName, "managedCallback": this.onManagedCallback.bind(this, callback), "callback": callback, "options": options };
     if (this.isTargetListenable(target)) {
       if (options) {
         if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding event listener ${eventName} on target with options:`, target, options));
