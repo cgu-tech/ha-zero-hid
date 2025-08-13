@@ -177,7 +177,7 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         border-radius: 50%;   /* This makes the button circular */
       }
-      .circle-button:hover { background-color: #4a4a4a; }
+      .circle-button:hover { background-color: #ff4a4a; }
       .circle-button:active,
       .circle-button.pressed { transform: scale(0.95); }
       .side-button {
