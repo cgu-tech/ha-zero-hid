@@ -190,6 +190,7 @@ class AndroidKeyboardCard extends HTMLElement {
     this._elements.style.textContent = `
       :host {
         --card-corner-radius: 10px;
+        --key-min-corner-radius: 4px;
         --key-max-corner-radius: 8px;
         --base-font-size: 1rem; /* base scaling unit */
         --key-bg: #3b3a3a;
@@ -214,8 +215,8 @@ class AndroidKeyboardCard extends HTMLElement {
         border-radius: var(--card-corner-radius);
         display: flex;
         flex-direction: column;
-        gap: clamp(1px, 1vw, 8px);
-        padding: clamp(1px, 1vw, 6px) clamp(1px, 1vw, 6px);
+        gap: clamp(4px, 10vw, 8px);
+        padding: clamp(3px, 10vw, 6px) clamp(3px, 10vw, 6px);
         background: #1a1a1a;
         box-sizing: border-box;
         width: 100%;
@@ -230,11 +231,11 @@ class AndroidKeyboardCard extends HTMLElement {
         gap: clamp(4px, 1vw, 5px);
       }
       button.key {
-        border-radius: clamp(1px, 1vw, var(--key-max-corner-radius));
+        border-radius: clamp(var(--key-min-corner-radius), 1vw, var(--key-max-corner-radius));
         flex: 1 1 0;
         min-width: 0;      /* prevent content from forcing expansion */
         font-size: clamp(0.6em, 10vw, 1em);
-        padding: clamp(1px, 0.6vw, 4px); clamp(1px, 0.6vw, 4px);
+        padding: clamp(2px, 10vw, 4px); clamp(2px, 10vw, 4px);
         cursor: pointer;
         height: var(--key-height);
         background: var(--key-bg);
@@ -255,7 +256,7 @@ class AndroidKeyboardCard extends HTMLElement {
         flex: 1 1 auto;
         font-size: clamp(0.55em, 10vw, 0.95em);
         font-weight: bold;
-        padding: clamp(1px, 0.6vw, 4px); clamp(0px, 0.3vw, 2px);
+        padding: clamp(1px, 10vw, 4px); clamp(0px, 10vw, 2px);
         background: var(--key-special-bg);
         color: var(--key-special-color);
       }
@@ -322,7 +323,7 @@ class AndroidKeyboardCard extends HTMLElement {
       .key-popin {
         position: fixed; /* Use fixed instead of absolute for document.body */
         background: var(--key-bg, #3b3a3a); /* Fallback if var is missing */
-        border-radius: clamp(1px, 1vw, var(--key-max-corner-radius));
+        border-radius: clamp(var(--key-min-corner-radius), 1vw, var(--key-max-corner-radius));
         padding: 0.3em;
         box-shadow: 0 0.2em 0.8em rgba(0,0,0,0.4);
         z-index: 9999;
