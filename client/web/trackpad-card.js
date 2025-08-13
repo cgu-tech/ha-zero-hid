@@ -1099,7 +1099,7 @@ class TrackpadCard extends HTMLElement {
         this.doScrollOnce(scrollZoneConfig);
 
         // Add next move scroll event with the same delay
-        this._scrollsClick.set(evt.pointerId, { "scroll-timeout": this.addScrollZoneLongMoveTimeout(scrollZoneConfig, triggerDelay) } );
+        this._scrollsClick.set(this._scrollMoveId, { "scroll-timeout": this.addScrollZoneLongMoveTimeout(scrollZoneConfig, triggerDelay) } );
       }
     }, triggerDelay); // next move-scroll duration
   }
