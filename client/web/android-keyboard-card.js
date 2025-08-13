@@ -215,7 +215,7 @@ class AndroidKeyboardCard extends HTMLElement {
         display: flex;
         flex-direction: column;
         gap: clamp(1px, 1vw, 8px);
-        padding: clamp(1px, 1vw, 8px) clamp(1px, 1vw, 8px);
+        padding: clamp(1px, 1vw, 6px) clamp(1px, 1vw, 6px);
         background: #1a1a1a;
         box-sizing: border-box;
         width: 100%;
