@@ -578,38 +578,29 @@ class AndroidKeyboardCard extends HTMLElement {
     return this.getStatusCurrentState()["label"];
   }
 
-  isStatusTriggerForMode(trigger) {
-    return !!this.getStatusCurrentMode()["nexts"].find(next => next["trigger"].test(trigger));
+  getNextStatusMode(trigger) {
+    return this.getStatusCurrentMode()["nexts"].find(next => next["trigger"].test(trigger));
   }
 
-  isStatusTriggerForState(trigger) {
-    return !!this.getStatusCurrentState()["nexts"].find(next => next["trigger"].test(trigger));
+  getNextStatusState(trigger) {
+    return this.getStatusCurrentState()["nexts"].find(next => next["trigger"].test(trigger));
   }
 
-  isStatusTrigger(trigger) {
-    return this.isStatusTriggerForState(trigger) || this.isStatusTriggerForMode(trigger);
+  getNextStatus(trigger) {
+    return this.getNextStatusState(trigger) || this.getNextStatusMode(trigger);
   }
 
-  activateNextStatusMode(trigger) {
-    const nextMode = this.getStatusCurrentMode()["nexts"].find(next => next["trigger"].test(trigger));
-    if (nextMode) {
-      this._currentMode = nextMode["mode"];
-      this._currentState = nextMode["state"];
-    }
-    return !!nextMode;
+  isNextStatusTrigger(trigger) {
+    return !!this.getNextStatus(trigger);
   }
 
-  activateNextStatusState(trigger) {
-    const nextState = this.getStatusCurrentState()["nexts"].find(next => next["trigger"].test(trigger));
-    if (nextState) {
-      this._currentMode = nextState["mode"];
-      this._currentState = nextState["state"];
-    }
-    return !!nextState;
-  }
-  
   activateNextStatus(trigger) {
-    return this.activateNextStatusState(trigger) || this.activateNextStatusMode(trigger);
+    const nextStatus = this.getNextStatus(trigger);
+    if (nextStatus) {
+      this._currentMode = nextStatus["mode"];
+      this._currentState = nextStatus["state"];
+    }
+    return !!nextStatus;
   }
 
   getStandardLabel(cellConfig, statusLabel) {
@@ -1065,11 +1056,11 @@ class AndroidKeyboardCard extends HTMLElement {
     // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
     this._referenceBtn = btn;
 
-    if (this.activateNextStatus(code)) {
+    if (this.isVirtualModifier(code)) {
       // Pressed key code triggered keyboard status change
 
       // Update all cells labels and visuals
-      this.doUpdateCells();
+      if (this.activateNextStatus(code)) this.doUpdateCells();
     } else {
       // Pressed key code does not triggered keyboard status change
 
@@ -1155,11 +1146,14 @@ class AndroidKeyboardCard extends HTMLElement {
       }
     }
 
+    // Update all cells labels and visuals for non-virtual keys modifiers
+    if (this.activateNextStatus(code)) this.doUpdateCells();
+
     // Switch to next state when "shift-once" was set and a key was pressed (other than MOD_LEFT_SHIFT, previously debounced)
-    if (this._currentState === this.constructor._STATE_SHIFT_ONCE) {
-      this.activateNextState();
-      this.doUpdateCells();
-    }
+    //if (this._currentState === this.constructor._STATE_SHIFT_ONCE) {
+    //  this.activateNextState();
+    //  this.doUpdateCells();
+    //}
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release done`));
