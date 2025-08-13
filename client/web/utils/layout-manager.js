@@ -137,13 +137,14 @@ export class LayoutManager {
     return evt?.pointerType === 'touch';
   }
 
-  forceRefresh(target) {
-    target?.offsetHeight; // Force reflow
-  }
+  doAddAsyncForTouchDevice(evt, target, className) { if (this.isTouchDevice(evt)) this.doAddAsync(target, className); }
+  doRemoveAsyncForTouchDevice(evt, target, className) { if (this.isTouchDevice(evt)) this.doRemoveAsync(target, className); }
 
-  forceRefreshForTouchDevice(evt, target) {
-    if (this.isTouchDevice(evt)) this.forceRefresh(target);
-  }
+  doAddAsync(target, className) { requestAnimationFrame(this.onAddClassAsync.bind(this, target, className)); }
+  doRemoveAsync(target, className) { requestAnimationFrame(this.onRemoveClassAsync.bind(this, target, className)); }
+
+  onAddClassAsync(target, className) { target?.classList.add(className); }
+  onRemoveClassAsync(target, className) { target?.classList.remove(className); }
 
   getScaleOrDefault(scale, defaultScale) {
     let scaleOrDefault;

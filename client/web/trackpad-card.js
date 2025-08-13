@@ -315,6 +315,10 @@ class TrackpadCard extends HTMLElement {
       }
 
       .scroll-toggle {
+        --mdc-ripple-color: transparent;
+        --mdc-theme-primary: transparent;
+        --mdc-theme-on-primary: transparent;
+        --ha-card-border-radius: 0; /* optional: prevent rounded ripple */
         z-index: 3;
         pointer-events: none;
         position: absolute;

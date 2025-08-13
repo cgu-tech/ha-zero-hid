@@ -966,8 +966,8 @@ class AndroidKeyboardCard extends HTMLElement {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
-    this._layoutManager.forceRefreshForTouchDevice(evt, btn);
     btn.classList.remove("active");
+    this._layoutManager.doRemoveAsyncForTouchDevice(evt, btn, "active");
   }
 
   onPopinButtonPointerDown(evt) {
@@ -982,8 +982,8 @@ class AndroidKeyboardCard extends HTMLElement {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
-    this._layoutManager.forceRefreshForTouchDevice(evt, btn);
     btn.classList.remove("active");
+    this._layoutManager.doRemoveAsyncForTouchDevice(evt, btn, "active");
     //this.handleKeyPress(btn);
     //this.handleKeyRelease(btn);
     this.doClosePopin();
@@ -1077,8 +1077,8 @@ class AndroidKeyboardCard extends HTMLElement {
     this._popinTimeouts.delete(evt.pointerId);
 
     // Unmark clickable button active for visual feedback
-    this._layoutManager.forceRefreshForTouchDevice(evt, btn);
     btn.classList.remove("active");
+    this._layoutManager.doRemoveAsyncForTouchDevice(evt, btn, "active");
 
     // Retrieve clickable button data
     const cellConfig = this._layoutManager.getElementData(btn);
@@ -1150,8 +1150,8 @@ class AndroidKeyboardCard extends HTMLElement {
     this._popinTimeouts.delete(evt.pointerId);
 
     // Unmark clickable button active for visual feedback
-    this._layoutManager.forceRefreshForTouchDevice(evt, btn);
     btn.classList.remove("active");
+    this._layoutManager.doRemoveAsyncForTouchDevice(evt, btn, "active");
 
     // Retrieve clickable button data
     const cellConfig = this._layoutManager.getElementData(btn);
