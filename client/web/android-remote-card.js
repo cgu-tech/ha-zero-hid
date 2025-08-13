@@ -942,15 +942,15 @@ class AndroidRemoteCard extends HTMLElement {
 
   onButtonPointerDown(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    div.blur?.();        // try to blur if it was focused
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    btn?.blur?.();        // try to blur if it was focused
     this.doKeyPress(btn);
   }
 
   onButtonPointerUp(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    div.blur?.();        // try to blur if it was focused
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    btn?.blur?.();        // try to blur if it was focused
     this.doKeyRelease(evt, btn);
   }
 
