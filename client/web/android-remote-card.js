@@ -263,6 +263,9 @@ class AndroidRemoteCard extends HTMLElement {
         pointer-events: none;
         user-select: none;
       }
+      .pass-through {
+        pointer-events: none;
+      }
       #foldable-container {
         width: 100%;
         display: none;
@@ -784,6 +787,9 @@ class AndroidRemoteCard extends HTMLElement {
     while (arrowSvg.firstChild) {
       iconGroup.appendChild(arrowSvg.firstChild);
     }
+
+    // Mark each triangle icon as "pass-through" to avoid blocking events
+    iconGroup.classList.add("pass-through");
 
     dpad.appendChild(iconGroup);
 
