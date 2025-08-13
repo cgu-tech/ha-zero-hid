@@ -1022,24 +1022,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   executeButtonOverride(btn) {
-    const overrideConfig = this._layoutManager.getButtonOverride(btn.id);
-
-    // When sensor detected in override configuration, 
-    // choose override action to execute according to current sensor state (on/off)
-    let overrideAction;
-    if (overrideConfig['sensor']) {
-      if (btn._sensorState && btn._sensorState.toLowerCase() === "on") {
-        overrideAction = overrideConfig['action_when_on'];
-      } else {
-        overrideAction = overrideConfig['action_when_off'];
-      }
-    } else {
-      overrideAction = overrideConfig['action'];
-    }
-
-    // Execute override action
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
-    this._eventManager.triggerHaosTapAction(btn, overrideAction);
+    this._eventManager.executeButtonOverride(btn, this._layoutManager.getButtonOverride(btn));
   }
 
   appendCode(code) {

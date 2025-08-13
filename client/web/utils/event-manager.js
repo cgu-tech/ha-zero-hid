@@ -70,7 +70,27 @@ export class EventManager {
     this.removePointerCancelListener(window, handleGlobalPointerUp);
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleGlobalPointerUp removed"));
   }
-  
+
+  executeButtonOverride(btn, overrideConfig) {
+
+    // When sensor detected in override configuration, 
+    // choose override action to execute according to current sensor state (on/off)
+    let overrideAction;
+    if (overrideConfig['sensor']) {
+      if (btn._sensorState && btn._sensorState.toLowerCase() === "on") {
+        overrideAction = overrideConfig['action_when_on'];
+      } else {
+        overrideAction = overrideConfig['action_when_off'];
+      }
+    } else {
+      overrideAction = overrideConfig['action'];
+    }
+
+    // Execute override action
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
+    this.triggerHaosTapAction(btn, overrideAction);
+  }
+
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
   // 
   // Parameters:
