@@ -134,7 +134,7 @@ export class LayoutManager {
   }
 
   isTouchDevice(evt) {
-    return evt?.pointerType === 'touch'; // Force reflow
+    return evt?.pointerType === 'touch';
   }
 
   forceRefresh(target) {
@@ -142,7 +142,7 @@ export class LayoutManager {
   }
 
   forceRefreshForTouchDevice(evt, target) {
-    if (isTouchDevice(evt)) this.forceRefresh(target);
+    if (this.isTouchDevice(evt)) this.forceRefresh(target);
   }
 
   getScaleOrDefault(scale, defaultScale) {
