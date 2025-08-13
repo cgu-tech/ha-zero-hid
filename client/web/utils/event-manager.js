@@ -5,9 +5,40 @@ import { Logger } from './logger.js';
 export class EventManager {
 
   _origin;
+  _eventsMap;
+  _reversedEventsMap;
+  _preferedEventsNames;
+  
 
   constructor(origin) {
     this._origin = origin;
+
+    // Mapping for "virtual" event names with their "real" event names counterparts 
+    // that might be supported by device - or not (by preference order)
+    this._eventsMap = new Map();
+    this._eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
+    this._eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
+    this._eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
+    this._eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
+    this._eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
+    this._eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
+    this._eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
+    this._eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
+    this._eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
+    this._eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
+    this._eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
+
+    // Reversed mapping for each "real" event names with its "virtual" event name counterpart
+    // ex: "pointerdown" --> "EVT_POINTER_DOWN"
+    this._reversedEventsMap = new Map();
+    for (const [key, valueArray] of this._eventsMap.entries()) {
+      for (const eventName of valueArray) {
+        this._reversedEventsMap.set(eventName, key);
+      }
+    }
+
+    // Cache for prefered discovered listeners (lookup speedup)
+    this._preferedEventsNames = new Map();
   }
 
   getLogger() {
@@ -138,10 +169,9 @@ export class EventManager {
 
   // Manages the callback to handle erratic touch devices events
   onManagedCallback(callback, evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Hello, i'm a managed event`));
     if (evt?.pointerType === 'touch') {
       // handle touch-specific logic before delegating to unmanaged callback
-      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Hello, i'm a touch device`));
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Touch device managed ${this._reversedEventsMap.get(event.type)} event (real event ${event.type})`));
     }
     // delegate to unmanaged callback
     callback(evt);
@@ -200,31 +230,9 @@ export class EventManager {
       if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
       return null;
     }
-    
-    // Init events mapping and cache when needed
-    if (!this.eventsMap) {
-      
-      // Mapping for "virtual" event names with their "real" event names counterparts 
-      // that might be supported by device - or not (by preference order)
-      this.eventsMap = new Map();
-      this.eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
-      this.eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
-      this.eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
-      this.eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
-      this.eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
-      this.eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
-      this.eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
-      this.eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
-      this.eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
-      this.eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
-      this.eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
-      
-      // Cache for prefered listeners (lookup speedup)
-      this.preferedEventsNames = new Map();
-    }
 
     // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
-    const preferedEventName = this.preferedEventsNames.get(abstractEventName);
+    const preferedEventName = this._preferedEventsNames.get(abstractEventName);
     if (preferedEventName) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache HIT for event ${abstractEventName}: found cached prefered event ${preferedEventName}`));
       return preferedEventName;
@@ -232,7 +240,7 @@ export class EventManager {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache MISS for event ${abstractEventName}: no supported prefered event cached`));
 
     // When no prefered concrete js event, then try to retrieve mapped events
-    const mappedEvents = this.eventsMap.get(abstractEventName);
+    const mappedEvents = this._eventsMap.get(abstractEventName);
     if (!mappedEvents) {
       if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Unknwon abstractEventName ${abstractEventName}`));
       return null;
@@ -243,7 +251,7 @@ export class EventManager {
       if (this.isEventSupported(target, mappedEvent)) {
 
         // First supported event found: cache-it as prefered concrete js event
-        this.preferedEventsNames.set(abstractEventName, mappedEvent);
+        this._preferedEventsNames.set(abstractEventName, mappedEvent);
 
         // Return prefered concrete js event
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache UPDATE for event ${abstractEventName}: set to prefered event ${mappedEvent}`));

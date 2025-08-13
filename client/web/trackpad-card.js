@@ -542,18 +542,18 @@ class TrackpadCard extends HTMLElement {
     }
   }
 
-  onTrackpadPointerLeave(evt) {
-    evt.preventDefault();
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerLeave(evt):", evt));
-    this.onTrackpadPointerOut(evt);
-  }
-  
   onTrackpadPointerCancel(evt) {
     evt.preventDefault();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerCancel(evt):", evt));
     this.onTrackpadPointerOut(evt);
   }
-  
+
+  onTrackpadPointerLeave(evt) {
+    evt.preventDefault();
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerLeave(evt):", evt));
+    this.onTrackpadPointerOut(evt);
+  }
+
   onTrackpadPointerOut(evt) {
     this.enableScrollToggleEvents();
 
