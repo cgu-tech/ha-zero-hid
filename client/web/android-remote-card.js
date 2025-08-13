@@ -92,9 +92,6 @@ class AndroidRemoteCard extends HTMLElement {
         overflow: hidden; /* prevent overflow outside card */
         font-family: sans-serif;
       }
-      * {
-        -webkit-tap-highlight-color: transparent;
-      }
       #main-container {
         --base-font-size: 1rem; /* base scaling unit */
         font-size: var(--base-font-size);
@@ -177,9 +174,12 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         border-radius: 50%;   /* This makes the button circular */
       }
-      .circle-button:hover { background-color: #ff4a4a; }
+      ${this._layoutManager.isTouchDevice() ? "" : ".circle-button:hover { background-color: #4a4a4a; }" }
       .circle-button:active,
-      .circle-button.pressed { transform: scale(0.95); }
+      .circle-button.pressed {
+        background-color: #4a4a4a;
+        transform: scale(0.95);
+      }
       .side-button {
         aspect-ratio: 3 / 1;
         width: 100%;  /* maintain aspect ratio */
@@ -203,9 +203,12 @@ class AndroidRemoteCard extends HTMLElement {
         border-top-right-radius: 999px;
         border-bottom-right-radius: 999px;
       }
-      .side-button:hover { background-color: #4a4a4a; }
+      ${this._layoutManager.isTouchDevice() ? "" : ".side-button:hover { background-color: #4a4a4a; }" }
       .side-button:active,
-      .side-button.pressed { transform: scale(0.95); }
+      .side-button.pressed {
+        background-color: #4a4a4a;
+        transform: scale(0.95);
+      }
       .ts-toggle-container {
         min-width: 0;
         text-align: center;
@@ -248,9 +251,7 @@ class AndroidRemoteCard extends HTMLElement {
         border-radius: 999px;
         transition: left 0.3s ease;
       }
-      .ts-toggle-option:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-      }
+      ${this._layoutManager.isTouchDevice() ? "" : ".ts-toggle-option:hover { background-color: rgba(0, 0, 0, 0.05); }" }
       .ts-toggle-option.active {
         color: #bfbfbf;
         font-weight: bold;
@@ -259,7 +260,7 @@ class AndroidRemoteCard extends HTMLElement {
         cursor: pointer;
         transition: opacity 0.2s;
       }
-      .quarter:hover { opacity: 0.0; }
+      ${this._layoutManager.isTouchDevice() ? "" : ".quarter:hover { opacity: 0.0; }" }
       text {
         font-family: sans-serif;
         fill: #bfbfbf;
@@ -943,15 +944,13 @@ class AndroidRemoteCard extends HTMLElement {
   onButtonPointerDown(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    btn?.blur?.();        // try to blur if it was focused
     this.doKeyPress(btn);
   }
 
   onButtonPointerUp(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    btn?.blur?.();        // try to blur if it was focused
-    this.doKeyRelease(evt, btn);
+    this.doKeyRelease(btn);
   }
 
   doKeyPress(btn) {
@@ -984,11 +983,10 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.hapticFeedback();
   }
 
-  doKeyRelease(evt, btn) {
+  doKeyRelease(btn) {
 
     // Unmark clickable button active for visual feedback
     btn.classList.remove("active");
-    this._layoutManager.doRemoveAsyncForTouchDevice(evt, btn, "active");
 
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);

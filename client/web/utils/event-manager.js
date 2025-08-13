@@ -8,7 +8,6 @@ export class EventManager {
   _eventsMap;
   _reversedEventsMap;
   _preferedEventsNames;
-  
 
   constructor(origin) {
     this._origin = origin;

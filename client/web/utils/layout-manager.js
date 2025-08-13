@@ -7,6 +7,7 @@ export class LayoutManager {
   _layoutsByNames;
   _layoutsNames;
   _attachedLayoutName;
+  _isTouchDevice;
 
   // Usage:
   // const layoutManager = new LayoutManager(this, layouts);
@@ -15,6 +16,7 @@ export class LayoutManager {
     this._layouts = layouts || {};
     this._layoutsByNames = this.constructor.getLayoutsByNames(this._layouts);
     this._layoutsNames = Array.from(this._layoutsByNames.keys());
+    this._isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }
 
   getLogger() {
@@ -39,6 +41,10 @@ export class LayoutManager {
 
   getFromConfigOrDefaultConfig(configName) {
     return this.getFromConfig(configName) || this.getFromDefaultConfig(configName);
+  }
+
+  isTouchDevice() {
+    return this._isTouchDevice;
   }
 
   getFontScale() {
@@ -132,19 +138,6 @@ export class LayoutManager {
       }
     }
   }
-
-  isTouchDevice(evt) {
-    return evt?.pointerType === 'touch';
-  }
-
-  doAddAsyncForTouchDevice(evt, target, className) { if (this.isTouchDevice(evt)) this.doAddAsync(target, className); }
-  doRemoveAsyncForTouchDevice(evt, target, className) { if (this.isTouchDevice(evt)) this.doRemoveAsync(target, className); }
-
-  doAddAsync(target, className) { requestAnimationFrame(this.onAddClassAsync.bind(this, target, className)); }
-  doRemoveAsync(target, className) { requestAnimationFrame(this.onRemoveClassAsync.bind(this, target, className)); }
-
-  onAddClassAsync(target, className) { target?.classList.add(className); }
-  onRemoveClassAsync(target, className) { target?.classList.remove(className); }
 
   getScaleOrDefault(scale, defaultScale) {
     let scaleOrDefault;
