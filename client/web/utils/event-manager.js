@@ -98,17 +98,17 @@ export class EventManager {
     });
   }
 
-  addPointerDownListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
-  addPointerEnterListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
-  addPointerOverListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
-  addPointerMoveListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
-  addPointerLeaveListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
-  addPointerUpListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
-  addPointerCancelListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
-  addPointerOutListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
-  addPointerClickListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
-  addPointerDblClickListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
-  addPointerContextmenuListener(target, callback, options = null) { this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
+  addPointerDownListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
+  addPointerEnterListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
+  addPointerOverListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
+  addPointerMoveListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
+  addPointerLeaveListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
+  addPointerUpListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
+  addPointerCancelListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
+  addPointerOutListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
+  addPointerClickListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
+  addPointerDblClickListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
+  addPointerContextmenuListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
 
   // Add the available event listener using 
   // - supported event first (when available) 
@@ -116,22 +116,35 @@ export class EventManager {
   addAvailableEventListener(target, callback, options, events) {
     const eventName = this.getSupportedEventListener(target, events);
     if (eventName) {
-      this.addGivenEventListener(target, callback, options, eventName);
+      return this.addGivenEventListener(target, callback, options, eventName);
     }
-    return eventName;
+    return null;
   }
 
   // Add the specified event listener
   addGivenEventListener(target, callback, options, eventName) {
+    const listener = { "eventName": eventName, "managedCallback": managedCallback, "callback": this.onManagedCallback.bind(this, callback), "options": options };
     if (this.isTargetListenable(target)) {
       if (options) {
         if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding event listener ${eventName} on target with options:`, target, options));
-        target.addEventListener(eventName, callback, options);
+        target.addEventListener(eventName, listener["managedCallback"], options);
       } else {
         if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding event listener ${eventName} on target:`, target));
-        target.addEventListener(eventName, callback);
+        target.addEventListener(eventName, listener["managedCallback"]);
       }
     }
+    return managedCallback;
+  }
+  
+  // Manages the callback to handle erratic touch devices events
+  onManagedCallback(callback, evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Hello, i'm a managed event`));
+    if (evt?.pointerType === 'touch') {
+      // handle touch-specific logic before delegating to unmanaged callback
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Hello, i'm a touch device`));
+    }
+    // delegate to unmanaged callback
+    callback(evt);
   }
 
   removePointerDownListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
