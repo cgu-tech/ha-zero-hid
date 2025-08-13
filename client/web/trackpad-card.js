@@ -410,7 +410,7 @@ class TrackpadCard extends HTMLElement {
     this._eventManager.addPointerDownListener(scrollToggle, this.onScrollTogglePointerDown.bind(this));
     this._eventManager.addPointerUpListener(scrollToggle, this.onScrollTogglePointerUp.bind(this));
     this._eventManager.addPointerCancelListener(scrollToggle, this.onScrollTogglePointerCancel.bind(this));
-    this._eventManager.addPointerLeaveListener(scrollToggle, this.onScrollTogglePointerCancel.bind(this));
+    this._eventManager.addPointerLeaveListener(scrollToggle, this.onScrollTogglePointerLeave.bind(this));
   }
 
   onScrollTogglePointerDown(evt) {
@@ -441,7 +441,18 @@ class TrackpadCard extends HTMLElement {
   }
   
   onScrollTogglePointerCancel(evt) {
+    evt.stopPropagation(); // Prevents underneath trackpad click
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollTogglePointerCancel(evt):", evt));
+    this.onScrollTogglePointerOut(evt);
+  }
 
+  onScrollTogglePointerLeave(evt) {
+    evt.stopPropagation(); // Prevents underneath trackpad click
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollTogglePointerLeave(evt):", evt));
+    this.onScrollTogglePointerOut(evt);
+  }
+
+  onScrollTogglePointerOut(evt) {
     // Remove current pointer entry from tracked scroll pointers (when existing)
     this._scrollPointers.delete(evt.pointerId);
   }
@@ -452,7 +463,7 @@ class TrackpadCard extends HTMLElement {
     this._eventManager.addPointerMoveListener(trackpad, this.onTrackpadPointerMove.bind(this));
     this._eventManager.addPointerUpListener(trackpad, this.onTrackpadPointerUp.bind(this));
     this._eventManager.addPointerCancelListener(trackpad, this.onTrackpadPointerCancel.bind(this));
-    this._eventManager.addPointerLeaveListener(trackpad, this.onTrackpadPointerCancel.bind(this));
+    this._eventManager.addPointerLeaveListener(trackpad, this.onTrackpadPointerLeave.bind(this));
   }
 
   onTrackpadPointerDown(evt) {
@@ -531,9 +542,19 @@ class TrackpadCard extends HTMLElement {
     }
   }
 
+  onTrackpadPointerLeave(evt) {
+    evt.preventDefault();
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerLeave(evt):", evt));
+    this.onTrackpadPointerOut(evt);
+  }
+  
   onTrackpadPointerCancel(evt) {
     evt.preventDefault();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerCancel(evt):", evt));
+    this.onTrackpadPointerOut(evt);
+  }
+  
+  onTrackpadPointerOut(evt) {
     this.enableScrollToggleEvents();
 
     // Remove current pointer from all trackpad pointers
@@ -644,9 +665,9 @@ class TrackpadCard extends HTMLElement {
   doListenScrollZones() {
     for (const scrollZone of this._elements.scrollZones) {
       this._eventManager.addPointerDownListener(scrollZone, this.onScrollZonePointerDown.bind(this));
-      this._eventManager.addPointerUpListener(scrollZone, this.onScrollZonePointerCancel.bind(this));
+      this._eventManager.addPointerUpListener(scrollZone, this.onScrollZonePointerUp.bind(this));
       this._eventManager.addPointerCancelListener(scrollZone, this.onScrollZonePointerCancel.bind(this));
-      this._eventManager.addPointerLeaveListener(scrollZone, this.onScrollZonePointerCancel.bind(this));
+      this._eventManager.addPointerLeaveListener(scrollZone, this.onScrollZonePointerLeave.bind(this));
     }
   }
 
@@ -666,8 +687,22 @@ class TrackpadCard extends HTMLElement {
     this._scrollsClick.set(evt.pointerId, { "event": evt , "long-scroll-timeout": this.addScrollZoneLongClickTimeout(evt, scrollZoneConfig, this.getTriggerLongScrollDelay()) } );
   }
 
+  onScrollZonePointerUp(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerUp(evt):", evt));
+    this.onScrollZonePointersOut(evt);
+  }
+
   onScrollZonePointerCancel(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerCancel(evt):", evt));
+    this.onScrollZonePointersOut(evt);
+  }
+
+  onScrollZonePointerLeave(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollZonePointerLeave(evt):", evt));
+    this.onScrollZonePointersOut(evt);
+  }
+  
+  onScrollZonePointersOut(evt) {
     this.enableScrollToggleEvents();
 
     this.clearScrollZoneLongClickTimeout(evt);
