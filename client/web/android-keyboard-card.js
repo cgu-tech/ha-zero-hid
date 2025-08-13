@@ -81,7 +81,6 @@ class AndroidKeyboardCard extends HTMLElement {
   // private constants
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _triggerPopin = 500;
   _allowedCellDataFields = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
 
   // private properties
@@ -132,6 +131,10 @@ class AndroidKeyboardCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
     this.doUpdateHass()
+  }
+
+  getTriggerLongClickDelay() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
   }
 
   doUpdateCells() {
@@ -550,7 +553,8 @@ class AndroidKeyboardCard extends HTMLElement {
       log_level: "warn",
       log_pushback: false,
       buttons_overrides: {},
-      font_scale: 1.4
+      font_scale: 1.4,
+      trigger_long_click_delay: 500
     }
   }
 
@@ -718,7 +722,7 @@ class AndroidKeyboardCard extends HTMLElement {
         // Show popin
         this.doShowPopin(evt, cell);
       }
-    }, this.triggerLongClick); // long-press duration
+    }, this.getTriggerLongClickDelay()); // long-press duration
   }
 
   clearPopinTimeout(evt) {
