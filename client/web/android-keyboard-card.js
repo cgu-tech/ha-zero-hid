@@ -234,7 +234,7 @@ class AndroidKeyboardCard extends HTMLElement {
         flex: 1 1 0;
         min-width: 0;      /* prevent content from forcing expansion */
         font-size: clamp(1px, 1em, 1em);
-        padding: 0 clamp(1px, 1.5vw, 10px);
+        padding: clamp(1px, 0.6vw, 4px); clamp(1px, 0.6vw, 4px);
         cursor: pointer;
         height: var(--key-height);
         background: var(--key-bg);
@@ -255,7 +255,7 @@ class AndroidKeyboardCard extends HTMLElement {
         flex: 1 1 auto;
         font-size: clamp(1px, 0.95em, 0.95em);
         font-weight: bold;
-        padding: 0 clamp(1px, 0.6vw, 4px);
+        padding: clamp(1px, 0.6vw, 4px); clamp(0px, 0.3vw, 2px);
         background: var(--key-special-bg);
         color: var(--key-special-color);
       }
