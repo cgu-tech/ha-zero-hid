@@ -394,7 +394,7 @@ class CarrouselCard extends HTMLElement {
     // When mode is not "image" or "mixed", do not create cell content image
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
     if (cellDisplayMode !== this.constructor._CELL_MODE_IMAGE && cellDisplayMode !== this.constructor._CELL_MODE_MIXED) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellConfig, defaultCellConfig) + cellDisplayMode: skipping due to cellDisplayMode`, cellConfig, defaultCellConfig, ${cellDisplayMode}));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellConfig, defaultCellConfig) + cellDisplayMode: skipping due to cellDisplayMode`, cellConfig, defaultCellConfig, cellDisplayMode));
       return null;
     }
 
