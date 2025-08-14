@@ -92,7 +92,7 @@ export class ResourceManager {
       return null;
     }
   }
-  
+
   isValidUrl(str) {
     if (!str) return false;
     try {
@@ -102,7 +102,7 @@ export class ResourceManager {
       return false;
     }
   }
-  
+
   getLocalIconUrl(str) {
     return `${Globals.DIR_ICONS}/${str}`;
   }

@@ -249,7 +249,9 @@ class CarrouselCard extends HTMLElement {
 
   doUpdateConfig() {
     // Layout is user defined complex structure: always rebuild
-    this.doUpdateLayout();
+    this.getLogger().doLogOnError(this.doUpdateLayout.bind(this));
+    // TODO: uncomment once stable for prod mode
+    // this.doUpdateLayout(); 
   }
 
   doUpdateHass() {

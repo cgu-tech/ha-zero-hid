@@ -43,6 +43,14 @@ export class Logger {
   isDebugEnabled() { return this.isLevelEnabled(3); }
   isTraceEnabled() { return this.isLevelEnabled(4); }
 
+  doLogOnError(callback,...args) {
+    try {
+      callback(...args);
+    } catch (err) {
+      if (this.isErrorEnabled()) console.error(...this.error(err));
+    }
+  }
+
   getArgs(header, logStyle, ...args) {
     const hass = this.getHass();
     
