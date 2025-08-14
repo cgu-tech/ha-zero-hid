@@ -136,17 +136,17 @@ class CarrouselCard extends HTMLElement {
     // TODO: check configured display mode
     //  // Invalid cellDisplayMode specified by user: warn it
     //  if (!targetDisplayMode) {
-    //    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellName}': defaulting to '${defaultDisplayMode}'`));
+    //    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellName}': defaulting to '${defaultDisplayMode}'`));
     //    targetDisplayMode = defaultDisplayMode;
     //  }
     //}
     //
     //// No cellDisplayMode specified by user: defaulting silently
     //if (!targetDisplayMode) {
-    //  if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`No display mode provided for cell '${cellName}': defaulting to '${defaultDisplayMode}'`));
+    //  if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`No display mode provided for cell '${cellName}': defaulting to '${defaultDisplayMode}'`));
     //  targetDisplayMode = defaultDisplayMode;
     //}
-    //if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Display mode set to '${targetDisplayMode}' for cell '${cellName}' (user configured mode:'${cellDisplayMode}')`));
+    //if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Display mode set to '${targetDisplayMode}' for cell '${cellName}' (user configured mode:'${cellDisplayMode}')`));
     //return targetDisplayMode;
   }
 
@@ -254,7 +254,7 @@ class CarrouselCard extends HTMLElement {
 
   doUpdateHass() {
     // Nothing to do here: no specific HA entity state to listen for this card
-    //TODO: treat auto-refresh for all cards: this.resourceManager.synchronizeResources(this._hass);
+    //TODO: treat auto-refresh for all cards: this._resourceManager.synchronizeResources(this._hass);
   }
 
   doUpdateLayout() {
@@ -318,12 +318,12 @@ class CarrouselCard extends HTMLElement {
   }
 
   doListenCell(cell) {
-    this.eventManager.addPointerClickListener(cell, this.onCellPointerClick().bind(this));
+    this._eventManager.addPointerClickListener(cell, this.onCellPointerClick().bind(this));
   }
 
   onCellPointerClick(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("onCellPointerClick(evt):", evt));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onCellPointerClick(evt):", evt));
     const cell = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doCellPointerClick(cell);
   }
@@ -338,11 +338,11 @@ class CarrouselCard extends HTMLElement {
     if (!cellConfig.action) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Cell config ${cellConfig} release aborted due to missing action`));
     } else {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering action for cell:", cell, cellConfig.action));
-      this.eventManager.triggerHaosTapAction(cell, cellConfig.action);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Triggering action for cell:", cell, cellConfig.action));
+      this._eventManager.triggerHaosTapAction(cell, cellConfig.action);
     }
 
-    this.eventManager.hapticFeedback();
+    this._eventManager.hapticFeedback();
   }
 
   doCellContent(cellConfig, defaultCellConfig) {
@@ -387,7 +387,7 @@ class CarrouselCard extends HTMLElement {
   }
 
   doCellContentImage(cellName, cellConfig) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`doCellContentImage(cellName, cellConfig):`, cellName, cellConfig));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellName, cellConfig):`, cellName, cellConfig));
 
     // When mode is not "image" or "mixed", do not create cell content image
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
@@ -432,13 +432,13 @@ class CarrouselCard extends HTMLElement {
   }
 
   doLoadImage(img, cellImageUrl) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace('doLoadImage(img, cellImageUrl):', img, cellImageUrl));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doLoadImage(img, cellImageUrl):', img, cellImageUrl));
     if (cellImageUrl) img.src = cellImageUrl;
   }
 
   onImageLoadError(img, cellImageUrl, cellName, err) {
     // Handle image source loading error
-    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL '${cellImageUrl}' for cell '${cellName}'`));
+    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Unable to load image URL '${cellImageUrl}' for cell '${cellName}'`));
 
     // Hide image
     img.style.display = 'none';
@@ -459,7 +459,7 @@ class CarrouselCard extends HTMLElement {
   }
 
   doCellContentLabel(cellName, cellConfig) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`doCellContentLabel(cellName, cellConfig):`, cellName, cellConfig));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentLabel(cellName, cellConfig):`, cellName, cellConfig));
 
     // Independently of current cell display mode, always create the label (to serve as fallback for image loading error)
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
