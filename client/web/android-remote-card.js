@@ -577,7 +577,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
     
     // Setup three-states-toggle foldables
-    this.setupThreeStateFoldables();
+    this.setupFoldable();
   }
 
   doRow(rowConfig) {
@@ -960,55 +960,58 @@ class AndroidRemoteCard extends HTMLElement {
             Z`;
   }
 
-  setupThreeStateFoldables() {
+  setupFoldable() {
     // Reset toggle state
     this._threeStatesToggleState = 1;
+
+    this.doUpdateThreeStateToggle();
+    this.doUpdateFoldable();
 
     for (const [optionIndex, opt] of (this._elements.threeStatesToggleOptions ?? []).entries()) {
       this._eventManager.addPointerClickListener(opt, this.onThreeStateToggleOptionPointerClick.bind(this, optionIndex));
     }
-
-    this.updateFoldableUI();
   }
 
   onThreeStateToggleOptionPointerClick(optionIndex, evt) {
     
-    // Clicked option is not currently selected
+    // When clicked option changed
     if (this._threeStatesToggleState !== optionIndex) {
       
       // Select the clicked option
       this._threeStatesToggleState = optionIndex;
-
       
-      this.updateFoldableUI();
-
+      // Update toggle state and associated foldable
+      this.doUpdateThreeStateToggle();
+      this.doUpdateFoldable();
       
       this._layoutManager.hapticFeedback();
     }
   }
 
-  updateFoldableUI() {
+  doUpdateThreeStateToggle() {
 
     // Move indicator over selected state
     const leftPercentages = ["0%", "33.33%", "66.66%"];
     this._elements.threeStatesToggleIndicator.style.left = leftPercentages[this._threeStatesToggleState];
 
-    // Make active the selected option, make inactive the two other options
+    // Activate visually selected option + de-activate visually the two others
     const options = this._elements.threeStatesToggleOptions;
-    options.forEach((opt, idx) => opt.classList.toggle("active", idx === this._threeStatesToggleState));
-
-    this.updateFoldable();
+    for (const [optionIndex, opt] of (this._elements.threeStatesToggleOptions ?? []).entries()) {
+      opt.classList.toggle("active", this._threeStatesToggleState === optionIndex)
+    }
   }
 
-  updateFoldable() {
+  doUpdateFoldable() {
+    // Remove foldable content from DOM (ie. hide it)
     const foldable = this._elements.threeStatesToggleFoldable;
     foldable.innerHTML = "";  
     foldable.style.display = "block";
 
+    // Retrieve and prepare next foldable content
     const foldableContent = this.getFoldableChild();
     foldableContent.setAttribute("style", "width: 100%;");
-    foldableContent.setConfig(foldableContentConfig);
-    foldableContent.hass = this._hass;
+
+    // Append next foldable content into DOM (ie. show it)
     foldable.appendChild(foldableContent);
 
     // Automatically scroll-down to the added foldable
