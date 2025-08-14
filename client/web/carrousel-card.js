@@ -402,7 +402,7 @@ class CarrouselCard extends HTMLElement {
     const cellName = cellConfig["cellName"];
 
     // Suppress this cell release when reference pointer down event was originated from a different cell
-    const referenceName = this._layoutManager.getElementData(this._referenceCell)["cellName"];
+    const referenceName = this._layoutManager.getElementData(this._referenceCell)?.["cellName"];
     if (referenceName !== cellName) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cell ${cellName} release aborted due to existing reference cell ${referenceName}`));
       return;
