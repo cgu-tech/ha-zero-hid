@@ -710,7 +710,7 @@ class AndroidRemoteCard extends HTMLElement {
     // When three-states-toggle, query its elements
     if (cellContent?.id === "ts-toggle-container") {
       const card = this._elements.card;
-      const toggle = card.querySelector("#ts-toggle-container");
+      const toggle = cellContent;
       this._elements.threeStatesToggle = toggle;
       this._elements.threeStatesToggleIndicator = toggle.querySelector(".ts-toggle-indicator");
       this._elements.threeStatesToggleOptions = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
