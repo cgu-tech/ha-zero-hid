@@ -381,24 +381,28 @@ EOF
 }
 
 uninstall () {
+    local INTERACTIVE="${1:-}"
     delete_component_conf_file=false
-    if [ -f "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" ]; then
-        read -rp "Keep integration config? (y/n) " confirm </dev/tty
-        case "$confirm" in
-            [Yy]* )
-                echo "Config file will not be deleted (${HA_ZERO_HID_CLIENT_CONFIG_FILE})"
-                ;;
-            [Nn]* )
-                echo "Config file will be deleted (${HA_ZERO_HID_CLIENT_CONFIG_FILE})"
-                delete_component_conf_file=true
-                ;;
-            * )
-                echo "Please answer y or n."
-                exit 1
-                ;;
-        esac
-    fi
 
+    if [ -z "${INTERACTIVE}" ]; then
+      if [ -f "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" ]; then
+          read -rp "Keep integration config? (y/n) " confirm </dev/tty
+          case "$confirm" in
+              [Yy]* )
+                  echo "Config file will not be deleted (${HA_ZERO_HID_CLIENT_CONFIG_FILE})"
+                  ;;
+              [Nn]* )
+                  echo "Config file will be deleted (${HA_ZERO_HID_CLIENT_CONFIG_FILE})"
+                  delete_component_conf_file=true
+                  ;;
+              * )
+                  echo "Please answer y or n."
+                  exit 1
+                  ;;
+          esac
+      fi
+    fi
+    
     # Effective removal
     cleanup "${delete_component_conf_file}"
 }
@@ -406,38 +410,28 @@ uninstall () {
 if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
     echo "Looks like HA zero-hid client integration is already installed"
     echo "Please choose an option:"
-    echo "  1) Reinstall or update"
-    echo "  2) Uninstall"
-    echo "  3) Exit"
+    echo "  1) Update & reinstall (auto)"
+    echo "  2) Update & reinstall (interactive)"
+    echo "  3) Uninstall (interactive)"
+    echo "  4) Exit"
     read -rp "Enter choice [1-3]: " choice </dev/tty
 
     case "$choice" in
         1)
+            echo "Updating & reinstalling (auto)"
+            uninstall "NON_INTERACTIVE"
+            update "${ZERO_HID_REPO_BRANCH}"
+            install
+            echo "Updated & reinstalled HA zero-hid client integration (auto)."
+        2)
             read -rp "Are you sure you want to reinstall or update? (y/n) " confirm </dev/tty
             case "$confirm" in
                 [Yy]* )
+                    echo "Updating & reinstalling (auto)..."
                     uninstall
                     update "${ZERO_HID_REPO_BRANCH}"
                     install
-                    echo "Reinstalled/updated HA zero-hid client integration."
-                    exit 0
-                    ;;
-                [Nn]* )
-                    echo "Operation cancelled."
-                    exit 0
-                    ;;
-                * )
-                    echo "Please answer y or n."
-                    exit 1
-                    ;;
-            esac
-            ;;
-        2)
-            read -rp "Are you sure you want to uninstall? (y/n) " confirm </dev/tty
-            case "$confirm" in
-                [Yy]* )
-                    uninstall
-                    echo "Uninstalled HA zero-hid client integration."
+                    echo "Updated & reinstalled HA zero-hid client integration (interactive)."
                     exit 0
                     ;;
                 [Nn]* )
@@ -451,6 +445,25 @@ if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
             esac
             ;;
         3)
+            read -rp "Are you sure you want to uninstall? (y/n) " confirm </dev/tty
+            case "$confirm" in
+                [Yy]* )
+                    echo "Uninstalling..."
+                    uninstall
+                    echo "Uninstalled HA zero-hid client integration (interactive)."
+                    exit 0
+                    ;;
+                [Nn]* )
+                    echo "Operation cancelled."
+                    exit 0
+                    ;;
+                * )
+                    echo "Please answer y or n."
+                    exit 1
+                    ;;
+            esac
+            ;;
+        4)
             echo "Exiting script."
             exit 0
             ;;
