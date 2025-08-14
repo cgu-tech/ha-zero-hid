@@ -86,10 +86,10 @@ class CarrouselCard extends HTMLElement {
   getCells() { return this._layoutManager.getFromConfigOrDefaultConfig("cells"); }
 
   // Global and overridable per cell config
-  getDisplayMode(cellConfig) {
+  getCellDisplayMode(cellConfig) {
     return return this._reversedCellModesMap.get(this.getCellConfigOrDefault("display_mode"));
   }
-  getBackground(cellConfig) {
+  getCellBackground(cellConfig) {
     return this.getCellConfigOrDefault("background");
   }
   getCellWidth(cellConfig) {
@@ -171,8 +171,6 @@ class CarrouselCard extends HTMLElement {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        width: ${this.getCellWidth()};
-        height: ${this.getCellHeight()};
         margin-left: 2px;
         margin-right: 2px;
         margin-top: 4px;
@@ -275,7 +273,7 @@ class CarrouselCard extends HTMLElement {
     // Create all cells
     for (const [cellName, cellConfig] of this.getCells().entries()) {
       const cell = this.doCell(cellName, cellConfig);
-      this.doStyleCell();
+      this.doStyleCell(cell, cellConfig);
       this.doAttachCell(cell);
       this.doQueryCellElements();
       this.doListenCell(cell);
@@ -285,16 +283,17 @@ class CarrouselCard extends HTMLElement {
   doCell(cellName, cellConfig) {
 
     // Define cell default config
-    const defaultCellConfig = { "imageUrl": this.getCellImageUrl(cellConfig) };
+    const defaultCellConfig = { "name": cellName, "imageUrl": this.getCellImageUrl(cellConfig) };
 
     // Create a new cell
     const cell = document.createElement("div");
+    this._elements.cells.push(cell);
     cell.className = "carrousel-cell";
     cell.id = cellName;
     this.setCellData(cell, cellConfig, defaultCellConfig);
 
     // Create cell content
-    const cellContent = this.doCellContent(cellName, cellConfig);
+    const cellContent = this.doCellContent(cellConfig, defaultCellConfig);
     this.doStyleCellContent();
     this.doAttachCellContent();
     this.doQueryCellContentElements();
@@ -303,8 +302,9 @@ class CarrouselCard extends HTMLElement {
     return cell;
   }
 
-  doStyleCell() {
-    // Nothing to do here: already included into card style
+  doStyleCell(cell, cellConfig) {
+    cell.style.width = this.getCellWidth(cellConfig);
+    cell.style.height = this.getCellHeight(cellConfig);
   }
 
   doAttachCell(cell) {
@@ -343,21 +343,21 @@ class CarrouselCard extends HTMLElement {
     this.eventManager.hapticFeedback();
   }
 
-  doCellContent(cellName, cellConfig) {
+  doCellContent(cellConfig, defaultCellConfig) {
 
     // Create cell content
     const cellContent = document.createElement("div");
     cellContent.className = "carrousel-cell-content";
 
     // Create cell content inner label
-    const cellContentLabel = this.doCellContentLabel(cellName, cellConfig);
+    const cellContentLabel = this.doCellContentLabel(cellConfig, defaultCellConfig);
     this.doStyleCellContentLabel(cellContentLabel, cellConfig);
     this.doAttachCellContentLabel(cellContent, cellContentLabel);
     this.doQueryCellContentLabelElements();
     this.doListenCellContentLabel();
 
     // Create cell content inner image
-    const cellContentImage = this.doCellContentImage(cellName, cellConfig);
+    const cellContentImage = this.doCellContentImage(cellConfig, defaultCellConfig);
     this.doStyleCellContentImage();
     this.doAttachCellContentImage(cellContent, cellContentImage);
     this.doQueryCellContentImageElements();
@@ -367,9 +367,9 @@ class CarrouselCard extends HTMLElement {
   }
 
   doStyleCellContent(cellContent, cellConfig) {
+
     // Apply user preferences over cell content background
-    const cellBackground = cellConfig["cell_background"];
-    if (cellBackground) cellContent.style.background = cellBackground;
+    cellContent.style.background = this.getCellBackground(cellConfig);
   }
 
   doAttachCellContent(cell, cellContent) {
@@ -403,8 +403,6 @@ class CarrouselCard extends HTMLElement {
     cellContentImage._image = img;
     img.className = "carrousel-img";
     img.alt = cellName;
-    img.addEventListener('error', this.onImageLoadError.bind(this, img, cellImageUrl, cellName));
-    
 
     // Append and return wrapper (not image itself)
     cellContentImage.appendChild(img);
@@ -413,20 +411,22 @@ class CarrouselCard extends HTMLElement {
 
   doStyleCellContentImage(cellContentImage, cellConfig) {
 
-    // Apply user preferences on image style
-    cellContentImage.style.padding = this.getCellImageGap(cellConfig);
+    if (cellContentImage) {
+      // Apply user preferences on image style
+      cellContentImage.style.padding = this.getCellImageGap(cellConfig);
+    }
   }
 
   doAttachCellContentImage(cellContent, cellContentImage) {
-    cellContent.appendChild(cellContentImage);
+    if (cellContentImage) cellContent.appendChild(cellContentImage);
   }
 
   doQueryCellContentImageElements() {
     // Nothing to do here: element already referenced and sub-elements are not needed
   }
 
-  doListenCellContentImage() {
-    // Nothing to do here: no events needed on cell content
+  doListenCellContentImage(cellContentImage) {
+    if (cellContentImage) this._eventManager.addErrorListener(img, this.onImageLoadError.bind(this, img, cellImageUrl, cellName));
   }
 
   doLoadImage(img, cellImageUrl) {

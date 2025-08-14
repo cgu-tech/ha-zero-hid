@@ -34,7 +34,6 @@ export class EventManager {
         this._reversedEventsMap.set(eventName, abstractEventName);
       }
     }
-
   }
 
   getLogger() {
