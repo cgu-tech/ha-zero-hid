@@ -148,10 +148,11 @@ export class LayoutManager {
   }
 
   autoScrollTo(target) {
-    if (this.getHaptic()) {
-    setTimeout(() => {
-        target?.scrollIntoView({ behavior: 'smooth' }); 
-    }, 0);
+    if (this.getAutoScroll()) {
+      setTimeout(() => {
+          target?.scrollIntoView({ behavior: 'smooth' }); 
+      }, 0);
+    }
   }
 
   // vibrate the device like a long haptic feedback (ex: button long-click)
