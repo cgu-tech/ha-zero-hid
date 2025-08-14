@@ -89,38 +89,38 @@ class CarrouselCard extends HTMLElement {
 
   // Global and overridable per cell config
   getCellDisplayMode(cellConfig) {
-    return this._reversedCellModesMap.get(this.getCellConfigOrDefault("display_mode"));
+    return this._reversedCellModesMap.get(this.getCellConfigOrDefault(cellConfig, "display_mode"));
   }
   getCellBackground(cellConfig) {
-    return this.getCellConfigOrDefault("background");
+    return this.getCellConfigOrDefault(cellConfig, "background");
   }
   getCellWidth(cellConfig) {
-    return this.getCellConfigOrDefault("width");
+    return this.getCellConfigOrDefault(cellConfig, "width");
   }
   getCellHeight(cellConfig) {
-    return this.getCellConfigOrDefault("height");
+    return this.getCellConfigOrDefault(cellConfig, "height");
   }
   getCellLabel(cellConfig) {
-    return this.getCellConfigOrDefault("label"); 
+    return this.getCellConfigOrDefault(cellConfig, "label"); 
   }
   getCellLabelFontScale(cellConfig) {
-    return this._layoutManager.getScaleOrDefault(this.getCellConfigOrDefault("label_font_scale"), "1rem");
+    return this._layoutManager.getScaleOrDefault(this.getCellConfigOrDefault(cellConfig, "label_font_scale"), "1rem");
   }
   getCellLabelGap(cellConfig) {
-    return this.getCellConfigOrDefault("label_gap");
+    return this.getCellConfigOrDefault(cellConfig, "label_gap");
   }
   getCellLabelColor(cellConfig) {
-    return this.getCellConfigOrDefault("label_color");
+    return this.getCellConfigOrDefault(cellConfig, "label_color");
   }
   getCellImageUrl(cellConfig) {
-    const imageUrl = this.getCellConfigOrDefault("image_url");
+    const imageUrl = this.getCellConfigOrDefault(cellConfig, "image_url");
     return imageUrl ? (this._resourceManager.isValidUrl(imageUrl) ? imageUrl : this._resourceManager.getLocalIconUrl(imageUrl)) : "";
   }
   getCellImageGap(cellConfig) {
-    return this.getCellConfigOrDefault("image_gap");
+    return this.getCellConfigOrDefault(cellConfig, "image_gap");
   }
   getCellAction(cellConfig) {
-    return this.getCellConfigOrDefault("cell_action");
+    return this.getCellConfigOrDefault(cellConfig, "cell_action");
   }
 
   // Per cell config helper
