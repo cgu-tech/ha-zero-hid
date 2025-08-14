@@ -8,10 +8,13 @@ console.info("Loading carrousel-card");
 
 class CarrouselCard extends HTMLElement {
 
-  // private constants
+  // private init required constants
   static _CELL_MODE_IMAGE = "image";
   static _CELL_MODE_LABEL = "label";
   static _CELL_MODE_MIXED = "mixed";
+
+  // private constants
+  _allowedCellData = new Set(['imageUrl']);
 
   // private properties
   _config;
@@ -79,22 +82,49 @@ class CarrouselCard extends HTMLElement {
     this.doUpdateHass()
   }
 
-  getCellWidth() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("cell_width");
+  // Global config
+  getCells() { return this._layoutManager.getFromConfigOrDefaultConfig("cells"); }
+
+  // Global and overridable per cell config
+  getDisplayMode(cellConfig) {
+    return return this._reversedCellModesMap.get(this.getCellConfigOrDefault("display_mode"));
   }
-  getCellHeight() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("cell_height");
+  getBackground(cellConfig) {
+    return this.getCellConfigOrDefault("background");
   }
-  getCells() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("cells");
+  getCellWidth(cellConfig) {
+    return this.getCellConfigOrDefault("width");
   }
-  getDisplayMode() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("display_mode");
+  getCellHeight(cellConfig) {
+    return this.getCellConfigOrDefault("height");
   }
-  
-  getCellDisplayMode(cellConfig) {
-    const configDisplayMode = (cellConfig?.["display_mode"] || this.getDisplayMode()).toLowerCase();
-    return this._reversedCellModesMap.get(configDisplayMode);
+  getCellLabel(cellConfig) {
+    return this.getCellConfigOrDefault("label"); 
+  }
+  getCellLabelFontScale(cellConfig) {
+    return this._layoutManager.getScaleOrDefault(this.getCellConfigOrDefault("label_font_scale"), "1rem");
+  }
+  getCellLabelGap(cellConfig) {
+    return this.getCellConfigOrDefault("label_gap");
+  }
+  getCellLabelColor(cellConfig) {
+    return this.getCellConfigOrDefault("label_color");
+  }
+  getCellImageUrl(cellConfig) {
+    const imageUrl = this.getCellConfigOrDefault("image_url");
+    return imageUrl ? (this._resourceManager.isValidUrl(imageUrl) ? imageUrl : this._resourceManager.getLocalIconUrl(imageUrl)) : "";
+  }
+  getCellImageGap(cellConfig) {
+    return this.getCellConfigOrDefault("image_gap");
+  }
+  getCellAction(cellConfig) {
+    return this.getCellConfigOrDefault("cell_action");
+  }
+
+  // Per cell config helper
+  getCellConfigOrDefault(cellConfig, property) {
+    const cellProperty = `cell_${property}`;
+    return cellConfig?.[cellProperty] || this._layoutManager.getFromConfigOrDefaultConfig(property);
   }
 
   // jobs
@@ -104,17 +134,17 @@ class CarrouselCard extends HTMLElement {
     // TODO: check configured display mode
     //  // Invalid cellDisplayMode specified by user: warn it
     //  if (!targetDisplayMode) {
-    //    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
+    //    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellName}': defaulting to '${defaultDisplayMode}'`));
     //    targetDisplayMode = defaultDisplayMode;
     //  }
     //}
     //
     //// No cellDisplayMode specified by user: defaulting silently
     //if (!targetDisplayMode) {
-    //  if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`No display mode provided for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
+    //  if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`No display mode provided for cell '${cellName}': defaulting to '${defaultDisplayMode}'`));
     //  targetDisplayMode = defaultDisplayMode;
     //}
-    //if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Display mode set to '${targetDisplayMode}' for cell '${cellId}' (user configured mode:'${cellDisplayMode}')`));
+    //if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Display mode set to '${targetDisplayMode}' for cell '${cellName}' (user configured mode:'${cellDisplayMode}')`));
     //return targetDisplayMode;
   }
 
@@ -246,8 +276,8 @@ class CarrouselCard extends HTMLElement {
   doCreateLayout() {
 
     // Create all cells
-    for (const [cellId, cellConfig] of this.getCells().entries()) {
-      const cell = this.doCell(cellId, cellConfig);
+    for (const [cellName, cellConfig] of this.getCells().entries()) {
+      const cell = this.doCell(cellName, cellConfig);
       this.doStyleCell();
       this.doAttachCell(cell);
       this.doQueryCellElements();
@@ -255,16 +285,19 @@ class CarrouselCard extends HTMLElement {
     }
   }
 
-  doCell(cellId, cellConfig) {
+  doCell(cellName, cellConfig) {
+
+    // Define cell default config
+    const defaultCellConfig = { "imageUrl": this.getCellImageUrl(cellConfig) };
 
     // Create a new cell
     const cell = document.createElement("div");
     cell.className = "carrousel-cell";
-    cell.id = cellId;
-    this.setCellData(cell, null, { "cellConfig": cellConfig });
+    cell.id = cellName;
+    this.setCellData(cell, cellConfig, defaultCellConfig);
 
     // Create cell content
-    const cellContent = this.doCellContent(cellId, cellConfig);
+    const cellContent = this.doCellContent(cellName, cellConfig);
     this.doStyleCellContent();
     this.doAttachCellContent();
     this.doQueryCellContentElements();
@@ -313,24 +346,21 @@ class CarrouselCard extends HTMLElement {
     this.eventManager.hapticFeedback();
   }
 
-  doCellContent(cellId, cellConfig) {
-
-    // Retrieve cell user configurations
-    const cellLabel = cellConfig["label"] || cellId;
+  doCellContent(cellName, cellConfig) {
 
     // Create cell content
     const cellContent = document.createElement("div");
     cellContent.className = "carrousel-cell-content";
 
     // Create cell content inner label
-    const cellContentLabel = this.doCellContentLabel(cellId, cellLabel, cellConfig);
+    const cellContentLabel = this.doCellContentLabel(cellName, cellConfig);
     this.doStyleCellContentLabel(cellContentLabel, cellConfig);
     this.doAttachCellContentLabel(cellContent, cellContentLabel);
     this.doQueryCellContentLabelElements();
     this.doListenCellContentLabel();
 
     // Create cell content inner image
-    const cellContentImage = this.doCellContentImage(cellId, cellLabel, cellConfig);
+    const cellContentImage = this.doCellContentImage(cellName, cellConfig);
     this.doStyleCellContentImage();
     this.doAttachCellContentImage(cellContent, cellContentImage);
     this.doQueryCellContentImageElements();
@@ -341,9 +371,7 @@ class CarrouselCard extends HTMLElement {
 
   doStyleCellContent(cellContent, cellConfig) {
     // Apply user preferences over cell content background
-    const cellBackgroundColor = cellConfig["background_color"];
-    const cellBackground = cellConfig["background"];
-    if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
+    const cellBackground = cellConfig["cell_background"];
     if (cellBackground) cellContent.style.background = cellBackground;
   }
 
@@ -359,19 +387,12 @@ class CarrouselCard extends HTMLElement {
     // Nothing to do here: no events needed on cell content
   }
 
-  doCellContentImage(cellId, cellLabel, cellConfig) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`doCellContentImage(cellId, cellLabel, cellConfig):`, cellId, cellLabel, cellConfig));
+  doCellContentImage(cellName, cellConfig) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`doCellContentImage(cellName, cellConfig):`, cellName, cellConfig));
 
     // When mode is not "image" or "mixed", do not create cell content image
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
     if (cellDisplayMode !== "image" && cellDisplayMode !== "mixed") return null;
-
-    // Retrieve user preferences for image
-    const cellIconUrl = cellConfig["icon_url"];
-
-    // Define image source URL
-    const imgCellIconUrl = cellIconUrl ? (this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl)) : "";
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Determined image URL '${imgCellIconUrl}' for cell '${cellId}'`));
 
     // Instanciates a content wrapper to avoid chromium-based browser bugs
     // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
@@ -380,12 +401,13 @@ class CarrouselCard extends HTMLElement {
     if (cellDisplayMode === "image") cellContentImage.classList.add('img-full');
     if (cellDisplayMode === "mixed") cellContentImage.classList.add('img-half');
 
-    // Instanciates image (but do not load it for now)
+    // Instanciates image (but load its content later)
     const img = document.createElement("img");
     cellContentImage._image = img;
     img.className = "carrousel-img";
-    img.alt = cellLabel;
-    img.addEventListener('error', this.onImageLoadError.bind(this, img, imgCellIconUrl, cellId));
+    img.alt = cellName;
+    img.addEventListener('error', this.onImageLoadError.bind(this, img, cellImageUrl, cellName));
+    
 
     // Append and return wrapper (not image itself)
     cellContentImage.appendChild(img);
@@ -393,11 +415,9 @@ class CarrouselCard extends HTMLElement {
   }
 
   doStyleCellContentImage(cellContentImage, cellConfig) {
-    // Retrieve user preferences for image
-    const cellIconGap = cellConfig["image_gap"];
 
     // Apply user preferences on image style
-    if (cellIconGap) cellContentImage.style.padding = cellIconGap;
+    cellContentImage.style.padding = this.getCellImageGap(cellConfig);
   }
 
   doAttachCellContentImage(cellContent, cellContentImage) {
@@ -412,13 +432,14 @@ class CarrouselCard extends HTMLElement {
     // Nothing to do here: no events needed on cell content
   }
 
-  doLoadImage(img, imgCellIconUrl) {
-    if (imgCellIconUrl) img.src = imgCellIconUrl;
+  doLoadImage(img, cellImageUrl) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace('doLoadImage(img, cellImageUrl):', img, cellImageUrl));
+    if (cellImageUrl) img.src = cellImageUrl;
   }
 
-  onImageLoadError(img, imgCellIconUrl, cellId, err) {
+  onImageLoadError(img, cellImageUrl, cellName, err) {
     // Handle image source loading error
-    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL '${imgCellIconUrl}' for cell '${cellId}'`));
+    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL '${cellImageUrl}' for cell '${cellName}'`));
 
     // Hide image
     img.style.display = 'none';
@@ -430,7 +451,7 @@ class CarrouselCard extends HTMLElement {
     // When missing label (because displayMode was set to image for example)
     // Create a new label inside the cell and display it
     if (!label) {
-      label = this.createCellContentLabel(cellId, cellLabel, cellConfig);
+      label = this.createCellContentLabel(cellName, cellLabel, cellConfig);
       cellContent.appendChild(label);
     }
     // Set the "full" class for the label (to make all rounded corners for example)
@@ -438,8 +459,8 @@ class CarrouselCard extends HTMLElement {
     label.classList.add('label-full');
   }
 
-  doCellContentLabel(cellId, cellLabel, cell) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`doCellContentLabel(cellId, cellLabel, cellConfig):`, cellId, cellLabel, cellConfig));
+  doCellContentLabel(cellName, cellConfig) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`doCellContentLabel(cellName, cellConfig):`, cellName, cellConfig));
 
     // Independently of current cell display mode, always create the label (to serve as fallback for image loading error)
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
@@ -455,7 +476,7 @@ class CarrouselCard extends HTMLElement {
     const label = document.createElement("div");
     cellContentLabel._label = label;
     label.className = "carrousel-label";
-    label.textContent = cellLabel;
+    label.textContent = this.getCellLabel(cellConfig) || cellName;;
 
     // Append and return wrapper (not label itself)
     cellContentLabel.appendChild(label);
@@ -463,17 +484,13 @@ class CarrouselCard extends HTMLElement {
   }
 
   doStyleCellContentLabel(cellContentLabel, cellConfig) {
-    // Retrieve user preferences for label
-    const cellLabelGap = cellConfig["label_gap"];
-    const cellLabelColor = cellConfig["label_color"];
-    const cellLabelSize = cellConfig["label_size"];
 
     // Apply user preferences on cell content label container style
-    if (cellLabelGap) cellContentLabel.style.padding = cellLabelGap;
+    cellContentLabel.style.padding = this.getCellLabelGap(cellConfig);
     
     // Apply user preferences on cell content label style
-    if (cellLabelColor) cellContentLabel._label.style.color = cellLabelColor;
-    if (cellLabelSize) cellContentLabel._label.style.fontSize = cellLabelSize;
+    cellContentLabel._label.style.color = this.getCellLabelColor(cellConfig);
+    cellContentLabel._label.style.fontSize = this.getCellLabelFontScale(cellConfig);
   }
 
   doAttachCellContentLabel(cellContent, cellContentLabel) {
@@ -497,9 +514,17 @@ class CarrouselCard extends HTMLElement {
       haptic: true,
       log_level: "warn",
       log_pushback: false,
-      display_mode: "mixed",
+      cell_display_mode: "mixed",
+      cell_background: "transparent",
       cell_width: 60,
       cell_height: 60,
+      cell_label: "",
+      cell_label_font_scale: 1,
+      cell_label_gap: 0,
+      cell_label_color: "white",
+      cell_image_url: "",
+      cell_image_gap: 0,
+      cell_action: {},
       cells: []
     };
   }
@@ -513,16 +538,6 @@ class CarrouselCard extends HTMLElement {
     this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedCellData.has(key));
   }
 
-  isFiniteNumber(value) {
-    return Number.isFinite(Number(value));
-  }
-
-  arraysEqual(a, b) {
-    return Array.isArray(a) &&
-           Array.isArray(b) &&
-           a.length === b.length &&
-           a.every((val, index) => val === b[index]);
-  }
 }
 
 customElements.define("carrousel-card", CarrouselCard);

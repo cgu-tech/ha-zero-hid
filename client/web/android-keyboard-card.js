@@ -81,7 +81,7 @@ class AndroidKeyboardCard extends HTMLElement {
   // private constants
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _allowedCellDataFields = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
+  _allowedCellData = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
 
   // private properties
   _config;
@@ -1011,7 +1011,7 @@ class AndroidKeyboardCard extends HTMLElement {
   }
 
   setCellData(cell, defaultConfig, overrideConfig) {
-    this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedCellDataFields.has(key));
+    this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedCellData.has(key));
   }
 
   // Set listeners on a clickable button
