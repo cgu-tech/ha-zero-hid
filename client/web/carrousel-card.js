@@ -337,13 +337,13 @@ class CarrouselCard extends HTMLElement {
 
   doListenCell(cell) {
     // Visual events
-    this._eventManager.addPointerEnterListener(cell, this.onCellPointerEnter.bind(this));
-    this._eventManager.addPointerLeaveListener(cell, this.onCellPointerLeave.bind(this));
-    this._eventManager.addPointerCancelListener(cell, this.onCellPointerCancel.bind(this));
+    //this._eventManager.addPointerEnterListener(cell, this.onCellPointerEnter.bind(this));
 
     // Action and visual events
     this._eventManager.addPointerDownListener(cell, this.onCellPointerDown.bind(this));
     this._eventManager.addPointerUpListener(cell, this.onCellPointerUp.bind(this));
+    this._eventManager.addPointerLeaveListener(cell, this.onCellPointerLeave.bind(this));
+    this._eventManager.addPointerCancelListener(cell, this.onCellPointerCancel.bind(this));
   }
 
   onCellPointerEnter(evt) {
@@ -351,20 +351,6 @@ class CarrouselCard extends HTMLElement {
     const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
     cell.classList.add("active");
-  }
-
-  onCellPointerLeave(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
-    const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
-
-    cell.classList.remove("active");
-  }
-
-  onCellPointerCancel(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
-    const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
-
-    cell.classList.remove("active");
   }
 
   onCellPointerDown(evt) {
@@ -379,6 +365,20 @@ class CarrouselCard extends HTMLElement {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onCellPointerUp(evt):", evt));
     const cell = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+
+    this.doCellRelease(cell);
+  }
+
+  onCellPointerLeave(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    this.doCellRelease(cell);
+  }
+
+  onCellPointerCancel(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
     this.doCellRelease(cell);
   }
