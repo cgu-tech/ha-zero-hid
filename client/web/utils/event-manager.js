@@ -25,6 +25,7 @@ export class EventManager {
     this._eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
     this._eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
     this._eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
+    this._eventsMap.set("EVT_LOAD",             ["load"]);
     this._eventsMap.set("EVT_ERROR",            ["error"]);
 
     // Reversed mapping for each "real" event names with its "abstract" event name counterpart
@@ -155,6 +156,7 @@ export class EventManager {
   addPointerClickListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
   addPointerDblClickListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
   addPointerContextmenuListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
+  addLoadListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_LOAD" ); }
   addErrorListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_ERROR" ); }
 
   // Add the available event listener using 
@@ -239,6 +241,7 @@ export class EventManager {
   removePointerClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
   removePointerDblClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
   removePointerContextmenuListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
+  removeLoadListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_LOAD" ); }
   removeErrorListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_ERROR" ); }
 
   // Remove the available event listener using 

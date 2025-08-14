@@ -130,6 +130,18 @@ class CarrouselCard extends HTMLElement {
     return cellConfig?.[property] || this._layoutManager.getFromConfigOrDefaultConfig(cellProperty);
   }
 
+  // Dynamic config
+  getDynamicCellName(defaultCellConfig) {
+    return defaultCellConfig["cellName"]; 
+  }
+  getDynamicCellImageUrl(defaultCellConfig) {
+    return defaultCellConfig["cellImageUrl"]; 
+  }
+  createDynamicCellConfig(cellName, cellImageUrl) {
+    return { "cellName": cellName, "cellImageUrl": cellImageUrl };
+  }
+
+
   // jobs
   doCheckConfig() {
     //TODO: check config in details
@@ -288,7 +300,7 @@ class CarrouselCard extends HTMLElement {
   doCell(cellName, cellConfig) {
 
     // Define cell default config
-    const defaultCellConfig = { "cellName": cellName, "imageUrl": this.getCellImageUrl(cellConfig) };
+    const defaultCellConfig = this.createDynamicCellConfig(cellName, this.getCellImageUrl(cellConfig))
 
     // Create a new cell
     const cell = document.createElement("div");
@@ -303,6 +315,7 @@ class CarrouselCard extends HTMLElement {
     this.doAttachCellContent(cell, cellContent);
     this.doQueryCellContentElements();
     this.doListenCellContent();
+    this.doLoadImage(cellContent, defaultCellConfig);
 
     return cell;
   }
@@ -357,16 +370,16 @@ class CarrouselCard extends HTMLElement {
     // Create cell content inner label
     const cellContentLabel = this.doCellContentLabel(cellConfig, defaultCellConfig);
     this.doStyleCellContentLabel(cellContentLabel, cellConfig);
-    this.doAttachCellContentLabel(cellContent, cellContentLabel, cellConfig);
-    this.doQueryCellContentLabelElements();
+    this.doAttachCellContentLabel(cellContent, cellContentLabel);
+    this.doQueryCellContentLabelElements(cellContent, cellContentLabel);
     this.doListenCellContentLabel();
 
     // Create cell content inner image
     const cellContentImage = this.doCellContentImage(cellConfig, defaultCellConfig);
-    this.doStyleCellContentImage();
-    this.doAttachCellContentImage(cellContent, cellContentImage);
-    this.doQueryCellContentImageElements();
-    this.doListenCellContentImage();
+    this.doStyleCellContentImage(cellContentImage, cellConfig);
+    this.doAttachCellContentImage();
+    this.doQueryCellContentImageElements(cellContent, cellContentImage, defaultCellConfig);
+    this.doListenCellContentImage(cellContent, cellConfig, defaultCellConfig);
 
     return cellContent;
   }
@@ -389,81 +402,6 @@ class CarrouselCard extends HTMLElement {
     // Nothing to do here: no events needed on cell content
   }
 
-  doCellContentImage(cellConfig, defaultCellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellConfig, defaultCellConfig):`, cellConfig, defaultCellConfig));
-
-    // When mode is not "image" or "mixed", do not create cell content image
-    const cellDisplayMode = this.getCellDisplayMode(cellConfig);
-    if (cellDisplayMode !== this.constructor._CELL_MODE_IMAGE && cellDisplayMode !== this.constructor._CELL_MODE_MIXED) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellConfig, defaultCellConfig) + cellDisplayMode: skipping due to cellDisplayMode`, cellConfig, defaultCellConfig, cellDisplayMode));
-      return null;
-    }
-
-    // Instanciates a content wrapper to avoid chromium-based browser bugs
-    // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
-    const cellContentImage = document.createElement("div");
-    cellContentImage.className = "carrousel-cell-content-part img";
-    if (cellDisplayMode === this.constructor._CELL_MODE_IMAGE) cellContentImage.classList.add('full');
-    if (cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContentImage.classList.add('half');
-
-    // Instanciates image (but load its content later)
-    const img = document.createElement("img");
-    cellContentImage._image = img;
-    img.className = "carrousel-img";
-    img.alt = defaultCellConfig["cellName"];
-
-    // Append and return wrapper (not image itself)
-    cellContentImage.appendChild(img);
-    return cellContentImage;
-  }
-
-  doStyleCellContentImage(cellContentImage, cellConfig) {
-
-    if (cellContentImage) {
-      // Apply user preferences on image style
-      cellContentImage.style.padding = this.getCellImageGap(cellConfig);
-    }
-  }
-
-  doAttachCellContentImage(cellContent, cellContentImage) {
-    if (cellContentImage) cellContent.appendChild(cellContentImage);
-  }
-
-  doQueryCellContentImageElements() {
-    // Nothing to do here: element already referenced and sub-elements are not needed
-  }
-
-  doListenCellContentImage(cellContentImage) {
-    if (cellContentImage) this._eventManager.addErrorListener(img, this.onImageLoadError.bind(this, img, cellImageUrl, cellName));
-  }
-
-  doLoadImage(img, cellImageUrl) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doLoadImage(img, cellImageUrl):', img, cellImageUrl));
-    if (cellImageUrl) img.src = cellImageUrl;
-  }
-
-  onImageLoadError(img, cellImageUrl, cellName, err) {
-    // Handle image source loading error
-    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Unable to load image URL '${cellImageUrl}' for cell '${cellName}'`));
-
-    // Hide image
-    img.style.display = 'none';
-
-    // Retrieve label with "Name" text as alternative
-    const cellContent = img.parentElement;
-    let label = cellContent.querySelector('.carrousel-label');
-
-    // When missing label (because displayMode was set to image for example)
-    // Create a new label inside the cell and display it
-    if (!label) {
-      label = this.createCellContentLabel(cellName, cellLabel, cellConfig);
-      cellContent.appendChild(label);
-    }
-    // Set the "full" class for the label (to make all rounded corners for example)
-    label.classList.remove('label-half');
-    label.classList.add('label-full');
-  }
-
   doCellContentLabel(cellConfig, defaultCellConfig) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentLabel(cellConfig, defaultCellConfig):`, cellConfig, defaultCellConfig));
 
@@ -473,14 +411,13 @@ class CarrouselCard extends HTMLElement {
     // Instanciates a content wrapper for layout consistency, relatives to image layout circument of chromium-based browser bugs
     const cellContentLabel = document.createElement("div");
     cellContentLabel.className = "carrousel-cell-content-part label";
-    if (cellDisplayMode === this.constructor._CELL_MODE_LABEL) cellContentLabel.classList.add('full');
-    if (cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContentLabel.classList.add('half');
+    cellContentLabel.classList.add('full'); // Always make the label taking full cell space first as fallback
 
     // Instanciates a new label
     const label = document.createElement("div");
     cellContentLabel._label = label;
     label.className = "carrousel-label";
-    label.textContent = this.getCellLabel(cellConfig) || defaultCellConfig["cellName"];
+    label.textContent = this.getCellLabel(cellConfig) || this.getDynamicCellName(defaultCellConfig);
 
     // Append and return wrapper (not label itself)
     cellContentLabel.appendChild(label);
@@ -498,20 +435,103 @@ class CarrouselCard extends HTMLElement {
     cellContentLabel._label.style.fontSize = this.getCellLabelFontScale(cellConfig);
   }
 
-  doAttachCellContentLabel(cellContent, cellContentLabel, cellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doAttachCellContentLabel(cellContent, cellContentLabel, cellConfig):`, cellContent, cellContentLabel, cellConfig));
-
-    // When display mode requires it explicitely, attach label to cell content
-    const cellDisplayMode = this.getCellDisplayMode(cellConfig);
-    if (cellDisplayMode === this.constructor._CELL_MODE_LABEL || cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentLabel);
+  doAttachCellContentLabel(cellContent, cellContentLabel) {
+    cellContent.appendChild(cellContentLabel); // Always attach label first as fallback
   }
 
-  doQueryCellContentLabelElements() {
-    // Nothing to do here: element does not need to be referenced and sub-element is already referenced
+  doQueryCellContentLabelElements(cellContent, cellContentLabel) {
+    // Keep content label wrapper reference into cellContent for further operations
+    cellContent._cellContentLabel = cellContentLabel;
   }
 
   doListenCellContentLabel() {
     // Nothing to do here: no events needed on cell content label
+  }
+
+  doCellContentImage(cellConfig, defaultCellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellConfig, defaultCellConfig):`, cellConfig, defaultCellConfig));
+
+    // When mode is not "image" or "mixed", do not create cell content image
+    const cellDisplayMode = this.getCellDisplayMode(cellConfig);
+    if (cellDisplayMode !== this.constructor._CELL_MODE_IMAGE && cellDisplayMode !== this.constructor._CELL_MODE_MIXED) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellConfig, defaultCellConfig) + cellDisplayMode: skipping due to cellDisplayMode`, cellConfig, defaultCellConfig, cellDisplayMode));
+      return null;
+    }
+
+    // Instanciates a content wrapper to avoid chromium-based browser bugs
+    // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
+    const cellContentImage = document.createElement("div");
+    cellContentImage.className = "carrousel-cell-content-part img";
+
+    // Instanciates image (but load its content later)
+    const img = document.createElement("img");
+    cellContentImage._image = img;
+    img.className = "carrousel-img";
+    img.alt = this.getDynamicCellName(defaultCellConfig);
+
+    // Append and return wrapper (not image itself)
+    cellContentImage.appendChild(img);
+    return cellContentImage;
+  }
+
+  doStyleCellContentImage(cellContentImage, cellConfig) {
+
+    // Apply user preferences on image style
+    if (cellContentImage) cellContentImage.style.padding = this.getCellImageGap(cellConfig);
+  }
+
+  doAttachCellContentImage() {
+    // Nothing to do here: content image will be attached to DOM later, once successfully loaded
+  }
+
+  doQueryCellContentImageElements(cellContent, cellContentImage) {
+    // Keep content image wrapper reference into cellContent for further operations
+    cellContent._cellContentImage = cellContentImage;
+  }
+
+  doListenCellContentImage(cellContent, cellConfig, defaultCellConfig) {
+    const img = cellContent._cellContentImage?._image;
+    if (img) this._eventManager.addLoadListener(img, this.onLoadImageSuccess.bind(this, cellContent, cellConfig, defaultCellConfig));
+    if (img) this._eventManager.addErrorListener(img, this.onLoadImageError.bind(this, cellContent, cellConfig, defaultCellConfig));
+  }
+
+  doLoadImage(cellContent, defaultCellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doLoadImage(cellContent, defaultCellConfig):', cellContent, defaultCellConfig));
+    const cellImageUrl = this.getDynamicCellImageUrl(defaultCellConfig);
+    const img = cellContent._cellContentImage?._image;
+    if (img && cellImageUrl) img.src = cellImageUrl; // Starts loading image asynchronously
+  }
+
+  onLoadImageSuccess(cellContent, cellConfig, defaultCellConfig) {
+    const cellName = this.getDynamicCellName(defaultCellConfig);
+    const cellImageUrl = this.getDynamicCellImageUrl(defaultCellConfig);
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cell ${cellName} image successfully loaded from URL '${cellImageUrl}'`));
+
+    const cellContentLabel = cellContent._cellContentLabel;
+    const cellContentImage = cellContent._cellContentImage;
+    const cellDisplayMode = this.getCellDisplayMode(cellConfig);
+
+    // 1. Reset fallback label
+    cellContentLabel.remove();      // Remove from DOM
+    label.classList.remove('full'); // Remove full class
+
+    // 2. update visuals for image + label
+    if (cellDisplayMode === this.constructor._CELL_MODE_IMAGE) cellContentImage.classList.add('full');
+    if (cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContentImage.classList.add('half');
+    if (cellDisplayMode === this.constructor._CELL_MODE_LABEL) cellContentLabel.classList.add('full');
+    if (cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContentLabel.classList.add('half');
+
+    // 3. attach and position: image into cell content top, label into cell content bottom
+    if (cellDisplayMode === this.constructor._CELL_MODE_IMAGE || cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentLabel);
+    if (cellDisplayMode === this.constructor._CELL_MODE_LABEL || cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentLabel);
+  }
+
+  onLoadImageError(cellContent, cellConfig, defaultCellConfig, err) {
+    const cellName = this.getDynamicCellName(defaultCellConfig);
+    const cellImageUrl = this.getDynamicCellImageUrl(defaultCellConfig);
+    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Cell ${cellName} image failed to load from URL '${cellImageUrl}' with error:`, err));
+
+    // Nothing more to do: let label as-is into cell content as fallback for image fail
   }
 
   // configuration defaults
