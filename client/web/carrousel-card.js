@@ -12,6 +12,7 @@ class CarrouselCard extends HTMLElement {
   _cellImageModes = new Set(["img", "image", "ico", "icon", "pic", "picture", "photo"]);
   _cellLabelModes = new Set(["txt", "text", "lbl", "label", "name"]);
   _cellMixedModes = new Set(["mix", "mixed", "both", "all"]);
+  _allowedCellData = new Set(['cellConfig']);
 
   // private properties
   _config;
@@ -209,14 +210,65 @@ class CarrouselCard extends HTMLElement {
   doCell(cellId, cellConfig) {
 
     // Create a new cell
-    const cellDiv = document.createElement("div");
-    cellDiv.className = "carrousel-cell";
-    cellDiv.id = id;
-    cellDiv._keyData = { config: cell };
+    const cell = document.createElement("div");
+    cell.className = "carrousel-cell";
+    cell.id = cellId;
+    this.setCellData(cell, null, { "cellConfig": cellConfig });
+
+    // Create cell content
+    const cellContent = this.doCellContent(cellId, cellConfig);
+    this.doStyleCellContent();
+    this.doAttachCellContent();
+    this.doQueryCellContentElements();
+    this.doListenCellContentElements();
+    
+    return cell;
+  }
+
+  doStyleCell() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachCell(cell) {
+    this._elements.container.appendChild(cell);
+  }
+
+  doQueryCellElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenCell(cell) {
+    this.eventManager.addPointerClickListener(cell, this.onCellPointerClick().bind(this));
+  }
+
+  onCellPointerClick(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("onCellPointerClick(evt):", evt));
+    const cell = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    this.doCellPointerClick(cell);
+  }
+
+  doCellPointerClick(cell) {
+    const cellData = this._layoutManager.getElementData(cell);
+    if (!cellData) return;
+
+    const cellConfig = cellData.cellConfig;
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Cell config to execute:", cellConfig));
+
+    if (!cellConfig.action) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Cell config ${cellConfig} release aborted due to missing action`));
+    } else {
+      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering action for cell:", cell, cellConfig.action));
+      this.eventManager.triggerHaosTapAction(cell, cellConfig.action);
+    }
+
+    this.eventManager.hapticFeedback();
+  }
+
+  doCellContent(cellId, cellConfig) {
 
     // Retrieve cell user configurations
     const cellLabel = cellConfig["label"] || cellId;
-
     const cellDisplayMode = cellConfig["display-mode"];
     const cellBackgroundColor = cellConfig["background-color"];
     const cellBackground = cellConfig["background"];
@@ -253,30 +305,24 @@ class CarrouselCard extends HTMLElement {
     // Apply user preferences over label style
     if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
     if (cellBackground) cellContent.style.background = cellBackground;
-
-    cellDiv.appendChild(cellContent);
-
-    this.eventManager.addPointerClickListener(cellDiv, (e) => {
-      this.handlePointerClick(e, hass, cellDiv);
-    });
-
-    container.appendChild(cellDiv);
+    
+    return cellContent;
   }
 
-  doStyleCell() {
+  doStyleCellContent() {
     // Nothing to do here: already included into card style
   }
 
-  doAttachCell(cell) {
-    this._elements.container.appendChild(cell);
+  doAttachCellContent(cell, cellContent) {
+    cell.appendChild(cellContent);
   }
 
-  doQueryCellElements() {
+  doQueryCellContentElements() {
     // Nothing to do here: element already referenced and sub-elements are not needed
   }
 
-  doListenCell(cell) {
-    this.addClickableListeners(cell);
+  doListenCellContent() {
+    // Nothing to do here: no events needed on cell content
   }
 
   // configuration defaults
@@ -392,19 +438,10 @@ class CarrouselCard extends HTMLElement {
     return wrapper;
   }
 
-  handlePointerClick(evt, hass, cell) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
-    const keyData = cell._keyData;
-    if (!keyData) return;
 
-    const config = keyData.config;
-
-    if (config.action) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("Triggering action for cell:", cell, config.action));
-      this.eventManager.triggerHaosTapAction(cell, config.action);
-    }
-
-    this.eventManager.hapticFeedback();
+  // Set key data
+  setCellData(cell, defaultConfig, overrideConfig) {
+    this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedCellData.has(key));
   }
 
   getDisplayMode(cellDisplayMode, cellId) {
