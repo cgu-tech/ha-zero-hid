@@ -68,6 +68,43 @@ cleanup() {
     rm -rf "${ZERO_HID_REPO_DIR}" >/dev/null 2>&1 || true
 }
 
+# Updates component to latest GIT available version of specified branch (or default branch when not specified)
+update() {
+    local REMOTE_BRANCH="$1"
+    local REMOTE_NAME="origin"
+    local LOCAL_BRANCH="$REMOTE_BRANCH"
+    local LOCAL_REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+    # Fetch latest info from remote
+    git -C "$LOCAL_REPO_ROOT" fetch -a --prune "$REMOTE_NAME"
+
+    # If no branch specified, get default remote branch
+    if [ -z "$REMOTE_BRANCH" ]; then
+      REMOTE_BRANCH=$(git -C "$LOCAL_REPO_ROOT" symbolic-ref refs/remotes/$REMOTE_NAME/HEAD | sed "s@refs/remotes/$REMOTE_NAME/@@")
+      echo "No branch specified. Using default remote branch: $REMOTE_BRANCH"
+    else
+      echo "Target remote branch: $REMOTE_BRANCH"
+    fi
+
+    # Check if local branch exists
+    if git -C "$LOCAL_REPO_ROOT" show-ref --verify --quiet refs/heads/"$LOCAL_BRANCH"; then
+      echo "Local branch '$LOCAL_BRANCH' exists. Checking it out."
+      git -C "$LOCAL_REPO_ROOT" checkout "$LOCAL_BRANCH"
+    else
+      echo "Local branch '$LOCAL_BRANCH' doesn't exist. Creating and tracking '$REMOTE_NAME/$REMOTE_BRANCH'."
+      git -C "$LOCAL_REPO_ROOT" checkout -b "$LOCAL_BRANCH" --track "$REMOTE_NAME/$REMOTE_BRANCH"
+    fi
+
+    # Hard reset local branch to remote branch (discard all local changes)
+    echo "Resetting local branch '$LOCAL_BRANCH' to '$REMOTE_NAME/$REMOTE_BRANCH'..."
+    git -C "$LOCAL_REPO_ROOT" reset --hard "$REMOTE_NAME/$REMOTE_BRANCH"
+
+    # Clean untracked files (including ignored files)
+    git -C "$LOCAL_REPO_ROOT" clean -xfd
+
+    echo "Local branch '$LOCAL_BRANCH' is now clean and matches '$REMOTE_NAME/$REMOTE_BRANCH'"
+}
+
 copy_dir_content() {
     local SRC_DIR_PATH="${1}"
     local DST_DIR_PATH="${2}"
@@ -380,6 +417,7 @@ if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
             case "$confirm" in
                 [Yy]* )
                     uninstall
+                    update "${ZERO_HID_REPO_BRANCH}"
                     install
                     echo "Reinstalled/updated HA zero-hid client integration."
                     exit 0
