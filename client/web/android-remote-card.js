@@ -105,9 +105,9 @@ class AndroidRemoteCard extends HTMLElement {
 
   createChildren() {
     this._elements.children = {};
-    this._elements.children.keyboard = new AndroidKeyboardCard();
-    this._elements.children.trackpad = new TrackpadCard();
-    this._elements.children.activities = new CarrouselCard();
+    this._elements.children.keyboard = document.createElement("android-keyboard-card");
+    this._elements.children.trackpad = document.createElement("trackpad-card");
+    this._elements.children.activities = document.createElement("carrousel-card");
   }
 
   // jobs
