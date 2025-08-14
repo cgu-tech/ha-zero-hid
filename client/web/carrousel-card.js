@@ -301,7 +301,7 @@ class CarrouselCard extends HTMLElement {
     this.doStyleCellContent(cellContent, cellConfig);
     this.doAttachCellContent(cell, cellContent);
     this.doQueryCellContentElements();
-    this.doListenCellContentElements();
+    this.doListenCellContent();
 
     return cell;
   }
