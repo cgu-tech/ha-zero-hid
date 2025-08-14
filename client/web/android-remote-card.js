@@ -8,6 +8,10 @@ import { ConsumerCodes } from './utils/consumercodes.js';
 import { androidRemoteCardConfig } from './configs/android-remote-card-config.js';
 import * as layoutsRemote from './layouts/remote/index.js';
 
+import { AndroidKeyboardCard } from './android-keyboard-card.js';
+import { TrackpadCard } from './trackpad-card.js';
+import { CarrouselCard } from './carrousel-card.js';
+
 console.info("Loading android-remote-card");
 
 class AndroidRemoteCard extends HTMLElement {
@@ -57,12 +61,45 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
     this.doCheckConfig();
     this.doUpdateConfig();
+    this.doUpdateChildrenConfig();
   }
 
   set hass(hass) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
-    this.doUpdateHass()
+    this.doUpdateHass();
+    this.doUpdateChildrenHass();
+  }
+
+  getKeyboardConfig() {
+    return this.getFromConfigOrDefaultConfig("keyboard");
+  }
+
+  getTrackpadConfig() {
+    return this.getFromConfigOrDefaultConfig("trackpad");
+  }
+
+  getActivitiesConfig() {
+    return this.getFromConfigOrDefaultConfig("activities");
+  }
+
+  getKeyboard() {
+    return this._elements.children.keyboard;
+  }
+
+  getTrackpad() {
+    return this._elements.children.trackpad;
+  }
+
+  getActivities() {
+    return this._elements.children.activities;
+  }
+
+  createChildren() {
+    this._elements.children = {};
+    this._elements.children.keyboard = new AndroidKeyboardCard();
+    this._elements.children.trackpad = new TrackpadCard();
+    this._elements.children.activities = new CarrouselCard();
   }
 
   // jobs
@@ -78,6 +115,8 @@ class AndroidRemoteCard extends HTMLElement {
         </div>
       </div>
     `;
+
+    this.createChildren();
   }
 
   doStyle() {
@@ -433,6 +472,14 @@ class AndroidRemoteCard extends HTMLElement {
       this.doUpdateLayout();
     }
   }
+  
+  doUpdateChildrenConfig() {
+    // Update children cards configs
+    const children = this._elements;
+    children?.keyboard.setConfig(this.getKeyboardConfig());
+    children?.trackpad.setConfig(this.getTrackpadConfig());
+    children?.carrousel.setConfig(this.getActivitiesConfig());
+  }
 
   doUpdateHass() {
 
@@ -475,7 +522,14 @@ class AndroidRemoteCard extends HTMLElement {
         }
       }
     });
+  }
 
+  doUpdateChildrenHass() {
+    // Update children cards configs
+    const children = this._elements;
+    children?.keyboard.hass = this._hass;
+    children?.trackpad.hass = this._hass;
+    children?.carrousel.hass = this._hass;
   }
 
   doUpdateLayout() {
@@ -513,6 +567,9 @@ class AndroidRemoteCard extends HTMLElement {
       this.doQueryRowElements();
       this.doListenRow();
     }
+    
+    // Setup three-states-toggle foldables
+    this.setupThreeStateFoldables();
   }
 
   doRow(rowConfig) {
@@ -561,7 +618,7 @@ class AndroidRemoteCard extends HTMLElement {
     const cellContent = this.doCellContent(cellConfig);
     this.doStyleCellContent();
     this.doAttachCellContent(cell, cellContent);
-    this.doQueryCellContentElements();
+    this.doQueryCellContentElements(cellContent);
     this.doListenCellContent(cellContent);
 
     return cell;
@@ -617,16 +674,7 @@ class AndroidRemoteCard extends HTMLElement {
     let cellContent;
     if (cellContentTag === "svg") {
       cellContent = document.createElementNS(Globals.SVG_NAMESPACE, "svg");
-      // Create Dpad content
-      if (!cellContentHtml && cellName === "dpad") {
-        const dpad = cellContent;
-        const dpadConfig = cellConfig;
-        this.doDpad(dpad, dpadConfig);
-        this.doStyleDpad();
-        this.doAttachDpad();
-        this.doQueryDpadElements();
-        this.doListenDpad();
-      }
+      if (!cellContentHtml && cellName === "dpad") this.createDpad(cellContent, cellConfig); // When Dpad cell, create Dpad content
     } else {
       cellContent = document.createElement(cellContentTag);
     }
@@ -650,12 +698,27 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContent) cell.appendChild(cellContent); // Fillers does not have any content
   }
 
-  doQueryCellContentElements() {
-    // Nothing to do here: element already referenced and sub-elements are not needed
+  doQueryCellContentElements(cellContent) {
+    // When three-states-toggle, query its elements
+    if (cellContent?.id === "ts-toggle-container") {
+      const card = this._elements.card;
+      this._elements.threeStatesToggle = card.querySelector("#ts-toggle-container");
+      this._elements.threeStatesToggleIndicator = toggle.querySelector(".ts-toggle-indicator");
+      this._elements.threeStatesToggleOptions = Array.from(toggle.querySelectorAll(".ts-toggle-option"));
+      this._elements.threeStatesToggleFoldable = card.querySelector("#foldable-container");
+    }
   }
 
   doListenCellContent(cellContent) {
     if (cellContent) this.addClickableListeners(cellContent); // Fillers does not have any content
+  }
+
+  createDpad(dpad, dpadConfig) {
+    this.doDpad(dpad, dpadConfig);
+    this.doStyleDpad();
+    this.doAttachDpad();
+    this.doQueryDpadElements();
+    this.doListenDpad();
   }
 
   doDpad(dpad, dpadConfig) {
@@ -889,6 +952,94 @@ class AndroidRemoteCard extends HTMLElement {
             Z`;
   }
 
+  setupThreeStateFoldables() {
+    const foldableKeyboardName = "android-keyboard-card";
+    const foldableActivitiesName = "carrousel-card";
+    const foldableMouseName = "trackpad-card";
+    
+    let foldableKeyboard;
+    let foldableActivites;
+    let foldableMouse;
+
+    let state = 1;
+
+    const options = this._elements.threeStatesToggleOptions;
+    options.forEach((option, index) => {
+      this.eventManager.addPointerClickListener(option, () => {
+        if (state !== index) {
+          state = index;
+          this.updateFoldableUI();
+          this.eventManager.hapticFeedback();
+        }
+      });
+    });
+
+    this.updateFoldableUI();
+  }
+
+  _threeStatesToggleStates = 
+  _threeStatesToggleState;
+
+  updateFoldableUI() {
+
+    // Move indicator over selected state
+    const leftPercentages = ["0%", "33.33%", "66.66%"];
+    this._elements.threeStatesToggleIndicator.style.left = leftPercentages[this._selectedFoldableState];
+
+    // Make active the selected option, make inactive the two other options
+    const options = this._elements.threeStatesToggleOptions;
+    options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
+
+    this.updateFoldable();
+  }
+
+  updateFoldable() {
+    const foldable = this._elements.threeStatesToggleFoldable;
+    foldable.innerHTML = "";  
+    foldable.style.display = "block";
+    let foldableContentName;
+    if (state === 0) {
+      foldableContentName = foldableKeyboardName;
+    } else if (state === 1) {
+      foldableContentName = foldableActivitiesName;
+    } else if (state === 2) {
+      foldableContentName = foldableMouseName;
+    }
+
+    if (foldableContentName) {
+      customElements.whenDefined(foldableContentName).then(() => {
+        let foldableContent;
+        let foldableContentConfig;
+        if (foldableContentName === foldableKeyboardName) {
+          if (!foldableKeyboard) foldableKeyboard = document.createElement(foldableKeyboardName); // Safe init of imported component
+          foldableContent = foldableKeyboard;
+          foldableContentConfig = this.keyboardConfig;
+        } else if (foldableContentName === foldableActivitiesName) {
+          if (!foldableActivites) foldableActivites = document.createElement(foldableActivitiesName); // Safe init of imported component
+          foldableContent = foldableActivites;
+          foldableContentConfig = this.activitiesConfig;
+        } else if (foldableContentName === foldableMouseName) {
+          if (!foldableMouse) foldableMouse = document.createElement(foldableMouseName); // Safe init of imported component
+          foldableContent = foldableMouse;
+          foldableContentConfig = this.mouseConfig;
+        } else {
+          throw new Error(`Unkwnon foldable component ${foldableContentName}`);
+        }
+        foldableContent.setAttribute("style", "width: 100%;");
+        foldableContent.setConfig(foldableContentConfig);
+        foldableContent.hass = this._hass;
+        foldable.appendChild(foldableContent);
+
+        // Automatically scroll-down to the added foldable (if autoscroll enabled)
+        if (this.autoScroll) {
+          setTimeout(() => {
+            foldable.scrollIntoView({ behavior: 'smooth' });
+          }, 0);
+        }
+      });
+    }
+  }
+
   createSpanClass(flex) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createSpanClass(flex):", flex));
     const styleName = this.getStyleSpanName(flex);
@@ -920,7 +1071,7 @@ class AndroidRemoteCard extends HTMLElement {
       log_pushback: false,
       buttons_overrides: {},
       keyboard: {},
-      mouse: {},
+      trackpad: {},
       activities: {}
     }
   }
