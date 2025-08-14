@@ -626,4 +626,4 @@ export class CarrouselCard extends HTMLElement {
 
 }
 
-customElements.define("carrousel-card", CarrouselCard);
+if (!customElements.get("carrousel-card")) customElements.define("carrousel-card", CarrouselCard);

@@ -1322,4 +1322,4 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 }
 
-customElements.define("android-keyboard-card", AndroidKeyboardCard);
+if (!customElements.get("android-keyboard-card")) customElements.define("android-keyboard-card", AndroidKeyboardCard);

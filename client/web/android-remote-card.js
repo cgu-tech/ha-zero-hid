@@ -1252,4 +1252,4 @@ class AndroidRemoteCard extends HTMLElement {
 
 }
 
-customElements.define("android-remote-card", AndroidRemoteCard);
+if (!customElements.get("android-remote-card")) customElements.define("android-remote-card", AndroidRemoteCard);

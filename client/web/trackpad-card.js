@@ -1206,4 +1206,4 @@ export class TrackpadCard extends HTMLElement {
 
 }
 
-customElements.define("trackpad-card", TrackpadCard);
+if (!customElements.get("trackpad-card")) customElements.define("trackpad-card", TrackpadCard);
