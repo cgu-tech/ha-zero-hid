@@ -87,7 +87,7 @@ class CarrouselCard extends HTMLElement {
 
   // Global and overridable per cell config
   getCellDisplayMode(cellConfig) {
-    return return this._reversedCellModesMap.get(this.getCellConfigOrDefault("display_mode"));
+    return this._reversedCellModesMap.get(this.getCellConfigOrDefault("display_mode"));
   }
   getCellBackground(cellConfig) {
     return this.getCellConfigOrDefault("background");
