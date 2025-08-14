@@ -199,6 +199,10 @@ class CarrouselCard extends HTMLElement {
         box-sizing: border-box;
         cursor: pointer;
       }
+      .carrousel-cell.active {
+        background: #4a4a4a;
+        transition: background 0.15s ease;
+      }
       .carrousel-cell-content {
         display: inline-flex;
         flex-direction: column;
@@ -365,7 +369,7 @@ class CarrouselCard extends HTMLElement {
 
   onCellPointerDown(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onPopinButtonPointerDown(evt):", evt));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onCellPointerDown(evt):", evt));
     const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
     this.doCellPress(cell);
