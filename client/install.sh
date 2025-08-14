@@ -423,6 +423,8 @@ if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
             update "${ZERO_HID_REPO_BRANCH}"
             install
             echo "Updated & reinstalled HA zero-hid client integration (auto)."
+            exit 0
+            ;;
         2)
             read -rp "Are you sure you want to reinstall or update? (y/n) " confirm </dev/tty
             case "$confirm" in
