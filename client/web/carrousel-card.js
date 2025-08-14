@@ -83,7 +83,9 @@ class CarrouselCard extends HTMLElement {
   }
 
   // Global config
-  getCells() { return this._layoutManager.getFromConfigOrDefaultConfig("cells"); }
+  getCells() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("cells");
+  }
 
   // Global and overridable per cell config
   getCellDisplayMode(cellConfig) {
@@ -271,7 +273,7 @@ class CarrouselCard extends HTMLElement {
   doCreateLayout() {
 
     // Create all cells
-    for (const [cellName, cellConfig] of this.getCells().entries()) {
+    for (const [cellName, cellConfig] of Object.entries(this.getCells())) {
       const cell = this.doCell(cellName, cellConfig);
       this.doStyleCell(cell, cellConfig);
       this.doAttachCell(cell);
