@@ -513,7 +513,7 @@ class CarrouselCard extends HTMLElement {
 
     // 1. Reset fallback label
     cellContentLabel.remove();      // Remove from DOM
-    label.classList.remove('full'); // Remove full class
+    cellContentLabel.classList.remove('full'); // Remove full class
 
     // 2. update visuals for image + label
     if (cellDisplayMode === this.constructor._CELL_MODE_IMAGE) cellContentImage.classList.add('full');
