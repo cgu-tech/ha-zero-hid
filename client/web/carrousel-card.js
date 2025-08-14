@@ -201,7 +201,7 @@ class CarrouselCard extends HTMLElement {
       }
       .carrousel-cell.active {
         background: #4a4a4a;
-        transition: background 0.15s ease;
+        transition: opacity 0.3s ease, transform 0.3s ease;
       }
       .carrousel-cell-content {
         display: inline-flex;
