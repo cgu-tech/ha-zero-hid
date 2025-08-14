@@ -320,7 +320,7 @@ class CarrouselCard extends HTMLElement {
   }
 
   doListenCell(cell) {
-    this._eventManager.addPointerClickListener(cell, this.onCellPointerClick().bind(this));
+    this._eventManager.addPointerClickListener(cell, this.onCellPointerClick.bind(this));
   }
 
   onCellPointerClick(evt) {
