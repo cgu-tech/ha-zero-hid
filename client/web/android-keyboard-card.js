@@ -9,7 +9,7 @@ import * as layoutsAndroid from './layouts/android/index.js';
 
 console.info("Loading android-keyboard-card");
 
-class AndroidKeyboardCard extends HTMLElement {
+export class AndroidKeyboardCard extends HTMLElement {
 
   // private init required constants
   static _STATUS_MAP;

@@ -6,7 +6,7 @@ import { LayoutManager } from './utils/layout-manager.js';
 
 console.info("Loading trackpad-card");
 
-class TrackpadCard extends HTMLElement {
+export class TrackpadCard extends HTMLElement {
 
   // private init required constants
   static _LAYOUTS;

@@ -6,7 +6,7 @@ import { LayoutManager } from './utils/layout-manager.js';
 
 console.info("Loading carrousel-card");
 
-class CarrouselCard extends HTMLElement {
+export class CarrouselCard extends HTMLElement {
 
   // private init required constants
   static _CELL_MODE_IMAGE = "image";
