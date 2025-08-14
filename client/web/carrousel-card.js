@@ -9,10 +9,9 @@ console.info("Loading carrousel-card");
 class CarrouselCard extends HTMLElement {
 
   // private constants
-  _cellImageModes = new Set(["img", "image", "ico", "icon", "pic", "picture", "photo"]);
-  _cellLabelModes = new Set(["txt", "text", "lbl", "label", "name"]);
-  _cellMixedModes = new Set(["mix", "mixed", "both", "all"]);
-  _allowedCellData = new Set(['cellConfig']);
+  static _CELL_MODE_IMAGE = "image";
+  static _CELL_MODE_LABEL = "label";
+  static _CELL_MODE_MIXED = "mixed";
 
   // private properties
   _config;
@@ -23,8 +22,33 @@ class CarrouselCard extends HTMLElement {
   _layoutManager;
   _resourceManager;
 
+  _cellModesMap = new Map();
+  _reversedCellModesMap = new Map();
+
   constructor() {
     super();    
+
+    // Mapping for mode names with their accepted mode names identifiers counterparts
+    this._cellModesMap.set(this.constructor._CELL_MODE_IMAGE, ["image", "img", "icon", "ico", "picture", "pic", "photo"]);
+    this._cellModesMap.set(this.constructor._CELL_MODE_LABEL, ["label", "lbl", "text", "txt", "name"]);
+    this._cellModesMap.set(this.constructor._CELL_MODE_MIXED, ["mixed", "mix", "all" , "both"]);
+
+    // Create mixed combinations mappings dynamically
+    const cellModeMixedIds = this._cellModesMap.get(this.constructor._CELL_MODE_MIXED;
+    for (const cellModeImageId of this._cellModesMap.get(this.constructor._CELL_MODE_IMAGE)) {
+      for (const cellModeLabelId of this._cellModesMap.get(this.constructor._CELL_MODE_LABEL)) {
+        cellModeMixedIds.push(`${cellModeImageId}-${cellModeLabelId}`);
+        cellModeMixedIds.push(`${cellModeLabelId}-${cellModeImageId}`);
+      }
+    }
+
+    // Reversed mapping for each mode name identifier with its mode name counterpart
+    // ex: "ico" --> "image"
+    for (const [cellMode, cellModeIdentifiers] of this._cellModesMap.entries()) {
+      for (const cellModeIdentifier of cellModeIdentifiers) {
+        this._reversedCellModesMap.set(cellModeIdentifier, cellMode);
+      }
+    }
 
     this._logger = new Logger(this, "carrousel-card.js");
     this._eventManager = new EventManager(this);
@@ -64,10 +88,34 @@ class CarrouselCard extends HTMLElement {
   getCells() {
     return this._layoutManager.getFromConfigOrDefaultConfig("cells");
   }
+  getDisplayMode() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("display_mode");
+  }
+  
+  getCellDisplayMode(cellConfig) {
+    const configDisplayMode = (cellConfig?.["display_mode"] || this.getDisplayMode()).toLowerCase();
+    return this._reversedCellModesMap.get(configDisplayMode);
+  }
 
   // jobs
   doCheckConfig() {
     //TODO: check config in details
+    
+    // TODO: check configured display mode
+    //  // Invalid cellDisplayMode specified by user: warn it
+    //  if (!targetDisplayMode) {
+    //    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
+    //    targetDisplayMode = defaultDisplayMode;
+    //  }
+    //}
+    //
+    //// No cellDisplayMode specified by user: defaulting silently
+    //if (!targetDisplayMode) {
+    //  if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`No display mode provided for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
+    //  targetDisplayMode = defaultDisplayMode;
+    //}
+    //if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Display mode set to '${targetDisplayMode}' for cell '${cellId}' (user configured mode:'${cellDisplayMode}')`));
+    //return targetDisplayMode;
   }
 
   doCard() {
@@ -221,7 +269,7 @@ class CarrouselCard extends HTMLElement {
     this.doAttachCellContent();
     this.doQueryCellContentElements();
     this.doListenCellContentElements();
-    
+
     return cell;
   }
 
@@ -269,48 +317,34 @@ class CarrouselCard extends HTMLElement {
 
     // Retrieve cell user configurations
     const cellLabel = cellConfig["label"] || cellId;
-    const cellDisplayMode = cellConfig["display-mode"];
-    const cellBackgroundColor = cellConfig["background-color"];
-    const cellBackground = cellConfig["background"];
-    const targetDisplayMode = this.getDisplayMode(cellDisplayMode, cellId);
 
     // Create cell content
     const cellContent = document.createElement("div");
     cellContent.className = "carrousel-cell-content";
 
-    // Set cell inner content (image, label)
-    if (targetDisplayMode === "image") {
-      // Image mode
-      const img = this.createImage(cellId, cellLabel, cellConfig);
-      img.classList.add('img-full');
-      cellContent.appendChild(img);
+    // Create cell content inner label
+    const cellContentLabel = this.doCellContentLabel(cellId, cellLabel, cellConfig);
+    this.doStyleCellContentLabel(cellContentLabel, cellConfig);
+    this.doAttachCellContentLabel(cellContent, cellContentLabel);
+    this.doQueryCellContentLabelElements();
+    this.doListenCellContentLabel();
 
-    } else if (targetDisplayMode === "label") {
-      // Label mode
-      const label = this.createLabel(cellId, cellLabel, cellConfig);
-      label.classList.add('label-full');
-      cellContent.appendChild(label);
+    // Create cell content inner image
+    const cellContentImage = this.doCellContentImage(cellId, cellLabel, cellConfig);
+    this.doStyleCellContentImage();
+    this.doAttachCellContentImage(cellContent, cellContentImage);
+    this.doQueryCellContentImageElements();
+    this.doListenCellContentImage();
 
-    } else {
-      // Image and label mode
-      const img = this.createImage(cellId, cellLabel, cellConfig);
-      img.classList.add('img-half');
-      const label = this.createLabel(cellId, cellLabel, cellConfig);
-      label.classList.add('label-half');
-      cellContent.appendChild(img);
-      cellContent.appendChild(label);
-
-    }
-
-    // Apply user preferences over label style
-    if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
-    if (cellBackground) cellContent.style.background = cellBackground;
-    
     return cellContent;
   }
 
-  doStyleCellContent() {
-    // Nothing to do here: already included into card style
+  doStyleCellContent(cellContent, cellConfig) {
+    // Apply user preferences over cell content background
+    const cellBackgroundColor = cellConfig["background_color"];
+    const cellBackground = cellConfig["background"];
+    if (cellBackgroundColor) cellContent.style.backgroundColor = cellBackgroundColor;
+    if (cellBackground) cellContent.style.background = cellBackground;
   }
 
   doAttachCellContent(cell, cellContent) {
@@ -325,12 +359,145 @@ class CarrouselCard extends HTMLElement {
     // Nothing to do here: no events needed on cell content
   }
 
+  doCellContentImage(cellId, cellLabel, cellConfig) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`doCellContentImage(cellId, cellLabel, cellConfig):`, cellId, cellLabel, cellConfig));
+
+    // When mode is not "image" or "mixed", do not create cell content image
+    const cellDisplayMode = this.getCellDisplayMode(cellConfig);
+    if (cellDisplayMode !== "image" && cellDisplayMode !== "mixed") return null;
+
+    // Retrieve user preferences for image
+    const cellIconUrl = cellConfig["icon_url"];
+
+    // Define image source URL
+    const imgCellIconUrl = cellIconUrl ? (this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl)) : "";
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Determined image URL '${imgCellIconUrl}' for cell '${cellId}'`));
+
+    // Instanciates a content wrapper to avoid chromium-based browser bugs
+    // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
+    const cellContentImage = document.createElement("div");
+    cellContentImage.className = "carrousel-content-wrapper";
+    if (cellDisplayMode === "image") cellContentImage.classList.add('img-full');
+    if (cellDisplayMode === "mixed") cellContentImage.classList.add('img-half');
+
+    // Instanciates image (but do not load it for now)
+    const img = document.createElement("img");
+    cellContentImage._image = img;
+    img.className = "carrousel-img";
+    img.alt = cellLabel;
+    img.addEventListener('error', this.onImageLoadError.bind(this, img, imgCellIconUrl, cellId));
+
+    // Append and return wrapper (not image itself)
+    cellContentImage.appendChild(img);
+    return cellContentImage;
+  }
+
+  doStyleCellContentImage(cellContentImage, cellConfig) {
+    // Retrieve user preferences for image
+    const cellIconGap = cellConfig["image_gap"];
+
+    // Apply user preferences on image style
+    if (cellIconGap) cellContentImage.style.padding = cellIconGap;
+  }
+
+  doAttachCellContentImage(cellContent, cellContentImage) {
+    cellContent.appendChild(cellContentImage);
+  }
+
+  doQueryCellContentImageElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenCellContentImage() {
+    // Nothing to do here: no events needed on cell content
+  }
+
+  doLoadImage(img, imgCellIconUrl) {
+    if (imgCellIconUrl) img.src = imgCellIconUrl;
+  }
+
+  onImageLoadError(img, imgCellIconUrl, cellId, err) {
+    // Handle image source loading error
+    if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL '${imgCellIconUrl}' for cell '${cellId}'`));
+
+    // Hide image
+    img.style.display = 'none';
+
+    // Retrieve label with "Name" text as alternative
+    const cellContent = img.parentElement;
+    let label = cellContent.querySelector('.carrousel-label');
+
+    // When missing label (because displayMode was set to image for example)
+    // Create a new label inside the cell and display it
+    if (!label) {
+      label = this.createCellContentLabel(cellId, cellLabel, cellConfig);
+      cellContent.appendChild(label);
+    }
+    // Set the "full" class for the label (to make all rounded corners for example)
+    label.classList.remove('label-half');
+    label.classList.add('label-full');
+  }
+
+  doCellContentLabel(cellId, cellLabel, cell) {
+    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`doCellContentLabel(cellId, cellLabel, cellConfig):`, cellId, cellLabel, cellConfig));
+
+    // Independently of current cell display mode, always create the label (to serve as fallback for image loading error)
+    const cellDisplayMode = this.getCellDisplayMode(cellConfig);
+
+    // Instanciates a content wrapper for layout consistency, relatives to image layout circument of chromium-based browser bugs
+    // (see doCellContentImage for details about this specificity)
+    const cellContentLabel = document.createElement("div");
+    cellContentLabel.className = "carrousel-content-wrapper";
+    if (cellDisplayMode === "label") cellContentLabel.classList.add('label-full');
+    if (cellDisplayMode === "mixed") cellContentLabel.classList.add('label-half');
+
+    // Instanciates a new label
+    const label = document.createElement("div");
+    cellContentLabel._label = label;
+    label.className = "carrousel-label";
+    label.textContent = cellLabel;
+
+    // Append and return wrapper (not label itself)
+    cellContentLabel.appendChild(label);
+    return cellContentLabel;
+  }
+
+  doStyleCellContentLabel(cellContentLabel, cellConfig) {
+    // Retrieve user preferences for label
+    const cellLabelGap = cellConfig["label_gap"];
+    const cellLabelColor = cellConfig["label_color"];
+    const cellLabelSize = cellConfig["label_size"];
+
+    // Apply user preferences on cell content label container style
+    if (cellLabelGap) cellContentLabel.style.padding = cellLabelGap;
+    
+    // Apply user preferences on cell content label style
+    if (cellLabelColor) cellContentLabel._label.style.color = cellLabelColor;
+    if (cellLabelSize) cellContentLabel._label.style.fontSize = cellLabelSize;
+  }
+
+  doAttachCellContentLabel(cellContent, cellContentLabel) {
+
+    // When display mode requires it explicitely, attach label to cell content
+    const cellDisplayMode = this.getCellDisplayMode(cellConfig);
+    if (cellDisplayMode === "label" && cellDisplayMode === "mixed") cellContent.appendChild(cellContentLabel);
+  }
+
+  doQueryCellContentLabelElements() {
+    // Nothing to do here: element does not need to be referenced and sub-element is already referenced
+  }
+
+  doListenCellContentLabel() {
+    // Nothing to do here: no events needed on cell content label
+  }
+
   // configuration defaults
   static getStubConfig() {
     return {
       haptic: true,
       log_level: "warn",
       log_pushback: false,
+      display_mode: "mixed",
       cell_width: 60,
       cell_height: 60,
       cells: []
@@ -341,152 +508,9 @@ class CarrouselCard extends HTMLElement {
     return 1;
   }
 
-  async loadLayout() {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout():"));
-    if (this.cells) {
-      const allCells = Object.entries(this.cells);
-      for (const [id, cell] of allCells) {
-        const cellIconUrl = cell["icon-url"];
-        if (cellIconUrl) {
-          if (this.isValidUrl(cellIconUrl)) {
-            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found image URL:${cellIconUrl}`, id));
-          } else {
-            // Local image requested: create the relative URL dynamically
-            const newIconUrl = this.getLocalIconUrl(cellIconUrl);
-            if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Found local image:${cellIconUrl}, will set it to relative URL:${newIconUrl}`, id));
-          }
-        }
-      }
-    }
-  }
-
-  createImage(cellId, cellLabel, cell) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating image for cell '${cellId}'`));
-
-    // Retrieve user preferences for image
-    const cellIconUrl = cell["icon-url"];
-    const cellIconGap = cell["icon-gap"];
-
-    // Define image source URL
-    const imgCellIconUrl = cellIconUrl ? (this.isValidUrl(cellIconUrl) ? cellIconUrl : this.getLocalIconUrl(cellIconUrl)) : "";
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Determined image URL '${imgCellIconUrl}' for cell '${cellId}'`));
-
-    // Instanciates a content wrapper to avoid chromium-based browser bugs
-    // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
-    const wrapper = document.createElement("div");
-    wrapper.className = "carrousel-content-wrapper";
-
-    // Instanciates a new image
-    const img = document.createElement("img");
-    img.className = "carrousel-img";
-    img.alt = cellLabel;
-    img.addEventListener('error', () => {
-      // Handle image loading error
-      if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unable to load image URL '${imgCellIconUrl}' for cell '${cellId}'`));
-
-      // Hide image
-      img.style.display = 'none';
-
-      // Retrieve label with "Name" text as alternative
-      const cellContent = img.parentElement;
-      let label = cellContent.querySelector('.carrousel-label');
-
-      // When missing label (because displayMode was set to image for example)
-      // Create a new label inside the cell and display it
-      if (!label) {
-        label = this.createLabel(cellId, cellLabel, cell);
-        cellContent.appendChild(label);
-      }
-      // Set the "full" class for the label (to make all rounded corners for example)
-      label.classList.remove('label-half');
-      label.classList.add('label-full');
-    });
-
-    // Apply user preferences on image style
-    if (imgCellIconUrl) img.src = imgCellIconUrl;
-    if (cellIconGap) wrapper.style.padding = cellIconGap; // apply gap on wrapper to avoid chrome bug
-
-    // Append and return wrapper (not image itself)
-    wrapper.appendChild(img);
-    return wrapper;
-  }
-
-  createLabel(cellId, cellLabel, cell) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Creating label for cell '${cellId}'`));
-
-    // Retrieve user preferences for label
-    const cellLabelColor = cell["label-color"];
-    const cellLabelSize = cell["label-size"];
-    const cellLabelGap = cell["label-gap"];
-
-    // Create wrapper (to align with image structure)
-    const wrapper = document.createElement("div");
-    wrapper.className = "carrousel-content-wrapper";
-
-    // Instanciates a new label
-    const label = document.createElement("div");
-    label.className = "carrousel-label";
-    label.textContent = cellLabel;
-
-    // Apply user preferences on label style
-    if (cellLabelColor) label.style.color = cellLabelColor;
-    if (cellLabelSize) label.style.fontSize = cellLabelSize;
-    if (cellLabelGap) wrapper.style.padding = cellLabelGap;
-
-    // Append and return wrapper (not label itself)
-    wrapper.appendChild(label);
-    return wrapper;
-  }
-
-
   // Set key data
   setCellData(cell, defaultConfig, overrideConfig) {
     this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedCellData.has(key));
-  }
-
-  getDisplayMode(cellDisplayMode, cellId) {
-    const defaultDisplayMode = 'image';
-    let targetDisplayMode = null;
-    if (cellDisplayMode) {
-      // Lowerize for equality comparizons
-      let loweredDisplayMode = cellDisplayMode.toLowerCase();
-      if (this._cellImageModes.has(loweredDisplayMode)) {
-        targetDisplayMode = "image";
-      } else if (this._cellLabelModes.has(loweredDisplayMode)) {
-        targetDisplayMode = "label";
-      } else if (this._cellMixedModes.has(loweredDisplayMode)) {
-        targetDisplayMode = "mixed";
-      } else {
-        const regex = /^\s*([^\s]+)\s*-\s*([^\s]+)\s*$/;
-        const match = loweredDisplayMode.match(regex);
-        if (match) {
-          const displayModeOne = match[1];
-          const displayModeTwo = match[2];
-
-          // Both labels matches one then the other display mode: mixed mode
-          if (
-              (this._cellImageModes.has(displayModeOne) && this._cellLabelModes.has(displayModeTwo)) ||
-              (this._cellLabelModes.has(displayModeOne) && this._cellImageModes.has(displayModeTwo))
-             ) {
-            targetDisplayMode = "mixed";
-          }
-        }
-      }
-
-      // Invalid cellDisplayMode specified by user: warn it
-      if (!targetDisplayMode) {
-        if (this.logger.isWarnEnabled()) console.warn(...this.logger.warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
-        targetDisplayMode = defaultDisplayMode;
-      }
-    }
-
-    // No cellDisplayMode specified by user: defaulting silently
-    if (!targetDisplayMode) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`No display mode provided for cell '${cellId}': defaulting to '${defaultDisplayMode}'`));
-      targetDisplayMode = defaultDisplayMode;
-    }
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(`Display mode set to '${targetDisplayMode}' for cell '${cellId}' (user configured mode:'${cellDisplayMode}')`));
-    return targetDisplayMode;
   }
 
   isFiniteNumber(value) {

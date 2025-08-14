@@ -5,16 +5,15 @@ import { Logger } from './logger.js';
 export class EventManager {
 
   _origin;
-  _eventsMap;
-  _reversedEventsMap;
-  _preferedEventsNames;
+  _eventsMap = new Map();
+  _reversedEventsMap = new Map();
+  _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
 
   constructor(origin) {
     this._origin = origin;
 
-    // Mapping for "virtual" event names with their "real" event names counterparts 
+    // Mapping for "abstract" event names with their "real" event names counterparts 
     // that might be supported by device - or not (by preference order)
-    this._eventsMap = new Map();
     this._eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
     this._eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
     this._eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
@@ -27,17 +26,14 @@ export class EventManager {
     this._eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
     this._eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
 
-    // Reversed mapping for each "real" event names with its "virtual" event name counterpart
+    // Reversed mapping for each "real" event names with its "abstract" event name counterpart
     // ex: "pointerdown" --> "EVT_POINTER_DOWN"
-    this._reversedEventsMap = new Map();
-    for (const [key, valueArray] of this._eventsMap.entries()) {
-      for (const eventName of valueArray) {
-        this._reversedEventsMap.set(eventName, key);
+    for (const [abstractEventName, eventNames] of this._eventsMap.entries()) {
+      for (const eventName of eventNames) {
+        this._reversedEventsMap.set(eventName, abstractEventName);
       }
     }
 
-    // Cache for prefered discovered listeners (lookup speedup)
-    this._preferedEventsNames = new Map();
   }
 
   getLogger() {
