@@ -287,7 +287,7 @@ class CarrouselCard extends HTMLElement {
   doCell(cellName, cellConfig) {
 
     // Define cell default config
-    const defaultCellConfig = { "name": cellName, "imageUrl": this.getCellImageUrl(cellConfig) };
+    const defaultCellConfig = { "cellName": cellName, "imageUrl": this.getCellImageUrl(cellConfig) };
 
     // Create a new cell
     const cell = document.createElement("div");
@@ -356,7 +356,7 @@ class CarrouselCard extends HTMLElement {
     // Create cell content inner label
     const cellContentLabel = this.doCellContentLabel(cellConfig, defaultCellConfig);
     this.doStyleCellContentLabel(cellContentLabel, cellConfig);
-    this.doAttachCellContentLabel(cellContent, cellConfig, cellContentLabel);
+    this.doAttachCellContentLabel(cellContent, cellContentLabel, cellConfig);
     this.doQueryCellContentLabelElements();
     this.doListenCellContentLabel();
 
@@ -388,8 +388,8 @@ class CarrouselCard extends HTMLElement {
     // Nothing to do here: no events needed on cell content
   }
 
-  doCellContentImage(cellName, cellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellName, cellConfig):`, cellName, cellConfig));
+  doCellContentImage(cellConfig, defaultCellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellConfig, defaultCellConfig):`, cellConfig, defaultCellConfig));
 
     // When mode is not "image" or "mixed", do not create cell content image
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
@@ -406,7 +406,7 @@ class CarrouselCard extends HTMLElement {
     const img = document.createElement("img");
     cellContentImage._image = img;
     img.className = "carrousel-img";
-    img.alt = cellName;
+    img.alt = defaultCellConfig["cellName"];
 
     // Append and return wrapper (not image itself)
     cellContentImage.appendChild(img);
@@ -460,8 +460,8 @@ class CarrouselCard extends HTMLElement {
     label.classList.add('label-full');
   }
 
-  doCellContentLabel(cellName, cellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentLabel(cellName, cellConfig):`, cellName, cellConfig));
+  doCellContentLabel(cellConfig, defaultCellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentLabel(cellConfig, defaultCellConfig):`, cellConfig, defaultCellConfig));
 
     // Independently of current cell display mode, always create the label (to serve as fallback for image loading error)
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
@@ -476,7 +476,7 @@ class CarrouselCard extends HTMLElement {
     const label = document.createElement("div");
     cellContentLabel._label = label;
     label.className = "carrousel-label";
-    label.textContent = this.getCellLabel(cellConfig) || cellName;;
+    label.textContent = this.getCellLabel(cellConfig) || defaultCellConfig["cellName"];
 
     // Append and return wrapper (not label itself)
     cellContentLabel.appendChild(label);
@@ -494,8 +494,8 @@ class CarrouselCard extends HTMLElement {
     cellContentLabel._label.style.fontSize = this.getCellLabelFontScale(cellConfig);
   }
 
-  doAttachCellContentLabel(cellContent, cellConfig, cellContentLabel) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doAttachCellContentLabel(cellContent, cellConfig, cellContentLabel):`, cellContent, cellConfig, cellContentLabel));
+  doAttachCellContentLabel(cellContent, cellContentLabel, cellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doAttachCellContentLabel(cellContent, cellContentLabel, cellConfig):`, cellContent, cellContentLabel, cellConfig));
 
     // When display mode requires it explicitely, attach label to cell content
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
