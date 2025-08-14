@@ -37,7 +37,7 @@ class CarrouselCard extends HTMLElement {
     this._cellModesMap.set(this.constructor._CELL_MODE_MIXED, ["mixed", "mix", "all" , "both"]);
 
     // Create mixed combinations mappings dynamically
-    const cellModeMixedIds = this._cellModesMap.get(this.constructor._CELL_MODE_MIXED;
+    const cellModeMixedIds = this._cellModesMap.get(this.constructor._CELL_MODE_MIXED);
     for (const cellModeImageId of this._cellModesMap.get(this.constructor._CELL_MODE_IMAGE)) {
       for (const cellModeLabelId of this._cellModesMap.get(this.constructor._CELL_MODE_LABEL)) {
         cellModeMixedIds.push(`${cellModeImageId}-${cellModeLabelId}`);
