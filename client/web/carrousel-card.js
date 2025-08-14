@@ -373,14 +373,14 @@ class CarrouselCard extends HTMLElement {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
-    this.doCellRelease(cell);
+    cell.classList.remove("active");
   }
 
   onCellPointerCancel(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
-    this.doCellRelease(cell);
+    cell.classList.remove("active");
   }
 
   doCellPress(cell) {
