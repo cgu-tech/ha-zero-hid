@@ -354,7 +354,7 @@ class CarrouselCard extends HTMLElement {
     // Create cell content inner label
     const cellContentLabel = this.doCellContentLabel(cellConfig, defaultCellConfig);
     this.doStyleCellContentLabel(cellContentLabel, cellConfig);
-    this.doAttachCellContentLabel(cellContent, cellContentLabel);
+    this.doAttachCellContentLabel(cellContent, cellConfig, cellContentLabel);
     this.doQueryCellContentLabelElements();
     this.doListenCellContentLabel();
 
@@ -482,6 +482,7 @@ class CarrouselCard extends HTMLElement {
   }
 
   doStyleCellContentLabel(cellContentLabel, cellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doStyleCellContentLabel(cellContentLabel, cellConfig):`, cellContentLabel, cellConfig));
 
     // Apply user preferences on cell content label container style
     cellContentLabel.style.padding = this.getCellLabelGap(cellConfig);
@@ -491,7 +492,8 @@ class CarrouselCard extends HTMLElement {
     cellContentLabel._label.style.fontSize = this.getCellLabelFontScale(cellConfig);
   }
 
-  doAttachCellContentLabel(cellContent, cellContentLabel) {
+  doAttachCellContentLabel(cellContent, cellConfig, cellContentLabel) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doAttachCellContentLabel(cellContent, cellConfig, cellContentLabel):`, cellContent, cellConfig, cellContentLabel));
 
     // When display mode requires it explicitely, attach label to cell content
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
