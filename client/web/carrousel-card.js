@@ -14,7 +14,7 @@ class CarrouselCard extends HTMLElement {
   static _CELL_MODE_MIXED = "mixed";
 
   // private constants
-  _allowedCellData = new Set(['imageUrl']);
+  _allowedCellData = new Set(['action', 'imageUrl']);
 
   // private properties
   _config;
@@ -345,10 +345,9 @@ class CarrouselCard extends HTMLElement {
   }
 
   doCellPointerClick(cell) {
-    const cellData = this._layoutManager.getElementData(cell);
+    const cellConfig = this._layoutManager.getElementData(cell);
     if (!cellData) return;
 
-    const cellConfig = cellData.cellConfig;
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Cell config to execute:", cellConfig));
 
     if (!cellConfig.action) {
