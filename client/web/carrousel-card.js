@@ -14,7 +14,7 @@ class CarrouselCard extends HTMLElement {
   static _CELL_MODE_MIXED = "mixed";
 
   // private constants
-  _allowedCellData = new Set(['action', 'imageUrl']);
+  _allowedCellData = new Set(['action', 'cellName', 'imageUrl']);
 
   // private properties
   _config;
