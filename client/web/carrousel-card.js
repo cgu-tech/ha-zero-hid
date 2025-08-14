@@ -190,7 +190,7 @@ class CarrouselCard extends HTMLElement {
         margin-right: 2px;
         margin-top: 4px;
         margin-bottom: 4px;
-        background: #2c2c2c;
+        background: #3a3a3a;
         border-radius: 8px;
         overflow: hidden;
         text-align: center;
@@ -346,7 +346,7 @@ class CarrouselCard extends HTMLElement {
 
   doCellPointerClick(cell) {
     const cellConfig = this._layoutManager.getElementData(cell);
-    if (!cellData) return;
+    if (!cellConfig) return;
 
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Cell config to execute:", cellConfig));
 
