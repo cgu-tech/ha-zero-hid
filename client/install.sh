@@ -3,7 +3,8 @@ CURRENT_DIR="$(pwd)"
 
 # Parameters
 ZERO_HID_REPO_BRANCH="${1:-main}"
-ENABLE_DEV_MODE="${2:-}"
+ENABLE_AUTO_MODE="${2:-}"
+ENABLE_DEV_MODE="${3:-}"
 
 # Configurations
 HAOS_CONFIG_DIR="/config"
@@ -409,73 +410,84 @@ uninstall () {
 
 if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
     echo "Looks like HA zero-hid client integration is already installed"
-    echo "Please choose an option:"
-    echo "  1) Update & reinstall (auto)"
-    echo "  2) Update & reinstall (interactive)"
-    echo "  3) Uninstall (interactive)"
-    echo "  4) Exit"
-    read -rp "Enter choice [1-4]: " choice </dev/tty
-
-    case "$choice" in
-        1)
-            echo "Updating & reinstalling (auto)"
-            uninstall "NON_INTERACTIVE"
-            update "${ZERO_HID_REPO_BRANCH}"
-            install
-            echo "Updated & reinstalled HA zero-hid client integration (auto)."
-            exit 0
-            ;;
-        2)
-            read -rp "Are you sure you want to reinstall or update? (y/n) " confirm </dev/tty
-            case "$confirm" in
-                [Yy]* )
-                    echo "Updating & reinstalling (auto)..."
-                    uninstall
-                    update "${ZERO_HID_REPO_BRANCH}"
-                    install
-                    echo "Updated & reinstalled HA zero-hid client integration (interactive)."
-                    exit 0
-                    ;;
-                [Nn]* )
-                    echo "Operation cancelled."
-                    exit 0
-                    ;;
-                * )
-                    echo "Please answer y or n."
-                    exit 1
-                    ;;
-            esac
-            ;;
-        3)
-            read -rp "Are you sure you want to uninstall? (y/n) " confirm </dev/tty
-            case "$confirm" in
-                [Yy]* )
-                    echo "Uninstalling..."
-                    uninstall
-                    echo "Uninstalled HA zero-hid client integration (interactive)."
-                    exit 0
-                    ;;
-                [Nn]* )
-                    echo "Operation cancelled."
-                    exit 0
-                    ;;
-                * )
-                    echo "Please answer y or n."
-                    exit 1
-                    ;;
-            esac
-            ;;
-        4)
-            echo "Exiting script."
-            exit 0
-            ;;
-        *)
-            echo "Invalid choice, exiting."
-            exit 1
-            ;;
-    esac
-
+    if [ -z "${ENABLE_AUTO_MODE}" ]; then
+        echo "Please choose an option:"
+        echo "  1) Update & reinstall (auto)"
+        echo "  2) Update & reinstall (interactive)"
+        echo "  3) Uninstall (interactive)"
+        echo "  4) Exit"
+        read -rp "Enter choice [1-4]: " choice </dev/tty
+        
+        case "$choice" in
+            1)
+                echo "Updating & reinstalling (auto)"
+                uninstall "NON_INTERACTIVE"
+                update "${ZERO_HID_REPO_BRANCH}"
+                install
+                echo "Updated & reinstalled HA zero-hid client integration (auto)."
+                exit 0
+                ;;
+            2)
+                read -rp "Are you sure you want to reinstall or update? (y/n) " confirm </dev/tty
+                case "$confirm" in
+                    [Yy]* )
+                        echo "Updating & reinstalling (auto)..."
+                        uninstall
+                        update "${ZERO_HID_REPO_BRANCH}"
+                        install
+                        echo "Updated & reinstalled HA zero-hid client integration (interactive)."
+                        exit 0
+                        ;;
+                    [Nn]* )
+                        echo "Operation cancelled."
+                        exit 0
+                        ;;
+                    * )
+                        echo "Please answer y or n."
+                        exit 1
+                        ;;
+                esac
+                ;;
+            3)
+                read -rp "Are you sure you want to uninstall? (y/n) " confirm </dev/tty
+                case "$confirm" in
+                    [Yy]* )
+                        echo "Uninstalling..."
+                        uninstall
+                        echo "Uninstalled HA zero-hid client integration (interactive)."
+                        exit 0
+                        ;;
+                    [Nn]* )
+                        echo "Operation cancelled."
+                        exit 0
+                        ;;
+                    * )
+                        echo "Please answer y or n."
+                        exit 1
+                        ;;
+                esac
+                ;;
+            4)
+                echo "Exiting script."
+                exit 0
+                ;;
+            *)
+                echo "Invalid choice, exiting."
+                exit 1
+                ;;
+        esac
+    else
+        echo "Interactive mode disabled"
+        echo "Updating & reinstalling (auto)"
+        uninstall "NON_INTERACTIVE"
+        update "${ZERO_HID_REPO_BRANCH}"
+        install
+        echo "Updated & reinstalled HA zero-hid client integration (auto)."
+        exit 0
+    fi
 else
+    echo "First install of HA zero-hid client integration"
+    echo "Installing (interactive)..."
     install
-    echo "Installed HA zero-hid client integration"
+    echo "Installed HA zero-hid client integration (interactive)."
 fi
