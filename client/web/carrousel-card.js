@@ -522,7 +522,7 @@ class CarrouselCard extends HTMLElement {
     if (cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContentLabel.classList.add('half');
 
     // 3. attach and position: image into cell content top, label into cell content bottom
-    if (cellDisplayMode === this.constructor._CELL_MODE_IMAGE || cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentLabel);
+    if (cellDisplayMode === this.constructor._CELL_MODE_IMAGE || cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentImage);
     if (cellDisplayMode === this.constructor._CELL_MODE_LABEL || cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentLabel);
   }
 
