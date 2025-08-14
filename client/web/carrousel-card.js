@@ -125,6 +125,7 @@ class CarrouselCard extends HTMLElement {
 
   // Per cell config helper
   getCellConfigOrDefault(cellConfig, property) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getCellConfigOrDefault(cellConfig, property):", cellConfig, property));
     const cellProperty = `cell_${property}`;
     return cellConfig?.[cellProperty] || this._layoutManager.getFromConfigOrDefaultConfig(property);
   }
