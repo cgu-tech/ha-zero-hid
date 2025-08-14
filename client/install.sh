@@ -414,7 +414,7 @@ if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
     echo "  2) Update & reinstall (interactive)"
     echo "  3) Uninstall (interactive)"
     echo "  4) Exit"
-    read -rp "Enter choice [1-3]: " choice </dev/tty
+    read -rp "Enter choice [1-4]: " choice </dev/tty
 
     case "$choice" in
         1)
