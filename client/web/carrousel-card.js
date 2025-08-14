@@ -162,9 +162,9 @@ class CarrouselCard extends HTMLElement {
       .carrousel-container {
         display: flex;
         width: 100%;
-        overflow-x: auto; /* instead of hidden */
+        overflow-x: auto;
         white-space: nowrap;
-        scroll-behavior: smooth; /* Optional */
+        scroll-behavior: smooth;
       }
       .carrousel-cell {
         display: inline-flex;
@@ -201,37 +201,34 @@ class CarrouselCard extends HTMLElement {
         height: 90%;
         padding: 4px;
       }
+      .carrousel-cell-content-part {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+      }
+      .carrousel-cell-content-part.img.half {
+        height: 70%;
+      }
+      .carrousel-cell-content-part.label.half {
+        height: 30%;
+      }
+      .carrousel-cell-content-part.full {
+        height: 100%;
+      }
       .carrousel-img {
         width: 100%;
         height: 100%;
         object-fit: contain;
       }
-      .carrousel-cell .carrousel-content-wrapper {
-        width: 100%;
-        height: 100%;
-        box-sizing: border-box;
-      }
-      .carrousel-cell .carrousel-content-wrapper.img-half {
-        height: 70%;
-      }
-      .carrousel-cell .carrousel-content-wrapper.img-full {
-        height: 100%;
-      }
       .carrousel-label {
         display: flex;
-        justify-content: center; /* Horizontal centering */
-        align-items: center;     /* Vertical centering */
+        justify-content: center;
+        align-items: center;
         width: 100%;
         height: 100%;
         white-space: normal;       /* allows wrapping */
         word-wrap: break-word;     /* allows breaking long words */
         overflow-wrap: break-word; /* better support for word breaking */
-      }
-      .carrousel-label.label-half {
-        height: 30%;
-      }
-      .carrousel-label.label-full {
-        height: 100%;
       }
     `;
   }
@@ -392,14 +389,14 @@ class CarrouselCard extends HTMLElement {
 
     // When mode is not "image" or "mixed", do not create cell content image
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
-    if (cellDisplayMode !== "image" && cellDisplayMode !== "mixed") return null;
+    if (cellDisplayMode !== this.constructor._CELL_MODE_IMAGE && cellDisplayMode !== this.constructor._CELL_MODE_MIXED) return null;
 
     // Instanciates a content wrapper to avoid chromium-based browser bugs
     // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
     const cellContentImage = document.createElement("div");
-    cellContentImage.className = "carrousel-content-wrapper";
-    if (cellDisplayMode === "image") cellContentImage.classList.add('img-full');
-    if (cellDisplayMode === "mixed") cellContentImage.classList.add('img-half');
+    cellContentImage.className = "carrousel-cell-content-part img";
+    if (cellDisplayMode === this.constructor._CELL_MODE_IMAGE) cellContentImage.classList.add('full');
+    if (cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContentImage.classList.add('half');
 
     // Instanciates image (but load its content later)
     const img = document.createElement("img");
@@ -466,11 +463,10 @@ class CarrouselCard extends HTMLElement {
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
 
     // Instanciates a content wrapper for layout consistency, relatives to image layout circument of chromium-based browser bugs
-    // (see doCellContentImage for details about this specificity)
     const cellContentLabel = document.createElement("div");
-    cellContentLabel.className = "carrousel-content-wrapper";
-    if (cellDisplayMode === "label") cellContentLabel.classList.add('label-full');
-    if (cellDisplayMode === "mixed") cellContentLabel.classList.add('label-half');
+    cellContentLabel.className = "carrousel-cell-content-part label";
+    if (cellDisplayMode === this.constructor._CELL_MODE_LABEL) cellContentLabel.classList.add('full');
+    if (cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContentLabel.classList.add('half');
 
     // Instanciates a new label
     const label = document.createElement("div");
@@ -497,7 +493,7 @@ class CarrouselCard extends HTMLElement {
 
     // When display mode requires it explicitely, attach label to cell content
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
-    if (cellDisplayMode === "label" && cellDisplayMode === "mixed") cellContent.appendChild(cellContentLabel);
+    if (cellDisplayMode === this.constructor._CELL_MODE_LABEL && cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentLabel);
   }
 
   doQueryCellContentLabelElements() {
@@ -514,7 +510,7 @@ class CarrouselCard extends HTMLElement {
       haptic: true,
       log_level: "warn",
       log_pushback: false,
-      cell_display_mode: "mixed",
+      cell_display_mode: this.constructor._CELL_MODE_MIXED,
       cell_background: "transparent",
       cell_width: 60,
       cell_height: 60,

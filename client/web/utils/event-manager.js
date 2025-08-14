@@ -25,6 +25,7 @@ export class EventManager {
     this._eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
     this._eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
     this._eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
+    this._eventsMap.set("EVT_ERROR",            ["error"]);
 
     // Reversed mapping for each "real" event names with its "abstract" event name counterpart
     // ex: "pointerdown" --> "EVT_POINTER_DOWN"
@@ -155,6 +156,7 @@ export class EventManager {
   addPointerClickListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
   addPointerDblClickListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
   addPointerContextmenuListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
+  addErrorListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_ERROR" ); }
 
   // Add the available event listener using 
   // - supported event first (when available) 
@@ -182,30 +184,49 @@ export class EventManager {
     return listener;
   }
 
-  // Manages the callback to handle erratic touch devices events
+  // Manages events callbacks (for example to handle erratic touch devices events)
   onManagedCallback(target, callback, evt) {
     if (evt?.pointerType === 'touch') {
-      // handle touch-specific logic before delegating to unmanaged callback
-
-      const abstractEventName = this._reversedEventsMap.get(evt.type);
-      const isRealPointerEvent = !!evt.pointerId;
-      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Touch device managed event ${abstractEventName} (real event ${evt.type}, ${isRealPointerEvent ? 'is' : 'is not'} real pointer event)`));
-
-      // Handle proper element leave on touch devices
-      if (abstractEventName === "EVT_POINTER_MOVE" && isRealPointerEvent) {
-        const isPointerCapturedByTarget = target.hasPointerCapture(evt.pointerId);
-        if (isPointerCapturedByTarget) {
-          const hoveredTarget = document.elementFromPoint(evt.clientX, evt.clientY);
-          if (target !== hoveredTarget) {
-            if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Releasing touch device pointer capture for managed event ${abstractEventName}: event target differs from hovered target (real event ${evt.type})`));
-            target.releasePointerCapture(evt.pointerId);
-            return; // Do not call unmanaged callback
-          }
-        }
-      }
+      if (!this.onManagedTouchCallback(target, callback, evt)) return; // Do not delegate to unmanaged callback
     }
     // delegate to unmanaged callback
     callback(evt);
+  }
+
+  onManagedTouchCallback(target, callback, evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug('onManagedTouchCallback(target, callback, evt):', target, callback, evt));
+
+    // Decides whether or not to delegate according to abstractEventName
+    if (this.isAbstractEvent(evt, "EVT_POINTER_MOVE") && this.isPointerCapturedByTarget(evt, target) && !this.isPointerHoveringTarget(evt, target)) {
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Managed EVT_POINTER_MOVE (real: ${evt.type}): releasing pointer capture and suppressing real event (cause: event target captures a pointer hovering another target)`));
+      this.releasePointerFromTarget(evt, target);
+      return false; // Prevent delegation to unmanaged callback
+    }
+    return true;
+  }
+
+  isAbstractEvent(evt, abstractEventName) {
+    return this._reversedEventsMap.get(evt.type) === abstractEventName;
+  }
+  
+  isPointerEvent(evt) {
+    return !!evt.pointerId;
+  }
+
+  isPointerCapturedByTarget(evt, target) {
+    return this.isPointerEvent(evt) && target.hasPointerCapture(evt.pointerId);
+  }
+
+  releasePointerFromTarget(evt, target) {
+    target.releasePointerCapture(evt.pointerId);
+  }
+
+  getTargetHoveredByPointer(evt) {
+    return document.elementFromPoint(evt.clientX, evt.clientY);
+  }
+
+  isPointerHoveringTarget(evt, target) {
+    return this.getTargetHoveredByPointer(evt) === target;
   }
 
   removePointerDownListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
@@ -219,6 +240,7 @@ export class EventManager {
   removePointerClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
   removePointerDblClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
   removePointerContextmenuListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
+  removeErrorListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_ERROR" ); }
 
   // Remove the available event listener using 
   // - supported event first (when available) 
