@@ -483,10 +483,10 @@ class AndroidRemoteCard extends HTMLElement {
   
   doUpdateChildrenConfig() {
     // Update children cards configs
-    const children = this._elements;
-    children?.keyboard.setConfig(this.getKeyboardConfig());
-    children?.trackpad.setConfig(this.getTrackpadConfig());
-    children?.carrousel.setConfig(this.getActivitiesConfig());
+    const children = this._elements.children;
+    children.keyboard.setConfig(this.getKeyboardConfig());
+    children.trackpad.setConfig(this.getTrackpadConfig());
+    children.carrousel.setConfig(this.getActivitiesConfig());
   }
 
   doUpdateHass() {
@@ -534,10 +534,10 @@ class AndroidRemoteCard extends HTMLElement {
 
   doUpdateChildrenHass() {
     // Update children cards configs
-    const children = this._elements;
-    children?.keyboard.hass = this._hass;
-    children?.trackpad.hass = this._hass;
-    children?.carrousel.hass = this._hass;
+    const children = this._elements.children;
+    children.keyboard.hass = this._hass;
+    children.trackpad.hass = this._hass;
+    children.carrousel.hass = this._hass;
   }
 
   doUpdateLayout() {
