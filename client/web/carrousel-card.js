@@ -332,28 +332,87 @@ class CarrouselCard extends HTMLElement {
   }
 
   doListenCell(cell) {
-    this._eventManager.addPointerClickListener(cell, this.onCellPointerClick.bind(this));
+    // Visual events
+    this._eventManager.addPointerEnterListener(cell, this.onCellPointerEnter.bind(this));
+    this._eventManager.addPointerLeaveListener(cell, this.onCellPointerLeave.bind(this));
+    this._eventManager.addPointerCancelListener(cell, this.onCellPointerCancel.bind(this));
+
+    // Action and visual events
+    this._eventManager.addPointerDownListener(cell, this.onCellPointerDown.bind(this));
+    this._eventManager.addPointerUpListener(cell, this.onCellPointerUp.bind(this));
   }
 
-  onCellPointerClick(evt) {
+  onCellPointerEnter(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onCellPointerClick(evt):", evt));
-    const cell = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doCellPointerClick(cell);
+    const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    cell.classList.add("active");
   }
 
-  doCellPointerClick(cell) {
+  onCellPointerLeave(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    cell.classList.remove("active");
+  }
+
+  onCellPointerCancel(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    cell.classList.remove("active");
+  }
+
+  onCellPointerDown(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onPopinButtonPointerDown(evt):", evt));
+    const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
+
+    this.doCellPress(cell);
+  }
+
+  onCellPointerUp(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onCellPointerUp(evt):", evt));
+    const cell = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+
+    this.doCellRelease(cell);
+  }
+
+  doCellPress(cell) {
+    cell.classList.add("active");
+
+    // Make this cell press the reference cell to prevent unwanted releases trigger from other cells in the future
+    this._referenceCell = cell;
+
+    this._eventManager.hapticFeedback();
+  }
+
+  doCellRelease(cell) {
+    cell.classList.remove("active");
+
+    // Retrieve cell data
     const cellConfig = this._layoutManager.getElementData(cell);
     if (!cellConfig) return;
 
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Cell config to execute:", cellConfig));
+    const cellName = cellConfig["cellName"];
 
-    if (!cellConfig.action) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Cell config ${cellConfig} release aborted due to missing action`));
-    } else {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Triggering action for cell:", cell, cellConfig.action));
-      this._eventManager.triggerHaosTapAction(cell, cellConfig.action);
+    // Suppress this cell release when reference pointer down event was originated from a different cell
+    const referenceName = this._layoutManager.getElementData(this._referenceCell)["cellName"];
+    if (referenceName !== cellName) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cell ${cellName} release aborted due to existing reference cell ${referenceName}`));
+      return;
     }
+
+    // Suppress this cell release when missing cell action from cell config
+    if (!cellConfig.action) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Cell ${cellName} release aborted due to missing action in config ${cellConfig} `));
+      return;
+    }
+    
+    // Execute cell action
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing cell ${cellName} action ${cellConfig.action}`));
+    this._eventManager.triggerHaosTapAction(cell, cellConfig.action);
 
     this._eventManager.hapticFeedback();
   }
