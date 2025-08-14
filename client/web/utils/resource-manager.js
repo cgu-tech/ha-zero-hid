@@ -1,3 +1,4 @@
+import { Globals } from './utils/globals.js';
 import { Logger } from './logger.js';
 
 export class ResourceManager {
