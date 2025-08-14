@@ -34,6 +34,7 @@ class AndroidRemoteCard extends HTMLElement {
   _pressedModifiers = new Set();
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
+  _threeStatesToggleState;
 
   constructor() {
     super();
@@ -93,6 +94,13 @@ class AndroidRemoteCard extends HTMLElement {
 
   getActivities() {
     return this._elements.children.activities;
+  }
+
+  getFoldableChild() {
+    return 
+      this._threeStatesToggleState === 0 ? this.getKeyboard() : 
+      (this._threeStatesToggleState === 1 ? this.getActivities() : 
+      (this._threeStatesToggleState === 2 ? this.getTrackpad() : null));
   }
 
   createChildren() {
@@ -953,42 +961,41 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   setupThreeStateFoldables() {
-    const foldableKeyboardName = "android-keyboard-card";
-    const foldableActivitiesName = "carrousel-card";
-    const foldableMouseName = "trackpad-card";
-    
-    let foldableKeyboard;
-    let foldableActivites;
-    let foldableMouse;
+    // Reset toggle state
+    this._threeStatesToggleState = 1;
 
-    let state = 1;
-
-    const options = this._elements.threeStatesToggleOptions;
-    options.forEach((option, index) => {
-      this.eventManager.addPointerClickListener(option, () => {
-        if (state !== index) {
-          state = index;
-          this.updateFoldableUI();
-          this.eventManager.hapticFeedback();
-        }
-      });
-    });
+    for (const [optionIndex, opt] of (this._elements.threeStatesToggleOptions ?? []).entries()) {
+      this._eventManager.addPointerClickListener(opt, this.onThreeStateToggleOptionPointerClick.bind(this, optionIndex));
+    }
 
     this.updateFoldableUI();
   }
 
-  _threeStatesToggleStates = 
-  _threeStatesToggleState;
+  onThreeStateToggleOptionPointerClick(optionIndex, evt) {
+    
+    // Clicked option is not currently selected
+    if (this._threeStatesToggleState !== optionIndex) {
+      
+      // Select the clicked option
+      this._threeStatesToggleState = optionIndex;
+
+      
+      this.updateFoldableUI();
+
+      
+      this._layoutManager.hapticFeedback();
+    }
+  }
 
   updateFoldableUI() {
 
     // Move indicator over selected state
     const leftPercentages = ["0%", "33.33%", "66.66%"];
-    this._elements.threeStatesToggleIndicator.style.left = leftPercentages[this._selectedFoldableState];
+    this._elements.threeStatesToggleIndicator.style.left = leftPercentages[this._threeStatesToggleState];
 
     // Make active the selected option, make inactive the two other options
     const options = this._elements.threeStatesToggleOptions;
-    options.forEach((opt, idx) => opt.classList.toggle("active", idx === state));
+    options.forEach((opt, idx) => opt.classList.toggle("active", idx === this._threeStatesToggleState));
 
     this.updateFoldable();
   }
@@ -997,47 +1004,15 @@ class AndroidRemoteCard extends HTMLElement {
     const foldable = this._elements.threeStatesToggleFoldable;
     foldable.innerHTML = "";  
     foldable.style.display = "block";
-    let foldableContentName;
-    if (state === 0) {
-      foldableContentName = foldableKeyboardName;
-    } else if (state === 1) {
-      foldableContentName = foldableActivitiesName;
-    } else if (state === 2) {
-      foldableContentName = foldableMouseName;
-    }
 
-    if (foldableContentName) {
-      customElements.whenDefined(foldableContentName).then(() => {
-        let foldableContent;
-        let foldableContentConfig;
-        if (foldableContentName === foldableKeyboardName) {
-          if (!foldableKeyboard) foldableKeyboard = document.createElement(foldableKeyboardName); // Safe init of imported component
-          foldableContent = foldableKeyboard;
-          foldableContentConfig = this.keyboardConfig;
-        } else if (foldableContentName === foldableActivitiesName) {
-          if (!foldableActivites) foldableActivites = document.createElement(foldableActivitiesName); // Safe init of imported component
-          foldableContent = foldableActivites;
-          foldableContentConfig = this.activitiesConfig;
-        } else if (foldableContentName === foldableMouseName) {
-          if (!foldableMouse) foldableMouse = document.createElement(foldableMouseName); // Safe init of imported component
-          foldableContent = foldableMouse;
-          foldableContentConfig = this.mouseConfig;
-        } else {
-          throw new Error(`Unkwnon foldable component ${foldableContentName}`);
-        }
-        foldableContent.setAttribute("style", "width: 100%;");
-        foldableContent.setConfig(foldableContentConfig);
-        foldableContent.hass = this._hass;
-        foldable.appendChild(foldableContent);
+    const foldableContent = this.getFoldableChild();
+    foldableContent.setAttribute("style", "width: 100%;");
+    foldableContent.setConfig(foldableContentConfig);
+    foldableContent.hass = this._hass;
+    foldable.appendChild(foldableContent);
 
-        // Automatically scroll-down to the added foldable (if autoscroll enabled)
-        if (this.autoScroll) {
-          setTimeout(() => {
-            foldable.scrollIntoView({ behavior: 'smooth' });
-          }, 0);
-        }
-      });
-    }
+    // Automatically scroll-down to the added foldable
+    this._layoutManager.autoScrollTo(foldable);
   }
 
   createSpanClass(flex) {
@@ -1132,7 +1107,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   doKeyRelease(btn) {
@@ -1166,7 +1141,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   executeButtonOverride(btn) {

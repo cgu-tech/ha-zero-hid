@@ -389,7 +389,7 @@ class CarrouselCard extends HTMLElement {
     // Make this cell press the reference cell to prevent unwanted releases trigger from other cells in the future
     this._referenceCell = cell;
 
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   doCellRelease(cell) {
@@ -418,7 +418,7 @@ class CarrouselCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing cell ${cellName} action ${cellConfig.action}`));
     this._eventManager.triggerHaosTapAction(cell, cellConfig.action);
 
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   doCellContent(cellConfig, defaultCellConfig) {

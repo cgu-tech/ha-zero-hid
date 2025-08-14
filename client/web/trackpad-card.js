@@ -971,19 +971,19 @@ class TrackpadCard extends HTMLElement {
     switch (scrollZone) {
       case "top":
         this.sendMouseScroll(0, 1);
-        this._eventManager.hapticFeedbackShort();
+        this._layoutManager.hapticFeedbackShort();
         break;
       case "bottom":
         this.sendMouseScroll(0, -1);
-        this._eventManager.hapticFeedbackShort();
+        this._layoutManager.hapticFeedbackShort();
         break;
       case "left":
         this.sendMouseScroll(-1, 0);
-        this._eventManager.hapticFeedbackShort();
+        this._layoutManager.hapticFeedbackShort();
         break;
       case "right":
         this.sendMouseScroll(1, 0);
-        this._eventManager.hapticFeedbackShort();
+        this._layoutManager.hapticFeedbackShort();
         break;
     }
   }
@@ -1040,7 +1040,7 @@ class TrackpadCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerLeftClick(evt):", evt));
     this.sendMouseClickLeft();
     this.sendMouseClickRelease();
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   handleSinglePointerLeftDblClick(evt) {
@@ -1049,7 +1049,7 @@ class TrackpadCard extends HTMLElement {
     this.sendMouseClickRelease();
     this.sendMouseClickLeft();
     this.sendMouseClickRelease();
-    this._eventManager.hapticFeedbackLong();
+    this._layoutManager.hapticFeedbackLong();
   }
 
   handleSinglePointerMove(evt) {
@@ -1075,7 +1075,7 @@ class TrackpadCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Delta detected for one pointer:${evt.pointerId}`, dx, dy));
     if (dx !== 0 || dy !== 0) {
       this.sendMouseMove(dx, dy);
-      this._eventManager.hapticFeedbackShort();
+      this._layoutManager.hapticFeedbackShort();
     }
     return updateStartPoint;
   }

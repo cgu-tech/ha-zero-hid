@@ -45,10 +45,6 @@ export class EventManager {
     return this._origin?._hass;
   }
 
-  getHaptic() {
-    return !!this._origin?._config?.['haptic'];
-  }
-
   // Get elapsed time between a start event and an end event (in milliseconds)
   getElapsedTime(evtStart, evtEnd) {
     return evtEnd.timeStamp - evtStart.timeStamp;
@@ -321,29 +317,4 @@ export class EventManager {
   isEventSupported(target, eventName) {
     return (typeof target[`on${eventName}`] === "function" || `on${eventName}` in target);
   }
-
-  // vibrate the device like a long haptic feedback (ex: button long-click)
-  hapticFeedbackLong() {
-    if (this.getHaptic()) this.vibrateDevice(20);
-  }
-
-  // vibrate the device like a standard haptic feedback (ex: button click)
-  hapticFeedback() {
-    if (this.getHaptic()) this.vibrateDevice(10);
-  }
-
-  // vibrate the device like a short haptic feedback (ex: mouse move)
-  hapticFeedbackShort() {
-    if (this.getHaptic()) this.vibrateDevice(5);
-  }
-
-  // vibrate the device during specified duration (in milliseconds)
-  vibrateDevice(duration) {
-    if (navigator.vibrate) {
-      navigator.vibrate(duration);
-    } else {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Vibration not supported on this device.'));
-    }
-  }
-
 }

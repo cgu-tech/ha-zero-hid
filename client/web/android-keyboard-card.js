@@ -998,7 +998,7 @@ class AndroidKeyboardCard extends HTMLElement {
     const btn = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
     btn.classList.add("active");
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   onPopinButtonPointerUp(evt) {
@@ -1085,7 +1085,7 @@ class AndroidKeyboardCard extends HTMLElement {
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   doKeyRelease(evt, btn) {
@@ -1150,7 +1150,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release done`));
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   doKeyCancel(evt, btn) {
@@ -1202,7 +1202,7 @@ class AndroidKeyboardCard extends HTMLElement {
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key code ${code} release done`));
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   executeButtonOverride(btn) {

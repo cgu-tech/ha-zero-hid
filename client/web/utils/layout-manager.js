@@ -43,6 +43,14 @@ export class LayoutManager {
     return this.getFromConfig(configName) || this.getFromDefaultConfig(configName);
   }
 
+  getHaptic() {
+    return this.getFromConfigOrDefaultConfig('haptic');
+  }
+  
+  getAutoScroll() {
+    return this.getFromConfigOrDefaultConfig('auto_scroll');
+  }
+
   isTouchDevice() {
     return this._isTouchDevice;
   }
@@ -135,6 +143,39 @@ export class LayoutManager {
         if (accept?.(key, value, 'user')) {
           elt._keyData[key] = value;
         }
+      }
+    }
+  }
+
+  autoScrollTo(target) {
+    if (this.getHaptic()) {
+    setTimeout(() => {
+        target?.scrollIntoView({ behavior: 'smooth' }); 
+    }, 0);
+  }
+
+  // vibrate the device like a long haptic feedback (ex: button long-click)
+  hapticFeedbackLong() {
+    this.vibrateDevice(20);
+  }
+
+  // vibrate the device like a standard haptic feedback (ex: button click)
+  hapticFeedback() {
+    this.vibrateDevice(10);
+  }
+
+  // vibrate the device like a short haptic feedback (ex: mouse move)
+  hapticFeedbackShort() {
+    this.vibrateDevice(5);
+  }
+
+  // vibrate the device during specified duration (in milliseconds)
+  vibrateDevice(duration) {
+    if (this.getHaptic()) {
+      if (navigator.vibrate) {
+        navigator.vibrate(duration);
+      } else {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Vibration not supported on this device.'));
       }
     }
   }

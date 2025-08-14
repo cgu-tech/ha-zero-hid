@@ -428,7 +428,7 @@ class ArrowPadCard extends HTMLElement {
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   doKeyRelease(btn) {
@@ -463,7 +463,7 @@ class ArrowPadCard extends HTMLElement {
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
-    this._eventManager.hapticFeedback();
+    this._layoutManager.hapticFeedback();
   }
 
   executeButtonOverride(btn) {
