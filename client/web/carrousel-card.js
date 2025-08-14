@@ -393,7 +393,10 @@ class CarrouselCard extends HTMLElement {
 
     // When mode is not "image" or "mixed", do not create cell content image
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
-    if (cellDisplayMode !== this.constructor._CELL_MODE_IMAGE && cellDisplayMode !== this.constructor._CELL_MODE_MIXED) return null;
+    if (cellDisplayMode !== this.constructor._CELL_MODE_IMAGE && cellDisplayMode !== this.constructor._CELL_MODE_MIXED) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(cellConfig, defaultCellConfig) + cellDisplayMode: skipping due to cellDisplayMode`, cellConfig, defaultCellConfig, ${cellDisplayMode}));
+      return null;
+    }
 
     // Instanciates a content wrapper to avoid chromium-based browser bugs
     // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
@@ -499,7 +502,7 @@ class CarrouselCard extends HTMLElement {
 
     // When display mode requires it explicitely, attach label to cell content
     const cellDisplayMode = this.getCellDisplayMode(cellConfig);
-    if (cellDisplayMode === this.constructor._CELL_MODE_LABEL && cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentLabel);
+    if (cellDisplayMode === this.constructor._CELL_MODE_LABEL || cellDisplayMode === this.constructor._CELL_MODE_MIXED) cellContent.appendChild(cellContentLabel);
   }
 
   doQueryCellContentLabelElements() {
