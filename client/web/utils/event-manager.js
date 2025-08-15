@@ -4,6 +4,9 @@ import { Logger } from './logger.js';
 // Define EventManager helper class
 export class EventManager {
 
+  // Constants
+  _listenerKeys = ['target', 'callback', 'options', 'eventName', 'managedCallback'];
+
   _origin;
   _eventsMap = new Map();
   _reversedEventsMap = new Map();
@@ -12,7 +15,7 @@ export class EventManager {
   constructor(origin) {
     this._origin = origin;
 
-    // Mapping for "abstract" event names with their "real" event names counterparts 
+    // Mapping for "managed" event names with their "real" event names counterparts 
     // that might be supported by device - or not (by preference order)
     this._eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
     this._eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
@@ -28,11 +31,11 @@ export class EventManager {
     this._eventsMap.set("EVT_LOAD",             ["load"]);
     this._eventsMap.set("EVT_ERROR",            ["error"]);
 
-    // Reversed mapping for each "real" event names with its "abstract" event name counterpart
+    // Reversed mapping for each "real" event names with its "managed" event name counterpart
     // ex: "pointerdown" --> "EVT_POINTER_DOWN"
-    for (const [abstractEventName, eventNames] of this._eventsMap.entries()) {
+    for (const [managedEventName, eventNames] of this._eventsMap.entries()) {
       for (const eventName of eventNames) {
-        this._reversedEventsMap.set(eventName, abstractEventName);
+        this._reversedEventsMap.set(eventName, managedEventName);
       }
     }
   }
@@ -158,8 +161,8 @@ export class EventManager {
   // Add the available event listener using 
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
-  addAvailableEventListener(target, callback, options, events) {
-    const eventName = this.getSupportedEventListener(target, events);
+  addAvailableEventListener(target, callback, options, managedEventName) {
+    const eventName = this.getSupportedEventListener(target, managedEventName);
     if (eventName) {
       return this.addGivenEventListener(target, callback, options, eventName);
     }
@@ -168,7 +171,7 @@ export class EventManager {
 
   // Add the specified event listener
   addGivenEventListener(target, callback, options, eventName) {
-    const listener = { "eventName": eventName, "managedCallback": this.onManagedCallback.bind(this, target, callback), "callback": callback, "options": options };
+    const listener = { "target": target, "callback": callback, "options": options, "eventName": eventName, "managedCallback": this.onManagedCallback.bind(this, target, callback) };
     if (this.isTargetListenable(target)) {
       if (options) {
         if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding event listener ${eventName} on target with options:`, target, options));
@@ -193,8 +196,8 @@ export class EventManager {
   onManagedTouchCallback(target, callback, evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug('onManagedTouchCallback(target, callback, evt):', target, callback, evt));
 
-    // Decides whether or not to delegate according to abstractEventName
-    if (this.isAbstractEvent(evt, "EVT_POINTER_MOVE") && this.isPointerCapturedByTarget(evt, target) && !this.isPointerHoveringTarget(evt, target)) {
+    // Decides whether or not to delegate according to managedEventName
+    if (this.isBoundToManagedEvent(evt, "EVT_POINTER_MOVE") && this.isPointerCapturedByTarget(evt, target) && !this.isPointerHoveringTarget(evt, target)) {
       if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Managed EVT_POINTER_MOVE (real: ${evt.type}): releasing pointer capture and suppressing real event (cause: event target captures a pointer hovering another target)`));
       this.releasePointerFromTarget(evt, target);
       return false; // Prevent delegation to unmanaged callback
@@ -202,8 +205,8 @@ export class EventManager {
     return true;
   }
 
-  isAbstractEvent(evt, abstractEventName) {
-    return this._reversedEventsMap.get(evt.type) === abstractEventName;
+  isBoundToManagedEvent(evt, managedEventName) {
+    return this._reversedEventsMap.get(evt.type) === managedEventName;
   }
   
   isPointerEvent(evt) {
@@ -240,11 +243,36 @@ export class EventManager {
   removeLoadListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_LOAD" ); }
   removeErrorListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_ERROR" ); }
 
+  removeListener(listener) {
+    if (this.isValidListener(listener)) {
+        
+      // Remove managed callback
+      this.removeGivenEventListener(listener["target"], listener["managedCallback"], listener["options"], listener["eventName"]);
+
+      // Destroy references inside listener to allow GC
+      listener["target"] = null;
+      listener["callback"] = null;
+      listener["options"] = null;
+      listener["eventName"] = null;
+      listener["managedCallback"] = null;
+    }
+    return null;
+  }
+  
+  isValidListener(listener) {
+    // Falsy or not an object {} -> not a valid listener
+    if (!Object.prototype.toString.call(listener) === '[object Object]') return false;
+
+    // Check object contains at least all listener keys
+    const objKeys = new Set(Object.keys(obj));;
+    return this._listenerKeys.every(listenerKey => objKeys.has(listenerKey));
+  }
+
   // Remove the available event listener using 
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
-  removeAvailableEventListener(target, callback, options, abstractEventName) {
-    const eventName = this.getSupportedEventListener(target, abstractEventName);
+  removeAvailableEventListener(target, callback, options, managedEventName) {
+    const eventName = this.getSupportedEventListener(target, managedEventName);
     if (eventName) {
       this.removeGivenEventListener(target, callback, options, eventName);
     }
@@ -276,24 +304,24 @@ export class EventManager {
   // Gets the available event listener using 
   // - supported event first (when available) 
   // - then falling back to legacy event (when available)
-  getSupportedEventListener(target, abstractEventName) {
-    if (!abstractEventName) {
-      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Invalid abstractEventName ${abstractEventName}: expected a non-empty string`));
+  getSupportedEventListener(target, managedEventName) {
+    if (!managedEventName) {
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Invalid managedEventName ${managedEventName}: expected a non-empty string`));
       return null;
     }
 
-    // Given abstractEventName, then try to retrieve previously cached prefered concrete js event
-    const preferedEventName = this._preferedEventsNames.get(abstractEventName);
+    // Given managedEventName, then try to retrieve previously cached prefered concrete js event
+    const preferedEventName = this._preferedEventsNames.get(managedEventName);
     if (preferedEventName) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache HIT for event ${abstractEventName}: found cached prefered event ${preferedEventName}`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache HIT for event ${managedEventName}: found cached prefered event ${preferedEventName}`));
       return preferedEventName;
     }
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache MISS for event ${abstractEventName}: no supported prefered event cached`));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache MISS for event ${managedEventName}: no supported prefered event cached`));
 
     // When no prefered concrete js event, then try to retrieve mapped events
-    const mappedEvents = this._eventsMap.get(abstractEventName);
+    const mappedEvents = this._eventsMap.get(managedEventName);
     if (!mappedEvents) {
-      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Unknwon abstractEventName ${abstractEventName}`));
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Unknwon managedEventName ${managedEventName}`));
       return null;
     }
 
@@ -302,15 +330,15 @@ export class EventManager {
       if (this.isEventSupported(target, mappedEvent)) {
 
         // First supported event found: cache-it as prefered concrete js event
-        this._preferedEventsNames.set(abstractEventName, mappedEvent);
+        this._preferedEventsNames.set(managedEventName, mappedEvent);
 
         // Return prefered concrete js event
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache UPDATE for event ${abstractEventName}: set to prefered event ${mappedEvent}`));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cache UPDATE for event ${managedEventName}: set to prefered event ${mappedEvent}`));
         return mappedEvent;
       }
     }
 
-    if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`No concrete js event supported for ${abstractEventName}`));
+    if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`No concrete js event supported for ${managedEventName}`));
     return null;    
   }
 
