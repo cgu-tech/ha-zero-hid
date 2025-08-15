@@ -72,6 +72,9 @@ export class CarrouselCard extends HTMLElement {
   setConfig(config) {
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
+    if (this.getLogger().isDebugEnabled()) this.getLogger().doLogOnError(this.doSetConfig.bind(this)); else this.doSetConfig();
+  }
+  doSetConfig() {
     this.doCheckConfig();
     this.doUpdateConfig();
   }
