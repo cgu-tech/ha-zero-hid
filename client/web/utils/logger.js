@@ -125,10 +125,15 @@ export class Logger {
     let highlightRegExp = null;
     if (highlight) {
       if (!this._highlightRegExpCache.has(highlight)) {
-        highlightRegExp = new RegExp(pattern, flags);
-        this._highlightRegExpCache.set(highlight, new RegExp(pattern, flags));
+        try {
+          highlightRegExp = new RegExp(highlight);
+        } catch (err) {
+          highlightRegExp = null;
+          console.warn(`Invalid log_highlight regex ${highlight}`, err);
+        }
+        this._highlightRegExpCache.set(highlight, highlightRegExp);
       } else {
-        highlightRegExp = regexCache.get(key);
+        highlightRegExp = this._highlightRegExpCache.get(highlight);
       }
     }
     return highlightRegExp;
