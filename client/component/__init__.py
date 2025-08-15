@@ -66,6 +66,7 @@ CONPRESS_SERVICE_SCHEMA = vol.Schema({
 LOG_SERVICE_SCHEMA = vol.Schema({
     vol.Required("level"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("origin"): vol.All(lambda v: v or "", ensure_string_or_empty),
+    vol.Required("logger_id"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("logs"): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
