@@ -98,7 +98,7 @@ export class Logger {
   trace(...args) { this.logUserAgent(); return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
 
   logUserAgent() {
-    if (this.shouldLogUserAgent()) if (this.isTraceEnabled()) console.debug(...this.trace(`User_agent: ${navigator.userAgent}`));
+    if (this.shouldLogUserAgent()) if (this.isTraceEnabled()) console.debug(...this.trace(`User_agent: ${this._userAgentValueTrigger}`));
   }
 
   // Determines whether or not we should log level agent
@@ -106,8 +106,8 @@ export class Logger {
     if (this.isTraceEnabled()) {
       if (this._userAgentLevelTrigger !== this.getLevel()) {
         this._userAgentLevelTrigger = this.getLevel();
-        if (_userAgentValueTrigger !== navigator.userAgent) {
-          _userAgentValueTrigger = navigator.userAgent;
+        if (this._userAgentValueTrigger !== navigator.userAgent) {
+          this._userAgentValueTrigger = navigator.userAgent;
           return true;
         }
       }
