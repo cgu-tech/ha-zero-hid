@@ -97,6 +97,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getFoldableChild() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getFoldableChild() + _threeStatesToggleState:", this._threeStatesToggleState));
     return 
       this._threeStatesToggleState === 0 ? this.getKeyboard() : 
       (this._threeStatesToggleState === 1 ? this.getActivities() : 
