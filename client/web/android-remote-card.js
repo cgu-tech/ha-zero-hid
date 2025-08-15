@@ -62,14 +62,14 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
     this.doCheckConfig();
     this.doUpdateConfig();
-    this.doUpdateChildrenConfig();
+    this.doUpdateFoldablesConfig();
   }
 
   set hass(hass) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
     this.doUpdateHass();
-    this.doUpdateChildrenHass();
+    this.doUpdateFoldablesHass();
   }
 
   getKeyboardConfig() {
@@ -85,15 +85,15 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getKeyboard() {
-    return this._elements.children.keyboard;
+    return this._elements.foldables.keyboard;
   }
 
   getTrackpad() {
-    return this._elements.children.trackpad;
+    return this._elements.foldables.trackpad;
   }
 
   getActivities() {
-    return this._elements.children.activities;
+    return this._elements.foldables.activities;
   }
 
   getFoldableChild() {
@@ -105,11 +105,11 @@ class AndroidRemoteCard extends HTMLElement {
     return null;
   }
 
-  createChildren() {
-    this._elements.children = {};
-    this._elements.children.keyboard = document.createElement("android-keyboard-card");
-    this._elements.children.trackpad = document.createElement("trackpad-card");
-    this._elements.children.activities = document.createElement("carrousel-card");
+  createFoldableContent() {
+    this._elements.foldables = {};
+    this._elements.foldables.keyboard = document.createElement("android-keyboard-card");
+    this._elements.foldables.trackpad = document.createElement("trackpad-card");
+    this._elements.foldables.activities = document.createElement("carrousel-card");
   }
 
   // jobs
@@ -126,7 +126,7 @@ class AndroidRemoteCard extends HTMLElement {
       </div>
     `;
 
-    this.createChildren();
+    this.createFoldableContent();
   }
 
   doStyle() {
@@ -483,12 +483,12 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
   
-  doUpdateChildrenConfig() {
-    // Update children cards configs
-    const children = this._elements.children;
-    children.keyboard.setConfig(this.getKeyboardConfig());
-    children.trackpad.setConfig(this.getTrackpadConfig());
-    children.carrousel.setConfig(this.getActivitiesConfig());
+  doUpdateFoldablesConfig() {
+    // Update foldables cards configs
+    const foldables = this._elements.foldables;
+    foldables.keyboard.setConfig(this.getKeyboardConfig());
+    foldables.trackpad.setConfig(this.getTrackpadConfig());
+    foldables.carrousel.setConfig(this.getActivitiesConfig());
   }
 
   doUpdateHass() {
@@ -534,12 +534,12 @@ class AndroidRemoteCard extends HTMLElement {
     });
   }
 
-  doUpdateChildrenHass() {
-    // Update children cards configs
-    const children = this._elements.children;
-    children.keyboard.hass = this._hass;
-    children.trackpad.hass = this._hass;
-    children.carrousel.hass = this._hass;
+  doUpdateFoldablesHass() {
+    // Update foldables cards configs
+    const foldables = this._elements.foldables;
+    foldables.keyboard.hass = this._hass;
+    foldables.trackpad.hass = this._hass;
+    foldables.carrousel.hass = this._hass;
   }
 
   doUpdateLayout() {
