@@ -6,11 +6,13 @@ export class EventManager {
 
   // Constants
   _listenerKeys = ['target', 'callback', 'options', 'eventName', 'managedCallback'];
+  _defaultContainer = 'default';
 
   _origin;
   _eventsMap = new Map();
   _reversedEventsMap = new Map();
   _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
+  _containers = new Map(); // Registrered listeners for cleanup
 
   constructor(origin) {
     this._origin = origin;
@@ -144,6 +146,10 @@ export class EventManager {
     });
   }
 
+  this.registerListener(this.addGivenEventListener(target, callback, options, eventName), containerName || this._defaultContainer);
+
+
+
   addPointerDownListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
   addPointerEnterListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
   addPointerOverListener(target, callback, options = null) { return this.addAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
@@ -229,19 +235,121 @@ export class EventManager {
     return this.getTargetHoveredByPointer(evt) === target;
   }
 
-  removePointerDownListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
-  removePointerEnterListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
-  removePointerOverListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
-  removePointerMoveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
-  removePointerLeaveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
-  removePointerUpListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
-  removePointerCancelListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
-  removePointerOutListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
-  removePointerClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
-  removePointerDblClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
-  removePointerContextmenuListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
-  removeLoadListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_LOAD" ); }
-  removeErrorListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_ERROR" ); }
+  // Bind a listener to its specified container
+  registerListener(listener, containerName) {
+    if (this.isValidListener(listener)) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("registerListener(listener, containerName)", listener, containerName));
+      
+      // Ensure default container name as fallback
+      const safeContainerName = containerName || this._defaultContainer;
+      if (containerName !== safeContainerName) if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("registerListener(listener, containerName): using default container", listener, containerName, safeContainerName));
+      
+      // Retrieve listener container
+      let container = this._containers.get(safeContainerName);
+      
+      // Init listeners container for the specified id
+      if (!container) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("registerListener(listener, containerName): first registration of containerName", listener, safeContainerName));
+        container = new Set();
+        this._containers.set(safeContainerName, container);
+      }
+
+      // Register container name into the listener
+      listener["containerName"] = safeContainerName;
+
+      // Add listener into the container
+      container.add(listener);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("registerListener(listener, containerName): listener successfully registered", listener, safeContainerName));
+    }
+    // Usefull for chaining
+    return listener;
+  }
+  
+  // Unbind a listener to its specified container
+  unregisterListener(listener) {
+    if (this.isValidListener(listener)) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("unregisterListener(listener)", listener));
+      
+      // Retrieve listener container raw name
+      let containerName = this.listener["containerName"];
+
+      // Worst case: trying to unregister a listener not registered or with corrupted registration
+      if (!containerName) {
+        if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("unregisterListener(listener): missing registration container name (will perform containers lookup)", listener));
+        const containersNames = this.lookForMatchingContainerNames(listener);
+        if (containersNames.length === 0) {
+          if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("unregisterListener(listener): missing registration container name and no matching containers found (cannot unregister)", listener));
+          return;
+        } else if (containersNames.length > 1) {
+          if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("unregisterListener(listener): missing registration container name and multiple matching containers found (cannot unregister)", listener, containersNames));
+          return;
+        }
+        if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info("unregisterListener(listener): missing registration container name, found a single matching container", listener, containersNames));
+        
+        // Update listener container raw name to lookup result
+        containerName = mySet.values().next().value;
+      }
+
+      // Unregister from the container
+      const container = this._containers.get(safeContainerName);
+
+      // Missing container
+      if (!container) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("unregisterListener(listener): missing container, nothing to unregister", listener, containerName));
+        return;
+      }
+
+      // Existing container: remove from container
+      container.delete(listener);
+      
+      // Destroy container name reference inside listener to allow GC
+      listener["containerName"] = null;
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("unregisterListener(listener): listener successfully unregistered from container", listener, containerName));
+    }
+    // Usefull for chaining
+    return listener;
+  }
+  
+  lookForMatchingContainerNames(listener) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('lookForMatchingContainerNames(listener):', listener));
+    const containerNames = new Set();
+    for (const [containerName, container] of this._containers.entries()) {
+      if (container.has(listener)) containerNames.push(containerName);
+    }
+    return containerNames;
+  }
+
+  // Clears all registered listeners
+  clearAllListeners() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`clearAllListeners(): clearing ${this._containers.length} containers`));
+    for (const [containerName, container] of this._containers.entries()) {
+      this.clearListeners(containerName);
+    }
+  }
+
+  // Clears all registered listeners bound to specified listenersContainerId
+  clearListeners(containerName) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("clearListeners(containerName)", containerName));
+    const container = this._containers.get(containerName);
+
+    if (!container) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("clearListeners(containerName): no listeners found for containerName", containerName));
+      return;
+    }
+
+    // Remove all listeners inside the container
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`clearListeners(containerName): removing ${container.length} listeners bound to containerName`, containerName));
+    for (const listener of container) {
+      this.removeListener(listener);
+    }
+
+    // Clear the container from listeners references
+    container.clear();
+
+    // Remove the container from listeners containers
+    this._containers.delete(containerName);
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("clearListeners(containerName): listeners with containerName cleared", containerName));
+  }
 
   removeListener(listener) {
     if (this.isValidListener(listener)) {
@@ -255,9 +363,26 @@ export class EventManager {
       listener["options"] = null;
       listener["eventName"] = null;
       listener["managedCallback"] = null;
+
+      // Conditionnaly destroy option references inside listener to allow GC
+      if (listener["containerName"]) listener["containerName"] = null;
     }
     return null;
   }
+
+  removePointerDownListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DOWN" ); }
+  removePointerEnterListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_ENTER" ); }
+  removePointerOverListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OVER" ); }
+  removePointerMoveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_MOVE" ); }
+  removePointerLeaveListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_LEAVE" ); }
+  removePointerUpListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_UP" ); }
+  removePointerCancelListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CANCEL" ); }
+  removePointerOutListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_OUT" ); }
+  removePointerClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CLICK" ); }
+  removePointerDblClickListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_DBLCLICK" ); }
+  removePointerContextmenuListener(target, callback, options = null) { this.removeAvailableEventListener(target, callback, options, "EVT_POINTER_CTXMENU" ); }
+  removeLoadListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_LOAD" ); }
+  removeErrorListener(target, callback, options = null) { return this.removeAvailableEventListener(target, callback, options, "EVT_ERROR" ); }
   
   isValidListener(listener) {
     // Falsy or not an object {} -> not a valid listener
