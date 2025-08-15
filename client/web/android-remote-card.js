@@ -98,10 +98,11 @@ class AndroidRemoteCard extends HTMLElement {
 
   getFoldableChild() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getFoldableChild() + _threeStatesToggleState:", this._threeStatesToggleState));
-    return 
-      this._threeStatesToggleState === 0 ? this.getKeyboard() : 
-      (this._threeStatesToggleState === 1 ? this.getActivities() : 
-      (this._threeStatesToggleState === 2 ? this.getTrackpad() : null));
+    if (this._threeStatesToggleState === 0) return this.getKeyboard();
+    if (this._threeStatesToggleState === 1) return this.getActivities();
+    if (this._threeStatesToggleState === 2) return this.getTrackpad();
+    if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`getFoldableChild(): invalid _threeStatesToggleState ${this._threeStatesToggleState} (cannot map it to a foldable child)`));
+    return null;
   }
 
   createChildren() {
