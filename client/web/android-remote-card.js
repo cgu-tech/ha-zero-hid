@@ -993,19 +993,23 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateThreeStateToggle() {
+    // Safe guard against missing three-state-toggle (ie. not declared into layout for example)
+    if (!this._elements.threeStatesToggleIndicator) return;
 
     // Move indicator over selected state
     const leftPercentages = ["0%", "33.33%", "66.66%"];
     this._elements.threeStatesToggleIndicator.style.left = leftPercentages[this._threeStatesToggleState];
 
     // Activate visually selected option + de-activate visually the two others
-    const options = this._elements.threeStatesToggleOptions;
     for (const [optionIndex, opt] of (this._elements.threeStatesToggleOptions ?? []).entries()) {
       opt.classList.toggle("active", this._threeStatesToggleState === optionIndex)
     }
   }
 
   doUpdateFoldable() {
+    // Safe guard against missing foldable (ie. not declared into layout for example)
+    if (!this._elements.threeStatesToggleFoldable) return;
+
     // Remove foldable content from DOM (ie. hide it)
     const foldable = this._elements.threeStatesToggleFoldable;
     foldable.innerHTML = "";  
