@@ -267,9 +267,9 @@ export class EventManager {
     return this.getTargetHoveredByPointer(evt) === target;
   }
 
-  isValidListener(listener) {
+  isValidListener(obj) {
     // Falsy or not an object {} -> not a valid listener
-    if (!Object.prototype.toString.call(listener) === '[object Object]') return false;
+    if (!Object.prototype.toString.call(obj) === '[object Object]') return false;
 
     // Check object contains at least all listener keys
     const objKeys = new Set(Object.keys(obj));;
