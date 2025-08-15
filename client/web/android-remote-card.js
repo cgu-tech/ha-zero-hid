@@ -491,7 +491,7 @@ class AndroidRemoteCard extends HTMLElement {
     const foldables = this._elements.foldables;
     foldables.keyboard.setConfig(this.getKeyboardConfig());
     foldables.trackpad.setConfig(this.getTrackpadConfig());
-    foldables.carrousel.setConfig(this.getActivitiesConfig());
+    foldables.activities.setConfig(this.getActivitiesConfig());
   }
 
   doUpdateHass() {
@@ -542,7 +542,7 @@ class AndroidRemoteCard extends HTMLElement {
     const foldables = this._elements.foldables;
     foldables.keyboard.hass = this._hass;
     foldables.trackpad.hass = this._hass;
-    foldables.carrousel.hass = this._hass;
+    foldables.activities.hass = this._hass;
   }
 
   doUpdateLayout() {
