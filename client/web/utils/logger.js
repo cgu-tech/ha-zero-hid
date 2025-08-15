@@ -20,6 +20,7 @@ export class Logger {
   _userAgentLevelTrigger;
   _userAgentValueTrigger;
   _userAgentIsPushbackRequired;
+  _highlightRegExpCache = new Map();
 
   constructor(origin, originName) {
     this._guid = this.constructor.generateUUID();
@@ -34,6 +35,10 @@ export class Logger {
   getLevel() {
     const level = this._origin?._config?.['log_level'] || 'warn';
     return this._levels[level] ?? -1;
+  }
+
+  getHighlight() {
+    return !!this._origin?._config?.['log_highlight'];
   }
 
   getPushback() {
@@ -62,6 +67,29 @@ export class Logger {
   }
 
   getArgs(header, logStyle, ...args) {
+    let useStyle = logStyle;
+    let useArgs = args;
+    
+    // Retrieve highlight regexp when highlight is activated
+    const highlightRegExp = this.getHighlightRegExp();
+    if (highlightRegExp) {
+      
+      // Check if highlight is required due to:
+      // - level
+      // - origin
+      // - guid (should never match as newer guid is created each time)
+      // - args
+      const isHighlightRequired = highlightRegExp.test(header) 
+        || highlightRegExp.test(this._originName) 
+        || highlightRegExp.test(this._guid) 
+        || args.some(arg => highlightRegExp.test(arg));
+      if (isHighlightRequired) {
+
+        // Highlight is required: replace current style with highlight style and prepend [HIGH]
+        useStyle = this.getHighlightStyle();
+        useArgs = ["[HIGH]", ...args];
+      }
+    }
 
     // Push logs to backend when needed (and when possible)
     const hass = this.getHass();
@@ -71,8 +99,8 @@ export class Logger {
       const limit = this.getPushbackLimit();
       const appliedLimit = limit > 0 ? limit : this._pushbackLimit;
 
-      // Serialize and limit serialized args before pushing to HA backend
-      const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.truncateArg(this.constructor.safeSerialize(arg), appliedLimit)) : [];
+      // Serialize and limit serialized useArgs before pushing to HA backend
+      const serializedArgs = (useArgs && useArgs.length && useArgs.length > 0) ? useArgs.map(arg => this.truncateArg(this.constructor.safeSerialize(arg), appliedLimit)) : [];
       
       // Call to HA backend service for custom log pushback
       if (serializedArgs.length > 0) {
@@ -85,11 +113,29 @@ export class Logger {
       }
     }
 
-    // Format args for frontend logs
-    if (args && args.length && args.length > 0) {
-      return [`%c[${header}][${this._originName}][${this._guid}]`, logStyle, ...args];
+    // Format useArgs for frontend logs
+    if (useArgs && useArgs.length && useArgs.length > 0) {
+      return [`%c[${header}][${this._originName}][${this._guid}]`, useStyle, ...useArgs];
     }
-    return [`%c[${header}][${this._originName}][${this._guid}]`, logStyle];
+    return [`%c[${header}][${this._originName}][${this._guid}]`, useStyle];
+  }
+
+  getHighlightRegExp() {
+    const highlight = this.getHighlight();
+    let highlightRegExp = null;
+    if (highlight) {
+      if (!this._highlightRegExpCache.has(highlight)) {
+        highlightRegExp = new RegExp(pattern, flags);
+        this._highlightRegExpCache.set(highlight, new RegExp(pattern, flags));
+      } else {
+        highlightRegExp = regexCache.get(key);
+      }
+    }
+    return highlightRegExp;
+  }
+
+  getHighlightStyle() {
+    return 'background: #c589e0; color: black; font-weight: bold;';
   }
 
   error(...args) { this.logUserAgent(); return this._error(...args); }

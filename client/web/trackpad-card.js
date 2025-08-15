@@ -90,6 +90,18 @@ export class TrackpadCard extends HTMLElement {
     this.doUpdateHass()
   }
 
+  connectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+  }
+
+  disconnectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+  }
+
+  adoptedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
+  }
+
   // Trackpad short click/log click detection (with move debouncing)
   getTriggerMoveHorizontalDelta() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_move_horizontal_delta");

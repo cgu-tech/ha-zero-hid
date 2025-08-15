@@ -136,6 +136,18 @@ export class AndroidKeyboardCard extends HTMLElement {
     this.doUpdateHass()
   }
 
+  connectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+  }
+
+  disconnectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+  }
+
+  adoptedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
+  }
+
   getTriggerLongClickDelay() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
   }

@@ -85,6 +85,18 @@ export class CarrouselCard extends HTMLElement {
     this.doUpdateHass()
   }
 
+  connectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+  }
+
+  disconnectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+  }
+
+  adoptedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
+  }
+
   // Global config
   getCells() {
     return this._layoutManager.getFromConfigOrDefaultConfig("cells");

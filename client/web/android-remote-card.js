@@ -75,6 +75,18 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateFoldablesHass();
   }
 
+  connectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+  }
+
+  disconnectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+  }
+
+  adoptedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
+  }
+
   getKeyboardConfig() {
     return this._layoutManager.getFromConfigOrDefaultConfig("keyboard");
   }
