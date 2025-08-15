@@ -12,6 +12,7 @@ import { parse, stringify, toJSON, fromJSON } from '../libs/flatted_3.3.3_min.js
 // - to log TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
 export class Logger {
 
+  _pushbackLimit = 500; // Default pushback limit
   _levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
   _guid;
   _origin;
@@ -34,6 +35,11 @@ export class Logger {
 
   getPushback() {
     return !!this._origin?._config?.['log_pushback'];
+  }
+
+  getPushbackLimit() {
+    const num = Number(this._origin?._config?.['log_pushback_limit']);
+    return Number.isFinite(num) ? num : -1;
   }
 
   isLevelEnabled(level) { return (level <= this.getLevel()); }
@@ -59,17 +65,26 @@ export class Logger {
     
     // Push logs to backend when needed
     if (hass && this.getPushback()) {
-      const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.constructor.deepSerialize(arg)) : [];
+
+      // Get user configured pushback limit or use logger default limit
+      const limit = this.getPushbackLimit();
+      const appliedLimit = limit > 0 ? limit : this._pushbackLimit;
+
+      // Serialize and limit serialized args before pushing to HA backend
+      const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.truncateArg(this.constructor.safeSerialize(arg), appliedLimit)) : [];
+      
+      // Call to HA backend service for custom log pushback
       if (serializedArgs.length > 0) {
         hass.callService(
           Globals.COMPONENT_NAME, "log", { "level": header, "origin": this._originName, "logger_id": this._guid, "logs": serializedArgs }
         ).catch(err => {
+          // Pushback fail fallback: notify pushback fail into web console without resorting to this logger
           console.warn("Unable to do log pushback (log might be too long or HA unresponsive):", err);
         });
       }
     }
 
-    // Give frontend logs format
+    // Format args for frontend logs
     if (args && args.length && args.length > 0) {
       return [`%c[${header}][${this._originName}][${this._guid}]`, logStyle, ...args];
     }
@@ -82,8 +97,14 @@ export class Logger {
   debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
   trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
 
-  // Entry point
-  static deepSerialize(input) {
+  // Truncate argument to the limit, appending "...[truncated]" at the end when truncation occurs
+  truncateArg(arg, limit) {
+    if (typeof arg !== "string") return arg;
+    return (arg?.length || -1) > limit ? arg.slice(0, limit) + "...[truncated]" : arg;
+  }
+
+  // Serialize an object safely
+  static safeSerialize(input) {
     try {
       return stringify(input); // Use Flatted to serialize
     } catch (e) {
