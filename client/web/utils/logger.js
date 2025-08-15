@@ -56,7 +56,7 @@ export class Logger {
       if (this.isErrorEnabled()) console.error(...this.error(err));
       throw err; // Rethrow the same error after logging
     } finally {
-      if (this.isTraceEnabled()) console.trace(...this.trace(`User-agent: ${navigator.userAgent}`));
+      if (this.isTraceEnabled()) console.debug(...this.trace(`User_agent: ${navigator.userAgent}`));
     }
   }
 
