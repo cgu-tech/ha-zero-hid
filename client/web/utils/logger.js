@@ -97,10 +97,10 @@ export class Logger {
   debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
   trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
 
-  // Truncate argument to the limit, appending "...[truncated]" at the end when truncation occurs
+  // Truncate argument to the limit, appending "...[truncated|<limit>|<total>]" at the end when truncation occurs
   truncateArg(arg, limit) {
     if (typeof arg !== "string") return arg;
-    return (arg?.length || -1) > limit ? arg.slice(0, limit) + "...[truncated]" : arg;
+    return (arg?.length || -1) > limit ? arg.slice(0, limit) + `...[truncated|${limit}|${arg.length}]` : arg;
   }
 
   // Serialize an object safely
