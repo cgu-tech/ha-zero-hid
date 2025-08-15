@@ -72,7 +72,7 @@ export class LayoutManager {
   }
 
   hasButtonOverride(btn) {
-    return (btn.id && this.getButtonOverride(btn.id));
+    return (btn.id && this.getButtonOverride(btn));
   }
 
   getLayoutsNames() {
