@@ -17,7 +17,8 @@ export class Logger {
   _guid;
   _origin;
   _originName;
-  _userAgentTrigger;
+  _userAgentLevelTrigger;
+  _userAgentValueTrigger;
 
   constructor(origin, originName) {
     this._guid = this.constructor.generateUUID();
@@ -102,9 +103,14 @@ export class Logger {
 
   // Determines whether or not we should log level agent
   shouldLogUserAgent() {
-    if (this._userAgentTrigger !== this.getLevel()) {
-      this._userAgentTrigger = this.getLevel();
-      return this.isTraceEnabled();
+    if (this.isTraceEnabled()) {
+      if (this._userAgentLevelTrigger !== this.getLevel()) {
+        this._userAgentLevelTrigger = this.getLevel();
+        if (_userAgentValueTrigger !== navigator.userAgent) {
+          _userAgentValueTrigger = navigator.userAgent;
+          return true;
+        }
+      }
     }
     return false;
   }
