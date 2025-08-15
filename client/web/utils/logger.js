@@ -60,7 +60,7 @@ export class Logger {
       const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.constructor.deepSerialize(arg)) : [];
       if (serializedArgs.length > 0) {
         hass.callService(
-          Globals.COMPONENT_NAME, "log", { "level": header, "origin": this._originName, "logs": serializedArgs }
+          Globals.COMPONENT_NAME, "log", { "level": header, "origin": this._originName, "logger_id": this._guid, "logs": serializedArgs }
         ).catch(err => {
           console.warn("Unable to do log pushback (log might be too long or HA unresponsive):", err);
         });
