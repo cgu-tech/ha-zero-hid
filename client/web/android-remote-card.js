@@ -76,15 +76,15 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getKeyboardConfig() {
-    return this.getFromConfigOrDefaultConfig("keyboard");
+    return this._layoutManager.getFromConfigOrDefaultConfig("keyboard");
   }
 
   getTrackpadConfig() {
-    return this.getFromConfigOrDefaultConfig("trackpad");
+    return this._layoutManager.getFromConfigOrDefaultConfig("trackpad");
   }
 
   getActivitiesConfig() {
-    return this.getFromConfigOrDefaultConfig("activities");
+    return this._layoutManager.getFromConfigOrDefaultConfig("activities");
   }
 
   getKeyboard() {
