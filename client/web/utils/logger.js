@@ -38,7 +38,7 @@ export class Logger {
   }
 
   getHighlight() {
-    return !!this._origin?._config?.['log_highlight'];
+    return this._origin?._config?.['log_highlight'];
   }
 
   getPushback() {
