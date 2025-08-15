@@ -73,16 +73,19 @@ export class Logger {
     // Retrieve highlight regexp when highlight is activated
     const highlightRegExp = this.getHighlightRegExp();
     if (highlightRegExp) {
+      console.warn("highlightRegExp:", highlightRegExp);
       
       // Check if highlight is required due to:
       // - level
       // - origin
       // - guid (should never match as newer guid is created each time)
       // - args
-      const isHighlightRequired = highlightRegExp.test(header) 
-        || highlightRegExp.test(this._originName) 
-        || highlightRegExp.test(this._guid) 
-        || args.some(arg => highlightRegExp.test(arg));
+      const isRequiredByHeader = highlightRegExp.test(header);
+      const isRequiredByOrigin = highlightRegExp.test(this._originName);
+      const isRequiredByGuid = highlightRegExp.test(this._guid);
+      const isRequiredByArgs = args && args.some(arg => highlightRegExp.test(arg));
+      console.warn("highlightRegExp(isRequiredByHeader, isRequiredByOrigin, isRequiredByGuid, isRequiredByArgs)", isRequiredByHeader, isRequiredByOrigin, isRequiredByGuid, isRequiredByArgs);
+      const isHighlightRequired = isRequiredByHeader || isRequiredByOrigin || isRequiredByGuid || isRequiredByArgs;
       if (isHighlightRequired) {
 
         // Highlight is required: replace current style with highlight style and prepend [HIGH]
