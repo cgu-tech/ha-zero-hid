@@ -12,11 +12,12 @@ import { parse, stringify, toJSON, fromJSON } from '../libs/flatted_3.3.3_min.js
 // - to log TRACE: if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace(args));
 export class Logger {
 
-  _pushbackLimit = 500; // Default pushback limit
+  _pushbackLimit = 150; // Default pushback limit
   _levels = { error: 0, warn: 1, info: 2, debug: 3, trace: 4 };
   _guid;
   _origin;
   _originName;
+  _userAgentTrigger;
 
   constructor(origin, originName) {
     this._guid = this.constructor.generateUUID();
@@ -55,8 +56,6 @@ export class Logger {
     } catch (err) {
       if (this.isErrorEnabled()) console.error(...this.error(err));
       throw err; // Rethrow the same error after logging
-    } finally {
-      if (this.isTraceEnabled()) console.debug(...this.trace(`User_agent: ${navigator.userAgent}`));
     }
   }
 
@@ -91,11 +90,24 @@ export class Logger {
     return [`%c[${header}][${this._originName}][${this._guid}]`, logStyle];
   }
 
-  error(...args) { return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
-  warn(...args)  { return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
-  info(...args)  { return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
-  debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
-  trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
+  error(...args) { this.logUserAgent(); return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
+  warn(...args)  { this.logUserAgent(); return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
+  info(...args)  { this.logUserAgent(); return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
+  debug(...args) { this.logUserAgent(); return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
+  trace(...args) { this.logUserAgent(); return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
+
+  logUserAgent() {
+    if (this.shouldLogUserAgent()) if (this.isTraceEnabled()) console.debug(...this.trace(`User_agent: ${navigator.userAgent}`));
+  }
+
+  // Determines whether or not we should log level agent
+  shouldLogUserAgent() {
+    if (this._userAgentTrigger !== this.getLevel()) {
+      this._userAgentTrigger = this.getLevel();
+      return this.isTraceEnabled();
+    }
+    return false;
+  }
 
   // Truncate argument to the limit, appending "...[truncated|<limit>|<total>]" at the end when truncation occurs
   truncateArg(arg, limit) {
