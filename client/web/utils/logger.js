@@ -68,7 +68,7 @@ export class Logger {
 
   getArgs(header, logStyle, ...args) {
     let useStyle = logStyle;
-    let useArgs = args;
+    let useHighlight = "";
     
     // Retrieve highlight regexp when highlight is activated
     const highlightRegExp = this.getHighlightRegExp();
@@ -87,7 +87,7 @@ export class Logger {
 
         // Highlight is required: replace current style with highlight style and prepend [HIGH]
         useStyle = this.getHighlightStyle();
-        useArgs = ["[HIGH]", ...args];
+        useHighlight = "[HIGH]";
       }
     }
 
@@ -99,13 +99,13 @@ export class Logger {
       const limit = this.getPushbackLimit();
       const appliedLimit = limit > 0 ? limit : this._pushbackLimit;
 
-      // Serialize and limit serialized useArgs before pushing to HA backend
-      const serializedArgs = (useArgs && useArgs.length && useArgs.length > 0) ? useArgs.map(arg => this.truncateArg(this.constructor.safeSerialize(arg), appliedLimit)) : [];
+      // Serialize and limit serialized args before pushing to HA backend
+      const serializedArgs = (args && args.length && args.length > 0) ? args.map(arg => this.truncateArg(this.constructor.safeSerialize(arg), appliedLimit)) : [];
       
       // Call to HA backend service for custom log pushback
       if (serializedArgs.length > 0) {
         hass.callService(
-          Globals.COMPONENT_NAME, "log", { "level": header, "origin": this._originName, "logger_id": this._guid, "logs": serializedArgs }
+          Globals.COMPONENT_NAME, "log", { "level": header, "origin": this._originName, "logger_id": this._guid, "highlight": useHighlight, "logs": serializedArgs }
         ).catch(err => {
           // Pushback fail fallback: notify pushback fail into web console without resorting to this logger
           console.warn("Unable to do log pushback (log might be too long or HA unresponsive):", err);
@@ -113,11 +113,11 @@ export class Logger {
       }
     }
 
-    // Format useArgs for frontend logs
-    if (useArgs && useArgs.length && useArgs.length > 0) {
-      return [`%c[${header}][${this._originName}][${this._guid}]`, useStyle, ...useArgs];
+    // Format args for frontend logs
+    if (args && args.length && args.length > 0) {
+      return [`%c[${header}][${this._originName}][${this._guid}]${useHighlight}`, useStyle, ...args];
     }
-    return [`%c[${header}][${this._originName}][${this._guid}]`, useStyle];
+    return [`%c[${header}][${this._originName}][${this._guid}]${useHighlight}`, useStyle];
   }
 
   getHighlightRegExp() {

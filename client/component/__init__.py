@@ -67,6 +67,7 @@ LOG_SERVICE_SCHEMA = vol.Schema({
     vol.Required("level"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("origin"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("logger_id"): vol.All(lambda v: v or "", ensure_string_or_empty),
+    vol.Required("highlight"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("logs"): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
@@ -313,27 +314,28 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         level = call.data.get("level")
         origin = call.data.get("origin")
         logger_id = call.data.get("logger_id")
+        highlight = call.data.get("highlight")
         logs = call.data.get("logs")
-        fmt = "[CLIENT][%s][%s][%s]" + (" %s" * len(logs))
+        fmt = "[CLIENT][%s][%s][%s]%s" + (" %s" * len(logs))
         if level == "TRA":
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
-                _LOGGER.debug(fmt, level, origin, logger_id, *logs)
+                _LOGGER.debug(fmt, level, origin, logger_id, highlight, *logs)
         elif level == "DBG":
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
-                _LOGGER.debug(fmt, level, origin, logger_id, *logs)
+                _LOGGER.debug(fmt, level, origin, logger_id, highlight, *logs)
         elif level == "INF":
             if _LOGGER.getEffectiveLevel() == logging.INFO:
-                _LOGGER.info(fmt, level, origin, logger_id, *logs)
+                _LOGGER.info(fmt, level, origin, logger_id, highlight, *logs)
         elif level == "WRN":
             if _LOGGER.getEffectiveLevel() == logging.WARNING:
-                _LOGGER.warning(fmt, level, origin, logger_id, *logs)
+                _LOGGER.warning(fmt, level, origin, logger_id, highlight, *logs)
         elif level == "ERR":
             if _LOGGER.getEffectiveLevel() == logging.ERROR:
-                _LOGGER.error(fmt, level, origin, logger_id, *logs)
+                _LOGGER.error(fmt, level, origin, logger_id, highlight, *logs)
         else:
             _LOGGER.warning("Unknown log level '%s'. Logging as CRITICAL.", level)
             if _LOGGER.getEffectiveLevel() == logging.CRITICAL:
-                _LOGGER.critical(fmt, level, origin, logger_id, *logs)
+                _LOGGER.critical(fmt, level, origin, logger_id, highlight, *logs)
 
     # Register our services with Home Assistant.
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
