@@ -48,6 +48,7 @@ export class Logger {
       callback(...args);
     } catch (err) {
       if (this.isErrorEnabled()) console.error(...this.error(err));
+      throw err; // Rethrow the same error after logging
     }
   }
 
