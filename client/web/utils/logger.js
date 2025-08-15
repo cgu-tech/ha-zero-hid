@@ -92,16 +92,22 @@ export class Logger {
     return [`%c[${header}][${this._originName}][${this._guid}]`, logStyle];
   }
 
-  error(...args) { this.logUserAgent(); return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
-  warn(...args)  { this.logUserAgent(); return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
-  info(...args)  { this.logUserAgent(); return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
-  debug(...args) { this.logUserAgent(); return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
-  trace(...args) { this.logUserAgent(); return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
+  error(...args) { this.logUserAgent(); return this._error(...args); }
+  warn(...args)  { this.logUserAgent(); return this._warn(...args); }
+  info(...args)  { this.logUserAgent(); return this._info(...args); }
+  debug(...args) { this.logUserAgent(); return this._debug(...args); }
+  trace(...args) { this.logUserAgent(); return this._trace(...args); }
+
+  _error(...args) { return this.getArgs('ERR', 'background: #d6a1a1; color: black; font-weight: bold;', ...args); }
+  _warn(...args)  { return this.getArgs('WRN', 'background: #d6c8a1; color: black; font-weight: bold;', ...args); }
+  _info(...args)  { return this.getArgs('INF', 'background: #a2d6a1; color: black; font-weight: bold;', ...args); }
+  _debug(...args) { return this.getArgs('DBG', 'background: #75aaff; color: black; font-weight: bold;', ...args); }
+  _trace(...args) { return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
 
   logUserAgent() {
     if (this.shouldLogUserAgent()) this._userAgentIsPushbackRequired = true;
     if (this._userAgentIsPushbackRequired && this.canPushback(this.getHass())) {
-      if (this.isTraceEnabled()) console.debug(...this.trace(`User_agent: ${this._userAgentValueTrigger}`));
+      if (this.isTraceEnabled()) console.debug(...this._trace(`User_agent: ${this._userAgentValueTrigger}`));
       this._userAgentIsPushbackRequired = false;
     }
   }
