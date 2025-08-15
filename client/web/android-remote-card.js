@@ -60,6 +60,16 @@ class AndroidRemoteCard extends HTMLElement {
   setConfig(config) {
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
+    if (this.getLogger().isDebugEnabled()) {
+      // On debug mode, log into console (which helps having a clear view of what is wrong) 
+      // instead of letting logs pop into HomeAssistant (which obfuscate the problem by truncating errors)
+      this.getLogger().doLogOnError(this.doSetConfig.bind(this));
+    } else {
+      // Otherwise, use default HomeAssistant behavior (which helps user see configurations errors) 
+      this.doSetConfig();
+    }
+  }
+  doSetConfig() {
     this.doCheckConfig();
     this.doUpdateConfig();
     this.doUpdateFoldablesConfig();
