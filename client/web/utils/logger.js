@@ -19,6 +19,7 @@ export class Logger {
   _originName;
   _userAgentLevelTrigger;
   _userAgentValueTrigger;
+  _userAgentIsPushbackRequired;
 
   constructor(origin, originName) {
     this._guid = this.constructor.generateUUID();
@@ -61,10 +62,10 @@ export class Logger {
   }
 
   getArgs(header, logStyle, ...args) {
+
+    // Push logs to backend when needed (and when possible)
     const hass = this.getHass();
-    
-    // Push logs to backend when needed
-    if (hass && this.getPushback()) {
+    if (this.canPushback(hass)) {
 
       // Get user configured pushback limit or use logger default limit
       const limit = this.getPushbackLimit();
@@ -98,21 +99,27 @@ export class Logger {
   trace(...args) { this.logUserAgent(); return this.getArgs('TRA', 'background: #b7b8b6; color: black; font-weight: bold;', ...args); }
 
   logUserAgent() {
-    if (this.shouldLogUserAgent()) if (this.isTraceEnabled()) console.debug(...this.trace(`User_agent: ${this._userAgentValueTrigger}`));
+    if (this.shouldLogUserAgent()) this._userAgentIsPushbackRequired = true;
+    if (this._userAgentIsPushbackRequired && this.canPushback(this.getHass())) {
+      if (this.isTraceEnabled()) console.debug(...this.trace(`User_agent: ${this._userAgentValueTrigger}`));
+      this._userAgentIsPushbackRequired = false;
+    }
   }
 
   // Determines whether or not we should log level agent
   shouldLogUserAgent() {
-    if (this.isTraceEnabled()) {
-      if (this._userAgentLevelTrigger !== this.getLevel()) {
-        this._userAgentLevelTrigger = this.getLevel();
-        if (this._userAgentValueTrigger !== navigator.userAgent) {
-          this._userAgentValueTrigger = navigator.userAgent;
-          return true;
-        }
+    if (this._userAgentLevelTrigger !== this.getLevel()) {
+      this._userAgentLevelTrigger = this.getLevel();
+      if (this._userAgentValueTrigger !== navigator.userAgent) {
+        this._userAgentValueTrigger = navigator.userAgent;
+        return true;
       }
     }
     return false;
+  }
+
+  canPushback(hass) {
+    return hass && this.getPushback();
   }
 
   // Truncate argument to the limit, appending "...[truncated|<limit>|<total>]" at the end when truncation occurs
