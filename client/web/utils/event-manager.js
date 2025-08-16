@@ -529,7 +529,7 @@ export class EventManager {
       }
       
       // Unregister from the container
-      const container = this._containers.get(safeContainerName);
+      const container = this._containers.get(containerName);
       
       // Missing container
       if (!container) {
