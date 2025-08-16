@@ -118,7 +118,7 @@ export class EventManager {
     listeners.push(this.addPointerUpListenerToContainer(containerName, target, this.onButtonPointerUp.bind(this, callbacks), options));
 
     if (!this._buttonsWindowPointerUpListener) 
-      this._buttonsWindowPointerUpListener = this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this, callbacks);
+      this._buttonsWindowPointerUpListener = this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this, callbacks));
     
     return listeners;
   }
