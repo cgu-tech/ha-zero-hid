@@ -37,7 +37,10 @@ export class EventManager {
           ]
         },
         [this._BUTTON_STATE_HOVER]: {
-          "actions": [ { "action": "add", "class_list": [this._BUTTON_CLASS_HOVER] } ],
+          "actions": [
+            { "action": "remove", "class_list": [this._BUTTON_CLASS_PRESSED] },
+            { "action": "add", "class_list": [this._BUTTON_CLASS_HOVER] }
+          ],
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_HOVER }, 
             { "trigger": this._TRIGGER_POINTER_DOWN, "state": this._BUTTON_STATE_PRESSED, "callback": this._BUTTON_CALLBACK_PRESS }, // keyPress for 2-states button, popin/long-click/etc timeout for all buttons
