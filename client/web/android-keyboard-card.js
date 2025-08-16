@@ -1005,7 +1005,7 @@ export class AndroidKeyboardCard extends HTMLElement {
     this.doPopinKeyAbortPress(btn);
   }
 
-  onPopinButtonRelease(evt) {
+  onPopinButtonRelease(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doPopinKeyRelease(btn);
   }
