@@ -164,7 +164,8 @@ export class TestCard extends HTMLElement {
   }
 
   triggerPopinOrPopup(evt) {
-    if (this._config?.["pop_mode"] === "popup") this.triggerPopup(); else this.triggerPopin(evt);
+    if (this._config?.["pop_mode"] === "popin") this.triggerPopin(evt);
+    if (this._config?.["pop_mode"] === "popup") this.triggerPopup();
   }
 
   triggerPopin(evt) {
