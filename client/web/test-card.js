@@ -61,10 +61,12 @@ export class TestCard extends HTMLElement {
 
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+    this._eventManager.connectedCallback();
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+    this._eventManager.disconnectedCallback();
   }
 
   adoptedCallback() {
@@ -141,11 +143,11 @@ export class TestCard extends HTMLElement {
   doListen() {
     this._eventManager.addButtonListeners("buttons", this._elements.testButton, 
       {
-        this._eventManager.constructor._BUTTON_CALLBACK_HOVER: this.onTestButtonHover.bind(this),
-        this._eventManager.constructor._BUTTON_CALLBACK_ABORT_HOVER: this.onTestButtonAbortHover.bind(this),
-        this._eventManager.constructor._BUTTON_CALLBACK_PRESS: this.onTestButtonPress.bind(this),
-        this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS: this.onTestButtonAbortPress.bind(this),
-        this._eventManager.constructor._BUTTON_CALLBACK_RELEASE: this.onTestButtonRelease.bind(this)
+        [this._eventManager.constructor._BUTTON_CALLBACK_HOVER]: this.onTestButtonHover.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_HOVER]: this.onTestButtonAbortHover.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onTestButtonPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onTestButtonAbortPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onTestButtonRelease.bind(this)
       }
     );
 

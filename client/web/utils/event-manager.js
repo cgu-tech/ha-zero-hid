@@ -124,11 +124,13 @@ export class EventManager {
   }
 
   connectedCallback() {
-    if (this._buttonsWindowPointerUpListener) this.removeListener(this._buttonsWindowPointerUpListener);
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+if (this._buttons && !this._buttonsWindowPointerUpListener) this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this));
   }
 
   disconnectedCallback() {
-    if (this._buttons && !this._buttonsWindowPointerUpListener) this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+    if (this._buttonsWindowPointerUpListener) this.removeListener(this._buttonsWindowPointerUpListener);
   }
 
   onButtonPointerEnter(callbacks, evt) {
