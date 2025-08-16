@@ -364,14 +364,14 @@ export class CarrouselCard extends HTMLElement {
   }
 
   onCellPointerEnter(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
     cell.classList.add("active");
   }
 
   onCellPointerDown(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onCellPointerDown(evt):", evt));
     const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
@@ -379,7 +379,7 @@ export class CarrouselCard extends HTMLElement {
   }
 
   onCellPointerUp(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onCellPointerUp(evt):", evt));
     const cell = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
 
@@ -387,14 +387,14 @@ export class CarrouselCard extends HTMLElement {
   }
 
   onCellPointerLeave(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
     cell.classList.remove("active");
   }
 
   onCellPointerCancel(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     const cell = evt.currentTarget; // Retrieve clickable popin button attached to the listener that triggered the event
 
     cell.classList.remove("active");

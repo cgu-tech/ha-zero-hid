@@ -996,17 +996,17 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 
   onPopinButtonPress(btn, evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doPopinKeyPress(btn);
   }
 
   onPopinButtonAbortPress(btn, evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doPopinKeyAbortPress(btn);
   }
 
   onPopinButtonRelease(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doPopinKeyRelease(btn);
   }
   
@@ -1099,19 +1099,19 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 
   onButtonPointerDown(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyPress(evt, btn);
   }
 
   onButtonPointerUp(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyRelease(evt, btn);
   }
 
   onButtonPointerCancel(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyCancel(evt, btn);
   }

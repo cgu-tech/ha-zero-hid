@@ -413,12 +413,12 @@ class WindowsKeyboardCard extends HTMLElement {
   }
 
   handlePointerDown(evt, hass, btn) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.handleKeyPress(hass, btn);
   }
 
   handlePointerUp(evt, hass, btn) {
-    evt.preventDefault();
+    this._eventManager.preventDefault(evt);
     this.handleKeyRelease(hass, btn);
   }
 

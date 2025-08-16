@@ -440,7 +440,7 @@ export class TrackpadCard extends HTMLElement {
   }
 
   onScrollTogglePointerDown(evt) {
-    evt.preventDefault();
+    this._eventManager.preventDefault(evt);
     evt.stopPropagation(); // Prevents underneath trackpad click
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onScrollTogglePointerDown(evt):", evt));
 
@@ -494,7 +494,7 @@ export class TrackpadCard extends HTMLElement {
   }
 
   onTrackpadPointerDown(evt) {
-    evt.preventDefault();
+    this._eventManager.preventDefault(evt);
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt):", evt));
     this.disableScrollToggleEvents();
 
@@ -505,7 +505,7 @@ export class TrackpadCard extends HTMLElement {
   }
 
   onTrackpadPointerMove(evt) {
-    evt.preventDefault();
+    this._eventManager.preventDefault(evt);
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
 
     // Retrieve current pointer from tracked trackpad click pointers
@@ -538,7 +538,7 @@ export class TrackpadCard extends HTMLElement {
   }
 
   onTrackpadPointerUp(evt) {
-    evt.preventDefault();
+    this._eventManager.preventDefault(evt);
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerUp(evt):", evt));
     this.enableScrollToggleEvents();
 
@@ -570,13 +570,13 @@ export class TrackpadCard extends HTMLElement {
   }
 
   onTrackpadPointerCancel(evt) {
-    evt.preventDefault();
+    this._eventManager.preventDefault(evt);
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerCancel(evt):", evt));
     this.onTrackpadPointerOut(evt);
   }
 
   onTrackpadPointerLeave(evt) {
-    evt.preventDefault();
+    this._eventManager.preventDefault(evt);
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerLeave(evt):", evt));
     this.onTrackpadPointerOut(evt);
   }

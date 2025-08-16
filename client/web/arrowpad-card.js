@@ -404,13 +404,13 @@ class ArrowPadCard extends HTMLElement {
   }
 
   onButtonPointerDown(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyPress(btn);
   }
 
   onButtonPointerUp(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyRelease(btn);
   }

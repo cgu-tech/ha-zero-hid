@@ -267,6 +267,10 @@ export class EventManager {
     return false;
   }
 
+  preventDefault(evt) {
+    if (typeof evt?.preventDefault === 'function') evt.preventDefault();
+  }
+
   executeButtonOverride(btn, overrideConfig) {
 
     // When sensor detected in override configuration, 
