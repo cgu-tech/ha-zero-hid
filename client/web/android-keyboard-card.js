@@ -212,7 +212,7 @@ export class AndroidKeyboardCard extends HTMLElement {
         --card-corner-radius: 10px;
         --key-min-corner-radius: 4px;
         --key-max-corner-radius: 8px;
-        --base-font-size: 1rem; /* base scaling unit */
+        --base-font-size: 3rem; /* base scaling unit */
         --key-bg: #3b3a3a;
         --key-hover-bg: #4a4a4a;
         --key-active-bg: #2c2b2b;
