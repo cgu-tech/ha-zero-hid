@@ -4,6 +4,55 @@ import { Logger } from './logger.js';
 // Define EventManager helper class
 export class EventManager {
 
+  // private init required constants
+  static _BUTTON_STATUS_MAP;
+  static _TRIGGER_EVENTS_MAP;
+
+  static _BUTTON_STATE_NORMAL = "normal";
+  static _BUTTON_STATE_HOVER = "hover";
+  static _BUTTON_STATE_PRESSED = "pressed";
+
+  static _TRIGGER_POINTER_ENTER = "EVT_POINTER_ENTER";
+  static _TRIGGER_POINTER_LEAVE = "EVT_POINTER_LEAVE";
+  static _TRIGGER_POINTER_DOWN = "EVT_POINTER_DOWN";
+  static _TRIGGER_POINTER_UP = "EVT_POINTER_UP";
+
+  // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
+  static {
+    this._BUTTON_STATUS_MAP = {
+      "init": { "state": this._BUTTON_STATE_NORMAL },
+      "states": {
+        [this._BUTTON_STATE_NORMAL]: {
+          "actions": { "self": [ { "action": "remove", "class_list": ["active", "press"] } ] },
+          "nexts": [ 
+            { "trigger": this._TRIGGER_POINTER_ENTER, "state": this._BUTTON_STATE_HOVER }
+          ]
+        },
+        [this._BUTTON_STATE_HOVER]: {
+          "actions": { "self": [ { "action": "add", "class_list": ["active"] } ] },
+          "nexts": [ 
+            { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL },
+            { "trigger": this._TRIGGER_POINTER_DOWN, "state": this._BUTTON_STATE_PRESSED }, // press event here (2-states button)
+          ]
+        },
+        [this._BUTTON_STATE_PRESSED]: {
+          "actions": { "self": [ { "action": "add", "class_list": ["press"] } ] },
+          "nexts": [ 
+            { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL }, // abort event here (2-states button)
+            { "trigger": this._TRIGGER_POINTER_UP, "state": this._BUTTON_STATE_HOVER },     // release event here (2-states button), click event here (1-state button)
+          ]
+        }
+      }
+    };
+
+    this._TRIGGER_EVENTS_MAP = {
+      [this._TRIGGER_POINTER_ENTER]: ["self.EVT_POINTER_ENTER"],
+      [this._TRIGGER_POINTER_LEAVE]: ["self.EVT_POINTER_LEAVE", "self.EVT_POINTER_CANCEL", "window.EVT_MOUSE_UP.not.self"],
+      [this._TRIGGER_POINTER_DOWN]: ["self.EVT_POINTER_DOWN"],
+      [this._TRIGGER_POINTER_UP]: ["self.EVT_POINTER_UP"],
+    };
+  }
+
   // Constants
   _listenerKeys = ['target', 'callback', 'options', 'eventName', 'managedCallback'];
   _defaultContainerName = 'default';
