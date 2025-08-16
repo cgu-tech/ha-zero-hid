@@ -153,7 +153,7 @@ export class EventManager {
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
-
+    this.removeButtonsGlobalListeners();
   }
 
   onButtonPointerEnter(evt) {
