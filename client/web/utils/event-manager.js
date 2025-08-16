@@ -20,9 +20,9 @@ export class EventManager {
   static _BUTTON_CLASS_HOVER = "active";
   static _BUTTON_CLASS_PRESSED = "press";
 
-  static _TRIGGER_POINTER_ENTER = "NTR";
+  static _TRIGGER_POINTER_ENTER = "NT";
   static _TRIGGER_POINTER_LEAVE = "LV";
-  static _TRIGGER_POINTER_DOWN = "DWN";
+  static _TRIGGER_POINTER_DOWN = "DW";
   static _TRIGGER_POINTER_UP = "UP";
 
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
