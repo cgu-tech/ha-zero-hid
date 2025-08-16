@@ -149,7 +149,7 @@ class AndroidRemoteCard extends HTMLElement {
   doStyle() {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
-      :host {
+      ha-card {
         display: block;
         box-sizing: border-box;
         max-width: 100%;
