@@ -165,8 +165,8 @@ export class TestCard extends HTMLElement {
 
   triggerPopin(evt) {
     // Store mouse position
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
+    const mouseX = evt.clientX;
+    const mouseY = evt.clientY;
     popinTimeout = setTimeout(() => {
       // Show the popin after 500 milliseconds
       this._elements.popin.style.left = `${mouseX}px`;
