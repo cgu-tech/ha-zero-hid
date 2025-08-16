@@ -27,6 +27,10 @@ export class LayoutManager {
     return this._origin._config;
   }
 
+  isDefined(value) {
+    return (value !== null && value !== undefined);
+  }
+
   getStubConfig() {
     return this._origin.constructor.getStubConfig();
   }
@@ -35,12 +39,21 @@ export class LayoutManager {
     return this.getConfig()?.[configName];
   }
 
+  isConfigDefined(configName) {
+    return this.isDefined(this.getFromConfig(configName))
+  }
+
   getFromDefaultConfig(configName) {
     return this.getStubConfig()[configName];
   }
 
+  isDefaultConfigDefined(configName) {
+    return this.isDefined(this.getFromDefaultConfig(configName))
+  }
+
   getFromConfigOrDefaultConfig(configName) {
-    return this.getFromConfig(configName) || this.getFromDefaultConfig(configName);
+    const configValue = this.getFromConfig(configName);
+    return this.isDefined(configValue) ? configValue : this.getFromDefaultConfig(configName);
   }
 
   getHaptic() {
