@@ -160,13 +160,13 @@ export class EventManager {
     this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_ENTER, evt);
   }
   onButtonPointerLeave(evt) {
-    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_LEAVE);
+    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_LEAVE, evt);
   }
   onButtonPointerCancel(evt) {
-    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_LEAVE);
+    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_LEAVE, evt);
   }
   onButtonPointerDown(evt) {
-    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_DOWN);
+    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_DOWN, evt);
   }
   onButtonPointerUp(evt) {
     //this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
