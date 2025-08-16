@@ -504,9 +504,10 @@ export class AndroidKeyboardCard extends HTMLElement {
     // Create cell
     const cell = document.createElement("button");
     this._elements.cells.push(cell);
+    cell.id = cellConfig["code"];
     cell.classList.add("key");
     if (cellConfig.special) cell.classList.add("special");
-    if (cellConfig.width) cell.classList.add(cellConfig.width);
+    if (cellConfig.width) cell.classList.add(cellConfig["width"]);
     if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
     this.setCellData(cell, cellConfig, overrideCellConfig);
 
