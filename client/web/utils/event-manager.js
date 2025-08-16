@@ -67,7 +67,7 @@ export class EventManager {
   _reversedEventsMap = new Map();
   _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
   _containers = new Map(); // Registrered listeners for cleanup
-  _buttonsGlobalListeners; // Callback with global scopes (document, window) for buttons management
+  _buttonsGlobalListeners = new Map(); // Callback with global scopes (document, window) for buttons management
   _buttons = new Set(); // Managed buttons
 
   constructor(origin) {
@@ -130,19 +130,19 @@ export class EventManager {
   }
 
   addButtonsGlobalListeners() {
-    if (!this._buttonsGlobalListeners) {
-      this._buttonsGlobalListeners = {};
-      this._buttonsGlobalListeners["windowPointerUp"] = this.addPointerUpListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowPointerUp.bind(this));
-      this._buttonsGlobalListeners["windowBlur"] = this.addBlurListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowBlur.bind(this));
-      this._buttonsGlobalListeners["documentVisibilityChange"] = this.addVisibilityChangeListenerToContainer(this._buttonsGlobalContainerName, document, this.onButtonsGlobalDocumentVisibilityChange.bind(this));
+    if (this._buttons && this._buttonsGlobalListeners.size === 0) {
+      this._buttonsGlobalListeners.set("windowPointerUp", this.addPointerUpListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowPointerUp.bind(this)));
+      this._buttonsGlobalListeners.set("windowBlur", this.addBlurListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowBlur.bind(this)));
+      this._buttonsGlobalListeners.set("documentVisibilityChange", this.addVisibilityChangeListenerToContainer(this._buttonsGlobalContainerName, document, this.onButtonsGlobalDocumentVisibilityChange.bind(this)));
     }
   }
 
   removeButtonsGlobalListeners() {
     if (this._buttonsGlobalListeners) {
-      this.removeListener(this._buttonsGlobalListeners["windowPointerUp"]);
-      this.removeListener(this._buttonsGlobalListeners["windowBlur"]);
-      this.removeListener(this._buttonsGlobalListeners["documentVisibilityChange"]);
+      this.removeListener(this._buttonsGlobalListeners.get("windowPointerUp"));
+      this.removeListener(this._buttonsGlobalListeners.get("windowBlur"));
+      this.removeListener(this._buttonsGlobalListeners.get("documentVisibilityChange"));
+      this._buttonsGlobalListeners.clear();
     }
   }
 
