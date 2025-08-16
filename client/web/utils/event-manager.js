@@ -144,17 +144,17 @@ export class EventManager {
       if (btn !== hovered) this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_LEAVE);
     }
   }
-  
-  initButtonState(btn) {
-    return if (btn) btn._managedButtonState = this.constructor._BUTTON_STATUS_MAP["init"]["state"];
+
+  setButtonState(btn, stateName) {
+    if (btn) btn._managedButtonState = stateName;
   }
 
-  getButtonCurrentStateName(btn) {
-    return if (btn) btn._managedButtonState;
+  initButtonState(btn) {
+    this.setButtonState(this.constructor._BUTTON_STATUS_MAP["init"]["state"]);
   }
 
   getButtonCurrentState(btn) {
-    return if (btn) this.constructor._BUTTON_STATUS_MAP["states"][this.getButtonCurrentStateName(btn)];
+    return this.constructor._BUTTON_STATUS_MAP["states"][btn?._managedButtonState];
   }
 
   getButtonCurrentActions(btn) {
@@ -163,10 +163,6 @@ export class EventManager {
 
   getButtonNextState(btn, trigger) {
     return this.getButtonCurrentState(btn)?.["nexts"].find(next => next["trigger"] === trigger);
-  }
-
-  isButtonNextStateTrigger(btn, trigger) {
-    return !!this.getButtonNextState(btn, trigger);
   }
 
   activateButtonNextState(callbacks, evt, trigger) {
