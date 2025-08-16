@@ -242,8 +242,8 @@ export class EventManager {
 
         // Update button classes
         for (const action of (this.getButtonCurrentActions(btn) ?? [])) {
-          const actionName = cellAction["action"];
-          const actionClassList = cellAction["class_list"];
+          const actionName = action["action"];
+          const actionClassList = action["class_list"];
           if (actionName === "add") btn.classList.add(...actionClassList);
           if (actionName === "remove") btn.classList.remove(...actionClassList);
         }
