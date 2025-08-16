@@ -130,7 +130,7 @@ export class EventManager {
   }
 
   addButtonsGlobalListeners() {
-    if (this._buttons && !this._buttonsGlobalListeners) {
+    if (!this._buttonsGlobalListeners) {
       this._buttonsGlobalListeners = {};
       this._buttonsGlobalListeners["windowPointerUp"] = this.addPointerUpListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowPointerUp.bind(this));
       this._buttonsGlobalListeners["windowBlur"] = this.addBlurListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowBlur.bind(this));
