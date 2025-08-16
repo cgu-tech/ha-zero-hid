@@ -1092,47 +1092,31 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Set listeners on a clickable button
   addClickableListeners(btn) {
-    //this._eventManager.addButtonListeners("buttons", btn, 
-    //  {
-    //    [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onTestButtonPress.bind(this),
-    //    [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onTestButtonAbortPress.bind(this),
-    //    [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onTestButtonRelease.bind(this)
-    //  }
-    //);
-    this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
-    this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
-    this._eventManager.addPointerCancelListener(btn, this.onButtonPointerCancel.bind(this));
-    this._eventManager.addPointerLeaveListener(btn, this.onButtonPointerLeave.bind(this));
+    this._eventManager.addButtonListeners("buttons", btn, 
+      {
+        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onButtonPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onButtonAbortPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onButtonRelease.bind(this)
+      }
+    );
   }
 
-  onButtonPointerDown(evt) {
+  onButtonPress(btn, evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyPress(btn);
   }
 
-  onButtonPointerUp(evt) {
+  onButtonAbortPress(btn, evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doKeyRelease(btn);
+    this.doKeyAbortPress(btn);
   }
 
-  onButtonPointerCancel(evt) {
+  onButtonRelease(btn, evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
-    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doKeyRelease(btn);
-  }
-
-  onButtonPointerLeave(evt) {
-    evt.preventDefault(); // prevent unwanted focus or scrolling
-    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyRelease(btn);
   }
 
   doKeyPress(btn) {
-
-    // Mark clickable button active for visual feedback
-    btn.classList.add("active");
 
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
@@ -1140,19 +1124,42 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to press
     const code = btnData.code;
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to press:", code));
-
-    // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
-    this._referenceBtn = btn;
-
     if (this._layoutManager.hasButtonOverride(btn)) {
-      // Override detected: do nothing (override action will be executed on button up)
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Override detected on key press (suppressed):", btn.id));
+      // Overriden action
+      
+      // Nothing to do: overriden action will be executed on key release
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: override detected (suppressing press of ${code})`));
     } else {
       // Default action
 
       // Press HID key
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: pressing ${code}...`));
       this.appendCode(code);
+    }
+
+    // Send haptic feedback to make user acknownledgable of succeeded press event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doKeyAbortPress(btn) {
+
+    // Retrieve clickable button data
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
+
+    // Key code to abort press
+    const code = btnData.code;
+    if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: override detected (nothing to abort)`));
+    } else {
+      // Default action
+
+      // Release HID key to prevent infinite key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: releasing ${code}...`));
+      this.removeCode(code);
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded press event
@@ -1161,40 +1168,28 @@ class AndroidRemoteCard extends HTMLElement {
 
   doKeyRelease(btn) {
 
-    // Unmark clickable button active for visual feedback
-    btn.classList.remove("active");
-
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
     if (!btnData) return;
 
     // Key code to release
     const code = btnData.code;
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to release:", code));
-
-    // Suppress this clickable button release if reference pointer down event was originated from a different clickable button
-    const referenceCode = this._layoutManager.getElementData(this._referenceBtn)?.code;
-    if (referenceCode !== code) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to existing reference key code ${referenceCode}`));
-      return;
-    }
-
     if (this._layoutManager.hasButtonOverride(btn)) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to detected override on ${btn.id}`));
-      this.executeButtonOverride(btn);
+      // Overriden action
+      
+      // Execute the override action
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: override detected (suppressing release of ${code})`));
+      this._eventManager.executeButtonOverride(btn, this._layoutManager.getButtonOverride(btn));
     } else {
       // Default action
 
       // Release HID key
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: releasing ${code}...`));
       this.removeCode(code);
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded release event
     this._layoutManager.hapticFeedback();
-  }
-
-  executeButtonOverride(btn) {
-    this._eventManager.executeButtonOverride(btn, this._layoutManager.getButtonOverride(btn));
   }
 
   appendCode(code) {
