@@ -128,7 +128,7 @@ export class EventManager {
       this._buttonsGlobalListeners = {};
       this._buttonsGlobalListeners["windowPointerUp"] = this.addPointerUpListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowPointerUp.bind(this));
       this._buttonsGlobalListeners["windowBlur"] = this.addBlurListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowBlur.bind(this));
-      this._buttonsGlobalListeners["documentVisibilityChange"] = this.addVisibilityChangeListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalDocumentVisibilityChange.bind(this));
+      this._buttonsGlobalListeners["documentVisibilityChange"] = this.addVisibilityChangeListenerToContainer(this._buttonsGlobalContainerName, document, this.onButtonsGlobalDocumentVisibilityChange.bind(this));
     }
   }
 
