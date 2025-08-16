@@ -11,6 +11,7 @@ RESOURCES = [
     "carrousel-card.js",
     "trackpad-card.js",
     "windows-keyboard-card.js",
+    "test-card.js"
 ]
 
 # This component name
