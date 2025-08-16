@@ -230,6 +230,7 @@ export class AndroidKeyboardCard extends HTMLElement {
       ha-card {
         border-radius: var(--card-corner-radius);
         position: relative;
+        font-size: var(--base-font-size);
       }
       .keyboard-container {
         border-radius: var(--card-corner-radius);
