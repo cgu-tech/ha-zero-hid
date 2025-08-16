@@ -54,14 +54,14 @@ export class EventManager {
   // Constants
   _listenerKeys = ['target', 'callback', 'options', 'eventName', 'managedCallback'];
   _defaultContainerName = 'default';
-  _windowContainerName = '__window';
+  _buttonsGlobalContainerName = '__window';
   
   _origin;
   _eventsMap = new Map();
   _reversedEventsMap = new Map();
   _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
   _containers = new Map(); // Registrered listeners for cleanup
-  _buttonsWindowPointerUpListener; // Global windows.pointerUp callback for buttons management
+  _buttonsGlobalListeners; // Callback with global scopes (document, window) for buttons management
   _buttons = new Set(); // Managed buttons
 
   constructor(origin) {
@@ -69,19 +69,22 @@ export class EventManager {
 
     // Mapping for "managed" event names with their "real" event names counterparts 
     // that might be supported by device - or not (by preference order)
-    this._eventsMap.set("EVT_POINTER_DOWN",     ["pointerdown", "touchstart", "mousedown"]);
-    this._eventsMap.set("EVT_POINTER_ENTER",    ["pointerenter", "mouseenter"]);
-    this._eventsMap.set("EVT_POINTER_OVER",     ["pointerover", "mouseover"]);
-    this._eventsMap.set("EVT_POINTER_MOVE",     ["pointermove", "touchmove", "mousemove"]);
-    this._eventsMap.set("EVT_POINTER_LEAVE",    ["pointerleave", "mouseleave"]);
-    this._eventsMap.set("EVT_POINTER_UP",       ["pointerup", "touchend", "mouseup"]);
-    this._eventsMap.set("EVT_POINTER_CANCEL",   ["pointercancel", "touchcancel"]);
-    this._eventsMap.set("EVT_POINTER_OUT",      ["pointerout", "mouseout"]);
-    this._eventsMap.set("EVT_POINTER_CLICK",    ["click"]);
-    this._eventsMap.set("EVT_POINTER_DBLCLICK", ["dblclick"]);
-    this._eventsMap.set("EVT_POINTER_CTXMENU",  ["contextmenu"]);
-    this._eventsMap.set("EVT_LOAD",             ["load"]);
-    this._eventsMap.set("EVT_ERROR",            ["error"]);
+    this._eventsMap.set("EVT_BLUR",              ["blur"]);
+    this._eventsMap.set("EVT_ERROR",             ["error"]);
+    this._eventsMap.set("EVT_LOAD",              ["load"]);
+    this._eventsMap.set("EVT_POINTER_CANCEL",    ["pointercancel", "touchcancel"]);
+    this._eventsMap.set("EVT_POINTER_CLICK",     ["click"]);
+    this._eventsMap.set("EVT_POINTER_CTXMENU",   ["contextmenu"]);
+    this._eventsMap.set("EVT_POINTER_DBLCLICK",  ["dblclick"]);
+    this._eventsMap.set("EVT_POINTER_DOWN",      ["pointerdown", "touchstart", "mousedown"]);
+    this._eventsMap.set("EVT_POINTER_ENTER",     ["pointerenter", "mouseenter"]);
+    this._eventsMap.set("EVT_POINTER_LEAVE",     ["pointerleave", "mouseleave"]);
+    this._eventsMap.set("EVT_POINTER_MOVE",      ["pointermove", "touchmove", "mousemove"]);
+    this._eventsMap.set("EVT_POINTER_OUT",       ["pointerout", "mouseout"]);
+    this._eventsMap.set("EVT_POINTER_OVER",      ["pointerover", "mouseover"]);
+    this._eventsMap.set("EVT_POINTER_UP",        ["pointerup", "touchend", "mouseup"]);
+    this._eventsMap.set("EVT_VISIBILITY_CHANGE", ["visibilitychange"]);
+    
 
     // Reversed mapping for each "real" event names with its "managed" event name counterpart
     // ex: "pointerdown" --> "EVT_POINTER_DOWN"
@@ -107,8 +110,9 @@ export class EventManager {
 
   addButtonListeners(containerName, target, callbacks, options = null) {
     if (!target) throw new Error('Invalid target', target);
+
     this.initButtonState(target, callbacks);
-    this._buttons.add(target);
+    this.addButtonsGlobalListeners();
 
     const listeners = [];
     listeners.push(this.addPointerEnterListenerToContainer(containerName, target, this.onButtonPointerEnter.bind(this), options));
@@ -116,21 +120,34 @@ export class EventManager {
     listeners.push(this.addPointerCancelListenerToContainer(containerName, target, this.onButtonPointerCancel.bind(this), options));
     listeners.push(this.addPointerDownListenerToContainer(containerName, target, this.onButtonPointerDown.bind(this), options));
     listeners.push(this.addPointerUpListenerToContainer(containerName, target, this.onButtonPointerUp.bind(this), options));
-
-    if (!this._buttonsWindowPointerUpListener) 
-      this._buttonsWindowPointerUpListener = this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this));
-    
     return listeners;
+  }
+
+  addButtonsGlobalListeners() {
+    if (this._buttons && !this._buttonsGlobalListeners) {
+      this._buttonsGlobalListeners = {};
+      this._buttonsGlobalListeners["windowPointerUp"] = this.addPointerUpListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowPointerUp.bind(this));
+      this._buttonsGlobalListeners["windowBlur"] = this.addBlurListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowBlur.bind(this));
+      this._buttonsGlobalListeners["documentVisibilityChange"] = this.addVisibilityChangeListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalDocumentVisibilityChange.bind(this));
+    }
+  }
+
+  removeButtonsGlobalListeners() {
+    if (this._buttonsGlobalListeners) {
+      this.removeListener(this._buttonsGlobalListeners["windowPointerUp"]);
+      this.removeListener(this._buttonsGlobalListeners["windowBlur"]);
+      this.removeListener(this._buttonsGlobalListeners["documentVisibilityChange"]);
+    }
   }
 
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
-    if (this._buttons && !this._buttonsWindowPointerUpListener) this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this));
+    this.addButtonsGlobalListeners();
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
-    if (this._buttonsWindowPointerUpListener) this.removeListener(this._buttonsWindowPointerUpListener);
+
   }
 
   onButtonPointerEnter(evt) {
@@ -148,10 +165,23 @@ export class EventManager {
   onButtonPointerUp(evt) {
     this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
   }
-  onButtonWindowPointerUp(evt) {
+
+  onButtonsGlobalWindowPointerUp(evt) {
     const hovered = this.getTargetHoveredByPointer(evt);
     for (const btn of this._buttons) {
       if (btn !== hovered) this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+    }
+  }
+  onButtonsGlobalWindowBlur(evt) {
+    for (const btn of this._buttons) {
+      if (btn !== hovered) this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+    }
+  }
+  onButtonsGlobalDocumentVisibilityChange(evt) {
+    if (document.visibilityState === "hidden") {
+      for (const btn of this._buttons) {
+        this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+      }
     }
   }
 
@@ -183,6 +213,7 @@ export class EventManager {
     this.setButtonData(btn, {});
     this.setButtonState(btn, this.constructor._BUTTON_STATUS_MAP["init"]["state"]);
     this.setButtonCallbacks(btn, callbacks);
+    this._buttons.add(target);
   }
 
   getButtonCurrentState(btn) {
@@ -305,6 +336,7 @@ export class EventManager {
   addPointerContextmenuListener(target, callback, options = null) { return this.addPointerContextmenuListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addLoadListener(target, callback, options = null) { return this.addLoadListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addErrorListener(target, callback, options = null) { return this.addErrorListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addBlurListener(target, callback, options = null) { return this.addBlurListenerToContainer(this._defaultContainerName, target, callback, options ); }
 
   addPointerDownListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_DOWN" ); }
   addPointerEnterListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_ENTER" ); }
@@ -319,6 +351,7 @@ export class EventManager {
   addPointerContextmenuListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_CTXMENU" ); }
   addLoadListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_LOAD" ); }
   addErrorListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_ERROR" ); }
+  addBlurListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_BLUR" ); }
 
   // Add the available event listener using 
   // - supported event first (when available) 
