@@ -1092,8 +1092,8 @@ class AndroidRemoteCard extends HTMLElement {
   addClickableListeners(btn) {
     this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
     this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
-    this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
-    this._eventManager.addPointerLeaveListener(btn, this.onButtonPointerUp.bind(this));
+    this._eventManager.addPointerCancelListener(btn, this.onButtonPointerCancel.bind(this));
+    this._eventManager.addPointerLeaveListener(btn, this.onButtonPointerLeave.bind(this));
   }
 
   onButtonPointerDown(evt) {
@@ -1103,6 +1103,18 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   onButtonPointerUp(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    this.doKeyRelease(btn);
+  }
+
+  onButtonPointerCancel(evt) {
+    evt.preventDefault(); // prevent unwanted focus or scrolling
+    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
+    this.doKeyRelease(btn);
+  }
+
+  onButtonPointerLeave(evt) {
     evt.preventDefault(); // prevent unwanted focus or scrolling
     const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
     this.doKeyRelease(btn);
