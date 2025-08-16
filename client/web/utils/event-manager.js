@@ -6,11 +6,16 @@ export class EventManager {
 
   // private init required constants
   static _BUTTON_STATUS_MAP;
-  static _TRIGGER_EVENTS_MAP;
 
   static _BUTTON_STATE_NORMAL = "normal";
   static _BUTTON_STATE_HOVER = "hover";
   static _BUTTON_STATE_PRESSED = "pressed";
+
+  static _BUTTON_CALLBACK_POINTER_HOVER = "BTN_HOVER";
+  static _BUTTON_CALLBACK_ABORT_POINTER_HOVER = "BTN_ABORT_HOVER";
+  static _BUTTON_CALLBACK_PRESS = "BTN_PRESS";
+  static _BUTTON_CALLBACK_ABORT_PRESS = "BTN_ABORT_PRESS";
+  static _BUTTON_CALLBACK_RELEASE = "BTN_RELEASE";
 
   static _TRIGGER_POINTER_ENTER = "EVT_POINTER_ENTER";
   static _TRIGGER_POINTER_LEAVE = "EVT_POINTER_LEAVE";
@@ -25,43 +30,39 @@ export class EventManager {
         [this._BUTTON_STATE_NORMAL]: {
           "actions": { "self": [ { "action": "remove", "class_list": ["active", "press"] } ] },
           "nexts": [ 
-            { "trigger": this._TRIGGER_POINTER_ENTER, "state": this._BUTTON_STATE_HOVER }
+            { "trigger": this._TRIGGER_POINTER_ENTER, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_POINTER_HOVER }
           ]
         },
         [this._BUTTON_STATE_HOVER]: {
           "actions": { "self": [ { "action": "add", "class_list": ["active"] } ] },
           "nexts": [ 
-            { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL },
-            { "trigger": this._TRIGGER_POINTER_DOWN, "state": this._BUTTON_STATE_PRESSED }, // press event here (2-states button)
+            { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_POINTER_HOVER }, 
+            { "trigger": this._TRIGGER_POINTER_DOWN, "state": this._BUTTON_STATE_PRESSED, "callback": this._BUTTON_CALLBACK_PRESS }, // keyPress for 2-states button, popin/long-click/etc timeout for all buttons
           ]
         },
         [this._BUTTON_STATE_PRESSED]: {
           "actions": { "self": [ { "action": "add", "class_list": ["press"] } ] },
           "nexts": [ 
-            { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL }, // abort event here (2-states button)
-            { "trigger": this._TRIGGER_POINTER_UP, "state": this._BUTTON_STATE_HOVER },     // release event here (2-states button), click event here (1-state button)
+            { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_PRESS }, // onAbort for 2-states button
+            { "trigger": this._TRIGGER_POINTER_UP, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_RELEASE }, // keyRelease for 2-states button, key click for 1-state button
           ]
         }
       }
-    };
-
-    this._TRIGGER_EVENTS_MAP = {
-      [this._TRIGGER_POINTER_ENTER]: ["self.EVT_POINTER_ENTER"],
-      [this._TRIGGER_POINTER_LEAVE]: ["self.EVT_POINTER_LEAVE", "self.EVT_POINTER_CANCEL", "window.EVT_MOUSE_UP.not.self"],
-      [this._TRIGGER_POINTER_DOWN]: ["self.EVT_POINTER_DOWN"],
-      [this._TRIGGER_POINTER_UP]: ["self.EVT_POINTER_UP"],
     };
   }
 
   // Constants
   _listenerKeys = ['target', 'callback', 'options', 'eventName', 'managedCallback'];
   _defaultContainerName = 'default';
-
+  _windowContainerName = '__window';
+  
   _origin;
   _eventsMap = new Map();
   _reversedEventsMap = new Map();
   _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
   _containers = new Map(); // Registrered listeners for cleanup
+  _buttonsWindowPointerUpListener; // Global windows.pointerUp callback for buttons management
+  _buttons = new Set(); // Managed buttons
 
   constructor(origin) {
     this._origin = origin;
@@ -102,6 +103,86 @@ export class EventManager {
   // Get elapsed time between a start event and an end event (in milliseconds)
   getElapsedTime(evtStart, evtEnd) {
     return evtEnd.timeStamp - evtStart.timeStamp;
+  }
+
+  addButtonListeners(containerName, target, callbacks, options = null) {
+    if (!target) throw new Error('Invalid target', target);
+    this.initButtonState(target);
+    this._buttons.add(target);
+
+    const listeners = [];
+    listeners.push(this.addPointerEnterListenerToContainer(containerName, target, this.onButtonPointerEnter.bind(this, callbacks), options);
+    listeners.push(this.addPointerLeaveListenerToContainer(containerName, target, this.onButtonPointerLeave.bind(this, callbacks), options);
+    listeners.push(this.addPointerCancelListenerToContainer(containerName, target, this.onButtonPointerCancel.bind(this, callbacks), options);
+    listeners.push(this.addPointerDownListenerToContainer(containerName, target, this.onButtonPointerDown.bind(this, callbacks), options);
+    listeners.push(this.addPointerUpListenerToContainer(containerName, target, this.onButtonPointerUp.bind(this, callbacks), options);
+
+    if (!this._buttonsWindowPointerUpListener) 
+      this._buttonsWindowPointerUpListener = this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this, callbacks);
+    
+    return listeners;
+  }
+  
+  onButtonPointerEnter(callbacks, evt) {
+    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_ENTER);
+  }
+  onButtonPointerLeave(callbacks, evt) {
+    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_LEAVE);
+  }
+  onButtonPointerCancel(callbacks, evt) {
+    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_LEAVE);
+  }
+  onButtonPointerDown(callbacks, evt) {
+    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_DOWN);
+  }
+  onButtonPointerUp(callbacks, evt) {
+    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_UP);
+  }
+  onButtonWindowPointerUp(callbacks, evt) {
+    const hovered = this.getTargetHoveredByPointer(evt);
+    for (const btn of this._buttons) {
+      if (btn !== hovered) this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_LEAVE);
+    }
+  }
+  
+  initButtonState(btn) {
+    return if (btn) btn._managedButtonState = this.constructor._BUTTON_STATUS_MAP["init"]["state"];
+  }
+
+  getButtonCurrentStateName(btn) {
+    return if (btn) btn._managedButtonState;
+  }
+
+  getButtonCurrentState(btn) {
+    return if (btn) this.constructor._BUTTON_STATUS_MAP["states"][this.getButtonCurrentStateName(btn)];
+  }
+
+  getButtonCurrentActions(btn) {
+    return this.getButtonCurrentState(btn)?.["actions"];
+  }
+
+  getButtonNextState(btn, trigger) {
+    return this.getButtonCurrentState(btn)?.["nexts"].find(next => next["trigger"] === trigger);
+  }
+
+  isButtonNextStateTrigger(btn, trigger) {
+    return !!this.getButtonNextState(btn, trigger);
+  }
+
+  activateButtonNextState(callbacks, evt, trigger) {
+    const btn = evt.currentTarget;
+    if (btn) {
+      const nextState = this.getButtonNextState(btn, trigger);
+      if (nextState) {
+        // Change button state
+        btn._managedButtonState = nextState["state"];
+
+        // Execute associated callback (when present)
+        const callback = callbacks?.[nextState["callback"]];
+        if (callback) callback(evt);
+      }
+      return !!nextState;
+    }
   }
 
   executeButtonOverride(btn, overrideConfig) {
