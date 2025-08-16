@@ -81,7 +81,7 @@ export class TestCard extends HTMLElement {
     this._elements.card.innerHTML = `
       <div class="container">
         <div class="test-button">
-          <div class="test-button-label">Test<div>
+          <div class="test-button-label">Test</div>
         </div>
       </div>
     `;
@@ -91,43 +91,26 @@ export class TestCard extends HTMLElement {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
       .container {
-        display: inline-flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        background: #3a3a3a;
-        border-radius: 8px;
-        overflow: hidden;
-        text-align: center;
-        color: white;
-        font-size: 14px;
-        box-sizing: border-box;
-        cursor: pointer;
-        padding: 20px;
-      }
-      .test-button {
-        display: inline-flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        border-radius: 4px;
-        overflow: hidden;
-        text-align: center;
-        color: white;
-        font-size: 14px;
-        box-sizing: border-box;
-        width: 90%;
-        height: 90%;
-      }
-      .test-button-label {
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100%;
-        height: 100%;
-        white-space: normal;       /* allows wrapping */
-        word-wrap: break-word;     /* allows breaking long words */
-        overflow-wrap: break-word; /* better support for word breaking */
+        width: 200px;
+        height: 200px;
+        background: #3a3a3a;
+      }
+    
+      .test-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100px;
+        height: 40px;
+        background: #555;
+      }
+    
+      .test-button-label {
+        text-align: center;
+        color: white;
       }
     `;
   }
