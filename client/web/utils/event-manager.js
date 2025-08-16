@@ -157,16 +157,16 @@ export class EventManager {
   }
 
   onButtonPointerEnter(evt) {
-    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_ENTER);
+    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_ENTER, evt);
   }
   onButtonPointerLeave(evt) {
-    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_LEAVE);
   }
   onButtonPointerCancel(evt) {
-    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_LEAVE);
   }
   onButtonPointerDown(evt) {
-    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_DOWN);
+    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_DOWN);
   }
   onButtonPointerUp(evt) {
     //this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
@@ -177,22 +177,22 @@ export class EventManager {
     const hovered = this.getTargetHoveredByPointer(evt);
     for (const btn of this._buttons) {
       if (btn !== hovered)
-        this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+        this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
       else
-        this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
+        this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_UP, evt);
     }
   }
   onButtonsGlobalWindowBlur(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowBlur(evt)"));
     for (const btn of this._buttons) {
-      this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+      this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
     }
   }
   onButtonsGlobalDocumentVisibilityChange(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalDocumentVisibilityChange(evt)"));
     if (document.visibilityState === "hidden") {
       for (const btn of this._buttons) {
-        this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+        this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
       }
     }
   }
@@ -240,8 +240,11 @@ export class EventManager {
     return this.getButtonCurrentState(btn)?.["nexts"].find(next => next["trigger"] === trigger);
   }
 
-  activateButtonNextState(evt, trigger) {
-    const btn = evt.currentTarget;
+  activateButtonNextStateFromEvent(trigger, evt) {
+    return this.activateButtonNextState(evt.currentTarget, trigger, evt);
+  }
+
+  activateButtonNextState(btn, trigger, evt) {
     if (btn) {
       const nextState = this.getButtonNextState(btn, trigger);
       if (nextState) {
