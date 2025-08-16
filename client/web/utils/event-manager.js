@@ -391,7 +391,7 @@ export class EventManager {
   // Add the specified event listener
   addGivenEventListener(containerName, target, callback, options, eventName) {
     const managedCallback = this.onManagedCallback.bind(this, target, callback);
-    const listener = this.registerListener(this.createListener(target, callback, options, eventName, callback), containerName);
+    const listener = this.registerListener(this.createListener(target, callback, options, eventName, managedCallback), containerName);
     
     if (this.isTargetListenable(target)) {
       if (options) {
