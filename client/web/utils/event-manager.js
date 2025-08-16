@@ -151,7 +151,7 @@ export class EventManager {
   onButtonWindowPointerUp(evt) {
     const hovered = this.getTargetHoveredByPointer(evt);
     for (const btn of this._buttons) {
-      if (btn !== hovered) this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_LEAVE);
+      if (btn !== hovered) this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
     }
   }
 
