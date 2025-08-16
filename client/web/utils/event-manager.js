@@ -174,7 +174,7 @@ export class EventManager {
   }
   onButtonsGlobalWindowBlur(evt) {
     for (const btn of this._buttons) {
-      if (btn !== hovered) this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+      this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
     }
   }
   onButtonsGlobalDocumentVisibilityChange(evt) {
