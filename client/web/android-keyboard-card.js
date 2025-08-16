@@ -821,7 +821,7 @@ export class AndroidKeyboardCard extends HTMLElement {
 
   doListenPopin() {
     // When any pointer is up anywhere: close popin
-    this._eventManager.addPointerUpListener(document, this.onClosingPopin.bind(this), { once: true });
+    //this._eventManager.addPointerUpListener(document, this.onClosingPopin.bind(this), { once: true });
   }
 
   doPromptPopin(evt) {
@@ -1044,6 +1044,10 @@ export class AndroidKeyboardCard extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: normal press detected (nothing to do)`));
     }
 
+    // Close popin
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: closing popin...`));
+    this.doClosePopin();
+
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
   }
@@ -1074,7 +1078,7 @@ export class AndroidKeyboardCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: updating status and visuals...`));
     if (this.activateNextStatus(code)) this.doUpdateCells();
 
-    // Send haptic feedback to make user acknownledgable of succeeded release event
+    // Close popin
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: closing popin...`));
     this.doClosePopin();
 
