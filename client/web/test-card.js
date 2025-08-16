@@ -144,6 +144,10 @@ export class TestCard extends HTMLElement {
     this._eventManager.addPointerDownListener(this._elements.testButton, this.onTestButtonPointerDown.bind(this));
     this._eventManager.addPointerCancelListener(this._elements.testButton, this.onTestButtonPointerCancel.bind(this));
     this._eventManager.addPointerUpListener(this._elements.testButton, this.onTestButtonPointerUp.bind(this));
+
+    document.addEventListener('visibilitychange', this.onDocumentVisibilityChange.bind(this));
+    window.addEventListener('focus', this.onWindowFocus.bind(this));
+    window.addEventListener('blur', this.onWindowBlur.bind(this));
   }
 
   onTestButtonPointerEnter(evt) {
@@ -161,6 +165,16 @@ export class TestCard extends HTMLElement {
   }
   onTestButtonPointerUp(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPointerUp(evt)", evt));
+  }
+
+  onDocumentVisibilityChange(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onDocumentVisibilityChange(evt) + document.visibilityState", evt, document.visibilityState));
+  }
+  onWindowFocus(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onWindowFocus(evt) + document.visibilityState", evt, document.visibilityState));
+  }
+  onWindowBlur(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onWindowBlur(evt) + document.visibilityState", evt, document.visibilityState));
   }
 
   triggerPopinOrPopup(evt) {
