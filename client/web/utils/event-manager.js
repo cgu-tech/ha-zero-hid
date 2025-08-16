@@ -133,22 +133,22 @@ export class EventManager {
     if (this._buttonsWindowPointerUpListener) this.removeListener(this._buttonsWindowPointerUpListener);
   }
 
-  onButtonPointerEnter(callbacks, evt) {
-    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_ENTER);
+  onButtonPointerEnter(evt) {
+    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_ENTER);
   }
-  onButtonPointerLeave(callbacks, evt) {
-    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_LEAVE);
+  onButtonPointerLeave(evt) {
+    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
   }
-  onButtonPointerCancel(callbacks, evt) {
-    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_LEAVE);
+  onButtonPointerCancel(evt) {
+    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
   }
-  onButtonPointerDown(callbacks, evt) {
-    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_DOWN);
+  onButtonPointerDown(evt) {
+    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_DOWN);
   }
-  onButtonPointerUp(callbacks, evt) {
-    this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_UP);
+  onButtonPointerUp(evt) {
+    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
   }
-  onButtonWindowPointerUp(callbacks, evt) {
+  onButtonWindowPointerUp(evt) {
     const hovered = this.getTargetHoveredByPointer(evt);
     for (const btn of this._buttons) {
       if (btn !== hovered) this.activateButtonNextState(callbacks, evt, this.constructor._TRIGGER_POINTER_LEAVE);
