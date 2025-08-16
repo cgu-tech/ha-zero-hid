@@ -323,35 +323,38 @@ export class EventManager {
     });
   }
 
+  addBlurListener(target, callback, options = null) { return this.addBlurListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addErrorListener(target, callback, options = null) { return this.addErrorListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addLoadListener(target, callback, options = null) { return this.addLoadListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addPointerCancelListener(target, callback, options = null) { return this.addPointerCancelListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addPointerClickListener(target, callback, options = null) { return this.addPointerClickListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addPointerContextmenuListener(target, callback, options = null) { return this.addPointerContextmenuListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addPointerDblClickListener(target, callback, options = null) { return this.addPointerDblClickListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addPointerDownListener(target, callback, options = null) { return this.addPointerDownListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addPointerEnterListener(target, callback, options = null) { return this.addPointerEnterListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addPointerOverListener(target, callback, options = null) { return this.addPointerOverListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addPointerMoveListener(target, callback, options = null) { return this.addPointerMoveListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addPointerLeaveListener(target, callback, options = null) { return this.addPointerLeaveListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addPointerUpListener(target, callback, options = null) { return this.addPointerUpListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addPointerCancelListener(target, callback, options = null) { return this.addPointerCancelListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addPointerMoveListener(target, callback, options = null) { return this.addPointerMoveListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addPointerOutListener(target, callback, options = null) { return this.addPointerOutListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addPointerClickListener(target, callback, options = null) { return this.addPointerClickListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addPointerDblClickListener(target, callback, options = null) { return this.addPointerDblClickListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addPointerContextmenuListener(target, callback, options = null) { return this.addPointerContextmenuListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addLoadListener(target, callback, options = null) { return this.addLoadListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addErrorListener(target, callback, options = null) { return this.addErrorListenerToContainer(this._defaultContainerName, target, callback, options ); }
-  addBlurListener(target, callback, options = null) { return this.addBlurListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addPointerOverListener(target, callback, options = null) { return this.addPointerOverListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addPointerUpListener(target, callback, options = null) { return this.addPointerUpListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addVisibilityChangeListener(target, callback, options = null) { return this.addVisibilityChangeListenerToContainer(this._defaultContainerName, target, callback, options ); }
 
+
+  addBlurListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_BLUR" ); }
+  addErrorListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_ERROR" ); }
+  addLoadListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_LOAD" ); }
+  addPointerCancelListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_CANCEL" ); }
+  addPointerClickListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_CLICK" ); }
+  addPointerContextmenuListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_CTXMENU" ); }
+  addPointerDblClickListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_DBLCLICK" ); }
   addPointerDownListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_DOWN" ); }
   addPointerEnterListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_ENTER" ); }
-  addPointerOverListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_OVER" ); }
-  addPointerMoveListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_MOVE" ); }
   addPointerLeaveListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_LEAVE" ); }
-  addPointerUpListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_UP" ); }
-  addPointerCancelListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_CANCEL" ); }
+  addPointerMoveListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_MOVE" ); }
   addPointerOutListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_OUT" ); }
-  addPointerClickListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_CLICK" ); }
-  addPointerDblClickListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_DBLCLICK" ); }
-  addPointerContextmenuListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_CTXMENU" ); }
-  addLoadListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_LOAD" ); }
-  addErrorListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_ERROR" ); }
-  addBlurListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_BLUR" ); }
+  addPointerOverListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_OVER" ); }
+  addPointerUpListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_UP" ); }
+  addVisibilityChangeListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_VISIBILITY_CHANGE" ); }
 
   // Add the available event listener using 
   // - supported event first (when available) 
