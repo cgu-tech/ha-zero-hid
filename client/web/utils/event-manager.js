@@ -213,7 +213,7 @@ export class EventManager {
     this.setButtonData(btn, {});
     this.setButtonState(btn, this.constructor._BUTTON_STATUS_MAP["init"]["state"]);
     this.setButtonCallbacks(btn, callbacks);
-    this._buttons.add(target);
+    this._buttons.add(btn);
   }
 
   getButtonCurrentState(btn) {
