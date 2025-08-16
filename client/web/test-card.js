@@ -27,7 +27,7 @@ export class TestCard extends HTMLElement {
   constructor() {
     super();
 
-    this._logger = new Logger(this, "android-keyboard-card.js");
+    this._logger = new Logger(this, "test-card.js");
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, null);
     this._resourceManager = new ResourceManager(this, import.meta.url);
