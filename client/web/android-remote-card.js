@@ -1094,8 +1094,6 @@ class AndroidRemoteCard extends HTMLElement {
   addClickableListeners(btn) {
     //this._eventManager.addButtonListeners("buttons", btn, 
     //  {
-    //    [this._eventManager.constructor._BUTTON_CALLBACK_HOVER]: this.onTestButtonHover.bind(this),
-    //    [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_HOVER]: this.onTestButtonAbortHover.bind(this),
     //    [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onTestButtonPress.bind(this),
     //    [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onTestButtonAbortPress.bind(this),
     //    [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onTestButtonRelease.bind(this)

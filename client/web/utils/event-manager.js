@@ -260,7 +260,7 @@ export class EventManager {
 
         // Execute associated callback (when present)
         const callback = this.getButtonCallbacks(btn)?.[nextState["callback"]];
-        if (callback) callback(evt);
+        if (callback) callback(btn, evt);
       }
       return !!nextState;
     }

@@ -172,20 +172,20 @@ export class TestCard extends HTMLElement {
     //window.addEventListener('blur', this.onWindowBlur.bind(this));
   }
   
-  onTestButtonHover(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonHover(evt)", evt));
+  onTestButtonHover(btn, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonHover(btn, evt)", btn, evt));
   }
-  onTestButtonAbortHover(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonAbortHover(evt)", evt));
+  onTestButtonAbortHover(btn, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonAbortHover(btn, evt)", btn, evt));
   }
-  onTestButtonPress(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPress(evt)", evt));
+  onTestButtonPress(btn, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPress(btn, evt)", btn, evt));
   }
-  onTestButtonAbortPress(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonAbortPress(evt)", evt));
+  onTestButtonAbortPress(btn, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonAbortPress(btn, evt)", btn, evt));
   }
-  onTestButtonRelease(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonRelease(evt)", evt));
+  onTestButtonRelease(btn, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonRelease(btn, evt)", btn, evt));
   }
 
   onTestButtonPointerEnter(evt) {
