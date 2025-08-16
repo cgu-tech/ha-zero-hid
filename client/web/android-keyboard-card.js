@@ -414,6 +414,9 @@ export class AndroidKeyboardCard extends HTMLElement {
     if (this.shadowRoot.host?.style) {
       this.shadowRoot.host?.style.setProperty('--base-font-size', this._layoutManager.getSafeFontScale());
     }
+    if (this._elements.card.style) {
+      this._elements.card.style.setProperty('--base-font-size', this._layoutManager.getSafeFontScale());
+    }
 
     if (this._layoutManager.configuredLayoutChanged()) {
       this.doUpdateLayout();
