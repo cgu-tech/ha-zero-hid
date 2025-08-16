@@ -139,15 +139,41 @@ export class TestCard extends HTMLElement {
   }
 
   doListen() {
-    this._eventManager.addPointerEnterListener(this._elements.testButton, this.onTestButtonPointerEnter.bind(this));
-    this._eventManager.addPointerLeaveListener(this._elements.testButton, this.onTestButtonPointerLeave.bind(this));
-    this._eventManager.addPointerDownListener(this._elements.testButton, this.onTestButtonPointerDown.bind(this));
-    this._eventManager.addPointerCancelListener(this._elements.testButton, this.onTestButtonPointerCancel.bind(this));
-    this._eventManager.addPointerUpListener(this._elements.testButton, this.onTestButtonPointerUp.bind(this));
+    this._eventManager.addButtonListeners("buttons", this._elements.testButton, 
+      {
+        this._eventManager.constructor._BUTTON_CALLBACK_HOVER: this.onTestButtonHover.bind(this),
+        this._eventManager.constructor._BUTTON_CALLBACK_ABORT_HOVER: this.onTestButtonAbortHover.bind(this),
+        this._eventManager.constructor._BUTTON_CALLBACK_PRESS: this.onTestButtonPress.bind(this),
+        this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS: this.onTestButtonAbortPress.bind(this),
+        this._eventManager.constructor._BUTTON_CALLBACK_RELEASE: this.onTestButtonRelease.bind(this)
+      }
+    );
 
-    document.addEventListener('visibilitychange', this.onDocumentVisibilityChange.bind(this));
-    window.addEventListener('focus', this.onWindowFocus.bind(this));
-    window.addEventListener('blur', this.onWindowBlur.bind(this));
+    //this._eventManager.addPointerEnterListener(this._elements.testButton, this.onTestButtonPointerEnter.bind(this));
+    //this._eventManager.addPointerLeaveListener(this._elements.testButton, this.onTestButtonPointerLeave.bind(this));
+    //this._eventManager.addPointerDownListener(this._elements.testButton, this.onTestButtonPointerDown.bind(this));
+    //this._eventManager.addPointerCancelListener(this._elements.testButton, this.onTestButtonPointerCancel.bind(this));
+    //this._eventManager.addPointerUpListener(this._elements.testButton, this.onTestButtonPointerUp.bind(this));
+    //
+    //document.addEventListener('visibilitychange', this.onDocumentVisibilityChange.bind(this));
+    //window.addEventListener('focus', this.onWindowFocus.bind(this));
+    //window.addEventListener('blur', this.onWindowBlur.bind(this));
+  }
+  
+  onTestButtonHover(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonHover(evt)", evt));
+  }
+  onTestButtonAbortHover(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonAbortHover(evt)", evt));
+  }
+  onTestButtonPress(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPress(evt)", evt));
+  }
+  onTestButtonAbortPress(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonAbortPress(evt)", evt));
+  }
+  onTestButtonRelease(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonRelease(evt)", evt));
   }
 
   onTestButtonPointerEnter(evt) {
