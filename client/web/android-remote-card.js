@@ -1128,12 +1128,12 @@ class AndroidRemoteCard extends HTMLElement {
       // Overriden action
       
       // Nothing to do: overriden action will be executed on key release
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: override detected (suppressing press of ${code})`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key detected, nothing to press`));
     } else {
       // Default action
 
       // Press HID key
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: pressing ${code}...`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: standard key detected, pressing ${code}...`));
       this.appendCode(code);
     }
 
@@ -1153,12 +1153,12 @@ class AndroidRemoteCard extends HTMLElement {
       // Overriden action
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: override detected (nothing to abort)`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden key detected, nothing to abort`));
     } else {
       // Default action
 
       // Release HID key to prevent infinite key press
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: releasing ${code}...`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: standard key detected, releasing ${code}...`));
       this.removeCode(code);
     }
 
@@ -1178,13 +1178,13 @@ class AndroidRemoteCard extends HTMLElement {
       // Overriden action
       
       // Execute the override action
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: override detected (suppressing release of ${code})`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected, suppressing ${code} to execute override...`));
       this.executeButtonOverride(btn);
     } else {
       // Default action
 
       // Release HID key
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: releasing ${code}...`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected, releasing ${code}...`));
       this.removeCode(code);
     }
 

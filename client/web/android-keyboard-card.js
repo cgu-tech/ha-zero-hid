@@ -1092,82 +1092,118 @@ export class AndroidKeyboardCard extends HTMLElement {
 
   // Set listeners on a clickable button
   addClickableListeners(btn) {
-    this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
-    this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
-    this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
-    this._eventManager.addPointerLeaveListener(btn, this.onButtonPointerCancel.bind(this));
+    //this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
+    //this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
+    //this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
+    //this._eventManager.addPointerLeaveListener(btn, this.onButtonPointerCancel.bind(this));
+    this._eventManager.addButtonListeners("buttons", btn, 
+      {
+        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onButtonPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onButtonAbortPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onButtonRelease.bind(this)
+      }
+    );
   }
 
-  onButtonPointerDown(evt) {
+  onButtonPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doKeyPress(evt, btn);
+    this.doKeyPress(btn, evt);
   }
 
-  onButtonPointerUp(evt) {
+  onButtonAbortPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doKeyRelease(evt, btn);
+    this.doKeyAbortPress(btn, evt);
   }
 
-  onButtonPointerCancel(evt) {
+  onButtonRelease(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    const btn = evt.currentTarget; // Retrieve clickable button attached to the listener that triggered the event
-    this.doKeyCancel(evt, btn);
+    this.doKeyRelease(btn, evt);
   }
 
-  doKeyPress(evt, btn) {
-
-    // Mark clickable button active for visual feedback
-    btn.classList.add("active");
+  doKeyPress(btn, evt) {
 
     // Retrieve clickable button data
-    const cellConfig = this._layoutManager.getElementData(btn);
-    if (!cellConfig) return;
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
 
     // Key code to press
-    const code = cellConfig.code;
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("Key code to press:", code));
-
-    // Make this clickable button press the reference button to prevent unwanted releases trigger from other clickable buttons in the future
-    this._referenceBtn = btn;
-
+    const code = btnData.code;
     if (this.isVirtualModifier(code)) {
-      // Pressed key code triggered keyboard status change
+      // Virtual modifier pressed: they cannot be overriden
 
       // Update all cells labels and visuals
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: virtual key detected, updating layout...`));
       if (this.activateNextStatus(code)) this.doUpdateCells();
+    } else if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+      
+      // Nothing to do: overriden action will be executed on key release
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key detected, nothing to press`));
+    } else if (btnData.special) {
+      // Special key pressed: this type of key contains consummer codes
+
+      // Press HID key
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: special key detected, pressing ${code}...`));
+      this.appendCode(code);
     } else {
-      // Pressed key code does not triggered keyboard status change
+      // Normal key pressed: this type of key contains a sendable key char
 
-      // Special key pressed
-      if (cellConfig.special) {
+      // Do not send pressed key to HID (key will be send to HID on release)
 
-        // Send special key press to HID
-        this.appendCode(code);
-      } else {
-        // Normal key pressed
-
-        // Do not send pressed key to HID (key will be send to HID on release)
-
-        // add popin timeout
-        this._popinTimeouts.set(evt.pointerId, { 
-          "popin-can-show": true,                     // until proven wrong, popin can be shown
-          "popin-shown": false,                       // true when popin was shown
-          "source": btn ,                             // popin source button
-          "popin-timeout": this.addPopinTimeout(evt)  // when it expires, triggers the associated inner callback to show (or not) popin
-        });
-      }
+      // Add timeout to trigger a popin if key is bound to another set of extended key chars
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: standard key detected, adding popin timeout...`));
+      this._popinTimeouts.set(evt.pointerId, { 
+        "popin-can-show": true,                     // until proven wrong, popin can be shown
+        "popin-shown": false,                       // true when popin was shown
+        "source": btn ,                             // popin source button
+        "popin-timeout": this.addPopinTimeout(evt)  // when it expires, triggers the associated inner callback to show (or not) popin
+      });
     }
 
-    // Send haptic feedback to make user acknownledgable of succeeded press event
+    // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
   }
 
-  doKeyRelease(evt, btn) {
+  doKeyAbortPress(btn, evt) {
 
-    // Unmark clickable button active for visual feedback
-    btn.classList.remove("active");
+    // Remove popin timeout (when set before)
+    this.clearPopinTimeout(evt);
+    this._popinTimeouts.delete(evt.pointerId);
+
+    // Retrieve clickable button data
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
+
+    // Key code to abort
+    const code = btnData.code;
+    if (this.isVirtualModifier(code)) {
+      // Virtual modifier pressed: they cannot be overriden
+
+      // Nothing to do: action has already been executed on key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: virtual key detected, nothing to abort`));
+    }  else if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+      
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden key detected, nothing to abort`));
+    } else if (btnData.special) {
+      // Special key pressed: this type of key contains consummer codes
+
+      // Release HID key to prevent infinite key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: special key detected, releasing ${code}...`));
+      this.removeCode(code);
+    } else {
+      // Normal key pressed: this type of key contains a sendable key char
+
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: standard key detected, nothing to abort`));
+    }
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doKeyRelease(btn, evt) {
 
     // Retrieve popin entry (when existing)
     const popinEntry = this._popinTimeouts.get(evt.pointerId);
@@ -1177,74 +1213,46 @@ export class AndroidKeyboardCard extends HTMLElement {
     this._popinTimeouts.delete(evt.pointerId);
 
     // Retrieve clickable button data
-    const cellConfig = this._layoutManager.getElementData(btn);
-    if (!cellConfig) return;
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
 
     // Key code to release
-    const code = cellConfig.code;
-
-    // Suppress when pointer was originated from a different button
-    const referenceCode = this._layoutManager.getElementData(this._referenceBtn)?.code;
-    if (referenceCode !== code) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted due to existing reference key code ${referenceCode}`));
-      return;
-    }
-
-    // Suppress when pointer released over a key code that is a virtual modifier (ie. not a real key to send to HID)
+    const code = btnData.code;
+    const charToSend = btn._label.textContent || "";
     if (this.isVirtualModifier(code)) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (virtual modifier)`));
-      return;
-    }
+      // Virtual modifier released: they cannot be overriden
 
-    // Suppress when pointer triggered a popin with extended chars
-    if (popinEntry && popinEntry["popin-shown"]) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release aborted (button was used to trigger popin for extended chars)`));
-      return;
-    }
-
-    if (this._layoutManager.hasButtonOverride(btn)) {
-      // Override detected: bypass key release and execute override
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release will be executed: executing override ${btn.id}...`));
+      // Nothing to do: action has already been executed on key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: virtual key detected, nothing to release`));
+    } else if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+      
+      // Execute the override action
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected, executing override action...`));
       this.executeButtonOverride(btn);
+      if (this.activateNextStatus(code)) this.doUpdateCells();
+    } else if (btnData.special) {
+      // Special key released: this type of key contains consummer codes
 
-    } else if (cellConfig.special) {
-      // Special but not virtual key released
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release will be executed: releasing special key ${code}...`));
+      // Release HID key to prevent infinite key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: special key detected, releasing ${code}...`));
       this.removeCode(code);
-
+      if (this.activateNextStatus(code)) this.doUpdateCells();
+    } else if (popinEntry && popinEntry["popin-shown"]) {
+      // Popin shown: nothing to do
+      
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected with shown popin, nothing to release`));
     } else {
-      // Non-special and not virtual key clicked
-      const charToSend = btn._label.textContent || "";
-      if (charToSend) {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release will be executed: sending char ${charToSend}`));
+      // Normal key released: this type of key contains a sendable key char
+
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected, sending char ${charToSend}`));
         this.sendKeyboardChar(charToSend);
-      }
+      if (this.activateNextStatus(code)) this.doUpdateCells();
     }
-
-    // When current non-virtual key code triggers next status, update all cells labels and visuals
-    if (this.activateNextStatus(code)) this.doUpdateCells();
-
-    // Send haptic feedback to make user acknownledgable of succeeded release event
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} release done`));
+    
+    // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
-  }
-
-  doKeyCancel(evt, btn) {
-
-    // Unmark clickable button active for visual feedback
-    btn.classList.remove("active");
-
-    // Remove popin timeout (when set before)
-    this.clearPopinTimeout(evt);
-    this._popinTimeouts.delete(evt.pointerId);
-
-    // Retrieve clickable button data
-    const cellConfig = this._layoutManager.getElementData(btn);
-    if (!cellConfig) return;
-
-    // Key code to abort
-    const code = cellConfig.code;
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key code ${code} cancel done`));
   }
 
   executeButtonOverride(btn) {
