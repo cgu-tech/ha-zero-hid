@@ -111,11 +111,11 @@ export class EventManager {
     this._buttons.add(target);
 
     const listeners = [];
-    listeners.push(this.addPointerEnterListenerToContainer(containerName, target, this.onButtonPointerEnter.bind(this, callbacks), options);
-    listeners.push(this.addPointerLeaveListenerToContainer(containerName, target, this.onButtonPointerLeave.bind(this, callbacks), options);
-    listeners.push(this.addPointerCancelListenerToContainer(containerName, target, this.onButtonPointerCancel.bind(this, callbacks), options);
-    listeners.push(this.addPointerDownListenerToContainer(containerName, target, this.onButtonPointerDown.bind(this, callbacks), options);
-    listeners.push(this.addPointerUpListenerToContainer(containerName, target, this.onButtonPointerUp.bind(this, callbacks), options);
+    listeners.push(this.addPointerEnterListenerToContainer(containerName, target, this.onButtonPointerEnter.bind(this, callbacks), options));
+    listeners.push(this.addPointerLeaveListenerToContainer(containerName, target, this.onButtonPointerLeave.bind(this, callbacks), options));
+    listeners.push(this.addPointerCancelListenerToContainer(containerName, target, this.onButtonPointerCancel.bind(this, callbacks), options));
+    listeners.push(this.addPointerDownListenerToContainer(containerName, target, this.onButtonPointerDown.bind(this, callbacks), options));
+    listeners.push(this.addPointerUpListenerToContainer(containerName, target, this.onButtonPointerUp.bind(this, callbacks), options));
 
     if (!this._buttonsWindowPointerUpListener) 
       this._buttonsWindowPointerUpListener = this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this, callbacks);
