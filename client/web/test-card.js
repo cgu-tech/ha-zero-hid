@@ -84,6 +84,7 @@ export class TestCard extends HTMLElement {
           <div class="test-button-label">Test</div>
         </div>
       </div>
+      <div class="popin" hidden>Hello from popin!</div> 
     `;
   }
 
@@ -112,6 +113,16 @@ export class TestCard extends HTMLElement {
         text-align: center;
         color: white;
       }
+      
+      .popin {
+        position: fixed;
+        transform: translate(-50%, -50%);
+        background: white;
+        color: black;
+        padding: 10px;
+        border: 1px solid #ccc;
+        z-index: 9999;
+      }
     `;
   }
 
@@ -124,6 +135,7 @@ export class TestCard extends HTMLElement {
     const card = this._elements.card;
     this._elements.container = card.querySelector(".container");
     this._elements.testButton = card.querySelector(".test-button");
+    this._elements.popin = card.querySelector(".popin");
   }
 
   doListen() {
@@ -142,12 +154,31 @@ export class TestCard extends HTMLElement {
   }
   onTestButtonPointerDown(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPointerDown(evt)", evt));
+    this.triggerPopin(evt);
   }
   onTestButtonPointerCancel(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPointerCancel(evt)", evt));
   }
   onTestButtonPointerUp(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPointerUp(evt)", evt));
+  }
+
+  triggerPopin(evt) {
+    // Store mouse position
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    popinTimeout = setTimeout(() => {
+      // Show the popin after 500 milliseconds
+      this._elements.popin.style.left = `${mouseX}px`;
+      this._elements.popin.style.top = `${mouseY}px`;
+      this._elements.popin.hidden = false;
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("triggerPopinShown(evt)", evt));
+      setTimeout(() => {
+        // Hide the popin after 2 seconds
+        this._elements.popin.hidden = true;
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("triggerPopinHidden(evt)", evt));
+      }, 2000);
+    }, 500);
   }
 
   doUpdateConfig() {
