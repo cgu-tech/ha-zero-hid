@@ -154,13 +154,17 @@ export class TestCard extends HTMLElement {
   }
   onTestButtonPointerDown(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPointerDown(evt)", evt));
-    this.triggerPopin(evt);
+    this.triggerPopinOrPopup(evt);
   }
   onTestButtonPointerCancel(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPointerCancel(evt)", evt));
   }
   onTestButtonPointerUp(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonPointerUp(evt)", evt));
+  }
+
+  triggerPopinOrPopup(evt) {
+    if (this._config?.["pop_mode"] === "popup") this.triggerPopup(); else this.triggerPopin(evt);
   }
 
   triggerPopin(evt) {
@@ -179,6 +183,10 @@ export class TestCard extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("triggerPopinHidden(evt)", evt));
       }, 2000);
     }, 500);
+  }
+
+  triggerPopup(evt) {
+    alert("Hello from popup!");
   }
 
   doUpdateConfig() {
