@@ -520,7 +520,7 @@ export class EventManager {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("unregisterListener(listener)", listener));
       
       // Retrieve listener container name
-      let containerName = this.listener["containerName"];
+      let containerName = listener["containerName"];
       
       // Listener does not have container name: not registered
       if (!containerName) {
