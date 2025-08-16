@@ -17,6 +17,9 @@ export class EventManager {
   static _BUTTON_CALLBACK_ABORT_PRESS = "BTN_ABORT_PRESS";
   static _BUTTON_CALLBACK_RELEASE = "BTN_RELEASE";
 
+  static _BUTTON_CLASS_HOVER = "active";
+  static _BUTTON_CLASS_PRESSED = "press";
+
   static _TRIGGER_POINTER_ENTER = "EVT_POINTER_ENTER";
   static _TRIGGER_POINTER_LEAVE = "EVT_POINTER_LEAVE";
   static _TRIGGER_POINTER_DOWN = "EVT_POINTER_DOWN";
@@ -28,20 +31,20 @@ export class EventManager {
       "init": { "state": this._BUTTON_STATE_NORMAL },
       "states": {
         [this._BUTTON_STATE_NORMAL]: {
-          "actions": { "self": [ { "action": "remove", "class_list": ["active", "press"] } ] },
+          "actions": { "self": [ { "action": "remove", "class_list": [this._BUTTON_CLASS_HOVER, this._BUTTON_CLASS_PRESSED] } ] },
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_ENTER, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_HOVER }
           ]
         },
         [this._BUTTON_STATE_HOVER]: {
-          "actions": { "self": [ { "action": "add", "class_list": ["active"] } ] },
+          "actions": { "self": [ { "action": "add", "class_list": [this._BUTTON_CLASS_HOVER] } ] },
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_HOVER }, 
             { "trigger": this._TRIGGER_POINTER_DOWN, "state": this._BUTTON_STATE_PRESSED, "callback": this._BUTTON_CALLBACK_PRESS }, // keyPress for 2-states button, popin/long-click/etc timeout for all buttons
           ]
         },
         [this._BUTTON_STATE_PRESSED]: {
-          "actions": { "self": [ { "action": "add", "class_list": ["press"] } ] },
+          "actions": { "self": [ { "action": "add", "class_list": [this._BUTTON_CLASS_PRESSED] } ] },
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_PRESS }, // onAbort for 2-states button
             { "trigger": this._TRIGGER_POINTER_UP, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_RELEASE }, // keyRelease for 2-states button, key click for 1-state button
@@ -236,6 +239,14 @@ export class EventManager {
 
         // Change button to next state
         this.setButtonState(btn, nextState["state"]);
+
+        // Update button classes
+        for (const action of (this.getButtonCurrentActions(btn) ?? [])) {
+          const actionName = cellAction["action"];
+          const actionClassList = cellAction["class_list"];
+          if (actionName === "add") btn.classList.add(...actionClassList);
+          if (actionName === "remove") btn.classList.remove(...actionClassList);
+        }
 
         // Execute associated callback (when present)
         const callback = this.getButtonCallbacks(btn)?.[nextState["callback"]];

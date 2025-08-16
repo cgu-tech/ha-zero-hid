@@ -77,10 +77,12 @@ class AndroidRemoteCard extends HTMLElement {
 
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+    this._eventManager.connectedCallback();
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+    this._eventManager.disconnectedCallback();
   }
 
   adoptedCallback() {
@@ -1090,6 +1092,15 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Set listeners on a clickable button
   addClickableListeners(btn) {
+    //this._eventManager.addButtonListeners("buttons", btn, 
+    //  {
+    //    [this._eventManager.constructor._BUTTON_CALLBACK_HOVER]: this.onTestButtonHover.bind(this),
+    //    [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_HOVER]: this.onTestButtonAbortHover.bind(this),
+    //    [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onTestButtonPress.bind(this),
+    //    [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onTestButtonAbortPress.bind(this),
+    //    [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onTestButtonRelease.bind(this)
+    //  }
+    //);
     this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
     this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
     this._eventManager.addPointerCancelListener(btn, this.onButtonPointerCancel.bind(this));

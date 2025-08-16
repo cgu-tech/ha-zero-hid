@@ -138,10 +138,12 @@ export class AndroidKeyboardCard extends HTMLElement {
 
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+    this._eventManager.connectedCallback();
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+    this._eventManager.disconnectedCallback();
   }
 
   adoptedCallback() {

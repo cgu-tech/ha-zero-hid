@@ -62,6 +62,20 @@ class ArrowPadCard extends HTMLElement {
     this.doUpdateHass()
   }
 
+  connectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+    this._eventManager.connectedCallback();
+  }
+
+  disconnectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+    this._eventManager.disconnectedCallback();
+  }
+
+  adoptedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
+  }
+
   // jobs
   doCheckConfig() {
     this._layoutManager.checkConfiguredLayout();

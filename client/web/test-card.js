@@ -110,7 +110,15 @@ export class TestCard extends HTMLElement {
         height: 40px;
         background: #555;
       }
-    
+
+      .test-button.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background: #888;
+      }
+
+      .test-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background: #BBB;
+      }
+
       .test-button-label {
         text-align: center;
         color: white;
