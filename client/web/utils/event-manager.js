@@ -7,50 +7,67 @@ export class EventManager {
   // private init required constants
   static _BUTTON_STATUS_MAP;
 
-  static _BUTTON_STATE_NORMAL = "normal";
-  static _BUTTON_STATE_HOVER = "hover";
-  static _BUTTON_STATE_PRESSED = "pressed";
+  static _BUTTON_INIT = "init";
 
+  static _BUTTON_STATES = "states";
+  static _BUTTON_STATE = "state";
+  static _BUTTON_STATE_NORMAL = "NR";
+  static _BUTTON_STATE_HOVER = "HV";
+  static _BUTTON_STATE_PRESSED = "PR";
+
+  static _BUTTON_CALLBACK = "callback";
   static _BUTTON_CALLBACK_HOVER = "HOVER";
   static _BUTTON_CALLBACK_ABORT_HOVER = "ABORT_HOVER";
   static _BUTTON_CALLBACK_PRESS = "PRESS";
   static _BUTTON_CALLBACK_ABORT_PRESS = "ABORT_PRESS";
   static _BUTTON_CALLBACK_RELEASE = "RELEASE";
 
+  static _ACTION_CLASSLIST = "class";
   static _BUTTON_CLASS_HOVER = "active";
   static _BUTTON_CLASS_PRESSED = "press";
 
-  static _TRIGGER_POINTER_ENTER = "NT";
-  static _TRIGGER_POINTER_LEAVE = "LV";
-  static _TRIGGER_POINTER_DOWN = "DW";
-  static _TRIGGER_POINTER_UP = "UP";
+  static _BUTTON_NEXTS = "nexts";
+  static _BUTTON_TRIGGER = "trigger";
+  static _BUTTON_TRIGGER_POINTER_ENTER = "NT";
+  static _BUTTON_TRIGGER_POINTER_LEAVE = "LV";
+  static _BUTTON_TRIGGER_POINTER_DOWN = "DW";
+  static _BUTTON_TRIGGER_POINTER_UP = "UP";
+
+  static _BUTTON_ACTIONS = "actions";
+  static _BUTTON_ACTION = "action";
+  static _BUTTON_ACTION_ADD = "add";
+  static _BUTTON_ACTION_REMOVE = "remove";
 
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
     this._BUTTON_STATUS_MAP = {
-      "init": { "state": this._BUTTON_STATE_NORMAL },
-      "states": {
+      [this._BUTTON_INIT]: { [this._BUTTON_STATE]: this._BUTTON_STATE_NORMAL },
+      [this._BUTTON_STATES]: {
         [this._BUTTON_STATE_NORMAL]: {
-          "actions": [ { "action": "remove", "class": [this._BUTTON_CLASS_HOVER, this._BUTTON_CLASS_PRESSED] } ],
-          "nexts": [ 
-            { "trigger": this._TRIGGER_POINTER_ENTER, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_HOVER }
+          [this._BUTTON_ACTIONS]: [ 
+            { [this._BUTTON_ACTION]: this._BUTTON_ACTION_REMOVE, [this._ACTION_CLASSLIST]: [this._BUTTON_CLASS_HOVER, this._BUTTON_CLASS_PRESSED] }
+          ],
+          [this._BUTTON_NEXTS]: [ 
+            { [this._BUTTON_TRIGGER]: this._BUTTON_TRIGGER_POINTER_ENTER, [this._BUTTON_STATE]: this._BUTTON_STATE_HOVER,  [this._BUTTON_CALLBACK]: this._BUTTON_CALLBACK_HOVER }
           ]
         },
         [this._BUTTON_STATE_HOVER]: {
-          "actions": [
-            { "action": "remove", "class": [this._BUTTON_CLASS_PRESSED] },
-            { "action": "add", "class": [this._BUTTON_CLASS_HOVER] }
+          [this._BUTTON_ACTIONS]: [
+            { [this._BUTTON_ACTION]: this._BUTTON_ACTION_REMOVE, [this._ACTION_CLASSLIST]: [this._BUTTON_CLASS_PRESSED] },
+            { [this._BUTTON_ACTION]: this._BUTTON_ACTION_ADD,    [this._ACTION_CLASSLIST]: [this._BUTTON_CLASS_HOVER] }
           ],
-          "nexts": [ 
-            { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_HOVER }, 
-            { "trigger": this._TRIGGER_POINTER_DOWN, "state": this._BUTTON_STATE_PRESSED, "callback": this._BUTTON_CALLBACK_PRESS }, // keyPress for 2-states button, popin/long-click/etc timeout for all buttons
+          [this._BUTTON_NEXTS]: [ 
+            { [this._BUTTON_TRIGGER]: this._BUTTON_TRIGGER_POINTER_LEAVE, [this._BUTTON_STATE]: this._BUTTON_STATE_NORMAL,  [this._BUTTON_CALLBACK]: this._BUTTON_CALLBACK_ABORT_HOVER }, 
+            { [this._BUTTON_TRIGGER]: this._BUTTON_TRIGGER_POINTER_DOWN,  [this._BUTTON_STATE]: this._BUTTON_STATE_PRESSED, [this._BUTTON_CALLBACK]: this._BUTTON_CALLBACK_PRESS }, // keyPress for 2-states button, popin/long-click/etc timeout for all buttons
           ]
         },
         [this._BUTTON_STATE_PRESSED]: {
-          "actions": [ { "action": "add", "class": [this._BUTTON_CLASS_PRESSED] } ],
-          "nexts": [ 
-            { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_PRESS }, // onAbort for 2-states button
-            { "trigger": this._TRIGGER_POINTER_UP, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_RELEASE }, // keyRelease for 2-states button, key click for 1-state button
+          [this._BUTTON_ACTIONS]: [
+            { [this._BUTTON_ACTION]: this._BUTTON_ACTION_ADD,    [this._ACTION_CLASSLIST]: [this._BUTTON_CLASS_PRESSED] }
+          ],
+          [this._BUTTON_NEXTS]: [ 
+            { [this._BUTTON_TRIGGER]: this._BUTTON_TRIGGER_POINTER_LEAVE, [this._BUTTON_STATE]: this._BUTTON_STATE_NORMAL, [this._BUTTON_CALLBACK]: this._BUTTON_CALLBACK_ABORT_PRESS }, // onAbort for 2-states button
+            { [this._BUTTON_TRIGGER]: this._BUTTON_TRIGGER_POINTER_UP,    [this._BUTTON_STATE]: this._BUTTON_STATE_HOVER,  [this._BUTTON_CALLBACK]: this._BUTTON_CALLBACK_RELEASE }, // keyRelease for 2-states button, key click for 1-state button
           ]
         }
       }
@@ -156,40 +173,40 @@ export class EventManager {
   }
 
   onButtonPointerEnter(evt) {
-    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_ENTER, evt);
+    this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_ENTER, evt);
   }
   onButtonPointerLeave(evt) {
-    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_LEAVE, evt);
+    this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
   }
   onButtonPointerCancel(evt) {
-    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_LEAVE, evt);
+    this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
   }
   onButtonPointerDown(evt) {
-    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_DOWN, evt);
+    this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_DOWN, evt);
   }
   onButtonPointerUp(evt) {
-    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_UP, evt);
+    this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_UP, evt);
   }
 
   onButtonsGlobalWindowPointerUp(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowPointerUp(evt) + isConnected", evt, this._origin?.isConnected));
     if (document.visibilityState === "hidden") {
       for (const btn of this._buttons) {
-        this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
+        this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
       }
     }
   }
   onButtonsGlobalWindowBlur(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowBlur(evt) + isConnected", evt, this._origin?.isConnected));
     for (const btn of this._buttons) {
-      this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
+      this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
     }
   }
   onButtonsGlobalDocumentVisibilityChange(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalDocumentVisibilityChange(evt) + isConnected", evt, this._origin?.isConnected));
     if (document.visibilityState === "hidden") {
       for (const btn of this._buttons) {
-        this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
+        this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
       }
     }
   }
@@ -220,21 +237,21 @@ export class EventManager {
 
   initButtonState(btn, callbacks) {
     this.setButtonData(btn, {});
-    this.setButtonState(btn, this.constructor._BUTTON_STATUS_MAP["init"]["state"]);
+    this.setButtonState(btn, this.constructor._BUTTON_STATUS_MAP[this.constructor._BUTTON_INIT][this.constructor._BUTTON_STATE]);
     this.setButtonCallbacks(btn, callbacks);
     this._buttons.add(btn);
   }
 
   getButtonCurrentState(btn) {
-    return this.constructor._BUTTON_STATUS_MAP["states"][this.getButtonState(btn)];
+    return this.constructor._BUTTON_STATUS_MAP[this.constructor._BUTTON_STATES][this.getButtonState(btn)];
   }
 
   getButtonCurrentActions(btn) {
-    return this.getButtonCurrentState(btn)?.["actions"];
+    return this.getButtonCurrentState(btn)?.[this.constructor._BUTTON_ACTIONS];
   }
 
   getButtonNextState(btn, trigger) {
-    return this.getButtonCurrentState(btn)?.["nexts"].find(next => next["trigger"] === trigger);
+    return this.getButtonCurrentState(btn)?.[this.constructor._BUTTON_NEXTS].find(next => next[this.constructor._BUTTON_TRIGGER] === trigger);
   }
 
   activateButtonNextStateFromEvent(trigger, evt) {
@@ -247,18 +264,18 @@ export class EventManager {
       if (nextState) {
 
         // Change button to next state
-        this.setButtonState(btn, nextState["state"]);
+        this.setButtonState(btn, nextState[this.constructor._BUTTON_STATE]);
 
         // Update button classes
         for (const action of (this.getButtonCurrentActions(btn) ?? [])) {
-          const actionName = action["action"];
-          const actionClassList = action["class"];
-          if (actionName === "add") btn.classList.add(...actionClassList);
-          if (actionName === "remove") btn.classList.remove(...actionClassList);
+          const actionName = action[this.constructor._BUTTON_ACTION];
+          const actionClassList = action[this.constructor._ACTION_CLASSLIST];
+          if (actionName === this.constructor._BUTTON_ACTION_ADD) btn.classList.add(...actionClassList);
+          if (actionName === this.constructor._BUTTON_ACTION_REMOVE) btn.classList.remove(...actionClassList);
         }
 
         // Execute associated callback (when present)
-        const callback = this.getButtonCallbacks(btn)?.[nextState["callback"]];
+        const callback = this.getButtonCallbacks(btn)?.[nextState[this.constructor._BUTTON_CALLBACK]];
         if (callback) callback(btn, evt);
       }
       return !!nextState;
