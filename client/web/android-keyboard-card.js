@@ -944,7 +944,7 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 
   doListenPopinCell(popinCell) {
-    this._eventManager.addButtonListeners("popinButtons", btn, 
+    this._eventManager.addButtonListeners("popinButtons", popinCell, 
       {
         [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onPopinButtonPress.bind(this),
         [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onPopinButtonAbortPress.bind(this),
