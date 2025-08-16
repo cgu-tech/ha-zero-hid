@@ -118,7 +118,6 @@ export class EventManager {
     if (!target) throw new Error('Invalid target', target);
 
     this.initButtonState(target, callbacks);
-    this.addButtonsGlobalListeners();
 
     const listeners = [];
     listeners.push(this.addPointerEnterListenerToContainer(containerName, target, this.onButtonPointerEnter.bind(this), options));
