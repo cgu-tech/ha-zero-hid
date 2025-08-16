@@ -1137,7 +1137,7 @@ class AndroidRemoteCard extends HTMLElement {
       this.appendCode(code);
     }
 
-    // Send haptic feedback to make user acknownledgable of succeeded press event
+    // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
   }
 
@@ -1162,7 +1162,7 @@ class AndroidRemoteCard extends HTMLElement {
       this.removeCode(code);
     }
 
-    // Send haptic feedback to make user acknownledgable of succeeded press event
+    // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
   }
 
@@ -1179,7 +1179,7 @@ class AndroidRemoteCard extends HTMLElement {
       
       // Execute the override action
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: override detected (suppressing release of ${code})`));
-      this._eventManager.executeButtonOverride(btn, this._layoutManager.getButtonOverride(btn));
+      this.executeButtonOverride(btn);
     } else {
       // Default action
 
@@ -1188,8 +1188,12 @@ class AndroidRemoteCard extends HTMLElement {
       this.removeCode(code);
     }
 
-    // Send haptic feedback to make user acknownledgable of succeeded release event
+    // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
+  }
+
+  executeButtonOverride(btn) {
+    this._eventManager.executeButtonOverride(btn, this._layoutManager.getButtonOverride(btn));
   }
 
   appendCode(code) {
