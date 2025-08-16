@@ -169,17 +169,15 @@ export class EventManager {
     this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_DOWN, evt);
   }
   onButtonPointerUp(evt) {
-    //this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
+    this.activateButtonNextStateFromEvent(this.constructor._TRIGGER_POINTER_UP, evt);
   }
 
   onButtonsGlobalWindowPointerUp(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowPointerUp(evt)"));
-    const hovered = this.getTargetHoveredByPointer(evt);
-    for (const btn of this._buttons) {
-      if (btn !== hovered)
+    if (document.visibilityState === "hidden") {
+      for (const btn of this._buttons) {
         this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
-      else
-        this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_UP, evt);
+      }
     }
   }
   onButtonsGlobalWindowBlur(evt) {
