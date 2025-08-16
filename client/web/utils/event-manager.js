@@ -173,7 +173,7 @@ export class EventManager {
   }
 
   onButtonsGlobalWindowPointerUp(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowPointerUp(evt)"));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowPointerUp(evt) + isConnected", evt, this._origin?.isConnected));
     if (document.visibilityState === "hidden") {
       for (const btn of this._buttons) {
         this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
@@ -181,13 +181,13 @@ export class EventManager {
     }
   }
   onButtonsGlobalWindowBlur(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowBlur(evt)"));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowBlur(evt) + isConnected", evt, this._origin?.isConnected));
     for (const btn of this._buttons) {
       this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
     }
   }
   onButtonsGlobalDocumentVisibilityChange(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalDocumentVisibilityChange(evt)"));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalDocumentVisibilityChange(evt) + isConnected", evt, this._origin?.isConnected));
     if (document.visibilityState === "hidden") {
       for (const btn of this._buttons) {
         this.activateButtonNextState(btn, this.constructor._TRIGGER_POINTER_LEAVE, evt);
