@@ -158,6 +158,9 @@ class AndroidRemoteCard extends HTMLElement {
         overflow: hidden; /* prevent overflow outside card */
         font-family: sans-serif;
       }
+      :host ::slotted(.card-content) {
+        padding: 0;
+      }
       #main-container {
         --base-font-size: 1rem; /* base scaling unit */
         font-size: var(--base-font-size);
