@@ -31,20 +31,20 @@ export class EventManager {
       "init": { "state": this._BUTTON_STATE_NORMAL },
       "states": {
         [this._BUTTON_STATE_NORMAL]: {
-          "actions": { "self": [ { "action": "remove", "class_list": [this._BUTTON_CLASS_HOVER, this._BUTTON_CLASS_PRESSED] } ] },
+          "actions": [ { "action": "remove", "class_list": [this._BUTTON_CLASS_HOVER, this._BUTTON_CLASS_PRESSED] } ],
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_ENTER, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_HOVER }
           ]
         },
         [this._BUTTON_STATE_HOVER]: {
-          "actions": { "self": [ { "action": "add", "class_list": [this._BUTTON_CLASS_HOVER] } ] },
+          "actions": [ { "action": "add", "class_list": [this._BUTTON_CLASS_HOVER] } ],
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_HOVER }, 
             { "trigger": this._TRIGGER_POINTER_DOWN, "state": this._BUTTON_STATE_PRESSED, "callback": this._BUTTON_CALLBACK_PRESS }, // keyPress for 2-states button, popin/long-click/etc timeout for all buttons
           ]
         },
         [this._BUTTON_STATE_PRESSED]: {
-          "actions": { "self": [ { "action": "add", "class_list": [this._BUTTON_CLASS_PRESSED] } ] },
+          "actions": [ { "action": "add", "class_list": [this._BUTTON_CLASS_PRESSED] } ],
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_PRESS }, // onAbort for 2-states button
             { "trigger": this._TRIGGER_POINTER_UP, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_RELEASE }, // keyRelease for 2-states button, key click for 1-state button
