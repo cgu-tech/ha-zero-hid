@@ -9,34 +9,34 @@ export class EventManager {
 
   static _BUTTON_INIT = "init";
 
-  static _BUTTON_STATES = "states";
-  static _BUTTON_STATE = "state";
+  static _BUTTON_STATES = "SS";
+  static _BUTTON_STATE = "ST";
   static _BUTTON_STATE_NORMAL = "NR";
   static _BUTTON_STATE_HOVER = "HV";
   static _BUTTON_STATE_PRESSED = "PR";
 
-  static _BUTTON_CALLBACK = "callback";
+  static _BUTTON_CALLBACK = "CB";
   static _BUTTON_CALLBACK_HOVER = "HOVER";
   static _BUTTON_CALLBACK_ABORT_HOVER = "ABORT_HOVER";
   static _BUTTON_CALLBACK_PRESS = "PRESS";
   static _BUTTON_CALLBACK_ABORT_PRESS = "ABORT_PRESS";
   static _BUTTON_CALLBACK_RELEASE = "RELEASE";
 
-  static _ACTION_CLASSLIST = "class";
+  static _ACTION_CLASSLIST = "CL";
   static _BUTTON_CLASS_HOVER = "active";
   static _BUTTON_CLASS_PRESSED = "press";
 
-  static _BUTTON_NEXTS = "nexts";
-  static _BUTTON_TRIGGER = "trigger";
+  static _BUTTON_NEXTS = "NX";
+  static _BUTTON_TRIGGER = "TR";
   static _BUTTON_TRIGGER_POINTER_ENTER = "NT";
   static _BUTTON_TRIGGER_POINTER_LEAVE = "LV";
   static _BUTTON_TRIGGER_POINTER_DOWN = "DW";
   static _BUTTON_TRIGGER_POINTER_UP = "UP";
 
-  static _BUTTON_ACTIONS = "actions";
-  static _BUTTON_ACTION = "action";
-  static _BUTTON_ACTION_ADD = "add";
-  static _BUTTON_ACTION_REMOVE = "remove";
+  static _BUTTON_ACTIONS = "ACS";
+  static _BUTTON_ACTION = "AC";
+  static _BUTTON_ACTION_ADD = "AD";
+  static _BUTTON_ACTION_REMOVE = "RM";
 
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
