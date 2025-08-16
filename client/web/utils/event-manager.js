@@ -169,13 +169,16 @@ export class EventManager {
     this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_DOWN);
   }
   onButtonPointerUp(evt) {
-    this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
+    //this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
   }
 
   onButtonsGlobalWindowPointerUp(evt) {
     const hovered = this.getTargetHoveredByPointer(evt);
     for (const btn of this._buttons) {
-      if (btn !== hovered) this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+      if (btn !== hovered)
+        this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_LEAVE);
+      else
+        this.activateButtonNextState(evt, this.constructor._TRIGGER_POINTER_UP);
     }
   }
   onButtonsGlobalWindowBlur(evt) {
