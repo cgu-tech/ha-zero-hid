@@ -11,19 +11,19 @@ export class EventManager {
   static _BUTTON_STATE_HOVER = "hover";
   static _BUTTON_STATE_PRESSED = "pressed";
 
-  static _BUTTON_CALLBACK_HOVER = "BTN_HOVER";
-  static _BUTTON_CALLBACK_ABORT_HOVER = "BTN_ABORT_HOVER";
-  static _BUTTON_CALLBACK_PRESS = "BTN_PRESS";
-  static _BUTTON_CALLBACK_ABORT_PRESS = "BTN_ABORT_PRESS";
-  static _BUTTON_CALLBACK_RELEASE = "BTN_RELEASE";
+  static _BUTTON_CALLBACK_HOVER = "HOVER";
+  static _BUTTON_CALLBACK_ABORT_HOVER = "ABORT_HOVER";
+  static _BUTTON_CALLBACK_PRESS = "PRESS";
+  static _BUTTON_CALLBACK_ABORT_PRESS = "ABORT_PRESS";
+  static _BUTTON_CALLBACK_RELEASE = "RELEASE";
 
   static _BUTTON_CLASS_HOVER = "active";
   static _BUTTON_CLASS_PRESSED = "press";
 
-  static _TRIGGER_POINTER_ENTER = "EVT_POINTER_ENTER";
-  static _TRIGGER_POINTER_LEAVE = "EVT_POINTER_LEAVE";
-  static _TRIGGER_POINTER_DOWN = "EVT_POINTER_DOWN";
-  static _TRIGGER_POINTER_UP = "EVT_POINTER_UP";
+  static _TRIGGER_POINTER_ENTER = "NTR";
+  static _TRIGGER_POINTER_LEAVE = "LV";
+  static _TRIGGER_POINTER_DOWN = "DWN";
+  static _TRIGGER_POINTER_UP = "UP";
 
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
@@ -31,15 +31,15 @@ export class EventManager {
       "init": { "state": this._BUTTON_STATE_NORMAL },
       "states": {
         [this._BUTTON_STATE_NORMAL]: {
-          "actions": [ { "action": "remove", "class_list": [this._BUTTON_CLASS_HOVER, this._BUTTON_CLASS_PRESSED] } ],
+          "actions": [ { "action": "remove", "class": [this._BUTTON_CLASS_HOVER, this._BUTTON_CLASS_PRESSED] } ],
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_ENTER, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_HOVER }
           ]
         },
         [this._BUTTON_STATE_HOVER]: {
           "actions": [
-            { "action": "remove", "class_list": [this._BUTTON_CLASS_PRESSED] },
-            { "action": "add", "class_list": [this._BUTTON_CLASS_HOVER] }
+            { "action": "remove", "class": [this._BUTTON_CLASS_PRESSED] },
+            { "action": "add", "class": [this._BUTTON_CLASS_HOVER] }
           ],
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_HOVER }, 
@@ -47,7 +47,7 @@ export class EventManager {
           ]
         },
         [this._BUTTON_STATE_PRESSED]: {
-          "actions": [ { "action": "add", "class_list": [this._BUTTON_CLASS_PRESSED] } ],
+          "actions": [ { "action": "add", "class": [this._BUTTON_CLASS_PRESSED] } ],
           "nexts": [ 
             { "trigger": this._TRIGGER_POINTER_LEAVE, "state": this._BUTTON_STATE_NORMAL, "callback": this._BUTTON_CALLBACK_ABORT_PRESS }, // onAbort for 2-states button
             { "trigger": this._TRIGGER_POINTER_UP, "state": this._BUTTON_STATE_HOVER, "callback": this._BUTTON_CALLBACK_RELEASE }, // keyRelease for 2-states button, key click for 1-state button
@@ -252,7 +252,7 @@ export class EventManager {
         // Update button classes
         for (const action of (this.getButtonCurrentActions(btn) ?? [])) {
           const actionName = action["action"];
-          const actionClassList = action["class_list"];
+          const actionClassList = action["class"];
           if (actionName === "add") btn.classList.add(...actionClassList);
           if (actionName === "remove") btn.classList.remove(...actionClassList);
         }

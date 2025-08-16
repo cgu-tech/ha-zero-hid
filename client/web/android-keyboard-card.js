@@ -410,10 +410,7 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 
   doUpdateConfig() {
-    // Adjust host font scale to serve has a reference and properly scale the whole UI
-    if (this.shadowRoot.host?.style) {
-      this.shadowRoot.host?.style.setProperty('--base-font-size', this._layoutManager.getSafeFontScale());
-    }
+    // Adjust ha-card font scale to serve has a reference and properly scale the whole UI
     if (this._elements.card.style) {
       this._elements.card.style.setProperty('--base-font-size', this._layoutManager.getSafeFontScale());
     }
