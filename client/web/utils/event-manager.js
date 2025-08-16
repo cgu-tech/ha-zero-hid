@@ -125,7 +125,7 @@ export class EventManager {
 
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
-if (this._buttons && !this._buttonsWindowPointerUpListener) this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this));
+    if (this._buttons && !this._buttonsWindowPointerUpListener) this.addPointerUpListenerToContainer(this._windowContainerName, window, this.onButtonWindowPointerUp.bind(this));
   }
 
   disconnectedCallback() {
@@ -164,7 +164,7 @@ if (this._buttons && !this._buttonsWindowPointerUpListener) this.addPointerUpLis
   }
 
   setButtonState(btn, state) {
-    if (btn) this.getButtonData(btn)?.state = state;
+    if (btn) this.getButtonData(btn).state = state;
   }
   
   getButtonState(btn) {
@@ -172,7 +172,7 @@ if (this._buttons && !this._buttonsWindowPointerUpListener) this.addPointerUpLis
   }
 
   setButtonCallbacks(btn, callbacks) {
-    if (btn) this.getButtonData(btn)?.callbacks = callbacks;
+    if (btn) this.getButtonData(btn).callbacks = callbacks;
   }
 
   getButtonCallbacks(btn) {
