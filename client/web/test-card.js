@@ -109,6 +109,7 @@ export class TestCard extends HTMLElement {
         width: 100px;
         height: 40px;
         background: #555;
+        transition: background 0.3s ease, transform 0.1s ease;
       }
 
       .test-button.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
@@ -117,6 +118,7 @@ export class TestCard extends HTMLElement {
 
       .test-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background: #BBB;
+        transform: scale(0.95);
       }
 
       .test-button-label {
