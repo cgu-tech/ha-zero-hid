@@ -219,42 +219,53 @@ export class EventManager {
   onGlobalWindowPointerUp(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onGlobalWindowPointerUp(evt) + isConnected", evt, this._origin?.isConnected));
     
-    // Treat buttons
-    for (const btn of this._buttons) {
-      this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
-    }
-    
-    // Treat popins
-    for (const pop of this._popins) {
-      this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
+    if (document.visibilityState === "hidden") {
+      this.leaveAllButtons(evt);
+      this.hideAllPopins(evt);
+    } else {
+      const hovered = this.getTargetHoveredByPointer(evt);
+      this.leaveAllButtonsExceptTarget(evt);
+      this.hideAllPopinsExceptTarget(evt);
     }
   }
+  
   onGlobalWindowBlur(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onGlobalWindowBlur(evt) + isConnected", evt, this._origin?.isConnected));
-    
-    // Treat buttons
-    for (const btn of this._buttons) {
-      this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
-    }
-    
-    // Treat popins
-    for (const pop of this._popins) {
-      this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
-    }
+    this.leaveAllButtons(evt);
+    this.hideAllPopins(evt);
   }
+  
   onGlobalDocumentVisibilityChange(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onGlobalDocumentVisibilityChange(evt) + isConnected", evt, this._origin?.isConnected));
     
     if (document.visibilityState === "hidden") {
-      // Treat buttons
-      for (const btn of this._buttons) {
-        this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
-      }
-      
-      // Treat popins
-      for (const pop of this._popins) {
-        this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
-      }
+      this.leaveAllButtons(evt);
+      this.hideAllPopins(evt);
+    }
+  }
+  
+  leaveAllButtons(evt) {
+    for (const btn of this._buttons) {
+      this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
+    }
+  }
+
+  hideAllPopins(evt) {
+    for (const pop of this._popins) {
+      this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
+    }
+  }
+
+  leaveAllButtonsExceptTarget(target, evt) {
+    for (const btn of this._buttons) {
+      if (btn !== target) this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
+    }
+  }
+
+  hideAllPopinsExceptTarget(target, evt) {
+    const hovered = this.getTargetHoveredByPointer(evt);
+    for (const pop of this._popins) {
+      if (pop !== target) this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
     }
   }
 
