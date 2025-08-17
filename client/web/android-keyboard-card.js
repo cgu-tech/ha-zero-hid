@@ -220,6 +220,12 @@ export class AndroidKeyboardCard extends HTMLElement {
         --key-special-active-bg: #333;
         --key-special-press-bg: #444;
         --key-special-color: #ccc;
+        --key-shif-once-bg: #172636; /* grey-blue */
+        --key-shif-once-active-bg: #2e4b6b; /* grey-blue-light */
+        --key-shif-once-press-bg: #4571a1; /* grey-blue-lightest */
+        --key-locked-bg: #00264d; /* blue */
+        --key-locked-active-bg: #004d99; /* blue */
+        --key-locked-press-bg: #0073e6; /* lighter blue */
         --key-height: clamp(2rem, 9vh, 3.5rem);
         --key-margin: 0.15rem;
         font-size: var(--base-font-size);
@@ -276,11 +282,11 @@ export class AndroidKeyboardCard extends HTMLElement {
         outline: none; /* Prevent focus ring override */
       }
       button.key.active {
-        background: var(--key-active-bg) !important;
-        color: #fff !important;
+        background: var(--key-active-bg);
+        color: #fff;
       }
       button.key.press {
-        background: var(--key-press-bg) !important;
+        background: var(--key-press-bg);
       }
       button.key.special {
         flex: 1 1 auto;
@@ -323,25 +329,25 @@ export class AndroidKeyboardCard extends HTMLElement {
         flex-grow: 7.4;
       }
       /* Fix: Ensure shift-once state is visually dominant */
-      button.key.shift-once,
-      button.key.active.shift-once {
-        background: #374553 !important; /* grey-blue */
-        color: #fff !important;
+      button.key.shift-once {
+        background: var(--key-shif-once-bg);
         font-weight: bold;
       }
-      button.key.active.shift-once.press {
-        background: #374585 !important; /* grey-more-blue */
+      button.key.shift-once.active {
+        background: var(--key-shif-once-active-bg);
       }
-      button.key.locked,
-      button.key.active.locked {
-        background: #3399ff !important; /* blue */
-        color: #fff !important;
+      button.key.shift-once.press { 
+        background: var(--key-shif-once-press-bg);
+      }
+      button.key.locked {
+        background: var(--key-locked-bg);
         font-weight: bold;
       }
-      button.key.active.locked.press {
-        background: #44aaff !important; /* lighter blue */
-        color: #fff !important;
-        font-weight: bold;
+      button.key.locked.active {
+        background: var(--key-locked-active-bg);
+      }
+      button.key.locked.press {
+        background: var(--key-locked-press-bg);
       }
       .label-lower {
         font-size: 1em;
@@ -350,7 +356,7 @@ export class AndroidKeyboardCard extends HTMLElement {
       }
       .key-popin {
         position: fixed; /* Use fixed instead of absolute for document.body */
-        background: var(--key-bg, #3b3a3a); /* Fallback if var is missing */
+        background: var(--key-bg); /* Fallback if var is missing */
         border-radius: clamp(var(--key-min-corner-radius), 1vw, var(--key-max-corner-radius));
         padding: 0.3em;
         box-shadow: 0 0.2em 0.8em rgba(0,0,0,0.4);
@@ -366,7 +372,7 @@ export class AndroidKeyboardCard extends HTMLElement {
       .key-popin button.key {
         margin: var(--key-margin);
         height: var(--key-height);
-        background: var(--key-bg, #3b3a3a);
+        background: var(--key-bg);
         color: #fff;
         border: none;
         border-radius: 5px;
