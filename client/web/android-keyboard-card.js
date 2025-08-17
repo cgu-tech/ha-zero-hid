@@ -220,12 +220,12 @@ export class AndroidKeyboardCard extends HTMLElement {
         --key-special-active-bg: #333;
         --key-special-press-bg: #444;
         --key-special-color: #ccc;
-        --key-shif-once-bg: #172636; /* grey-blue */
-        --key-shif-once-active-bg: #2e4b6b; /* grey-blue-light */
-        --key-shif-once-press-bg: #4571a1; /* grey-blue-lightest */
-        --key-locked-bg: #00264d; /* blue */
-        --key-locked-active-bg: #004d99; /* blue */
-        --key-locked-press-bg: #0073e6; /* lighter blue */
+        --key-shif-once-bg: #2e4b6b; /* grey-blue */
+        --key-shif-once-active-bg: #4571a1; /* grey-blue-light */
+        --key-shif-once-press-bg: #7098c2; /* grey-blue-lightest */
+        --key-locked-bg: #004d99; /* blue */
+        --key-locked-active-bg: #0073e6; /* blue */
+        --key-locked-press-bg: #3399ff; /* lighter blue */
         --key-height: clamp(2rem, 9vh, 3.5rem);
         --key-margin: 0.15rem;
         font-size: var(--base-font-size);
