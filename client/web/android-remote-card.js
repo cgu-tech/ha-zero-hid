@@ -340,11 +340,11 @@ class AndroidRemoteCard extends HTMLElement {
         transition: background-color 0.2s ease, transform 0.1s ease;
       }
       .quarter.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
-        background-color: var(--cell-button-active-bg);
+        background-color: var(--cell-button-active-bg) !important;
       }
       .quarter.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
-        background-color: var(--cell-button-press-bg);
-        transform: scale(0.95);
+        background-color: var(--cell-button-press-bg) !important;
+        transform: scale(0.99);
       }
       text {
         font-family: sans-serif;
