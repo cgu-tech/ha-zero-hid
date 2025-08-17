@@ -154,6 +154,14 @@ export class AndroidKeyboardCard extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
   }
 
+  doRequestPopinShow(evt) {
+    this._eventManager.activatePopinShow(this._popin, evt);
+  }
+
+  doRequestPopinHide(evt) {
+    this._eventManager.activatePopinHide(this._popin, evt);
+  }
+
   doUpdateCells() {
     const statusActions = this.getStatusCurrentActions();
     const statusLabel = this.getStatusCurrentLabel();
@@ -804,7 +812,7 @@ export class AndroidKeyboardCard extends HTMLElement {
     this.doAttachPopin();
     this.doQueryPopinElements();
     this.doListenPopin();
-    this.doPromptPopin(evt);
+    this.doRequestPopinShow(evt);
   }
 
   doPopin(evt, cell) {
@@ -845,11 +853,27 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 
   doListenPopin() {
-    // nothing to do: popin is listened by its sub-elements
+    this._eventManager.addPopinListeners("popinContainer", popinCell, 
+      {
+        [this._eventManager.constructor._POPIN_CALLBACK_SHOW]: this.onPopinShow.bind(this),
+        [this._eventManager.constructor._POPIN_CALLBACK_HIDE]: this.onPopinHide.bind(this),
+      }
+    );
+  }
+
+  onPopinShow(popin, evt) {
+    this.doPromptPopin(evt);
+  }
+  
+  onPopinHide(popin, evt) {
+    this.doClosePopin();
   }
 
   doPromptPopin(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPromptPopin(evt)"));
     requestAnimationFrame(() => {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPromptPopin(evt) async"));
+
       // Trigger cells animations to prompt popin (requires attached popin)
       for (const popinCell of this._elements.popinCells) {
         popinCell.classList.add("enter-active");
@@ -859,6 +883,11 @@ export class AndroidKeyboardCard extends HTMLElement {
       // cell base event coordinates that triggered the popin
       this.doPositionPopin(evt);
     });
+  }
+
+  doClosePopin() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doClosePopin()"));
+    this.doResetPopin();
   }
 
   doPositionPopin(evt) {
@@ -968,7 +997,7 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 
   doListenPopinCell(popinCell) {
-    this._eventManager.addButtonListeners("popinButtons", popinCell, 
+    this._eventManager.addButtonListeners("popinContainer", popinCell, 
       {
         [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onPopinButtonPress.bind(this),
         [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onPopinButtonAbortPress.bind(this),
@@ -1009,16 +1038,6 @@ export class AndroidKeyboardCard extends HTMLElement {
     // nothing to do: no needs to listen events for this element
   }
 
-  onClosingPopin(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onClosingPopin(evt):", evt));
-    this.doClosePopin();
-  }
-
-  doClosePopin() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doClosePopin()"));
-    this.doResetPopin();
-  }
-
   onPopinButtonPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doPopinKeyPress(btn);
@@ -1026,12 +1045,12 @@ export class AndroidKeyboardCard extends HTMLElement {
 
   onPopinButtonAbortPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doPopinKeyAbortPress(btn);
+    this.doPopinKeyAbortPress(btn, evt);
   }
 
   onPopinButtonRelease(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doPopinKeyRelease(btn);
+    this.doPopinKeyRelease(btn, evt);
   }
   
   doPopinKeyPress(btn) {
@@ -1053,7 +1072,7 @@ export class AndroidKeyboardCard extends HTMLElement {
     this._layoutManager.hapticFeedback();
   }
 
-  doPopinKeyAbortPress(btn) {
+  doPopinKeyAbortPress(btn, evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPopinKeyAbortPress(btn):", btn));
 
     if (this._layoutManager.hasButtonOverride(btn)) {
@@ -1070,13 +1089,13 @@ export class AndroidKeyboardCard extends HTMLElement {
 
     // Close popin
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: closing popin...`));
-    this.doClosePopin();
+    this.doRequestPopinHide(evt);
 
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
   }
 
-  doPopinKeyRelease(btn) {
+  doPopinKeyRelease(btn, evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPopinKeyRelease(btn):", btn));
 
     // Retrieve clickable button data
@@ -1104,7 +1123,7 @@ export class AndroidKeyboardCard extends HTMLElement {
 
     // Close popin
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: closing popin...`));
-    this.doClosePopin();
+    this.doRequestPopinHide(evt);
 
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();

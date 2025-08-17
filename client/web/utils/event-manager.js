@@ -400,10 +400,6 @@ export class EventManager {
     return this.getPopinCurrentState(pop)?.[this.constructor._POPIN_NEXTS].find(next => next[this.constructor._POPIN_TRIGGER] === trigger);
   }
 
-  activatePopinNextStateFromEvent(trigger, evt) {
-    return this.activatePopinNextState(evt.currentTarget, trigger, evt);
-  }
-
   activatePopinNextState(pop, trigger, evt) {
     if (pop) {
       const nextState = this.getPopinNextState(pop, trigger);
@@ -421,11 +417,11 @@ export class EventManager {
     return false;
   }
 
-  popinActivateShow(pop, evt) {
+  activatePopinShow(pop, evt) {
     return this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_SHOW, evt);
   }
   
-  popinActivateHide(pop, evt) {
+  activatePopinHide(pop, evt) {
     return this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
   }
 
