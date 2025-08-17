@@ -340,12 +340,9 @@ class AndroidRemoteCard extends HTMLElement {
         transition: opacity 0.1s ease;
       }
       .quarter.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
-        fill: red;
+        opacity: 0.2;
       }
       .quarter.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
-        opacity: 0;
-      }
-      .dpad-hover-bg.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         opacity: 0;
       }
       text {
@@ -586,9 +583,6 @@ class AndroidRemoteCard extends HTMLElement {
     // Detach existing layout from DOM
     this._elements.wrapper.innerHTML = '';
 
-    // Reset Dpad elements (if any)
-    this._elements.dpadBackgrounds = [];
-
     // Reset cells contents elements (if any)
     this._elements.cellContents = []
 
@@ -722,6 +716,7 @@ class AndroidRemoteCard extends HTMLElement {
     let cellContent;
     if (cellContentTag === "svg") {
       cellContent = document.createElementNS(Globals.SVG_NAMESPACE, "svg");
+      if (!cellContentHtml && cellName === "dpad") this.createDpad(cellContent, cellConfig); // When Dpad cell, create Dpad content
     } else {
       cellContent = document.createElement(cellContentTag);
     }
@@ -732,12 +727,8 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Add cell content data when cell content is a button
     if (cellContentTag === "button") this.setClickableData(cellContent, defaultCellConfig, cellConfig);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
 
-    if (cellName === "dpad" && !cellContentHtml) {
-      this.createDpad(cellContent, cellConfig); // When Dpad cell, create Dpad content
-      return null; // Do not return cell content to avoid adding a listener over the dpad
-    }
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("created cellContent:", cellContent));
     return cellContent;
   }
 
@@ -765,7 +756,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doListenCellContent(cellContent) {
-    if (cellContent) this.addClickableListeners(cellContent);
+    if (cellContent) this.addClickableListeners(cellContent); // Fillers does not have any content
   }
 
   createDpad(dpad, dpadConfig) {
@@ -832,7 +823,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doQueryDpadElements() {
-    // Nothing to do here
+    // Nothing to do here: element already referenced and sub-elements are not needed
   }
 
   doListenDpad() {
@@ -855,23 +846,11 @@ class AndroidRemoteCard extends HTMLElement {
     clip.appendChild(clipShape);
     defs.appendChild(clip);
 
-    // As we cannot set background color consistently with dark theme plugins ON, we use a trick:
-    // we declare to sub-layers "hoverBg" and "pressBg". On respective user actions, those layers 
-    // are masked to make dpad appears like any of cell buttons (except for the transform animation)
-    const pressBg = document.createElementNS(Globals.SVG_NAMESPACE, "path");
-    pressBg.setAttribute("d", quarterPath);
-    pressBg.setAttribute("fill", this._cellButtonPressBg);
-    pressBg.setAttribute("clip-path", `url(#${clipId})`);
-    pressBg.setAttribute("class", "dpad-press-bg");
-    dpad.appendChild(pressBg);
-
-    const hoverBg = document.createElementNS(Globals.SVG_NAMESPACE, "path");
-    this._elements.dpadBackgrounds.push(hoverBg);
-    hoverBg.setAttribute("d", quarterPath);
-    hoverBg.setAttribute("fill", this._cellButtonActiveBg);
-    hoverBg.setAttribute("clip-path", `url(#${clipId})`);
-    hoverBg.setAttribute("class", "dpad-hover-bg");
-    dpad.appendChild(hoverBg);
+    const bg = document.createElementNS(Globals.SVG_NAMESPACE, "path");
+    bg.setAttribute("d", quarterPath);
+    bg.setAttribute("fill", this._cellButtonActiveBg);
+    bg.setAttribute("clip-path", `url(#${clipId})`);
+    dpad.appendChild(bg);
 
     const btn = document.createElementNS(Globals.SVG_NAMESPACE, "path");
     btn.setAttribute("d", quarterPath);
@@ -937,7 +916,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doAttachDpadQuarter() {
-    // Nothing to do here
+    // Nothing to do here: already attached during creation
   }
 
   doQueryDpadQuarterElements() {
@@ -945,30 +924,19 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doListenDpadQuarter(dpadQuarter) {
-    this.addDpadListeners(dpadQuarter);
+    this.addClickableListeners(dpadQuarter);
   }
 
   doDpadCenter(dpad, center, centerRadius) {
     const centerId = "remote-button-center";
     const defaultCenterConfig = this._defaultCellConfigs[centerId];
 
-    // Background trick pressBg
-    const pressBg = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
-    pressBg.setAttribute("cx", center);
-    pressBg.setAttribute("cy", center);
-    pressBg.setAttribute("r", centerRadius);
-    pressBg.setAttribute("fill", this._cellButtonPressBg);
-    pressBg.setAttribute("class", "dpad-press-bg");
-    dpad.appendChild(pressBg);
-
-    const hoverBg = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
-    this._elements.dpadBackgrounds.push(hoverBg);
-    hoverBg.setAttribute("cx", center);
-    hoverBg.setAttribute("cy", center);
-    hoverBg.setAttribute("r", centerRadius);
-    hoverBg.setAttribute("fill", this._cellButtonActiveBg);
-    hoverBg.setAttribute("class", "dpad-hover-bg");
-    dpad.appendChild(hoverBg);
+    const centerCircle = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
+    centerCircle.setAttribute("cx", center);
+    centerCircle.setAttribute("cy", center);
+    centerCircle.setAttribute("r", centerRadius);
+    centerCircle.setAttribute("fill", this._cellButtonActiveBg);
+    dpad.appendChild(centerCircle);
 
     const btn = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
     btn.setAttribute("cx", center);
@@ -1004,7 +972,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doListenDpadCenter(dpadCenter) {
-    this.addDpadListeners(dpadCenter);
+    this.addClickableListeners(dpadCenter);
   }
 
   degToRad(deg) {
@@ -1136,17 +1104,6 @@ class AndroidRemoteCard extends HTMLElement {
     this._layoutManager.setElementData(clickable, defaultConfig, overrideConfig, (key, value, source) => this._allowedClickableData.has(key));
   }
 
-  // Add Dpad specific listeners (for background customization trick)
-  addDpadListeners(btn) {
-    this._eventManager.addButtonListeners("buttons", btn, 
-      {
-        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onDpadPress.bind(this),
-        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onDpadAbortPress.bind(this),
-        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onDpadRelease.bind(this)
-      }
-    );
-  }
-
   // Set listeners on a clickable button
   addClickableListeners(btn) {
     this._eventManager.addButtonListeners("buttons", btn, 
@@ -1156,16 +1113,6 @@ class AndroidRemoteCard extends HTMLElement {
         [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onButtonRelease.bind(this)
       }
     );
-  }
-
-  onDpadPress(btn, evt) {
-    this.onButtonPress(btn, evt);
-  }
-  onDpadAbortPress(btn, evt) {
-    this.onButtonAbortPress(btn, evt);
-  }
-  onDpadRelease(btn, evt) {
-    this.onButtonRelease(btn, evt);
   }
 
   onButtonPress(btn, evt) {
