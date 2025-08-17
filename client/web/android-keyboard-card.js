@@ -465,6 +465,9 @@ export class AndroidKeyboardCard extends HTMLElement {
     // Reset popin (if any)
     this.doResetPopin();
 
+    // Clear previous listeners
+    this._eventManager.clearListeners("layoutContainer");
+
     // Clear existing layout content from DOM
     this._elements.container.innerHTML = '';
 
@@ -476,7 +479,7 @@ export class AndroidKeyboardCard extends HTMLElement {
 
     // Reset rows elements (if any)
     this._elements.rows = []
-    
+
     // Reset attached layout
     this._layoutManager.resetAttachedLayout();
   }
@@ -790,6 +793,9 @@ export class AndroidKeyboardCard extends HTMLElement {
   doResetPopin() {
     const popin = this._elements.popin;
 
+    // Clear previous listeners
+    this._eventManager.clearListeners("popinContainer");
+
     // Detach existing popin from DOM
     if (popin?.parentElement) popin.remove();
 
@@ -811,7 +817,7 @@ export class AndroidKeyboardCard extends HTMLElement {
     this.doStylePopin();
     this.doAttachPopin();
     this.doQueryPopinElements();
-    this.doListenPopin();
+    this.doListenPopin(popin);
     this.doRequestPopinShow(evt);
   }
 
@@ -852,8 +858,8 @@ export class AndroidKeyboardCard extends HTMLElement {
     // nothing to do: element already attached during creation
   }
 
-  doListenPopin() {
-    this._eventManager.addPopinListeners("popinContainer", popinCell, 
+  doListenPopin(popin) {
+    this._eventManager.addPopinListeners("popinContainer", popin, 
       {
         [this._eventManager.constructor._POPIN_CALLBACK_SHOW]: this.onPopinShow.bind(this),
         [this._eventManager.constructor._POPIN_CALLBACK_HIDE]: this.onPopinHide.bind(this),
@@ -1135,7 +1141,7 @@ export class AndroidKeyboardCard extends HTMLElement {
 
   // Set listeners on a clickable button
   addClickableListeners(btn) {
-    this._eventManager.addButtonListeners("buttons", btn, 
+    this._eventManager.addButtonListeners("layoutContainer", btn, 
       {
         [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onButtonPress.bind(this),
         [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onButtonAbortPress.bind(this),

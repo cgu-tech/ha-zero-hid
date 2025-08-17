@@ -556,6 +556,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doResetLayout() {
+    // Clear previous listeners
+    this._eventManager.clearListeners("layoutContainer");
+
     // Detach existing layout from DOM
     this._elements.wrapper.innerHTML = '';
 
@@ -978,7 +981,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateFoldable();
 
     for (const [optionIndex, opt] of (this._elements.threeStatesToggleOptions ?? []).entries()) {
-      this._eventManager.addPointerClickListener(opt, this.onThreeStateToggleOptionPointerClick.bind(this, optionIndex));
+      this._eventManager.addPointerClickListenerToContainer("layoutContainer", opt, this.onThreeStateToggleOptionPointerClick.bind(this, optionIndex));
     }
   }
 
@@ -1079,7 +1082,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Set listeners on a clickable button
   addClickableListeners(btn) {
-    this._eventManager.addButtonListeners("buttons", btn, 
+    this._eventManager.addButtonListeners("layoutContainer", btn, 
       {
         [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onButtonPress.bind(this),
         [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onButtonAbortPress.bind(this),

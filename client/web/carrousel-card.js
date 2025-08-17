@@ -315,6 +315,9 @@ export class CarrouselCard extends HTMLElement {
   }
 
   doResetLayout() {
+    // Clear previous listeners
+    this._eventManager.clearListeners("layoutContainer");
+
     // Clear existing container DOM content
     this._elements.container.innerHTML = '';
     
@@ -372,7 +375,7 @@ export class CarrouselCard extends HTMLElement {
 
   doListenCell(cell) {
     // Action and visual events
-    this._eventManager.addButtonListeners("buttons", cell, 
+    this._eventManager.addButtonListeners("layoutContainer", cell, 
       {
         [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onCellPress.bind(this),
         [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onCellAbortPress.bind(this),
@@ -566,8 +569,8 @@ export class CarrouselCard extends HTMLElement {
 
   doListenCellContentImage(cellContent, cellConfig, defaultCellConfig) {
     const img = cellContent._cellContentImage?._image;
-    if (img) this._eventManager.addLoadListener(img, this.onLoadImageSuccess.bind(this, cellContent, cellConfig, defaultCellConfig));
-    if (img) this._eventManager.addErrorListener(img, this.onLoadImageError.bind(this, cellContent, cellConfig, defaultCellConfig));
+    if (img) this._eventManager.addLoadListenerToContainer("layoutContainer", img, this.onLoadImageSuccess.bind(this, cellContent, cellConfig, defaultCellConfig));
+    if (img) this._eventManager.addErrorListenerToContainer("layoutContainer", img, this.onLoadImageError.bind(this, cellContent, cellConfig, defaultCellConfig));
   }
 
   doLoadImage(cellContent, defaultCellConfig) {

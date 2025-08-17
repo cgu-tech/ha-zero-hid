@@ -433,10 +433,10 @@ export class TrackpadCard extends HTMLElement {
 
   doListenScrollToggle() {
     const scrollToggle = this._elements.scrollToggle;
-    this._eventManager.addPointerDownListener(scrollToggle, this.onScrollTogglePointerDown.bind(this));
-    this._eventManager.addPointerUpListener(scrollToggle, this.onScrollTogglePointerUp.bind(this));
-    this._eventManager.addPointerCancelListener(scrollToggle, this.onScrollTogglePointerCancel.bind(this));
-    this._eventManager.addPointerLeaveListener(scrollToggle, this.onScrollTogglePointerLeave.bind(this));
+    this._eventManager.addPointerDownListenerToContainer("cardContainer", scrollToggle, this.onScrollTogglePointerDown.bind(this));
+    this._eventManager.addPointerUpListenerToContainer("cardContainer", scrollToggle, this.onScrollTogglePointerUp.bind(this));
+    this._eventManager.addPointerCancelListenerToContainer("cardContainer", scrollToggle, this.onScrollTogglePointerCancel.bind(this));
+    this._eventManager.addPointerLeaveListenerToContainer("cardContainer", scrollToggle, this.onScrollTogglePointerLeave.bind(this));
   }
 
   onScrollTogglePointerDown(evt) {
@@ -486,11 +486,11 @@ export class TrackpadCard extends HTMLElement {
 
   doListenTrackpad() {
     const trackpad = this._elements.trackpad;
-    this._eventManager.addPointerDownListener(trackpad, this.onTrackpadPointerDown.bind(this));
-    this._eventManager.addPointerMoveListener(trackpad, this.onTrackpadPointerMove.bind(this));
-    this._eventManager.addPointerUpListener(trackpad, this.onTrackpadPointerUp.bind(this));
-    this._eventManager.addPointerCancelListener(trackpad, this.onTrackpadPointerCancel.bind(this));
-    this._eventManager.addPointerLeaveListener(trackpad, this.onTrackpadPointerLeave.bind(this));
+    this._eventManager.addPointerDownListenerToContainer("cardContainer", trackpad, this.onTrackpadPointerDown.bind(this));
+    this._eventManager.addPointerMoveListenerToContainer("cardContainer", trackpad, this.onTrackpadPointerMove.bind(this));
+    this._eventManager.addPointerUpListenerToContainer("cardContainer", trackpad, this.onTrackpadPointerUp.bind(this));
+    this._eventManager.addPointerCancelListenerToContainer("cardContainer", trackpad, this.onTrackpadPointerCancel.bind(this));
+    this._eventManager.addPointerLeaveListenerToContainer("cardContainer", trackpad, this.onTrackpadPointerLeave.bind(this));
   }
 
   onTrackpadPointerDown(evt) {
@@ -691,10 +691,10 @@ export class TrackpadCard extends HTMLElement {
 
   doListenScrollZones() {
     for (const scrollZone of this._elements.scrollZones) {
-      this._eventManager.addPointerDownListener(scrollZone, this.onScrollZonePointerDown.bind(this));
-      this._eventManager.addPointerUpListener(scrollZone, this.onScrollZonePointerUp.bind(this));
-      this._eventManager.addPointerCancelListener(scrollZone, this.onScrollZonePointerCancel.bind(this));
-      this._eventManager.addPointerLeaveListener(scrollZone, this.onScrollZonePointerLeave.bind(this));
+      this._eventManager.addPointerDownListenerToContainer("cardContainer", scrollZone, this.onScrollZonePointerDown.bind(this));
+      this._eventManager.addPointerUpListenerToContainer("cardContainer", scrollZone, this.onScrollZonePointerUp.bind(this));
+      this._eventManager.addPointerCancelListenerToContainer("cardContainer", scrollZone, this.onScrollZonePointerCancel.bind(this));
+      this._eventManager.addPointerLeaveListenerToContainer("cardContainer", scrollZone, this.onScrollZonePointerLeave.bind(this));
     }
   }
 
@@ -798,6 +798,9 @@ export class TrackpadCard extends HTMLElement {
 
   doResetLayout() {
     const buttonsRow = this._elements.buttonsRow;
+
+    // Clear previous listeners
+    this._eventManager.clearListeners("layoutContainer");
 
     // Detach existing buttonsRow from DOM
     if (buttonsRow.parentElement) buttonsRow.remove();
@@ -903,8 +906,8 @@ export class TrackpadCard extends HTMLElement {
   }
 
   doListenTrackpadButton(trackpadButton) {
-    this._eventManager.addPointerDownListener(trackpadButton, this.onTrackpadButtonPointerDown.bind(this));
-    this._eventManager.addPointerUpListener(trackpadButton, this.onTrackpadButtonPointerUp.bind(this));
+    this._eventManager.addPointerDownListenerToContainer("layoutContainer", trackpadButton, this.onTrackpadButtonPointerDown.bind(this));
+    this._eventManager.addPointerUpListenerToContainer("layoutContainer", trackpadButton, this.onTrackpadButtonPointerUp.bind(this));
   }
   
   onTrackpadButtonPointerDown(evt) {
