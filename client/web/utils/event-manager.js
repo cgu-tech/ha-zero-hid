@@ -223,9 +223,9 @@ export class EventManager {
       this.leaveAllButtons(evt);
       this.hideAllPopins(evt);
     } else {
-      const hovered = this.getTargetHoveredByPointer(evt);
-      this.leaveAllButtonsExceptTarget(evt);
-      this.hideAllPopinsExceptTarget(evt);
+      const target = this.getTargetHoveredByPointer(evt);
+      this.leaveAllButtonsExceptTarget(target, evt);
+      this.hideAllPopinsExceptTarget(target, evt);
     }
   }
   
@@ -263,7 +263,6 @@ export class EventManager {
   }
 
   hideAllPopinsExceptTarget(target, evt) {
-    const hovered = this.getTargetHoveredByPointer(evt);
     for (const pop of this._popins) {
       if (pop !== target) this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
     }
