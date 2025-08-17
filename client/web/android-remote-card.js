@@ -252,9 +252,11 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         border-radius: 50%;   /* This makes the button circular */
       }
-      .circle-button.${this._eventManager.constructor._BUTTON_CLASS_HOVER},
-      .circle-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+      .circle-button.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background-color: var(--cell-button-active-bg);
+      }
+      .circle-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background-color: var(--cell-button-press-bg);
         transform: scale(0.95);
       }
       .side-button {
@@ -284,7 +286,7 @@ class AndroidRemoteCard extends HTMLElement {
         background-color: var(--cell-button-active-bg);
       }
       .side-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
-        background-color: var(--cell-button-active-bg);
+        background-color: var(--cell-button-press-bg);
         transform: scale(0.95);
       }
       .ts-toggle-container {
@@ -342,8 +344,9 @@ class AndroidRemoteCard extends HTMLElement {
         opacity: 0.0;
       }
       .quarter.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
-        background-color: var(--cell-button-active-bg);
+        background-color: var(--cell-button-press-bg);
         opacity: 0.0;
+        transform: scale(0.95);
       }
       text {
         font-family: sans-serif;
