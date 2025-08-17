@@ -41,6 +41,24 @@ export class EventManager {
   static _BUTTON_ACTION_ADD = '1';            // "add"
   static _BUTTON_ACTION_REMOVE = '2';         // "remove"
 
+
+  static _POPIN_STATUS_MAP;
+  
+  static _POPIN_INIT = '1';
+  static _POPIN_STATES = '2';
+
+  static _POPIN_NEXTS = '1';
+
+  static _POPIN_TRIGGER = '1';
+  static _POPIN_STATE = '2';
+  static _POPIN_CALLBACK = '3';
+
+  static _POPIN_STATE_HIDDEN = '1';
+  static _POPIN_STATE_SHOWN = '2';
+  
+  static _POPIN_TRIGGER_SHOW = '1';
+  static _POPIN_TRIGGER_HIDE = '2';
+
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
     this._BUTTON_STATUS_MAP = {
@@ -75,20 +93,36 @@ export class EventManager {
         }
       }
     };
+    this._POPIN_STATUS_MAP = {
+      [this._POPIN_INIT]: { [this._POPIN_STATE]: this._POPIN_STATE_HIDDEN },
+      [this._POPIN_STATES]: {
+        [this._POPIN_STATE_HIDDEN]: {
+          [this._POPIN_NEXTS]: [ 
+            { [this._POPIN_TRIGGER]: this._POPIN_TRIGGER_SHOW, [this._POPIN_STATE]: this._POPIN_STATE_SHOWN,  [this._POPIN_CALLBACK]: this._POPIN_CALLBACK_SHOW }
+          ]
+        },
+        [this._POPIN_STATE_SHOWN]: {
+          [this._POPIN_NEXTS]: [ 
+            { [this._POPIN_TRIGGER]: this._POPIN_TRIGGER_HIDE, [this._POPIN_STATE]: this._POPIN_STATE_HIDDEN,  [this._POPIN_CALLBACK]: this._POPIN_CALLBACK_HIDE }, 
+          ]
+        }
+      }
+    };
   }
 
   // Constants
   _listenerKeys = ['target', 'callback', 'options', 'eventName', 'managedCallback'];
   _defaultContainerName = 'default';
-  _buttonsGlobalContainerName = '__window';
+  _globalContainerName = '__window';
   
   _origin;
   _eventsMap = new Map();
   _reversedEventsMap = new Map();
   _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
   _containers = new Map(); // Registrered listeners for cleanup
-  _buttonsGlobalListeners = new Map(); // Callback with global scopes (document, window) for buttons management
+  _globalListeners = new Map(); // Callback with global scopes (document, window) for buttons management
   _buttons = new Set(); // Managed buttons
+  _popins = new Set(); // Managed popins
 
   constructor(origin) {
     this._origin = origin;
@@ -148,31 +182,80 @@ export class EventManager {
     return listeners;
   }
 
-  addButtonsGlobalListeners() {
-    if (this._buttons && this._buttonsGlobalListeners.size === 0) {
-      this._buttonsGlobalListeners.set("windowPointerUp", this.addPointerUpListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowPointerUp.bind(this)));
-      this._buttonsGlobalListeners.set("windowBlur", this.addBlurListenerToContainer(this._buttonsGlobalContainerName, window, this.onButtonsGlobalWindowBlur.bind(this)));
-      this._buttonsGlobalListeners.set("documentVisibilityChange", this.addVisibilityChangeListenerToContainer(this._buttonsGlobalContainerName, document, this.onButtonsGlobalDocumentVisibilityChange.bind(this)));
+  addPopinListeners(containerName, target, callbacks, options = null) {
+    if (!target) throw new Error('Invalid target', target);
+
+    this.initPopinState(target, callbacks);
+    return [];
+  }
+
+  addGlobalListeners() {
+    if (this._buttons && this._globalListeners.size === 0) {
+      this._globalListeners.set("windowPointerUp", this.addPointerUpListenerToContainer(this._globalContainerName, window, this.onGlobalWindowPointerUp.bind(this)));
+      this._globalListeners.set("windowBlur", this.addBlurListenerToContainer(this._globalContainerName, window, this.onGlobalWindowBlur.bind(this)));
+      this._globalListeners.set("documentVisibilityChange", this.addVisibilityChangeListenerToContainer(this._globalContainerName, document, this.onGlobalDocumentVisibilityChange.bind(this)));
     }
   }
 
-  removeButtonsGlobalListeners() {
-    if (this._buttonsGlobalListeners) {
-      this.removeListener(this._buttonsGlobalListeners.get("windowPointerUp"));
-      this.removeListener(this._buttonsGlobalListeners.get("windowBlur"));
-      this.removeListener(this._buttonsGlobalListeners.get("documentVisibilityChange"));
-      this._buttonsGlobalListeners.clear();
+  removeGlobalListeners() {
+    if (this._globalListeners) {
+      this.removeListener(this._globalListeners.get("windowPointerUp"));
+      this.removeListener(this._globalListeners.get("windowBlur"));
+      this.removeListener(this._globalListeners.get("documentVisibilityChange"));
+      this._globalListeners.clear();
     }
   }
 
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
-    this.addButtonsGlobalListeners();
+    this.addGlobalListeners();
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
-    this.removeButtonsGlobalListeners();
+    this.removeGlobalListeners();
+  }
+
+  onGlobalWindowPointerUp(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onGlobalWindowPointerUp(evt) + isConnected", evt, this._origin?.isConnected));
+    
+    // Treat buttons
+    for (const btn of this._buttons) {
+      this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
+    }
+    
+    // Treat popins
+    for (const pop of this._popins) {
+      this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
+    }
+  }
+  onGlobalWindowBlur(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onGlobalWindowBlur(evt) + isConnected", evt, this._origin?.isConnected));
+    
+    // Treat buttons
+    for (const btn of this._buttons) {
+      this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
+    }
+    
+    // Treat popins
+    for (const pop of this._popins) {
+      this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
+    }
+  }
+  onGlobalDocumentVisibilityChange(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onGlobalDocumentVisibilityChange(evt) + isConnected", evt, this._origin?.isConnected));
+    
+    if (document.visibilityState === "hidden") {
+      // Treat buttons
+      for (const btn of this._buttons) {
+        this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
+      }
+      
+      // Treat popins
+      for (const pop of this._popins) {
+        this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
+      }
+    }
   }
 
   onButtonPointerEnter(evt) {
@@ -189,29 +272,6 @@ export class EventManager {
   }
   onButtonPointerUp(evt) {
     this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_UP, evt);
-  }
-
-  onButtonsGlobalWindowPointerUp(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowPointerUp(evt) + isConnected", evt, this._origin?.isConnected));
-    if (document.visibilityState === "hidden") {
-      for (const btn of this._buttons) {
-        this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
-      }
-    }
-  }
-  onButtonsGlobalWindowBlur(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalWindowBlur(evt) + isConnected", evt, this._origin?.isConnected));
-    for (const btn of this._buttons) {
-      this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
-    }
-  }
-  onButtonsGlobalDocumentVisibilityChange(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonsGlobalDocumentVisibilityChange(evt) + isConnected", evt, this._origin?.isConnected));
-    if (document.visibilityState === "hidden") {
-      for (const btn of this._buttons) {
-        this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
-      }
-    }
   }
 
   setButtonData(btn, data) {
@@ -244,6 +304,7 @@ export class EventManager {
     this.setButtonCallbacks(btn, callbacks);
     this._buttons.add(btn);
   }
+
 
   getButtonCurrentState(btn) {
     return this.constructor._BUTTON_STATUS_MAP[this.constructor._BUTTON_STATES][this.getButtonState(btn)];
@@ -284,6 +345,78 @@ export class EventManager {
       return !!nextState;
     }
     return false;
+  }
+
+  setPopinData(pop, data) {
+    if (pop) pop._mngPopDt = data;
+  }
+
+  getPopinData(pop) {
+    return pop?._mngPopDt;
+  }
+
+  setPopinState(pop, state) {
+    if (pop) this.getPopinData(pop).state = state;
+  }
+  
+  getPopinState(pop) {
+    return this.getPopinData(pop)?.state;
+  }
+
+  setPopinCallbacks(pop, callbacks) {
+    if (pop) this.getPopinData(pop).callbacks = callbacks;
+  }
+
+  getPopinCallbacks(pop) {
+    return this.getPopinData(pop)?.callbacks;
+  }
+
+  initPopinState(pop, callbacks) {
+    this.setPopinData(pop, {});
+    this.setPopinState(pop, this.constructor._POPIN_STATUS_MAP[this.constructor._POPIN_INIT][this.constructor._POPIN_STATE]);
+    this.setPopinCallbacks(pop, callbacks);
+    this._popins.add(pop);
+  }
+
+  getPopinCurrentState(pop) {
+    return this.constructor._POPIN_STATUS_MAP[this.constructor._POPIN_STATES][this.getPopinState(pop)];
+  }
+
+  getPopinCurrentActions(pop) {
+    return this.getPopinCurrentState(pop)?.[this.constructor._POPIN_ACTIONS];
+  }
+
+  getPopinNextState(pop, trigger) {
+    return this.getPopinCurrentState(pop)?.[this.constructor._POPIN_NEXTS].find(next => next[this.constructor._POPIN_TRIGGER] === trigger);
+  }
+
+  activatePopinNextStateFromEvent(trigger, evt) {
+    return this.activatePopinNextState(evt.currentTarget, trigger, evt);
+  }
+
+  activatePopinNextState(pop, trigger, evt) {
+    if (pop) {
+      const nextState = this.getPopinNextState(pop, trigger);
+      if (nextState) {
+
+        // Change popin to next state
+        this.setPopinState(pop, nextState[this.constructor._POPIN_STATE]);
+
+        // Execute associated callback (when present)
+        const callback = this.getPopinCallbacks(pop)?.[nextState[this.constructor._POPIN_CALLBACK]];
+        if (callback) callback(pop, evt);
+      }
+      return !!nextState;
+    }
+    return false;
+  }
+
+  popinActivateShow(pop, evt) {
+    return this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_SHOW, evt);
+  }
+  
+  popinActivateHide(pop, evt) {
+    return this.activatePopinNextState(pop, this.constructor._POPIN_TRIGGER_HIDE, evt);
   }
 
   preventDefault(evt) {

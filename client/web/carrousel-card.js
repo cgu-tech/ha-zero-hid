@@ -225,17 +225,17 @@ export class CarrouselCard extends HTMLElement {
         cursor: pointer;
         transition: background-color 0.2s ease;
       }
-      .carrousel-cell.active {
+      .carrousel-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background-color: var(--cell-active-bg);
       }
-      .carrousel-cell.press {
+      .carrousel-cell.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background-color: var(--cell-press-bg);
         transform: scale(0.95);
       }
-      .carrousel-cell.active * {
+      .carrousel-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} * {
         opacity: 0.95;
       }
-      .carrousel-cell.press * {
+      .carrousel-cell.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} * {
         opacity: 0.85;
       }
       .carrousel-cell-content {
