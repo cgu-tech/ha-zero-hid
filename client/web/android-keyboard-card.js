@@ -217,6 +217,8 @@ export class AndroidKeyboardCard extends HTMLElement {
         --key-active-bg: #4a4a4a;
         --key-press-bg: #6a6a6a;
         --key-special-bg: #222;
+        --key-special-active-bg: #333;
+        --key-special-press-bg: #444;
         --key-special-color: #ccc;
         --key-height: clamp(2rem, 9vh, 3.5rem);
         --key-margin: 0.15rem;
@@ -273,6 +275,13 @@ export class AndroidKeyboardCard extends HTMLElement {
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
         outline: none; /* Prevent focus ring override */
       }
+      button.key.active {
+        background: var(--key-active-bg) !important;
+        color: #fff !important;
+      }
+      button.key.press {
+        background: var(--key-press-bg) !important;
+      }
       button.key.special {
         flex: 1 1 auto;
         font-size: clamp(0.55em, 10vw, 0.95em);
@@ -280,6 +289,12 @@ export class AndroidKeyboardCard extends HTMLElement {
         padding: clamp(1px, 10vw, 4px); clamp(0px, 10vw, 2px);
         background: var(--key-special-bg);
         color: var(--key-special-color);
+      }
+      button.key.special.active {
+        background: var(--key-special-active-bg);
+      }
+      button.key.special.press {
+        background: var(--key-special-press-bg);
       }
       button.key.spacer {
         pointer-events: none;
@@ -307,13 +322,6 @@ export class AndroidKeyboardCard extends HTMLElement {
       button.key.spacebar {
         flex-grow: 7.4;
       }
-      button.key.active {
-        background: var(--key-active-bg) !important;
-        color: #fff !important;
-      }
-      button.key.press {
-        background: var(--key-press-bg) !important;
-      }
       /* Fix: Ensure shift-once state is visually dominant */
       button.key.shift-once,
       button.key.active.shift-once {
@@ -322,7 +330,7 @@ export class AndroidKeyboardCard extends HTMLElement {
         font-weight: bold;
       }
       button.key.active.shift-once.press {
-        background: #3745a8 !important; /* grey-more-blue */
+        background: #374585 !important; /* grey-more-blue */
       }
       button.key.locked,
       button.key.active.locked {
