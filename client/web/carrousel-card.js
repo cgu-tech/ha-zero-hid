@@ -372,12 +372,12 @@ export class CarrouselCard extends HTMLElement {
     this.doCellPress(cell);
   }
 
-  onCellAbortPress(evt) {
+  onCellAbortPress(cell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doCellAbortPress(cell);
   }
 
-  onCellRelease(evt) {
+  onCellRelease(cell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doCellRelease(cell);
   }
