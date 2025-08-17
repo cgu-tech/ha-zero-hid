@@ -358,7 +358,7 @@ export class CarrouselCard extends HTMLElement {
 
   doListenCell(cell) {
     // Action and visual events
-    this._eventManager.addButtonListeners("buttons", btn, 
+    this._eventManager.addButtonListeners("buttons", cell, 
       {
         [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onCellPress.bind(this),
         [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onCellAbortPress.bind(this),
