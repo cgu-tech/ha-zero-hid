@@ -223,7 +223,7 @@ export class EventManager {
       this.leaveAllButtons(evt);
       this.hideAllPopins(evt);
     } else {
-      const target = this.getTargetHoveredByPointer(evt);
+      const target = this.getTargetHoveredByPointerThroughShadow(evt);
       this.leaveAllButtonsExceptTarget(target, evt);
       this.hideAllPopinsExceptTarget(target, evt);
     }
@@ -644,6 +644,10 @@ export class EventManager {
 
   getTargetHoveredByPointer(evt) {
     return document.elementFromPoint(evt.clientX, evt.clientY);
+  }
+  
+  getTargetHoveredByPointerThroughShadow(evt) {
+    return evt?.composedPath()?.[0]; // the most deeply nested element actually interacted with
   }
 
   isPointerHoveringTarget(evt, target) {
