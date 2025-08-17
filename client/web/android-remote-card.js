@@ -756,7 +756,17 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doListenCellContent(cellContent) {
-    if (cellContent) this.addClickableListeners(cellContent); // Fillers does not have any content
+    // Add a listener if cell content is not:
+    // - a filler
+    // - the Dpad
+    // - the three-states-toggle
+    // - the foldables container
+    if (cellContent
+        && cellContent?.id !== "dpad"
+        && cellContent?.id !== "ts-toggle-container" 
+        && cellContent?.id !== "foldable-container") {
+      this.addClickableListeners(cellContent); 
+    }
   }
 
   createDpad(dpad, dpadConfig) {
@@ -846,12 +856,6 @@ class AndroidRemoteCard extends HTMLElement {
     clip.appendChild(clipShape);
     defs.appendChild(clip);
 
-    const bg = document.createElementNS(Globals.SVG_NAMESPACE, "path");
-    bg.setAttribute("d", quarterPath);
-    bg.setAttribute("fill", this._cellButtonActiveBg);
-    bg.setAttribute("clip-path", `url(#${clipId})`);
-    dpad.appendChild(bg);
-
     const btn = document.createElementNS(Globals.SVG_NAMESPACE, "path");
     btn.setAttribute("d", quarterPath);
     btn.setAttribute("fill", this._cellButtonBg);
@@ -930,13 +934,6 @@ class AndroidRemoteCard extends HTMLElement {
   doDpadCenter(dpad, center, centerRadius) {
     const centerId = "remote-button-center";
     const defaultCenterConfig = this._defaultCellConfigs[centerId];
-
-    const centerCircle = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
-    centerCircle.setAttribute("cx", center);
-    centerCircle.setAttribute("cy", center);
-    centerCircle.setAttribute("r", centerRadius);
-    centerCircle.setAttribute("fill", this._cellButtonActiveBg);
-    dpad.appendChild(centerCircle);
 
     const btn = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
     btn.setAttribute("cx", center);
