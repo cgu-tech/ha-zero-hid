@@ -191,6 +191,14 @@ export class CarrouselCard extends HTMLElement {
   doStyle() {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
+      :host {
+        --card-corner-radius: 10px;
+        --cell-min-corner-radius: 4px;
+        --cell-max-corner-radius: 8px;
+        --cell-bg: #3b3a3a;
+        --cell-active-bg: #4a4a4a;
+        --cell-press-bg: #6a6a6a;
+      }
       .carrousel-container {
         display: flex;
         width: 100%;
@@ -207,7 +215,7 @@ export class CarrouselCard extends HTMLElement {
         margin-right: 2px;
         margin-top: 4px;
         margin-bottom: 4px;
-        background: #3a3a3a;
+        background: var(--cell-bg);
         border-radius: 8px;
         overflow: hidden;
         text-align: center;
@@ -215,14 +223,20 @@ export class CarrouselCard extends HTMLElement {
         font-size: 14px;
         box-sizing: border-box;
         cursor: pointer;
+        transition: background-color 0.2s ease;
       }
       .carrousel-cell.active {
-        background: #4a4a4a;
-        transition: opacity 0.3s ease, transform 0.3s ease;
+        background-color: var(--cell-active-bg);
       }
       .carrousel-cell.press {
-        background: #6a6a6a;
-        transition: opacity 0.3s ease, transform 0.3s ease;
+        background-color: var(--cell-press-bg);
+        transform: scale(0.95);
+      }
+      .carrousel-cell.active * {
+        opacity: 0.9;
+      }
+      .carrousel-cell.press * {
+        opacity: 0.6;
       }
       .carrousel-cell-content {
         display: inline-flex;

@@ -199,30 +199,6 @@ class AndroidRemoteCard extends HTMLElement {
         max-width: 100%;
         padding: clamp(1px, 1vw, 6px);
       }
-      .cell.highlight {
-        border-bottom-left-radius: 5px;
-        border-bottom-right-radius: 5px;
-        border-bottom-style: solid;
-        border-bottom-width: 2px;
-        border-image-outset: 0;
-        border-image-repeat: stretch;
-        border-image-slice: 100%;
-        border-image-source: none;
-        border-image-width: 1;
-        border-left-color: rgb(155, 80, 0);
-        border-left-style: solid;
-        border-left-width: 2px;
-        border-right-color: rgb(155, 80, 0);
-        border-right-style: solid;
-        border-right-width: 2px;
-        border-top-color: rgb(155, 80, 0);
-        border-top-left-radius: 5px;
-        border-top-right-radius: 5px;
-        border-top-style: solid;
-        border-top-width: 2px;
-        color: rgb(241, 108, 55);
-        color-scheme: dark;
-      }
       .cell.no-gap {
         padding: 0;
       }
