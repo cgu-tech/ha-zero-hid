@@ -822,8 +822,7 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 
   doListenPopin() {
-    // When any pointer is up anywhere: close popin
-    //this._eventManager.addPointerUpListener(document, this.onClosingPopin.bind(this), { once: true });
+    // nothing to do: popin is listened by its sub-elements
   }
 
   doPromptPopin(evt) {
@@ -1094,10 +1093,6 @@ export class AndroidKeyboardCard extends HTMLElement {
 
   // Set listeners on a clickable button
   addClickableListeners(btn) {
-    //this._eventManager.addPointerDownListener(btn, this.onButtonPointerDown.bind(this));
-    //this._eventManager.addPointerUpListener(btn, this.onButtonPointerUp.bind(this));
-    //this._eventManager.addPointerCancelListener(btn, this.onButtonPointerUp.bind(this));
-    //this._eventManager.addPointerLeaveListener(btn, this.onButtonPointerCancel.bind(this));
     this._eventManager.addButtonListeners("buttons", btn, 
       {
         [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onButtonPress.bind(this),
