@@ -233,10 +233,10 @@ export class CarrouselCard extends HTMLElement {
         transform: scale(0.95);
       }
       .carrousel-cell.active * {
-        opacity: 0.9;
+        opacity: 0.95;
       }
       .carrousel-cell.press * {
-        opacity: 0.6;
+        opacity: 0.85;
       }
       .carrousel-cell-content {
         display: inline-flex;
