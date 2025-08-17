@@ -1142,6 +1142,10 @@ export class AndroidKeyboardCard extends HTMLElement {
 
   doKeyPress(btn, evt) {
 
+    // Close popin
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: preventively closing popin...`));
+    this.doClosePopin();
+
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
     if (!btnData) return;
