@@ -8,10 +8,6 @@ import { ConsumerCodes } from './utils/consumercodes.js';
 import { androidRemoteCardConfig } from './configs/android-remote-card-config.js';
 import * as layoutsRemote from './layouts/remote/index.js';
 
-import { AndroidKeyboardCard } from './android-keyboard-card.js';
-import { TrackpadCard } from './trackpad-card.js';
-import { CarrouselCard } from './carrousel-card.js';
-
 console.info("Loading android-remote-card");
 
 class AndroidRemoteCard extends HTMLElement {
