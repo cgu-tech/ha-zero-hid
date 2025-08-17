@@ -223,9 +223,13 @@ export class AndroidKeyboardCard extends HTMLElement {
         --key-shif-once-bg: #2e4b6b; /* grey-blue */
         --key-shif-once-active-bg: #4571a1; /* grey-blue-light */
         --key-shif-once-press-bg: #7098c2; /* grey-blue-lightest */
-        --key-locked-bg: #004d99; /* blue */
-        --key-locked-active-bg: #0073e6; /* blue */
-        --key-locked-press-bg: #3399ff; /* lighter blue */
+        --key-locked-bg: #0073e6; /* blue */
+        --key-locked-active-bg: #3399ff; /* blue */
+        --key-locked-press-bg: #80bfff; /* lighter blue */
+        --key-popin-bg: #3b3a3a;
+        --key-popin-inner-bg: #3b3a3a;
+        --key-popin-inner-active-bg: #3399ff; /* blue */
+        --key-popin-inner-press-bg: #80bfff; /* blue */
         --key-height: clamp(2rem, 9vh, 3.5rem);
         --key-margin: 0.15rem;
         font-size: var(--base-font-size);
@@ -355,8 +359,8 @@ export class AndroidKeyboardCard extends HTMLElement {
         user-select: none;
       }
       .key-popin {
-        position: fixed; /* Use fixed instead of absolute for document.body */
-        background: var(--key-bg); /* Fallback if var is missing */
+        position: fixed;
+        background: var(--key-popin-bg);
         border-radius: clamp(var(--key-min-corner-radius), 1vw, var(--key-max-corner-radius));
         padding: 0.3em;
         box-shadow: 0 0.2em 0.8em rgba(0,0,0,0.4);
@@ -372,7 +376,7 @@ export class AndroidKeyboardCard extends HTMLElement {
       .key-popin button.key {
         margin: var(--key-margin);
         height: var(--key-height);
-        background: var(--key-bg);
+        background: var(--key-popin-inner-bg);
         color: #fff;
         border: none;
         border-radius: 5px;
@@ -383,7 +387,11 @@ export class AndroidKeyboardCard extends HTMLElement {
         justify-content: center;
       }
       .key-popin button.key.active {
-        background: #3399ff !important; /* blue */
+        background: var(--key-popin-inner-active-bg);
+        color: #000 !important;
+      }
+      .key-popin button.key.press {
+        background: var(--key-popin-inner-press-bg);
         color: #000 !important;
       }
       .key-popin.visible {
