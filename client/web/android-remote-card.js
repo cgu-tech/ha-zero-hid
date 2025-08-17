@@ -340,7 +340,7 @@ class AndroidRemoteCard extends HTMLElement {
         transition: opacity 0.1s ease;
       }
       .quarter.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
-        opacity: 0;
+        fill: red;
       }
       .quarter.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         opacity: 0;
