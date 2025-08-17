@@ -1,4 +1,4 @@
-//import './snow-background.js';
+//import './snow.js';
 //
 //const card = document.createElement("ha-card");
 //card.style.position = "relative";
@@ -6,11 +6,11 @@
 //const background = document.createElement("snow-background");
 //card.appendChild(background);
 //
-//// Then append your main UI content above it
+//// Then append to main content above it
 //const content = document.createElement("div");
 //content.style.position = "relative";
 //content.style.zIndex = "1"; // ensure content is above flakes
-//content.innerHTML = "My Card UI Here";
+//content.innerHTML = "My Card Here";
 //card.appendChild(content);
 //
 //this._elements.root = card;
