@@ -21,6 +21,10 @@ class AndroidRemoteCard extends HTMLElement {
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedClickableData = new Set(['code']);
+  _cellButtonFg = '#bfbfbf';
+  _cellButtonBg = '#3a3a3a';
+  _cellButtonActiveBg = '#4a4a4a';
+  _cellButtonPressBg = '#6a6a6a';
 
   // private properties
   _config;
@@ -150,10 +154,15 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
       :host {
+        --cell-button-fg: ${this._cellButtonFg};
+        --cell-button-bg: ${this._cellButtonBg};
+        --cell-button-active-bg: ${this._cellButtonActiveBg};
+        --cell-button-press-bg: ${this._cellButtonPressBg};
+        --cell-sensor-on-fg: #ffc107;
         display: block;
         box-sizing: border-box;
         max-width: 100%;
-        background: var(--card-background-color, white);
+        background: var(--card-background-color);
         border-radius: 0.5em;
         overflow: hidden; /* prevent overflow outside card */
         font-family: sans-serif;
@@ -218,20 +227,20 @@ class AndroidRemoteCard extends HTMLElement {
         padding: 0;
       }
       .standard-grey {
-        fill: #bfbfbf;
-        stroke: #bfbfbf;
+        fill: var(--cell-button-fg);
+        stroke: var(--cell-button-fg);
       }
       .sensor-on {
-        fill: #ffc107;
-        stroke: #ffc107;
+        fill: var(--cell-sensor-on-fg);
+        stroke: var(--cell-sensor-on-fg);
       }
       .circle-button {
         height: 100%;
         width: 100%;  /* maintain aspect ratio */
         flex: 1 1 0;
         aspect-ratio: 1 / 1;
-        background-color: #3a3a3a;
-        color: #bfbfbf;
+        background-color: var(--cell-button-bg);
+        color: var(--cell-button-fg);
         border: none;
         outline: none;
         cursor: pointer;
@@ -243,18 +252,17 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         border-radius: 50%;   /* This makes the button circular */
       }
-      ${this._layoutManager.isTouchDevice() ? "" : ".circle-button:hover { background-color: #4a4a4a; }" }
-      .circle-button:active,
-      .circle-button.pressed {
-        background-color: #4a4a4a;
+      .circle-button.${this._eventManager.constructor._BUTTON_CLASS_HOVER},
+      .circle-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background-color: var(--cell-button-active-bg);
         transform: scale(0.95);
       }
       .side-button {
         aspect-ratio: 3 / 1;
         width: 100%;  /* maintain aspect ratio */
         flex: 1 1 0;
-        background-color: #3a3a3a;
-        color: #bfbfbf;
+        background-color: var(--cell-button-bg);
+        color: var(--cell-button-fg);
         border: none;
         outline: none;
         cursor: pointer;
@@ -272,17 +280,18 @@ class AndroidRemoteCard extends HTMLElement {
         border-top-right-radius: 999px;
         border-bottom-right-radius: 999px;
       }
-      ${this._layoutManager.isTouchDevice() ? "" : ".side-button:hover { background-color: #4a4a4a; }" }
-      .side-button:active,
-      .side-button.pressed {
-        background-color: #4a4a4a;
+      .side-button.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background-color: var(--cell-button-active-bg);
+      }
+      .side-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background-color: var(--cell-button-active-bg);
         transform: scale(0.95);
       }
       .ts-toggle-container {
         min-width: 0;
         text-align: center;
         flex: 1 1 0;
-        background-color: #3a3a3a;
+        background-color: var(--cell-button-bg);
         outline: none;
         cursor: pointer;
         font-family: sans-serif;
@@ -302,7 +311,7 @@ class AndroidRemoteCard extends HTMLElement {
         position: relative;
         z-index: 1;
         font-size: clamp(1px, 5vw, 30px);
-        color: #bfbfbf;
+        color: var(--cell-button-fg);
         border-radius: 999px;
         user-select: none;
         display: flex;
@@ -316,26 +325,29 @@ class AndroidRemoteCard extends HTMLElement {
         width: calc(100% / 3); /* Assuming 3 options */
         left: 0;
         z-index: 0;
-        background-color: #4a4a4a;
+        background-color: var(--cell-button-active-bg);
         border-radius: 999px;
         transition: left 0.3s ease;
       }
       ${this._layoutManager.isTouchDevice() ? "" : ".ts-toggle-option:hover { background-color: rgba(0, 0, 0, 0.05); }" }
       .ts-toggle-option.active {
-        color: #bfbfbf;
         font-weight: bold;
       }
       .quarter {
         cursor: pointer;
         transition: opacity 0.2s;
       }
-      ${this._layoutManager.isTouchDevice() ? "" : ".quarter:hover { opacity: 0.0; }" }
-      .quarter.active {
+      .quarter.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background-color: var(--cell-button-active-bg);
+        opacity: 0.0;
+      }
+      .quarter.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background-color: var(--cell-button-active-bg);
         opacity: 0.0;
       }
       text {
         font-family: sans-serif;
-        fill: #bfbfbf;
+        fill: var(--cell-button-fg);
         pointer-events: none;
         user-select: none;
       }
@@ -785,11 +797,10 @@ class AndroidRemoteCard extends HTMLElement {
       { quarterId: "remote-button-arrow-down" , clipId: 'clip-quarter-3', angleStart: 45  },
       { quarterId: "remote-button-arrow-left" , clipId: 'clip-quarter-4', angleStart: 135 }
     ];
-    const arrowColor = "#bfbfbf";  // ← dynamic color
     const arrowScale = 0.6;          // ← 1 = normal size, <1 = smaller, >1 = larger
 
     for (const quarterConfig of quarters) {
-      const dpadQuarter = this.doDpadQuarter(dpad, defs, center, rOuter, rInner, arrowColor, arrowScale, quarterConfig);
+      const dpadQuarter = this.doDpadQuarter(dpad, defs, center, rOuter, rInner, this._cellButtonFg, arrowScale, quarterConfig);
       this.doStyleDpadQuarter();
       this.doAttachDpadQuarter();
       this.doQueryDpadQuarterElements();
@@ -837,13 +848,13 @@ class AndroidRemoteCard extends HTMLElement {
 
     const bg = document.createElementNS(Globals.SVG_NAMESPACE, "path");
     bg.setAttribute("d", quarterPath);
-    bg.setAttribute("fill", "#4a4a4a");
+    bg.setAttribute("fill", this._cellButtonActiveBg);
     bg.setAttribute("clip-path", `url(#${clipId})`);
     dpad.appendChild(bg);
 
     const btn = document.createElementNS(Globals.SVG_NAMESPACE, "path");
     btn.setAttribute("d", quarterPath);
-    btn.setAttribute("fill", "#3a3a3a");
+    btn.setAttribute("fill", this._cellButtonBg);
     btn.setAttribute("clip-path", `url(#${clipId})`);
     btn.setAttribute("class", "quarter");
     btn.setAttribute("id", quarterId);
@@ -924,14 +935,14 @@ class AndroidRemoteCard extends HTMLElement {
     centerCircle.setAttribute("cx", center);
     centerCircle.setAttribute("cy", center);
     centerCircle.setAttribute("r", centerRadius);
-    centerCircle.setAttribute("fill", "#4a4a4a");
+    centerCircle.setAttribute("fill", this._cellButtonActiveBg);
     dpad.appendChild(centerCircle);
 
     const btn = document.createElementNS(Globals.SVG_NAMESPACE, "circle");
     btn.setAttribute("cx", center);
     btn.setAttribute("cy", center);
     btn.setAttribute("r", centerRadius);
-    btn.setAttribute("fill", "#3a3a3a");
+    btn.setAttribute("fill", this._cellButtonBg);
     btn.setAttribute("class", "quarter");
     btn.setAttribute("id", centerId);
     this.setClickableData(btn, defaultCenterConfig, null);

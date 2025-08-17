@@ -285,11 +285,11 @@ export class AndroidKeyboardCard extends HTMLElement {
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
         outline: none; /* Prevent focus ring override */
       }
-      button.key.active {
+      button.key.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background: var(--key-active-bg);
         color: #fff;
       }
-      button.key.press {
+      button.key.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background: var(--key-press-bg);
       }
       button.key.special {
@@ -300,10 +300,10 @@ export class AndroidKeyboardCard extends HTMLElement {
         background: var(--key-special-bg);
         color: var(--key-special-color);
       }
-      button.key.special.active {
+      button.key.special.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background: var(--key-special-active-bg);
       }
-      button.key.special.press {
+      button.key.special.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background: var(--key-special-press-bg);
       }
       button.key.spacer {
@@ -337,20 +337,20 @@ export class AndroidKeyboardCard extends HTMLElement {
         background: var(--key-shif-once-bg);
         font-weight: bold;
       }
-      button.key.shift-once.active {
+      button.key.shift-once.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background: var(--key-shif-once-active-bg);
       }
-      button.key.shift-once.press { 
+      button.key.shift-once.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} { 
         background: var(--key-shif-once-press-bg);
       }
       button.key.locked {
         background: var(--key-locked-bg);
         font-weight: bold;
       }
-      button.key.locked.active {
+      button.key.locked.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background: var(--key-locked-active-bg);
       }
-      button.key.locked.press {
+      button.key.locked.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background: var(--key-locked-press-bg);
       }
       .label-lower {
@@ -386,11 +386,11 @@ export class AndroidKeyboardCard extends HTMLElement {
         align-items: center;
         justify-content: center;
       }
-      .key-popin button.key.active {
+      .key-popin button.key.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background: var(--key-popin-inner-active-bg);
         color: #000 !important;
       }
-      .key-popin button.key.press {
+      .key-popin button.key.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background: var(--key-popin-inner-press-bg);
         color: #000 !important;
       }
