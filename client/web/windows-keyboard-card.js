@@ -374,7 +374,10 @@ export class WindowsKeyboardCard extends HTMLElement {
   }
 
   doUpdateHass() {
-    // Nothing to do here: no specific HA entity state to listen for this card
+    // Synchronize keyboard state preventively here
+    // - at least usefull for the first time after constructor that cannot use synKeyboard until this moment
+    // - might also be usefull after a long disconnection by user, to ensure uptodate state
+    this.syncKeyboard();
   }
 
   doUpdateLayout() {
@@ -862,7 +865,9 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   // Synchronize with remote keyboard current state through HA websockets API
   syncKeyboard() {
-    this._eventManager.callComponentCommand('sync_keyboard').then((response) => {
+    // Sync keyboard will be called indirectly from constructor: 
+    // at this time hass is not already initialized, do we should conditionnaly call the sync keyboard only when hass is updated
+    if (this._hass) this._eventManager.callComponentCommand('sync_keyboard')?.then((response) => {
       // Keyboard sync success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
       const modifiers = [...(this.syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])];

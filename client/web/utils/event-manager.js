@@ -484,7 +484,7 @@ export class EventManager {
   callComponentCommand(name) {
     if (!this.getHass()) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callComponentCommand(name): undefined hass. Unable to execute the command (called too early before HA hass init or HA unresponsive)`, name));
-      return;
+      return null;
     }
     return this.getHass().connection.sendMessagePromise({
       type: `${Globals.COMPONENT_NAME}/${name}`
