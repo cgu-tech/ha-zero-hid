@@ -327,16 +327,13 @@ export class WindowsKeyboardCard extends HTMLElement {
       button.key.shift-once.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} { 
         background: var(--key-shif-once-press-bg);
       }
-      button.key.special.locked,
       button.key.locked {
         background: var(--key-locked-bg);
         font-weight: bold;
       }
-      button.key.special.locked.${this._eventManager.constructor._BUTTON_CLASS_HOVER},
       button.key.locked.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background: var(--key-locked-active-bg);
       }
-      button.key.special.locked.${this._eventManager.constructor._BUTTON_CLASS_PRESSED},
       button.key.locked.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background: var(--key-locked-press-bg);
       }
