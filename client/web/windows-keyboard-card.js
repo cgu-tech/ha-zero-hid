@@ -74,7 +74,7 @@ export class WindowsKeyboardCard extends HTMLElement {
   // private constants
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _allowedCellData = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
+  _allowedCellData = new Set(['code', 'special', 'label', 'fallback']);
 
   // private properties
   _config;
@@ -144,14 +144,6 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   getTriggerLongClickDelay() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
-  }
-
-  doRequestPopinShow(evt) {
-    this._eventManager.activatePopinShow(this._popin, evt);
-  }
-
-  doRequestPopinHide(evt) {
-    this._eventManager.activatePopinHide(this._popin, evt);
   }
 
   doUpdateCells() {
@@ -226,10 +218,6 @@ export class WindowsKeyboardCard extends HTMLElement {
         --key-locked-bg: #0073e6; /* blue */
         --key-locked-active-bg: #3399ff; /* blue */
         --key-locked-press-bg: #80bfff; /* lighter blue */
-        --key-popin-bg: #3b3a3a;
-        --key-popin-inner-bg: #3b3a3a;
-        --key-popin-inner-active-bg: #3399ff; /* blue */
-        --key-popin-inner-press-bg: #80bfff; /* blue */
         --key-height: clamp(2rem, 9vh, 3.5rem);
         --key-margin: 0.15rem;
         font-size: var(--base-font-size);
@@ -396,9 +384,6 @@ export class WindowsKeyboardCard extends HTMLElement {
   }
 
   doResetLayout() {
-    // Reset popin (if any)
-    this.doResetPopin();
-
     // Clear previous listeners
     this._eventManager.clearListeners("layoutContainer");
 
@@ -466,9 +451,6 @@ export class WindowsKeyboardCard extends HTMLElement {
   }
 
   doCell(rowConfig, cellConfig) {
-
-    // Create cell popin config
-    const overrideCellConfig = { "popinConfig": this.createPopinConfig(cellConfig) };
 
     // Create cell
     const cell = document.createElement("button");
@@ -605,470 +587,6 @@ export class WindowsKeyboardCard extends HTMLElement {
     return label ? label : this.getStandardLabel(cellConfig, cellConfig.fallback || "");
   }
 
-  // Transform user popin config per (rows/)cell/label
-  //
-  // "popin": [
-  //   [                                                                      <-- [optional] rows. When absent, all cells will form a single row.
-  //     { "code": "KEY_E_ACUTE", "label": { "normal": "é" } },               <-- cells / labels
-  //     { "code": "KEY_E_GRAVE", "label": { "normal": "è", "shift": "È" } },
-  //   ],
-  //   [
-  //     { "code": "KEY_E_CIRC",  "label": { "normal": "ê", "shift": "Ê" } }
-  //   ]
-  // ]
-  //
-  // Into popin config per label/row/cell:
-  //
-  // "popinConfig": {
-  //   "normal": [                                                            <-- labels
-  //     [                                                                    <-- rows
-  //       { "code": "KEY_E_ACUTE", "label": "é" },                           <-- cells
-  //       { "code": "KEY_E_GRAVE", "label": "è" },
-  //     ],
-  //     [
-  //       { "code": "KEY_E_CIRC",  "label": "ê" }
-  //     ]
-  //   ],
-  //   "shift": [
-  //     [
-  //       { "code": "KEY_E_GRAVE",  "label": "È" },
-  //       { "code": "KEY_E_CIRC",   "label": "Ê" },
-  //     ]
-  //   ]
-  // }
-  createPopinConfig(cellConfig) {
-
-    // Unlike static keyboard layout cells that always display and figure their label relative to current combination mode of code/mode/state,
-    // popin layout cells are not displayed when their is no content for current combination of code/mode/state.
-    // So to decide whether or not a popin is displayable on a key, 
-    // we need to figure out in advance whether or not there is at least one cell to display 
-    // in the future popin to come (or not) for the combination of code/mode/state.
-    
-    // We use this function to help serving this goal: a popin 
-
-    // Create new popin config
-    const popinConfig = {};
-
-    // Retrieve user popin config per (rows/)cell/label
-    let popinRows;
-    const rawPopinConfig = cellConfig["popin"];
-    const firstPopinKeysConfig = rawPopinConfig?.[0];
-    if (firstPopinKeysConfig) {
-      // single implicit row assumed when only one array of cells defined by user
-      popinRows = Array.isArray(firstPopinKeysConfig) ? rawPopinConfig : [rawPopinConfig];
-    } else {
-      popinRows = [];
-    }
-
-    for (const row of popinRows) {
-      const modeToRow = {};
-
-      for (const { code, label } of row) {
-        for (const [mode, char] of Object.entries(label)) {
-          if (!modeToRow[mode]) modeToRow[mode] = [];
-          modeToRow[mode].push({ code, label: char });
-        }
-      }
-
-      // Push each row to the corresponding mode
-      for (const [mode, rowItems] of Object.entries(modeToRow)) {
-        if (!popinConfig[mode]) popinConfig[mode] = [];
-        popinConfig[mode].push(rowItems);
-      }
-    }
-
-    return popinConfig;
-  }
-
-  addPopinTimeout(evt) {
-    return setTimeout(() => {
-      const popinEntry = this._popinTimeouts.get(evt.pointerId);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`popinTimeout() + popinEntry:`, popinEntry));
-
-      // When no poppin entry: key has been released before timeout
-      if (popinEntry && popinEntry["popin-can-show"] && !popinEntry["popin-shown"]) {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Poppin not shown and still has to be tested for show possibility`));
-        const cell = popinEntry["source"];
-
-        // Check whether or not popin can be shown in current mode and state
-        popinEntry["popin-can-show"] = this.canShowPopin(cell);
-        if (!popinEntry["popin-can-show"]) return;
-
-        // Mark popin as shown
-        popinEntry["popin-shown"] = true;
-
-        // Show popin
-        this.doShowPopin(evt, cell);
-      }
-    }, this.getTriggerLongClickDelay()); // long-press duration
-  }
-
-  clearPopinTimeout(evt) {
-    const popinTimeout = this._popinTimeouts.get(evt.pointerId)?.["popin-timeout"];
-    if (popinTimeout) clearTimeout(popinTimeout);
-  }
-
-  getPopinConfig(cell) {
-    return this._layoutManager.getElementData(cell)?.["popinConfig"]?.[this.getStatusCurrentLabel()];
-  }
-
-  // Popin can be shown when its config exists and contains current status label
-  canShowPopin(cell) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`canShowPopin(cell) + cellConfig["popinConfig"] + this.getCurrentStatusLabel():`, cell, this.getPopinConfig(cell)));
-    return !!this.getPopinConfig(cell);
-  }
-
-  doShowPopin(evt, cell) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doShowPopin(evt, cell):`, evt, cell));
-    this.doResetPopin();
-    this.doCreatePopin(evt, cell);
-  }
-
-  doResetPopin() {
-    const popin = this._elements.popin;
-
-    // Clear previous listeners
-    this._eventManager.clearListeners("popinContainer");
-
-    // Detach existing popin from DOM
-    if (popin?.parentElement) popin.remove();
-
-    // Clear existing popin DOM content
-    if (popin) popin.innerHTML = '';
-
-    // Reset popin cells elements (if any)
-    this._elements.popinCells = [];
-
-    // Reset popin rows elements (if any)
-    this._elements.popinRows = [];
-
-    // nullify popin reference
-    this._elements.popin = null;
-  }
-
-  doCreatePopin(evt, cell) {
-    const popin = this.doPopin(evt, cell);
-    this.doStylePopin();
-    this.doAttachPopin();
-    this.doQueryPopinElements();
-    this.doListenPopin(popin);
-    this.doRequestPopinShow(evt);
-  }
-
-  doPopin(evt, cell) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopin(evt, cell):`, evt, cell));
-
-    // Create popin
-    const popin = document.createElement("div");
-    this._elements.popin = popin;
-    popin.className = "key-popin";
-
-    // Create popin rows
-    const popinConfig = this.getPopinConfig(cell);
-    const cellWidth = cell.getBoundingClientRect().width;
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopin(evt, cell) + popinConfig + cellWidth:`, evt, cell, popinConfig, cellWidth));
-    for (const rowConfig of popinConfig) {
-      const popinRow = this.doPopinRow(rowConfig, cellWidth);
-      this.doStylePopinRow();
-      this.doAttachPopinRow(popin, popinRow);
-      this.doQueryPopinRowElements();
-      this.doListenPopinRow();
-    }
-
-    return popin;
-  }
-
-  doStylePopin() {
-    // Make popin position absolute (relative to card)
-    this._elements.popin.style.position = "absolute";
-  }
-
-  doAttachPopin() {
-    const card = this._elements.card;
-    card.appendChild(this._elements.popin);
-  }
-
-  doQueryPopinElements() {
-    // nothing to do: element already attached during creation
-  }
-
-  doListenPopin(popin) {
-    this._eventManager.addPopinListeners("popinContainer", popin, 
-      {
-        [this._eventManager.constructor._POPIN_CALLBACK_SHOW]: this.onPopinShow.bind(this),
-        [this._eventManager.constructor._POPIN_CALLBACK_HIDE]: this.onPopinHide.bind(this),
-      }
-    );
-  }
-
-  onPopinShow(popin, evt) {
-    this.doPromptPopin(evt);
-  }
-  
-  onPopinHide(popin, evt) {
-    this.doClosePopin();
-  }
-
-  doPromptPopin(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPromptPopin(evt)"));
-    requestAnimationFrame(() => {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPromptPopin(evt) async"));
-
-      // Trigger cells animations to prompt popin (requires attached popin)
-      for (const popinCell of this._elements.popinCells) {
-        popinCell.classList.add("enter-active");
-      }
-
-      // Then position the popin according to its size and 
-      // cell base event coordinates that triggered the popin
-      this.doPositionPopin(evt);
-    });
-  }
-
-  doClosePopin() {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doClosePopin()"));
-    this.doResetPopin();
-  }
-
-  doPositionPopin(evt) {
-    // Absolute positionning computation and style of popin (requires popin to already be added into DOM as card child)
-    const card = this._elements.card;
-    const popin = this._elements.popin;
-    
-    // 1. Get popin bounding box
-    const cardRect = card.getBoundingClientRect();
-    const popinRect = popin.getBoundingClientRect();
-
-    // 2. Compute initial popin position relative to card
-    let popinLeft = evt.clientX - cardRect.left - popinRect.width / 2;
-    let popinTop = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
-
-    // 3. Clamp horizontally (inside card)
-    if (popinLeft < 0) {
-      popinLeft = 0;
-    } else if (popinLeft + popinRect.width > cardRect.width) {
-      popinLeft = cardRect.width - popinRect.width;
-    }
-
-    // 4. Clamp vertically (inside card)
-    if (popinTop < 0) {
-      // If not enough space above, show below
-      popinTop = evt.clientY - cardRect.top + 8;
-      // If that too overflows bottom, clamp
-      if (popinTop + popinRect.height > cardRect.height) {
-        popinTop = cardRect.height - popinRect.height;
-      }
-    }
-
-    // 5. Set popin absolute position
-    popin.style.position = "absolute";
-    popin.style.left = `${popinLeft}px`;
-    popin.style.top = `${popinTop}px`;
-  }
-
-  doPopinRow(rowConfig, cellWidth) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinRow(rowConfig):`, rowConfig));
-
-    // Create popin row
-    const popinRow = document.createElement("div");
-    this._elements.popinRows.push(popinRow);
-    popinRow.className = "key-popin-row";
-
-    // Create popin row cells
-    for (const cellConfig of rowConfig) {
-      const popinCell = this.doPopinCell(cellConfig, cellWidth);
-      this.doStylePopinCell(popinCell, cellWidth);
-      this.doAttachPopinCell(popinRow, popinCell);
-      this.doQueryPopinCellElements();
-      this.doListenPopinCell(popinCell);
-    }
-
-    return popinRow;
-  }
-
-  doStylePopinRow() {
-    // nothing to do: style already included into card style
-  }
-
-  doAttachPopinRow(popin, popinRow) {
-    popin.appendChild(popinRow);
-  }
-
-  doQueryPopinRowElements() {
-    // nothing to do: element already attached during creation
-  }
-
-  doListenPopinRow() {
-    // nothing to do: no needs to listen events for this element
-  }
-
-  doPopinCell(cellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinCell(cellConfig):`, cellConfig));
-    
-    // Create popin cell 
-    const popinCell = document.createElement("button");
-    this._elements.popinCells.push(popinCell);
-    popinCell.id = cellConfig["code"];
-    popinCell.classList.add("key");
-    if (cellConfig.width) popinCell.classList.add(cellConfig.width);
-    this.setCellData(popinCell, null, cellConfig);
-
-    // Create popin cell content
-    const popinCellContent = this.doPopinCellContent(cellConfig);
-    this.doStylePopinCellContent();
-    this.doAttachPopinCellContent(popinCell, popinCellContent);
-    this.doQueryPopinCellContentElements(popinCell, popinCellContent);
-    this.doListenPopinCellContent();
-    
-    return popinCell;
-  }
-
-  doStylePopinCell(popinCell, cellWidth) {
-    // Make popin cell the same width than base cell button
-    popinCell.style.width = `${cellWidth}px`;
-  }
-
-  doAttachPopinCell(popinRow, popinCell) {
-    popinRow.appendChild(popinCell);
-  }
-
-  doQueryPopinCellElements() {
-    // nothing to do: element already attached during creation
-  }
-
-  doListenPopinCell(popinCell) {
-    this._eventManager.addButtonListeners("popinContainer", popinCell, 
-      {
-        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onPopinButtonPress.bind(this),
-        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onPopinButtonAbortPress.bind(this),
-        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onPopinButtonRelease.bind(this)
-      }
-    );
-  }
-
-  doPopinCellContent(cellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinCellContent(cellConfig):`, cellConfig));
-
-    // Create popin cell content
-    const popinCellContent = document.createElement("span");
-    popinCellContent.className = "label-lower";
-
-    // Set popin cell content label
-    popinCellContent.textContent = cellConfig["label"];
-    return popinCellContent;
-  }
-
-  doStylePopinCellContent() {
-    // nothing to do: style already included into card style
-  }
-
-  doAttachPopinCellContent(popinCell, popinCellContent) {
-    popinCell.appendChild(popinCellContent);
-  }
-
-  doQueryPopinCellContentElements(popinCell, popinCellContent) {
-    popinCell._label = popinCellContent;
-  }
-
-  doListenPopinCellContent() {
-    // nothing to do: no needs to listen events for this element
-  }
-
-  doListenPopinCellContent() {
-    // nothing to do: no needs to listen events for this element
-  }
-
-  onPopinButtonPress(btn, evt) {
-    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doPopinKeyPress(btn);
-  }
-
-  onPopinButtonAbortPress(btn, evt) {
-    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doPopinKeyAbortPress(btn, evt);
-  }
-
-  onPopinButtonRelease(btn, evt) {
-    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doPopinKeyRelease(btn, evt);
-  }
-  
-  doPopinKeyPress(btn) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPopinKeyPress(btn):", btn));
-
-    if (this._layoutManager.hasButtonOverride(btn)) {
-      // Overriden action
-
-      // Nothing to do: overriden action will be executed on key release
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} press: override detected (nothing to do)`));
-    } else {
-      // Default action
-
-      // Press HID key
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} press: normal press detected (nothing to do)`));
-    }
-
-    // Send haptic feedback to make user acknownledgable of succeeded event
-    this._layoutManager.hapticFeedback();
-  }
-
-  doPopinKeyAbortPress(btn, evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPopinKeyAbortPress(btn):", btn));
-
-    if (this._layoutManager.hasButtonOverride(btn)) {
-      // Overriden action
-
-      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: override detected (nothing to do)`));
-    } else {
-      // Default action
-
-      // Nothing to do: default action has not (and wont be) executed because key release wont happen
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: normal press detected (nothing to do)`));
-    }
-
-    // Close popin
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: closing popin...`));
-    this.doRequestPopinHide(evt);
-
-    // Send haptic feedback to make user acknownledgable of succeeded event
-    this._layoutManager.hapticFeedback();
-  }
-
-  doPopinKeyRelease(btn, evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPopinKeyRelease(btn):", btn));
-
-    // Retrieve clickable button data
-    const btnData = this._layoutManager.getElementData(btn);
-    if (!btnData) return;
-
-    // Key code to release
-    const code = btnData.code;
-    const charToSend = btn._label.textContent || "";
-    if (this._layoutManager.hasButtonOverride(btn)) {
-
-      // Override detected: bypass key release and execute override
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: override detected (suppressing release of ${charToSend})`));
-      this.executeButtonOverride(btn);
-
-    } else {
-      // Non-special and not virtual key clicked (popin only has normal keys)
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: sending char ${charToSend}...`));
-      this.sendKeyboardChar(charToSend);
-    }
-
-    // Update cells labels and visuals (when needed)
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: updating status and visuals...`));
-    if (this.activateNextStatus(code)) this.doUpdateCells();
-
-    // Close popin
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: closing popin...`));
-    this.doRequestPopinHide(evt);
-
-    // Send haptic feedback to make user acknownledgable of succeeded event
-    this._layoutManager.hapticFeedback();
-  }
-
   setCellData(cell, defaultConfig, overrideConfig) {
     this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedCellData.has(key));
   }
@@ -1128,15 +646,6 @@ export class WindowsKeyboardCard extends HTMLElement {
       // Normal key pressed: this type of key contains a sendable key char
 
       // Do not send pressed key to HID (key will be send to HID on release)
-
-      // Add timeout to trigger a popin if key is bound to another set of extended key chars
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: standard key detected, adding popin timeout...`));
-      this._popinTimeouts.set(evt.pointerId, { 
-        "popin-can-show": true,                     // until proven wrong, popin can be shown
-        "popin-shown": false,                       // true when popin was shown
-        "source": btn ,                             // popin source button
-        "popin-timeout": this.addPopinTimeout(evt)  // when it expires, triggers the associated inner callback to show (or not) popin
-      });
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded event
@@ -1144,10 +653,6 @@ export class WindowsKeyboardCard extends HTMLElement {
   }
 
   doKeyAbortPress(btn, evt) {
-
-    // Remove popin timeout (when set before)
-    this.clearPopinTimeout(evt);
-    this._popinTimeouts.delete(evt.pointerId);
 
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
@@ -1184,13 +689,6 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   doKeyRelease(btn, evt) {
 
-    // Retrieve popin entry (when existing)
-    const popinEntry = this._popinTimeouts.get(evt.pointerId);
-
-    // Remove popin timeout (when set before)
-    this.clearPopinTimeout(evt);
-    this._popinTimeouts.delete(evt.pointerId);
-
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
     if (!btnData) return;
@@ -1217,10 +715,6 @@ export class WindowsKeyboardCard extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: special key detected, releasing ${code}...`));
       this.removeCode(code);
       if (this.activateNextStatus(code)) this.doUpdateCells();
-    } else if (popinEntry && popinEntry["popin-shown"]) {
-      // Popin shown: nothing to do
-      
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected with shown popin, nothing to release`));
     } else {
       // Normal key released: this type of key contains a sendable key char
 
