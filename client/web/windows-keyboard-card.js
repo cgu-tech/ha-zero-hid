@@ -870,7 +870,7 @@ export class WindowsKeyboardCard extends HTMLElement {
     if (this._hass) this._eventManager.callComponentCommand('sync_keyboard')?.then((response) => {
       // Keyboard sync success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
-      const modifiers = [...(this.syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])];
+      const modifiers = [...(syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])];
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Keyboard synchronization: succeed (modifiers):', modifiers));
 
       // Update triggers
