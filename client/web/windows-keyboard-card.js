@@ -533,10 +533,10 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   getNextState() {
     return this.getCurrentState()["nexts"]
-      .find(next => {
-        next["pressed"].every(pressed => this._triggers.has(pressed) && 
-        next["released"].every(released => !this._triggers.has(released)
-      });
+      .find(next => 
+        next["pressed"].every(pressed => this._triggers.has(pressed)) && 
+        next["released"].every(released => !this._triggers.has(released));
+      );
   }
 
   isNextStateTrigger() {
