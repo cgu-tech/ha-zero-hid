@@ -780,8 +780,8 @@ export class WindowsKeyboardCard extends HTMLElement {
       btnData.toggled = !btnData.toggled;
 
       // Update triggers
-      if (btnData.toggled) this._triggers.add(code);
-      if (!btnData.toggled) this._triggers.delete(code);
+      if (btnData.toggled) this._triggers.add(btnData.code);
+      if (!btnData.toggled) this._triggers.delete(btnData.code);
     }
   }
 
