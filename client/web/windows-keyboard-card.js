@@ -466,7 +466,7 @@ export class WindowsKeyboardCard extends HTMLElement {
     this.doListenCellContent();
 
     // Update cell visuals and content label (to match current mode and state)
-    this.doUpdateCell(cell, cellConfig, this.getStatusCurrentActions(), this.getCurrentLabel());
+    this.doUpdateCell(cell, cellConfig, this.getCurrentLabel());
 
     return cell;
   }
