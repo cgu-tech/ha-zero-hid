@@ -882,7 +882,7 @@ export class WindowsKeyboardCard extends HTMLElement {
 
       // Visually toggle pressed/released toggables
       const pressedToggables = modifiers.filter(modifier => this._toggables.has(modifier));
-      const releasedToggables = this._toggables.filter(toggable => !pressedToggables.has(toggable));
+      const releasedToggables = [...this._toggables].filter(toggable => !pressedToggables.has(toggable));
       for (const cell of (this._elements.cells ?? [])) {
         if (pressedToggables.includes(cell)) this.setToggle(cell, true);
         if (releasedToggables.includes(cell)) this.setToggle(cell, false);
