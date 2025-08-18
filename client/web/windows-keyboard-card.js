@@ -862,20 +862,19 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   // Synchronize with remote keyboard current state through HA websockets API
   syncKeyboard() {
-    this._eventManager.callComponentCommand(hass, 'sync_keyboard').then((response) => {
+    this._eventManager.callComponentCommand(this._hass, 'sync_keyboard').then((response) => {
       // Keyboard sync success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Keyboard synchronization: succeed (syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock):', syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock));
-      
       const modifiers = [...(this.syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])];
-      
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Keyboard synchronization: succeed (modifiers):', modifiers));
+
       // Update triggers
       this._triggers.clear();
       const triggers = modifiers.filter(modifier => this.constructor._TRIGGERS.has(modifier));
       for (const trigger of triggers) {
         this._triggers.add(trigger);
       }
-      
+
       // Visually toggle pressed/released toggables
       const pressedToggables = modifiers.filter(modifier => this._toggables.has(modifier));
       const releasedToggables = this._toggables.filter(toggable => !pressedToggables.has(toggable));
@@ -883,7 +882,7 @@ export class WindowsKeyboardCard extends HTMLElement {
         if (pressedToggables.includes(cell)) this.setToggle(cell, true);
         if (releasedToggables.includes(cell)) this.setToggle(cell, false);
       }
-      
+
       // Update all cells labels and visuals
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Keyboard synchronization: succeed, updating layout...`));
       if (this.activateNextState()) this.doUpdateCells();
