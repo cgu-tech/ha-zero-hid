@@ -614,6 +614,10 @@ export class WindowsKeyboardCard extends HTMLElement {
     if (this.isToggable(code)) {
       // Togglable modifier pressed: they cannot be overriden
 
+      // Press HID key (so if it fails UI wont be updated)
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing ${code}...`));
+      this.appendCode(code);
+
       // Update the toggle button
       this.toggle(btn);
 
@@ -648,7 +652,7 @@ export class WindowsKeyboardCard extends HTMLElement {
     if (this.isToggable(code)) {
       // Togglable modifier pressed: they cannot be overriden
 
-      // Nothing to do: action has already been executed on key press
+      // Nothing to do: action has already been executed on key press (modifiers can stay infinitely pressed)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: modifier key detected, nothing to abort`));
     }  else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
