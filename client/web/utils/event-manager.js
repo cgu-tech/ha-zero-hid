@@ -223,7 +223,7 @@ export class EventManager {
       this.leaveAllButtons(evt);
       this.hideAllPopins(evt);
     } else {
-      const target = this.getKnownTarget(evt, this._buttons) || this.getKnownTargetOrDefault(evt, this._popins);
+      const target = this.getKnownTargetOrDefault(evt, this._buttons, this._popins);
       this.leaveAllButtonsExceptTarget(target, evt);
       this.hideAllPopinsExceptTarget(target, evt);
     }
@@ -650,12 +650,21 @@ export class EventManager {
   //  return evt?.composedPath()?.[0]; // the most deeply nested element actually interacted with
   //}
 
-  getKnownTargetOrDefault(evtComposedPath, targets) {
-    return this.getKnownTarget(evtComposedPath, targets) || evtComposedPath?.[0];
+  getKnownTargetOrDefault(evt, ...targetsSets) {
+    const composedPath = evt?.composedPath?.();
+    if (!composedPath) return null;
+    
+    for (const targets of targetsSets) {
+      const match = this.getKnownTarget(composedPath, targets);
+      if (match) return match;
+    }
+    
+    // Fallback: return the topmost element from the composed path
+    return composedPath[0];
   }
 
-  getKnownTarget(evtComposedPath, targets) {
-    return evtComposedPath?.find(target => targets.has(target));
+  getKnownTarget(composedPath, targets) {
+    return composedPath?.find(target => targets.has(target));
   }
 
   isPointerHoveringTarget(evt, target) {
