@@ -622,8 +622,21 @@ export class WindowsKeyboardCard extends HTMLElement {
       if (this.activateNextState()) this.doUpdateCells();
 
       // Press or release HID key according, whether respectively it is pressed or not pressed after toggling
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing ${code}...`));
-      if (isBtnPressed) this.appendCode(code); else this.removeCode(code);
+      if (code === "KEY_CAPSLOCK") {
+        // Special treatment for the unique CAPSLOCK key that... is a modifier that needs to be physically released to work
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing then releasing ${code}...`));
+        this.appendCode(code);
+        this.removeCode(code);
+      } else {
+        // For any other button, press it if toggled, release it if not toggled
+        if (isBtnPressed) {
+          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing ${code}...`));
+          this.appendCode(code);
+        } else {
+          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, releasing ${code}...`));
+          this.removeCode(code);
+        }
+      }
     } else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
