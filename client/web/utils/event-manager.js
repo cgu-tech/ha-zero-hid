@@ -655,7 +655,7 @@ export class EventManager {
   }
 
   getKnownTarget(evtComposedPath, targets) {
-    return evtComposedPath ? evtComposedPath.find(target => targets.has(target)) || null;
+    return evtComposedPath?.find(target => targets.has(target));
   }
 
   isPointerHoveringTarget(evt, target) {
