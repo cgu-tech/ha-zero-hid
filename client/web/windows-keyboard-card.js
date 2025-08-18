@@ -535,7 +535,7 @@ export class WindowsKeyboardCard extends HTMLElement {
     return this.getCurrentState()["nexts"]
       .find(next => 
         next["pressed"].every(pressed => this._triggers.has(pressed)) && 
-        next["released"].every(released => !this._triggers.has(released));
+        next["released"].every(released => !this._triggers.has(released))
       );
   }
 
