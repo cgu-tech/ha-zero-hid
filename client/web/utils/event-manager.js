@@ -223,7 +223,7 @@ export class EventManager {
       this.leaveAllButtons(evt);
       this.hideAllPopins(evt);
     } else {
-      const target = this.getTargetHoveredByPointerThroughShadow(evt);
+      const target = this.getKnownTarget(evt, this._buttons) || this.getKnownTargetOrDefault(evt, this._popins);
       this.leaveAllButtonsExceptTarget(target, evt);
       this.hideAllPopinsExceptTarget(target, evt);
     }
@@ -237,7 +237,6 @@ export class EventManager {
   
   onGlobalDocumentVisibilityChange(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onGlobalDocumentVisibilityChange(evt) + isConnected", evt, this._origin?.isConnected));
-    
     if (document.visibilityState === "hidden") {
       this.leaveAllButtons(evt);
       this.hideAllPopins(evt);
@@ -646,9 +645,17 @@ export class EventManager {
   getTargetHoveredByPointer(evt) {
     return document.elementFromPoint(evt.clientX, evt.clientY);
   }
-  
-  getTargetHoveredByPointerThroughShadow(evt) {
-    return evt?.composedPath()?.[0]; // the most deeply nested element actually interacted with
+
+  //getTargetHoveredByPointerThroughShadow(evt) {
+  //  return evt?.composedPath()?.[0]; // the most deeply nested element actually interacted with
+  //}
+
+  getKnownTargetOrDefault(evtComposedPath, targets) {
+    return this.getKnownTarget(evtComposedPath, targets) || evtComposedPath?.[0];
+  }
+
+  getKnownTarget(evtComposedPath, targets) {
+    return evtComposedPath ? evtComposedPath.find(target => targets.has(target)) || null;
   }
 
   isPointerHoveringTarget(evt, target) {
@@ -690,6 +697,12 @@ export class EventManager {
     if (this.isValidListener(listener)) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("unregisterListener(listener)", listener));
       
+      // Remove listener target from popins (when present)
+      this._popins.delete(btn);
+      
+      // Remove listener target from buttons (when present)
+      this._buttons.delete(btn);
+            
       // Retrieve listener container name
       let containerName = listener["containerName"];
       
