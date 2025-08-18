@@ -340,7 +340,6 @@ export class AndroidKeyboardCard extends HTMLElement {
       button.key.spacebar {
         flex-grow: 7.4;
       }
-      /* Fix: Ensure shift-once state is visually dominant */
       button.key.shift-once {
         background: var(--key-shif-once-bg);
         font-weight: bold;

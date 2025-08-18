@@ -2,214 +2,320 @@ import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
+import { LayoutManager } from './utils/layout-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
+import { ConsumerCodes } from './utils/consumercodes.js';
+import * as layoutsDesktops from './layouts/windows/index.js';
 
 console.info("Loading windows-keyboard-card");
 
-class WindowsKeyboardCard extends HTMLElement {
+export class WindowsKeyboardCard extends HTMLElement {
+
+  // private init required constants
+  static _STATUS_MAP;
+
+  static _STATE_NORMAL = '1';
+  static _STATE_SHIFT = '2';
+  static _STATE_RIGHT_ALT = '3';
+
+  static _TRIGGER_CAPSLOCK = 'KEY_CAPSLOCK';
+  static _TRIGGER_SHIFT_LEFT = 'MOD_LEFT_SHIFT';
+  static _TRIGGER_SHIFT_RIGHT = 'MOD_RIGHT_SHIFT';
+  static _TRIGGER_CTRL_LEFT = 'MOD_LEFT_CONTROL';
+  static _TRIGGER_CTRL_RIGHT = 'MOD_RIGHT_CONTROL';
+  static _TRIGGER_ALT_LEFT = 'MOD_LEFT_ALT';
+  static _TRIGGER_ALT_RIGHT = 'MOD_RIGHT_ALT';
+
+  // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
+  static {
+    this._SHIFT = [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_SHIFT_RIGHT];
+    this._CTRL = [this._TRIGGER_CTRL_LEFT, this._TRIGGER_CTRL_RIGHT];
+    this._ALT = [this._TRIGGER_ALT_LEFT, this._TRIGGER_ALT_RIGHT];
+
+    this._STATUS_MAP = {
+      "init": { "state": this._STATE_NORMAL },
+      "states": {
+        [this._STATE_NORMAL]: {
+          "nexts": [
+            { "pressed": [this._TRIGGER_SHIFT_LEFT],  "released": [...this._CTRL, ...this._ALT, this._TRIGGER_CAPSLOCK],              "state": this._STATE_SHIFT     },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT], "released": [...this._CTRL, ...this._ALT, this._TRIGGER_CAPSLOCK],              "state": this._STATE_SHIFT     },
+            { "pressed": [this._TRIGGER_CAPSLOCK],    "released": [...this._SHIFT],                                                   "state": this._STATE_SHIFT     },
+            { "pressed": [this._TRIGGER_ALT_RIGHT],   "released": [...this._SHIFT, this._TRIGGER_ALT_LEFT, this._TRIGGER_CTRL_RIGHT], "state": this._STATE_RIGHT_ALT }
+          ]
+        },
+        [this._STATE_SHIFT]: {
+          "nexts": [
+            { "pressed": [],                                                    "released": [this._TRIGGER_CAPSLOCK, ...this._SHIFT], "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CTRL_LEFT],   "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CTRL_RIGHT],  "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_ALT_LEFT],    "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_ALT_RIGHT],   "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CAPSLOCK],    "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CTRL_LEFT],  "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CTRL_RIGHT], "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_ALT_LEFT],   "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_ALT_RIGHT],  "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CAPSLOCK],   "released": [],                                       "state": this._STATE_NORMAL    }
+          ]
+        },
+        [this._STATE_RIGHT_ALT]: {
+          "nexts": [
+            { "pressed": [],                                                    "released": [this._TRIGGER_ALT_RIGHT],                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_ALT_RIGHT, this._TRIGGER_SHIFT_LEFT],   "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_ALT_RIGHT, this._TRIGGER_SHIFT_RIGHT],  "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_ALT_RIGHT, this._TRIGGER_ALT_LEFT],     "released": [],                                       "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_ALT_RIGHT, this._TRIGGER_CTRL_RIGHT],   "released": [],                                       "state": this._STATE_NORMAL    }
+          ]
+        }
+      }
+    };
+  }
+
+  // private constants
+  _keycodes = new KeyCodes().getMapping();
+  _consumercodes = new ConsumerCodes().getMapping();
+  _allowedCellData = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
+
+  // private properties
+  _config;
+  _hass;
+  _elements = {};
+  _logger;
+  _eventManager;
+  _layoutManager;
+  _resourceManager;
+  _pressedModifiers = new Set();
+  _pressedKeys = new Set();
+  _pressedConsumers = new Set();
+  _triggers = new Set();
+
   constructor() {
     super();
-    this.attachShadow({ mode: "open" }); // Create shadow root
 
-    this._keycodes = new KeyCodes().getMapping();
+    this._logger = new Logger(this, "windows-keyboard-card.js");
+    this._eventManager = new EventManager(this);
+    this._layoutManager = new LayoutManager(this, layoutsDesktops);
+    this._resourceManager = new ResourceManager(this, import.meta.url);
 
-    this._hass = null;
-    this._uiBuilt = false;
-    this.card = null;
+    this._currentState = this.constructor._STATUS_MAP["init"]["state"];
 
-    // Configs
-    this.config = null;
-    this.loglevel = 'warn';
-    this.logpushback = false;
-    this.logger = new Logger("windows-keyboard-card.js", this.loglevel, this._hass, this.logpushback);
-    this.eventManager = new EventManager(this.logger);
-    this.resourceManager = new ResourceManager(this.logger, this.eventManager, import.meta.url);
-    this.layout = 'US';
-    this.layoutUrl = `${Globals.DIR_LAYOUTS}/windows/${this.layout}.json`;
+    this.doCard();
+    this.doStyle();
+    this.doAttach();
+    this.doQueryElements();
+    this.doListen();
 
-    // Layout loading flags
-    this._layoutReady = false;
-    this._layoutLoaded = {};
+    this.doUpdateLayout();
+  }
 
-    // To track pressed modifiers
-    this.capsLock = false;
-    this.shift = false;
-    this.ctrl = false;
-    this.gui = false;
-    this.alt = false;
-    this.altGr = false;
-
-    // To track pressed modifiers and keys
-    this.pressedModifiers = new Set();
-    this.pressedKeys = new Set();
-
-    // Handle out of bounds mouse releases
-    this._handleGlobalPointerUp = this.handleGlobalPointerUp.bind(this);
+  getLogger() {
+    return this._logger;
   }
 
   setConfig(config) {
-    this.config = config;
-
-    if (config) {
-      // Set log level
-      const oldLoglevel = this.loglevel;
-      if (config['log_level']) {
-        this.loglevel = config['log_level'];
-      }
-
-      // Set log pushback
-      const oldLogpushback = this.logpushback;
-      if (config['log_pushback']) {
-        this.logpushback = config['log_pushback'];
-      }
-
-      // Update logger when needed
-      if (!oldLoglevel || oldLoglevel !== this.loglevel || !oldLogpushback || oldLogpushback !== this.logpushback) {
-        this.logger.update(this.loglevel, this._hass, this.logpushback);
-      }
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("setConfig(config):", this.config));
-
-      // Set haptic feedback
-      if (config['haptic']) {
-        this.eventManager.setHaptic(config['haptic']);
-      }
-
-      // Set layout
-      if (config['layout']) {
-        this.layout = config['layout'];
-      }
-
-      // Set layout URL
-      if (config['layout_url']) {
-        this.layoutUrl = config['layout_url'];
-      } else {
-        this.layoutUrl = `${Globals.DIR_LAYOUTS}/windows/${this.layout}.json`;
-      }
-    }
+    this._config = config;
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
+    if (this.getLogger().isDebugEnabled()) this.getLogger().doLogOnError(this.doSetConfig.bind(this)); else this.doSetConfig();
   }
-
-  getCardSize() {
-    return 3;
-  }
-
-  async connectedCallback() {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("connectedCallback()"));
-
-    // Check if layout needs loading
-    if (!this._layoutLoaded.layoutUrl || this._layoutLoaded.layoutUrl !== this.layoutUrl) {
-      this._layoutReady = false;
-
-      // Load layout
-      await this.loadLayout(this.layoutUrl);
-
-      // Update loaded layout
-      this._layoutLoaded.layoutUrl = this.layoutUrl;
-      this._layoutReady = true;
-    }
-
-    // Only build UI if hass is already set
-    if (this._hass) {
-      this.resourceManager.synchronizeResources(this._hass);
-      this.buildUi(this._hass);
-    }
-  }
-
-  async loadLayout(layoutUrl) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("loadLayout(layoutUrl):", layoutUrl));
-    try {
-      const response = await fetch(layoutUrl);
-      const layout = await response.json();
-      this.keys = layout.keys;
-      this.rowsConfig = layout.rowsConfig;
-    } catch (e) {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error(`Failed to load layout ${layoutUrl}`, e));
-      this.keys = [];
-      this.rowsConfig = [];
-    }
+  doSetConfig() {
+    this.doCheckConfig();
+    this.doUpdateConfig();
   }
 
   set hass(hass) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("set hass(hass):", hass));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
-    if (this._layoutReady && !this._uiBuilt) {
-      // Render UI
-      this.buildUi(this._hass);
+    this.doUpdateHass()
+  }
+
+  connectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+    this._eventManager.connectedCallback();
+  }
+
+  disconnectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+    this._eventManager.disconnectedCallback();
+  }
+
+  adoptedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
+  }
+
+  getTriggerLongClickDelay() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
+  }
+
+  doRequestPopinShow(evt) {
+    this._eventManager.activatePopinShow(this._popin, evt);
+  }
+
+  doRequestPopinHide(evt) {
+    this._eventManager.activatePopinHide(this._popin, evt);
+  }
+
+  doUpdateCells() {
+    const statusActions = this.getStatusCurrentActions();
+    const statusLabel = this.getStatusCurrentLabel();
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCells(statusActions, statusLabel):", statusActions, statusLabel));
+
+    for (const cell of this._elements.cells) {
+
+      const cellConfig = this._layoutManager.getElementData(cell);
+      if (!cellConfig) continue;
+
+      this.doUpdateCell(cell, cellConfig, statusActions, statusLabel);
     }
   }
 
-  buildUi(hass) {
-    if (this._uiBuilt) {
-      if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("buildUi(hass) - already built"));
-      return;
+  // Synchronize cell visuals and label with given mode and state
+  doUpdateCell(cell, cellConfig, statusActions, statusLabel) {
+    this.doUpdateCellVisuals(cell, cellConfig, statusActions);
+    this.doUpdateCellLabel(cell, cellConfig, statusLabel);
+  }
+
+  // Synchronize cell visuals with given mode and state
+  // using per-matching-cell-code configured actions
+  doUpdateCellVisuals(cell, cellConfig, statusActions) {
+    const cellActions = statusActions?.[cellConfig.code] || [];
+    for (const cellAction of cellActions) {
+      const actionName = cellAction["action"];
+      const actionClassList = cellAction["class_list"];
+      if (actionName === "add") cell.classList.add(...actionClassList);
+      if (actionName === "remove") cell.classList.remove(...actionClassList);
     }
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("buildUi(hass):", hass));
+  }
 
-    // Clear existing content (if any)
-    this.shadowRoot.innerHTML = '';
+  // Synchronize cell label with given mode and state
+  // using configured given label selection mode
+  doUpdateCellLabel(cell, cellConfig, statusLabel) {
+    cell._label.textContent = this.getLabel(cellConfig, statusLabel);
+  }
 
-    this._uiBuilt = true;
+  // jobs
+  doCheckConfig() {
+    this._layoutManager.checkConfiguredLayout();
+  }
 
-    // Re-add global handlers to ensure proper out-of-bound handling
-    this.eventManager.removeGlobalPointerUpHandlers(this._handleGlobalPointerUp);
-    this.eventManager.addGlobalPointerUpHandlers(this._handleGlobalPointerUp);
+  doCard() {
+    this._elements.card = document.createElement("ha-card");
+    this._elements.card.innerHTML = `
+      <div class="keyboard-container">
+      </div>
+    `;
+  }
 
-    // Update the logger
-    //this.logger.update(this.loglevel, hass, this.logpushback);
-
-    const card = document.createElement("ha-card");
-
-    const style = document.createElement("style");
-    style.textContent = `
+  doStyle() {
+    this._elements.style = document.createElement("style");
+    this._elements.style.textContent = `
       :host {
+        --card-corner-radius: 10px;
+        --key-min-corner-radius: 4px;
+        --key-max-corner-radius: 8px;
+        --base-font-size: 3rem; /* base scaling unit */
         --key-bg: #3b3a3a;
-        --key-hover-bg: #4a4a4a;
-        --key-active-bg: #2c2b2b;
+        --key-active-bg: #4a4a4a;
+        --key-press-bg: #6a6a6a;
         --key-special-bg: #222;
+        --key-special-active-bg: #333;
+        --key-special-press-bg: #444;
         --key-special-color: #ccc;
-        --key-height: 3.5rem;
+        --key-shif-once-bg: #2e4b6b; /* grey-blue */
+        --key-shif-once-active-bg: #4571a1; /* grey-blue-light */
+        --key-shif-once-press-bg: #7098c2; /* grey-blue-lightest */
+        --key-locked-bg: #0073e6; /* blue */
+        --key-locked-active-bg: #3399ff; /* blue */
+        --key-locked-press-bg: #80bfff; /* lighter blue */
+        --key-popin-bg: #3b3a3a;
+        --key-popin-inner-bg: #3b3a3a;
+        --key-popin-inner-active-bg: #3399ff; /* blue */
+        --key-popin-inner-press-bg: #80bfff; /* blue */
+        --key-height: clamp(2rem, 9vh, 3.5rem);
         --key-margin: 0.15rem;
+        font-size: var(--base-font-size);
         display: block;
         width: 100%;
         user-select: none;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         box-sizing: border-box;
       }
+      ha-card {
+        border-radius: var(--card-corner-radius);
+        position: relative;
+        font-size: var(--base-font-size);
+      }
       .keyboard-container {
+        border-radius: var(--card-corner-radius);
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
-        padding: 0.5rem 0.3rem 1rem;
+        gap: clamp(4px, 10vw, 8px);
+        padding: clamp(3px, 10vw, 6px) clamp(3px, 10vw, 6px);
         background: #1a1a1a;
-        border-radius: 8px;
         box-sizing: border-box;
         width: 100%;
       }
       .keyboard-row {
         display: flex;
-        gap: 0.3rem;
+        flex-wrap: nowrap;  /* prevent wrapping */
+        overflow: hidden;   /* prevent horizontal overflow */
         width: 100%;
+        box-sizing: border-box;
+        flex-shrink: 1;
+        gap: clamp(3px, 1vw, 6px);
       }
       button.key {
-        background: var(--key-bg);
-        border: none;
-        border-radius: 5px;
-        color: #eee;
-        font-size: 1.1rem;
+        border-radius: clamp(var(--key-min-corner-radius), 1vw, var(--key-max-corner-radius));
+        flex: 1 1 0;
+        min-width: 0;      /* prevent content from forcing expansion */
+        font-size: clamp(0.6em, 10vw, 1em);
+        padding: clamp(2px, 10vw, 4px); clamp(2px, 10vw, 4px);
         cursor: pointer;
         height: var(--key-height);
-        flex-grow: 1;
-        flex-basis: 0;
+        background: var(--key-bg);
+        border: none;
+        color: #eee;
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
         box-sizing: border-box;
         transition: background 0.15s ease;
-        padding: 0 0.5rem;
         white-space: nowrap;
         overflow: hidden;
         -webkit-tap-highlight-color: transparent; /* Remove mobile tap effect */
         outline: none; /* Prevent focus ring override */
+      }
+      button.key.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background: var(--key-active-bg);
+        color: #fff;
+      }
+      button.key.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background: var(--key-press-bg);
+      }
+      button.key.special {
+        flex: 1 1 auto;
+        font-size: clamp(0.55em, 10vw, 0.95em);
+        font-weight: bold;
+        padding: clamp(1px, 10vw, 4px); clamp(0px, 10vw, 2px);
+        background: var(--key-special-bg);
+        color: var(--key-special-color);
+      }
+      button.key.special.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background: var(--key-special-active-bg);
+      }
+      button.key.special.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background: var(--key-special-press-bg);
+      }
+      button.key.spacer {
+        pointer-events: none;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        opacity: 0;
+        cursor: default;
+      }
+      button.key.half {
+        flex-grow: 0.4;
       }
       button.key.wide {
         flex-grow: 2;
@@ -217,355 +323,1033 @@ class WindowsKeyboardCard extends HTMLElement {
       button.key.wider {
         flex-grow: 3;
       }
+      button.key.android {
+        flex-grow: 1.55;
+      }
       button.key.altkey {
         flex-grow: 1.5;
       }
       button.key.spacebar {
-        flex-grow: 11;
+        flex-grow: 7.4;
       }
-      button.key.special {
-        background: var(--key-special-bg);
-        color: var(--key-special-color);
-        font-weight: 600;
-        font-size: 0.95rem;
+      button.key.shift-once {
+        background: var(--key-shif-once-bg);
+        font-weight: bold;
       }
-      button.key:hover {
-        background: var(--key-hover-bg);
+      button.key.shift-once.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background: var(--key-shif-once-active-bg);
       }
-      button.key:active {
-        background: var(--key-active-bg);
+      button.key.shift-once.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} { 
+        background: var(--key-shif-once-press-bg);
       }
-      /* Fix: Ensure active state is visually dominant */
-      button.key.active,
-      button.key:hover.active,
-      button.key:active.active {
-        background: #5a5a5a !important;
-        color: #fff !important;
+      button.key.locked {
+        background: var(--key-locked-bg);
+        font-weight: bold;
       }
-      .label-upper {
-        position: absolute;
-        top: 0.3rem;
-        right: 0.5rem;
-        font-size: 0.6rem;
-        opacity: 0.7;
-        user-select: none;
+      button.key.locked.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background: var(--key-locked-active-bg);
+      }
+      button.key.locked.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background: var(--key-locked-press-bg);
       }
       .label-lower {
-        font-size: inherit;
-        font-weight: 500;
+        font-size: 1em;
+        font-weight: normal;
         user-select: none;
       }
     `;
-    this.shadowRoot.appendChild(style);
-
-    const container = document.createElement("div");
-    container.className = "keyboard-container";
-
-    let keyIndex = 0;
-    this.rowsConfig.forEach((rowCount) => {
-      const row = document.createElement("div");
-      row.className = "keyboard-row";
-
-      for (let i = 0; i < rowCount; i++, keyIndex++) {
-        const keyData = this.keys[keyIndex];
-        if (!keyData) continue;
-
-        const btn = document.createElement("button");
-        btn.classList.add("key");
-        if (keyData.special) btn.classList.add("special");
-        if (keyData.width) btn.classList.add(keyData.width);
-
-        btn.dataset.code = keyData.code;
-
-        const lowerLabel = document.createElement("span");
-        lowerLabel.className = "label-lower";
-
-        const upperLabel = document.createElement("span");
-        upperLabel.className = "label-upper";
-
-        lowerLabel.textContent = keyData.label.normal || "";
-        if (keyData.label.shift) {
-          upperLabel.textContent = keyData.label.shift;
-        } else if (keyData.label.altGr) {
-          upperLabel.textContent = keyData.label.altGr;
-        } else {
-          upperLabel.textContent = "";
-        }
-
-        btn.appendChild(lowerLabel);
-        btn.appendChild(upperLabel);
-
-        btn._lowerLabel = lowerLabel;
-        btn._upperLabel = upperLabel;
-        btn._keyData = keyData;
-
-        // Add pointer and touch events:
-        this.eventManager.addPointerDownListener(btn, (e) => this.handlePointerDown(e, hass, btn));
-        this.eventManager.addPointerUpListener(btn, (e) => this.handlePointerUp(e, hass, btn));
-        this.eventManager.addPointerCancelListener(btn, (e) => this.handlePointerUp(e, hass, btn));
-
-        row.appendChild(btn);
-      }
-
-      container.appendChild(row);
-    });
-
-    card.appendChild(container);
-    this.shadowRoot.appendChild(card);
-
-    this.content = container;
-    this.updateLabels();
-
-    // Initial synchronization to retrieve remote keyboard state
-    this.syncKeyboard(hass);
   }
 
-  updateLabels() {
-    for (const btn of this.content.querySelectorAll("button.key")) {
-      const keyData = btn._keyData;
-      if (!keyData) continue;
+  doAttach() {
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.append(this._elements.style, this._elements.card);
+  }
 
-      // Pressed key code (keyboard layout independant, later send to remote keyboard)
-      const code = keyData.code;
+  doQueryElements() {
+    const card = this._elements.card;
+    this._elements.container = card.querySelector(".keyboard-container");
+  }
 
-      // Toggle visual state
-      if (code === "KEY_CAPSLOCK") {
-        btn.classList.toggle("active", this.capsLock);
-      }
-      if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-        btn.classList.toggle("active", this.shift);
-      }
-      if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
-        btn.classList.toggle("active", this.ctrl);
-      }
-      if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
-        btn.classList.toggle("active", this.gui);
-      }
-      if (code === "MOD_LEFT_ALT") {
-        btn.classList.toggle("active", this.alt);
-      }
-      if (code === "MOD_RIGHT_ALT") {
-        btn.classList.toggle("active", this.altGr);
-      }
+  doListen() {
+    // Nothing to do here: events are listened per sub-element
+  }
 
-      // Determine displayed labels
-      let displayLower = "";
-      let displayUpper = "";
+  doUpdateConfig() {
+    // Adjust ha-card font scale to serve has a reference and properly scale the whole UI
+    if (this._elements.card.style) {
+      this._elements.card.style.setProperty('--base-font-size', this._layoutManager.getSafeFontScale());
+    }
 
-      if (this.altGr) {
-        displayLower = this.getLabelAlternativeAltGr(keyData);
-      } else if (this.shift !== this.capsLock) {
-        displayLower = this.getLabelAlternativeShift(keyData);
-      } else {
-        displayLower = this.getLabelNormal(keyData) || "";
-      }
-
-      // Set displayed labels
-      btn._lowerLabel.textContent = displayLower;
-      btn._upperLabel.textContent = displayUpper;
+    if (this._layoutManager.configuredLayoutChanged()) {
+      this.doUpdateLayout();
     }
   }
 
-  // Given:
-  // - keyData: a <button>.keyData object
-  // - alternativeLabel: an alternative label
-  // When:
-  // - alternativeLabel is defined, then alternativeLabel is returned
-  // - keyData.special is truthy, then normal label from keyData is returned
-  // - otherwise, empty label is returned
-  getLabelAlternative(keyData, alternativeLabel) {
-    let modifiedLabel = "";
-    if (alternativeLabel != null) {
-      modifiedLabel = alternativeLabel;
-    } else if (keyData.special) {
-      modifiedLabel = this.getLabelNormal(keyData);
+  doUpdateHass() {
+    // Nothing to do here: no specific HA entity state to listen for this card
+  }
+
+  doUpdateLayout() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout() + this._currentMode, this._currentState", this._currentMode, this._currentState));
+    this.doResetLayout();
+    this.doCreateLayout();
+  }
+
+  doResetLayout() {
+    // Reset popin (if any)
+    this.doResetPopin();
+
+    // Clear previous listeners
+    this._eventManager.clearListeners("layoutContainer");
+
+    // Clear existing layout content from DOM
+    this._elements.container.innerHTML = '';
+
+    // Reset cells contents elements (if any)
+    this._elements.cellContents = []
+
+    // Reset cells elements (if any)
+    this._elements.cells = []
+
+    // Reset rows elements (if any)
+    this._elements.rows = []
+
+    // Reset attached layout
+    this._layoutManager.resetAttachedLayout();
+  }
+
+  doCreateLayout() {
+    // Mark configured layout as attached
+    this._layoutManager.configuredLayoutAttached();
+
+    // Create rows
+    for (const rowConfig of this._layoutManager.getLayout().rows) {
+      const row = this.doRow(rowConfig);
+      this.doStyleRow();
+      this.doAttachRow(row);
+      this.doQueryRowElements();
+      this.doListenRow();
     }
-    return modifiedLabel;
   }
 
-  getLabelAlternativeAltGr(keyData) {
-    return this.getLabelAlternative(keyData, this.getLabelAltGr(keyData));
-  }
+  doRow(rowConfig) {
+    const row = document.createElement("div");
+    this._elements.rows.push(row);
+    row.className = "keyboard-row";
 
-  getLabelAlternativeShift(keyData) {
-    return this.getLabelAlternative(keyData, this.getLabelShift(keyData));
-  }
-
-  getLabelNormal(keyData) {
-    return keyData.label.normal;
-  }
-
-  getLabelAltGr(keyData) {
-    return keyData.label.altGr;
-  }
-
-  getLabelShift(keyData) {
-    return keyData.label.shift;
-  }
-
-  handleGlobalPointerUp(evt) {
-    if (this.logger.isTraceEnabled()) console.debug(...this.logger.trace("handleGlobalPointerUp(evt):", evt));
-    if (this.content && this._hass) {
-      for (const btn of this.content.querySelectorAll("button.key.active")) {
-        this.handleKeyRelease(this._hass, btn);
-      }
-    }
-  }
-
-  handlePointerDown(evt, hass, btn) {
-    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.handleKeyPress(hass, btn);
-  }
-
-  handlePointerUp(evt, hass, btn) {
-    this._eventManager.preventDefault(evt);
-    this.handleKeyRelease(hass, btn);
-  }
-
-  // A wrapper for handleKeyPressInternal internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyPress(hass, btn) {
-    this.handleKeyPressInternal(hass, btn);
-
-    // Send haptic feedback to make user acknownledgable of succeeded press event
-    this.eventManager.hapticFeedback();
-  }
-
-  handleKeyPressInternal(hass, btn) {
-    // Mark button active visually
-    btn.classList.add("active");
-
-    // Retrieve key data
-    const keyData = btn._keyData;
-    if (!keyData) return;
-
-    // Pressed key code (keyboard layout independant, later send to remote keyboard)
-    const code = keyData.code;
-
-    // Special buttons handling
-    if (code === "KEY_SYNC") {
-        this.syncKeyboard(hass);
-        return;
+    // Create cells
+    for (const cellConfig of rowConfig.cells) {
+      const cell = this.doCell(rowConfig, cellConfig);
+      this.doStyleCell();
+      this.doAttachCell(row, cell);
+      this.doQueryCellElements();
+      this.doListenCell(cell);
     }
 
-    // Change and retrieve modifiers + capslock states
-    if (this.isModifierOrCapslock(code)) {
-      if (code === "KEY_CAPSLOCK") {
-        this.capsLock = !this.capsLock;
-      } else if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-        this.shift = !this.shift;
-      } else if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
-        this.ctrl = !this.ctrl;
-      } else if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
-        this.gui = !this.gui;
-      } else if (code === "MOD_LEFT_ALT") {
-        this.alt = !this.alt;
-      } else if (code === "MOD_RIGHT_ALT") {
-        this.altGr = !this.altGr;
-      }
-      // Update visual layout with modified modifiers + capslock states
-      this.updateLabels();
-    }
-
-    // Send keyboard changes
-    this.appendKeyCode(hass, code);
+    return row;
   }
 
-  // A wrapper for handleKeyRelease internal logic, used to avoid clutering code with hapticFeedback calls
-  handleKeyRelease(hass, btn) {
-    this.handleKeyReleaseInternal(hass, btn);
-
-    // Send haptic feedback to make user acknownledgable of succeeded release event
-    this.eventManager.hapticFeedback();
+  doStyleRow() {
+    // Nothing to do here: already included into card style
   }
 
-  handleKeyReleaseInternal(hass, btn) {
-    const keyData = btn._keyData;
-    if (!keyData) return;
+  doAttachRow(row) {
+    this._elements.container.appendChild(row);
+  }
 
-    const code = keyData.code;
+  doQueryRowElements() {
+    // Nothing to do here: element already referenced and sub-elements already are included by them
+  }
 
-    // Special buttons handling
-    if (code === "KEY_SYNC") {
-        btn.classList.remove("active");
-        return;
+  doListenRow() {
+    // Nothing to do here: no listener on element and sub-elements listeners are included by them
+  }
+
+  doCell(rowConfig, cellConfig) {
+
+    // Create cell popin config
+    const overrideCellConfig = { "popinConfig": this.createPopinConfig(cellConfig) };
+
+    // Create cell
+    const cell = document.createElement("button");
+    this._elements.cells.push(cell);
+    cell.id = cellConfig["code"];
+    cell.classList.add("key");
+    if (cellConfig.special) cell.classList.add("special");
+    if (cellConfig.width) cell.classList.add(cellConfig["width"]);
+    if (cellConfig.code.startsWith("SPACER_")) cell.classList.add("spacer"); // Disable actions on spacers
+    this.setCellData(cell, cellConfig, overrideCellConfig);
+
+    // Create cell content
+    const cellContent = this.doCellContent(cellConfig);
+    this.doStyleCellContent();
+    this.doAttachCellContent(cell, cellContent);
+    this.doQueryCellContentElements(cell, cellContent);
+    this.doListenCellContent();
+
+    // Update cell visuals and content label (to match current mode and state)
+    this.doUpdateCell(cell, cellConfig, this.getStatusCurrentActions(), this.getStatusCurrentLabel());
+
+    return cell;
+  }
+
+  doStyleCell() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachCell(row, cell) {
+    row.appendChild(cell);
+  }
+
+  doQueryCellElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenCell(cell) {
+    this.addClickableListeners(cell);
+  }
+
+  doCellContent(cellConfig) {
+    const cellContent = document.createElement("span");
+    cellContent.className = "label-lower";
+    cellContent.textContent = "";
+    return cellContent;
+  }
+
+  doStyleCellContent() {
+    // Nothing to do here: already included into card style
+  }
+
+  doAttachCellContent(cell, cellContent) {
+    cell.appendChild(cellContent);
+  }
+
+  doQueryCellContentElements(cell, cellContent) {
+    cell._label = cellContent;
+  }
+
+  doListenCellContent() {
+    // Nothing to do: only parent is clickable
+  }
+
+  // configuration defaults
+  static getStubConfig() {
+    return {
+      layout: "US",
+      haptic: true,
+      log_level: "warn",
+      log_pushback: false,
+      buttons_overrides: {},
+      font_scale: 1.4,
+      trigger_long_click_delay: 500
     }
+  }
 
-    // Do not release modifiers when explicitly active
-    if (code === "MOD_LEFT_SHIFT" || code === "MOD_RIGHT_SHIFT") {
-      if (this.shift) return;
-    } else if (code === "MOD_LEFT_CONTROL" || code === "MOD_RIGHT_CONTROL") {
-      if (this.ctrl) return;
-    } else if (code === "MOD_LEFT_GUI" || code === "MOD_RIGHT_GUI") {
-      if (this.gui) return;
-    } else if (code === "MOD_LEFT_ALT") {
-      if (this.alt) return;
-    } else if (code === "MOD_RIGHT_ALT") {
-      if (this.altGr) return;
+  getCardSize() {
+    return 1;
+  }
+
+  getStatusCurrentMode() {
+    return this.constructor._STATUS_MAP["modes"][this._currentMode];
+  }
+
+  getStatusCurrentState() {
+    return this.getStatusCurrentMode()["states"][this._currentState];
+  }
+
+  getStatusCurrentActions() {
+    return this.getStatusCurrentState()["actions"];
+  }
+  
+  getStatusCurrentLabel() {
+    return this.getStatusCurrentState()["label"];
+  }
+
+  getNextStatusMode(trigger) {
+    return this.getStatusCurrentMode()["nexts"].find(next => next["trigger"].test(trigger));
+  }
+
+  getNextStatusState(trigger) {
+    return this.getStatusCurrentState()["nexts"].find(next => next["trigger"].test(trigger));
+  }
+
+  getNextStatus(trigger) {
+    return this.getNextStatusState(trigger) || this.getNextStatusMode(trigger);
+  }
+
+  isNextStatusTrigger(trigger) {
+    return !!this.getNextStatus(trigger);
+  }
+
+  activateNextStatus(trigger) {
+    const nextStatus = this.getNextStatus(trigger);
+    if (nextStatus) {
+      this._currentMode = nextStatus["mode"];
+      this._currentState = nextStatus["state"];
     }
+    return !!nextStatus;
+  }
 
-    // Do not disable capslock active when explicitly active
-    if (code === "KEY_CAPSLOCK") {
-      if (!this.capsLock) btn.classList.remove("active");
+  getStandardLabel(cellConfig, statusLabel) {
+    return cellConfig?.label?.[statusLabel] || "";
+  }
+
+  getSpecialLabel(cellConfig, statusLabel) {
+    return cellConfig?.label?.[statusLabel] || this.getStandardLabel(cellConfig, this.constructor._LABEL_NORMAL);
+  }
+
+  getLabel(cellConfig, statusLabel) {
+    const label = cellConfig.special 
+      ? this.getSpecialLabel(cellConfig, statusLabel) 
+      : this.getStandardLabel(cellConfig, statusLabel);
+    return label ? label : this.getStandardLabel(cellConfig, cellConfig.fallback || "");
+  }
+
+  // Transform user popin config per (rows/)cell/label
+  //
+  // "popin": [
+  //   [                                                                      <-- [optional] rows. When absent, all cells will form a single row.
+  //     { "code": "KEY_E_ACUTE", "label": { "normal": "é" } },               <-- cells / labels
+  //     { "code": "KEY_E_GRAVE", "label": { "normal": "è", "shift": "È" } },
+  //   ],
+  //   [
+  //     { "code": "KEY_E_CIRC",  "label": { "normal": "ê", "shift": "Ê" } }
+  //   ]
+  // ]
+  //
+  // Into popin config per label/row/cell:
+  //
+  // "popinConfig": {
+  //   "normal": [                                                            <-- labels
+  //     [                                                                    <-- rows
+  //       { "code": "KEY_E_ACUTE", "label": "é" },                           <-- cells
+  //       { "code": "KEY_E_GRAVE", "label": "è" },
+  //     ],
+  //     [
+  //       { "code": "KEY_E_CIRC",  "label": "ê" }
+  //     ]
+  //   ],
+  //   "shift": [
+  //     [
+  //       { "code": "KEY_E_GRAVE",  "label": "È" },
+  //       { "code": "KEY_E_CIRC",   "label": "Ê" },
+  //     ]
+  //   ]
+  // }
+  createPopinConfig(cellConfig) {
+
+    // Unlike static keyboard layout cells that always display and figure their label relative to current combination mode of code/mode/state,
+    // popin layout cells are not displayed when their is no content for current combination of code/mode/state.
+    // So to decide whether or not a popin is displayable on a key, 
+    // we need to figure out in advance whether or not there is at least one cell to display 
+    // in the future popin to come (or not) for the combination of code/mode/state.
+    
+    // We use this function to help serving this goal: a popin 
+
+    // Create new popin config
+    const popinConfig = {};
+
+    // Retrieve user popin config per (rows/)cell/label
+    let popinRows;
+    const rawPopinConfig = cellConfig["popin"];
+    const firstPopinKeysConfig = rawPopinConfig?.[0];
+    if (firstPopinKeysConfig) {
+      // single implicit row assumed when only one array of cells defined by user
+      popinRows = Array.isArray(firstPopinKeysConfig) ? rawPopinConfig : [rawPopinConfig];
     } else {
-      // Remove active visual for all other keys / states
-      btn.classList.remove("active");
+      popinRows = [];
     }
 
-    // Release modifier or key through websockets
-    this.removeKeyCode(hass, code);
+    for (const row of popinRows) {
+      const modeToRow = {};
+
+      for (const { code, label } of row) {
+        for (const [mode, char] of Object.entries(label)) {
+          if (!modeToRow[mode]) modeToRow[mode] = [];
+          modeToRow[mode].push({ code, label: char });
+        }
+      }
+
+      // Push each row to the corresponding mode
+      for (const [mode, rowItems] of Object.entries(modeToRow)) {
+        if (!popinConfig[mode]) popinConfig[mode] = [];
+        popinConfig[mode].push(rowItems);
+      }
+    }
+
+    return popinConfig;
   }
 
-  // When key code is a modifier key, returns true. Returns false otherwise.
-  isModifier(code) {
-    return code.startsWith("MOD_");
+  addPopinTimeout(evt) {
+    return setTimeout(() => {
+      const popinEntry = this._popinTimeouts.get(evt.pointerId);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`popinTimeout() + popinEntry:`, popinEntry));
+
+      // When no poppin entry: key has been released before timeout
+      if (popinEntry && popinEntry["popin-can-show"] && !popinEntry["popin-shown"]) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Poppin not shown and still has to be tested for show possibility`));
+        const cell = popinEntry["source"];
+
+        // Check whether or not popin can be shown in current mode and state
+        popinEntry["popin-can-show"] = this.canShowPopin(cell);
+        if (!popinEntry["popin-can-show"]) return;
+
+        // Mark popin as shown
+        popinEntry["popin-shown"] = true;
+
+        // Show popin
+        this.doShowPopin(evt, cell);
+      }
+    }, this.getTriggerLongClickDelay()); // long-press duration
   }
 
-  // When key code is the capslock key, returns true. Returns false otherwise.
-  isCapslock(code) {
-    return code === "KEY_CAPSLOCK";
+  clearPopinTimeout(evt) {
+    const popinTimeout = this._popinTimeouts.get(evt.pointerId)?.["popin-timeout"];
+    if (popinTimeout) clearTimeout(popinTimeout);
   }
 
-  // When key code is a modifier key or the capslock key, returns true. Returns false otherwise.
-  isModifierOrCapslock(code) {
-    return this.isModifier(code) || this.isCapslock(code);
+  getPopinConfig(cell) {
+    return this._layoutManager.getElementData(cell)?.["popinConfig"]?.[this.getStatusCurrentLabel()];
   }
 
-  appendKeyCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key pressed:", code));
+  // Popin can be shown when its config exists and contains current status label
+  canShowPopin(cell) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`canShowPopin(cell) + cellConfig["popinConfig"] + this.getCurrentStatusLabel():`, cell, this.getPopinConfig(cell)));
+    return !!this.getPopinConfig(cell);
+  }
+
+  doShowPopin(evt, cell) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doShowPopin(evt, cell):`, evt, cell));
+    this.doResetPopin();
+    this.doCreatePopin(evt, cell);
+  }
+
+  doResetPopin() {
+    const popin = this._elements.popin;
+
+    // Clear previous listeners
+    this._eventManager.clearListeners("popinContainer");
+
+    // Detach existing popin from DOM
+    if (popin?.parentElement) popin.remove();
+
+    // Clear existing popin DOM content
+    if (popin) popin.innerHTML = '';
+
+    // Reset popin cells elements (if any)
+    this._elements.popinCells = [];
+
+    // Reset popin rows elements (if any)
+    this._elements.popinRows = [];
+
+    // nullify popin reference
+    this._elements.popin = null;
+  }
+
+  doCreatePopin(evt, cell) {
+    const popin = this.doPopin(evt, cell);
+    this.doStylePopin();
+    this.doAttachPopin();
+    this.doQueryPopinElements();
+    this.doListenPopin(popin);
+    this.doRequestPopinShow(evt);
+  }
+
+  doPopin(evt, cell) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopin(evt, cell):`, evt, cell));
+
+    // Create popin
+    const popin = document.createElement("div");
+    this._elements.popin = popin;
+    popin.className = "key-popin";
+
+    // Create popin rows
+    const popinConfig = this.getPopinConfig(cell);
+    const cellWidth = cell.getBoundingClientRect().width;
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopin(evt, cell) + popinConfig + cellWidth:`, evt, cell, popinConfig, cellWidth));
+    for (const rowConfig of popinConfig) {
+      const popinRow = this.doPopinRow(rowConfig, cellWidth);
+      this.doStylePopinRow();
+      this.doAttachPopinRow(popin, popinRow);
+      this.doQueryPopinRowElements();
+      this.doListenPopinRow();
+    }
+
+    return popin;
+  }
+
+  doStylePopin() {
+    // Make popin position absolute (relative to card)
+    this._elements.popin.style.position = "absolute";
+  }
+
+  doAttachPopin() {
+    const card = this._elements.card;
+    card.appendChild(this._elements.popin);
+  }
+
+  doQueryPopinElements() {
+    // nothing to do: element already attached during creation
+  }
+
+  doListenPopin(popin) {
+    this._eventManager.addPopinListeners("popinContainer", popin, 
+      {
+        [this._eventManager.constructor._POPIN_CALLBACK_SHOW]: this.onPopinShow.bind(this),
+        [this._eventManager.constructor._POPIN_CALLBACK_HIDE]: this.onPopinHide.bind(this),
+      }
+    );
+  }
+
+  onPopinShow(popin, evt) {
+    this.doPromptPopin(evt);
+  }
+  
+  onPopinHide(popin, evt) {
+    this.doClosePopin();
+  }
+
+  doPromptPopin(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPromptPopin(evt)"));
+    requestAnimationFrame(() => {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPromptPopin(evt) async"));
+
+      // Trigger cells animations to prompt popin (requires attached popin)
+      for (const popinCell of this._elements.popinCells) {
+        popinCell.classList.add("enter-active");
+      }
+
+      // Then position the popin according to its size and 
+      // cell base event coordinates that triggered the popin
+      this.doPositionPopin(evt);
+    });
+  }
+
+  doClosePopin() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doClosePopin()"));
+    this.doResetPopin();
+  }
+
+  doPositionPopin(evt) {
+    // Absolute positionning computation and style of popin (requires popin to already be added into DOM as card child)
+    const card = this._elements.card;
+    const popin = this._elements.popin;
+    
+    // 1. Get popin bounding box
+    const cardRect = card.getBoundingClientRect();
+    const popinRect = popin.getBoundingClientRect();
+
+    // 2. Compute initial popin position relative to card
+    let popinLeft = evt.clientX - cardRect.left - popinRect.width / 2;
+    let popinTop = evt.clientY - cardRect.top - popinRect.height - 8; // 8px vertical gap
+
+    // 3. Clamp horizontally (inside card)
+    if (popinLeft < 0) {
+      popinLeft = 0;
+    } else if (popinLeft + popinRect.width > cardRect.width) {
+      popinLeft = cardRect.width - popinRect.width;
+    }
+
+    // 4. Clamp vertically (inside card)
+    if (popinTop < 0) {
+      // If not enough space above, show below
+      popinTop = evt.clientY - cardRect.top + 8;
+      // If that too overflows bottom, clamp
+      if (popinTop + popinRect.height > cardRect.height) {
+        popinTop = cardRect.height - popinRect.height;
+      }
+    }
+
+    // 5. Set popin absolute position
+    popin.style.position = "absolute";
+    popin.style.left = `${popinLeft}px`;
+    popin.style.top = `${popinTop}px`;
+  }
+
+  doPopinRow(rowConfig, cellWidth) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinRow(rowConfig):`, rowConfig));
+
+    // Create popin row
+    const popinRow = document.createElement("div");
+    this._elements.popinRows.push(popinRow);
+    popinRow.className = "key-popin-row";
+
+    // Create popin row cells
+    for (const cellConfig of rowConfig) {
+      const popinCell = this.doPopinCell(cellConfig, cellWidth);
+      this.doStylePopinCell(popinCell, cellWidth);
+      this.doAttachPopinCell(popinRow, popinCell);
+      this.doQueryPopinCellElements();
+      this.doListenPopinCell(popinCell);
+    }
+
+    return popinRow;
+  }
+
+  doStylePopinRow() {
+    // nothing to do: style already included into card style
+  }
+
+  doAttachPopinRow(popin, popinRow) {
+    popin.appendChild(popinRow);
+  }
+
+  doQueryPopinRowElements() {
+    // nothing to do: element already attached during creation
+  }
+
+  doListenPopinRow() {
+    // nothing to do: no needs to listen events for this element
+  }
+
+  doPopinCell(cellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinCell(cellConfig):`, cellConfig));
+    
+    // Create popin cell 
+    const popinCell = document.createElement("button");
+    this._elements.popinCells.push(popinCell);
+    popinCell.id = cellConfig["code"];
+    popinCell.classList.add("key");
+    if (cellConfig.width) popinCell.classList.add(cellConfig.width);
+    this.setCellData(popinCell, null, cellConfig);
+
+    // Create popin cell content
+    const popinCellContent = this.doPopinCellContent(cellConfig);
+    this.doStylePopinCellContent();
+    this.doAttachPopinCellContent(popinCell, popinCellContent);
+    this.doQueryPopinCellContentElements(popinCell, popinCellContent);
+    this.doListenPopinCellContent();
+    
+    return popinCell;
+  }
+
+  doStylePopinCell(popinCell, cellWidth) {
+    // Make popin cell the same width than base cell button
+    popinCell.style.width = `${cellWidth}px`;
+  }
+
+  doAttachPopinCell(popinRow, popinCell) {
+    popinRow.appendChild(popinCell);
+  }
+
+  doQueryPopinCellElements() {
+    // nothing to do: element already attached during creation
+  }
+
+  doListenPopinCell(popinCell) {
+    this._eventManager.addButtonListeners("popinContainer", popinCell, 
+      {
+        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onPopinButtonPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onPopinButtonAbortPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onPopinButtonRelease.bind(this)
+      }
+    );
+  }
+
+  doPopinCellContent(cellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doPopinCellContent(cellConfig):`, cellConfig));
+
+    // Create popin cell content
+    const popinCellContent = document.createElement("span");
+    popinCellContent.className = "label-lower";
+
+    // Set popin cell content label
+    popinCellContent.textContent = cellConfig["label"];
+    return popinCellContent;
+  }
+
+  doStylePopinCellContent() {
+    // nothing to do: style already included into card style
+  }
+
+  doAttachPopinCellContent(popinCell, popinCellContent) {
+    popinCell.appendChild(popinCellContent);
+  }
+
+  doQueryPopinCellContentElements(popinCell, popinCellContent) {
+    popinCell._label = popinCellContent;
+  }
+
+  doListenPopinCellContent() {
+    // nothing to do: no needs to listen events for this element
+  }
+
+  doListenPopinCellContent() {
+    // nothing to do: no needs to listen events for this element
+  }
+
+  onPopinButtonPress(btn, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doPopinKeyPress(btn);
+  }
+
+  onPopinButtonAbortPress(btn, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doPopinKeyAbortPress(btn, evt);
+  }
+
+  onPopinButtonRelease(btn, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doPopinKeyRelease(btn, evt);
+  }
+  
+  doPopinKeyPress(btn) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPopinKeyPress(btn):", btn));
+
+    if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+
+      // Nothing to do: overriden action will be executed on key release
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} press: override detected (nothing to do)`));
+    } else {
+      // Default action
+
+      // Press HID key
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} press: normal press detected (nothing to do)`));
+    }
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doPopinKeyAbortPress(btn, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPopinKeyAbortPress(btn):", btn));
+
+    if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: override detected (nothing to do)`));
+    } else {
+      // Default action
+
+      // Nothing to do: default action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: normal press detected (nothing to do)`));
+    }
+
+    // Close popin
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} abort press: closing popin...`));
+    this.doRequestPopinHide(evt);
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doPopinKeyRelease(btn, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doPopinKeyRelease(btn):", btn));
+
+    // Retrieve clickable button data
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
+
+    // Key code to release
+    const code = btnData.code;
+    const charToSend = btn._label.textContent || "";
+    if (this._layoutManager.hasButtonOverride(btn)) {
+
+      // Override detected: bypass key release and execute override
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: override detected (suppressing release of ${charToSend})`));
+      this.executeButtonOverride(btn);
+
+    } else {
+      // Non-special and not virtual key clicked (popin only has normal keys)
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: sending char ${charToSend}...`));
+      this.sendKeyboardChar(charToSend);
+    }
+
+    // Update cells labels and visuals (when needed)
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: updating status and visuals...`));
+    if (this.activateNextStatus(code)) this.doUpdateCells();
+
+    // Close popin
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: closing popin...`));
+    this.doRequestPopinHide(evt);
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  setCellData(cell, defaultConfig, overrideConfig) {
+    this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedCellData.has(key));
+  }
+
+  // Set listeners on a clickable button
+  addClickableListeners(btn) {
+    this._eventManager.addButtonListeners("layoutContainer", btn, 
+      {
+        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onButtonPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onButtonAbortPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onButtonRelease.bind(this)
+      }
+    );
+  }
+
+  onButtonPress(btn, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doKeyPress(btn, evt);
+  }
+
+  onButtonAbortPress(btn, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doKeyAbortPress(btn, evt);
+  }
+
+  onButtonRelease(btn, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doKeyRelease(btn, evt);
+  }
+
+  doKeyPress(btn, evt) {
+
+    // Retrieve clickable button data
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
+
+    // Key code to press
+    const code = btnData.code;
+    if (this.isVirtualModifier(code)) {
+      // Virtual modifier pressed: they cannot be overriden
+
+      // Update all cells labels and visuals
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: virtual key detected, updating layout...`));
+      if (this.activateNextStatus(code)) this.doUpdateCells();
+    } else if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+      
+      // Nothing to do: overriden action will be executed on key release
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key detected, nothing to press`));
+    } else if (btnData.special) {
+      // Special key pressed: this type of key contains consummer codes
+
+      // Press HID key
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: special key detected, pressing ${code}...`));
+      this.appendCode(code);
+    } else {
+      // Normal key pressed: this type of key contains a sendable key char
+
+      // Do not send pressed key to HID (key will be send to HID on release)
+
+      // Add timeout to trigger a popin if key is bound to another set of extended key chars
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: standard key detected, adding popin timeout...`));
+      this._popinTimeouts.set(evt.pointerId, { 
+        "popin-can-show": true,                     // until proven wrong, popin can be shown
+        "popin-shown": false,                       // true when popin was shown
+        "source": btn ,                             // popin source button
+        "popin-timeout": this.addPopinTimeout(evt)  // when it expires, triggers the associated inner callback to show (or not) popin
+      });
+    }
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doKeyAbortPress(btn, evt) {
+
+    // Remove popin timeout (when set before)
+    this.clearPopinTimeout(evt);
+    this._popinTimeouts.delete(evt.pointerId);
+
+    // Retrieve clickable button data
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
+
+    // Key code to abort
+    const code = btnData.code;
+    if (this.isVirtualModifier(code)) {
+      // Virtual modifier pressed: they cannot be overriden
+
+      // Nothing to do: action has already been executed on key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: virtual key detected, nothing to abort`));
+    }  else if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+      
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden key detected, nothing to abort`));
+    } else if (btnData.special) {
+      // Special key pressed: this type of key contains consummer codes
+
+      // Release HID key to prevent infinite key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: special key detected, releasing ${code}...`));
+      this.removeCode(code);
+    } else {
+      // Normal key pressed: this type of key contains a sendable key char
+
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: standard key detected, nothing to abort`));
+    }
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doKeyRelease(btn, evt) {
+
+    // Retrieve popin entry (when existing)
+    const popinEntry = this._popinTimeouts.get(evt.pointerId);
+
+    // Remove popin timeout (when set before)
+    this.clearPopinTimeout(evt);
+    this._popinTimeouts.delete(evt.pointerId);
+
+    // Retrieve clickable button data
+    const btnData = this._layoutManager.getElementData(btn);
+    if (!btnData) return;
+
+    // Key code to release
+    const code = btnData.code;
+    const charToSend = btn._label.textContent || "";
+    if (this.isVirtualModifier(code)) {
+      // Virtual modifier released: they cannot be overriden
+
+      // Nothing to do: action has already been executed on key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: virtual key detected, nothing to release`));
+    } else if (this._layoutManager.hasButtonOverride(btn)) {
+      // Overriden action
+      
+      // Execute the override action
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected, executing override action...`));
+      this.executeButtonOverride(btn);
+      if (this.activateNextStatus(code)) this.doUpdateCells();
+    } else if (btnData.special) {
+      // Special key released: this type of key contains consummer codes
+
+      // Release HID key to prevent infinite key press
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: special key detected, releasing ${code}...`));
+      this.removeCode(code);
+      if (this.activateNextStatus(code)) this.doUpdateCells();
+    } else if (popinEntry && popinEntry["popin-shown"]) {
+      // Popin shown: nothing to do
+      
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected with shown popin, nothing to release`));
+    } else {
+      // Normal key released: this type of key contains a sendable key char
+
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected, sending char ${charToSend}`));
+        this.sendKeyboardChar(charToSend);
+      if (this.activateNextStatus(code)) this.doUpdateCells();
+    }
+    
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  executeButtonOverride(btn) {
+    this._eventManager.executeButtonOverride(btn, this._layoutManager.getButtonOverride(btn));
+  }
+
+  appendCode(code) {
+    if (code) {
+      if (this.isKey(code) || this.isModifier(code)) {
+        this.appendKeyCode(code);
+      } else if (this.isConsumer(code)) {
+        this.appendConsumerCode(code);
+      } else {
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
+      }
+    }
+  }
+
+  appendKeyCode(code) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Key pressed:", code));
     if (code) {
       const intCode = this._keycodes[code];
       if (this.isModifier(code)) {
         // Modifier key pressed
-        this.pressedModifiers.add(intCode);
+        this._pressedModifiers.add(intCode);
       } else {
         // Standard key pressed
-        this.pressedKeys.add(intCode);
+        this._pressedKeys.add(intCode);
       }
     }
-    this.sendKeyboardUpdate(hass);
+    this.sendKeyboardUpdate();
   }
 
-  removeKeyCode(hass, code) {
-    if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("Key released:", code));
+  appendConsumerCode(code) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Consumer pressed:", code));
+    if (code) {
+      const intCode = this._consumercodes[code];
+      this._pressedConsumers.add(intCode);
+    }
+    this.sendConsumerUpdate();
+  }
+
+  removeCode(code) {
+    if (code) {
+      if (this.isKey(code) || this.isModifier(code)) {
+        this.removeKeyCode(code);
+      } else if (this.isConsumer(code)) {
+        this.removeConsumerCode(code);
+      } else {
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
+      }
+    }
+  }
+
+  removeKeyCode(code) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Key released:", code));
     if (code) {
       const intCode = this._keycodes[code];
       if (this.isModifier(code)) {
         // Modifier key released
-        this.pressedModifiers.delete(intCode);
+        this._pressedModifiers.delete(intCode);
       } else {
         // Standard key released
-        this.pressedKeys.delete(intCode);
+        this._pressedKeys.delete(intCode);
       }
     }
-    this.sendKeyboardUpdate(hass);
+    this.sendKeyboardUpdate();
+  }
+
+  removeConsumerCode(code) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("Consumer released:", code));
+    if (code) {
+      const intCode = this._consumercodes[code];
+      this._pressedConsumers.delete(intCode);
+    }
+    this.sendConsumerUpdate();
+  }
+
+  // When key code is a virtual modifier key, returns true. Returns false otherwise.
+  isVirtualModifier(code) {
+    return code === "KEY_MODE" || code === "MOD_LEFT_SHIFT";
+  }
+
+  isKey(code) {
+    return code && code.startsWith("KEY_");
+  }
+
+  isModifier(code) {
+    return code && code.startsWith("MOD_");
+  }
+
+  isConsumer(code) {
+    return code && code.startsWith("CON_");
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
-  sendKeyboardUpdate(hass) {
-    this.eventManager.callComponentService(hass, "keypress", {
-      sendModifiers: Array.from(this.pressedModifiers),
-      sendKeys: Array.from(this.pressedKeys),
+  sendKeyboardUpdate() {
+    this._eventManager.callComponentService("keypress", {
+      sendModifiers: Array.from(this._pressedModifiers),
+      sendKeys: Array.from(this._pressedKeys),
     });
+  }
+
+  // Send all current pressed modifiers and keys to HID keyboard
+  sendConsumerUpdate() {
+    this._eventManager.callComponentService("conpress", {
+      sendCons: Array.from(this._pressedConsumers),
+    });
+  }
+
+  // Send clicked char symbols to HID keyboard 
+  // and let it handle the right key-press combination using current kb layout
+  sendKeyboardChar(charToSend) {
+    if (charToSend) {
+      this._eventManager.callComponentService("chartap", {
+        sendChars: charToSend,
+      });
+    }
   }
 
   // Synchronize with remote keyboard current state through HA websockets API
@@ -594,4 +1378,4 @@ class WindowsKeyboardCard extends HTMLElement {
 
 }
 
-customElements.define("windows-keyboard-card", WindowsKeyboardCard);
+if (!customElements.get("windows-keyboard-card")) customElements.define("windows-keyboard-card", WindowsKeyboardCard);
