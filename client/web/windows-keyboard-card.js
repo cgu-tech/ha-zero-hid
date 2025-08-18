@@ -112,7 +112,7 @@ export class WindowsKeyboardCard extends HTMLElement {
     this._currentState = this.constructor._STATUS_MAP["init"]["state"];
     
     // Create a reversed map of <int_code>,<togglable_string_code>
-    this._toggables.forEach(toggable => this._toggablesCodes.set((toggable.startsWith('KEY_') ? this._keycodes[toggable] : this._consumercodes[toggable]), toggable));
+    this._toggables.forEach(toggable => this._toggablesCodes.set(((toggable.startsWith('KEY_') || toggable.startsWith('MOD_')) ? this._keycodes[toggable] : this._consumercodes[toggable]), toggable));
 
     this.doCard();
     this.doStyle();
