@@ -269,18 +269,23 @@ export class EventManager {
   }
 
   onButtonPointerEnter(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonPointerEnter(evt)", evt));
     this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_ENTER, evt);
   }
   onButtonPointerLeave(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonPointerLeave(evt)", evt));
     this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
   }
   onButtonPointerCancel(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonPointerCancel(evt)", evt));
     this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
   }
   onButtonPointerDown(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonPointerDown(evt)", evt));
     this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_DOWN, evt);
   }
   onButtonPointerUp(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onButtonPointerUp(evt)", evt));
     this.activateButtonNextStateFromEvent(this.constructor._BUTTON_TRIGGER_POINTER_UP, evt);
   }
 
@@ -426,7 +431,7 @@ export class EventManager {
   }
 
   preventDefault(evt) {
-    //if (typeof evt?.preventDefault === 'function') evt.preventDefault();
+    if (typeof evt?.preventDefault === 'function') evt.preventDefault();
   }
 
   executeButtonOverride(btn, overrideConfig) {
