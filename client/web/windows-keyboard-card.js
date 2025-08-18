@@ -381,6 +381,7 @@ export class WindowsKeyboardCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateLayout() + this._currentMode, this._currentState", this._currentMode, this._currentState));
     this.doResetLayout();
     this.doCreateLayout();
+    this.syncKeyboard();
   }
 
   doResetLayout() {
@@ -626,6 +627,11 @@ export class WindowsKeyboardCard extends HTMLElement {
 
       // Press or release HID key
       this.executePressToggable(btn, code, isBtnPressed);
+    } else if (code === "KEY_SYNC") {
+      // Special synchronization key, cannot be overriden
+      
+      // Execute keyboard synchronization
+      this.syncKeyboard();
     } else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
@@ -855,14 +861,14 @@ export class WindowsKeyboardCard extends HTMLElement {
   }
 
   // Synchronize with remote keyboard current state through HA websockets API
-  syncKeyboard(hass) {
-   this.eventManager.callComponentCommand(hass, 'sync_keyboard').then((response) => {
-      // Success handler
+  syncKeyboard() {
+    this._eventManager.callComponentCommand(hass, 'sync_keyboard').then((response) => {
+      // Keyboard sync success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Keyboard synchronization: succeed (syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock):', syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock));
-
+      
       const modifiers = [...(this.syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])];
-
+      
       // Update triggers
       this._triggers.clear();
       const triggers = modifiers.filter(modifier => this.constructor._TRIGGERS.has(modifier));
@@ -877,7 +883,7 @@ export class WindowsKeyboardCard extends HTMLElement {
         if (pressedToggables.includes(cell)) this.setToggle(cell, true);
         if (releasedToggables.includes(cell)) this.setToggle(cell, false);
       }
-
+      
       // Update all cells labels and visuals
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Keyboard synchronization: succeed, updating layout...`));
       if (this.activateNextState()) this.doUpdateCells();
