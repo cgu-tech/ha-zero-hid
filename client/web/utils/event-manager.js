@@ -705,12 +705,13 @@ export class EventManager {
   unregisterListener(listener) {
     if (this.isValidListener(listener)) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("unregisterListener(listener)", listener));
+      const target = listener["target"];
       
       // Remove listener target from popins (when present)
-      this._popins.delete(btn);
+      this._popins.delete(target);
       
       // Remove listener target from buttons (when present)
-      this._buttons.delete(btn);
+      this._buttons.delete(target);
             
       // Retrieve listener container name
       let containerName = listener["containerName"];
