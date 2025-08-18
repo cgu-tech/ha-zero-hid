@@ -30,11 +30,14 @@ export class WindowsKeyboardCard extends HTMLElement {
   static _TRIGGER_ALT_LEFT = 'MOD_LEFT_ALT';
   static _TRIGGER_ALT_RIGHT = 'MOD_RIGHT_ALT';
 
+  static _TRIGGERS;
+
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
-    this._SHIFT = [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_SHIFT_RIGHT];
-    this._CTRL = [this._TRIGGER_CTRL_LEFT, this._TRIGGER_CTRL_RIGHT];
-    this._ALT = [this._TRIGGER_ALT_LEFT, this._TRIGGER_ALT_RIGHT];
+    this._TRIGGERS = new Set([this._TRIGGER_CAPSLOCK, this._TRIGGER_SHIFT_LEFT, this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CTRL_LEFT, this._TRIGGER_CTRL_RIGHT, this._TRIGGER_ALT_LEFT, this._TRIGGER_ALT_RIGHT]);
+    this._TRIGGER_SHIFTS = [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_SHIFT_RIGHT];
+    this._TRIGGER_CTRLS = [this._TRIGGER_CTRL_LEFT, this._TRIGGER_CTRL_RIGHT];
+    this._TRIGGER_ALTS = [this._TRIGGER_ALT_LEFT, this._TRIGGER_ALT_RIGHT];
 
     this._STATUS_MAP = {
       "init": { "state": this._STATE_NORMAL },
@@ -42,26 +45,26 @@ export class WindowsKeyboardCard extends HTMLElement {
         [this._STATE_NORMAL]: {
           "label": this._LABEL_NORMAL,
           "nexts": [
-            { "pressed": [this._TRIGGER_SHIFT_LEFT],  "released": [...this._CTRL, ...this._ALT, this._TRIGGER_CAPSLOCK],              "state": this._STATE_SHIFT     },
-            { "pressed": [this._TRIGGER_SHIFT_RIGHT], "released": [...this._CTRL, ...this._ALT, this._TRIGGER_CAPSLOCK],              "state": this._STATE_SHIFT     },
-            { "pressed": [this._TRIGGER_CAPSLOCK],    "released": [...this._SHIFT],                                                   "state": this._STATE_SHIFT     },
-            { "pressed": [this._TRIGGER_ALT_RIGHT],   "released": [...this._SHIFT, this._TRIGGER_ALT_LEFT, this._TRIGGER_CTRL_RIGHT], "state": this._STATE_RIGHT_ALT }
+            { "pressed": [this._TRIGGER_SHIFT_LEFT],  "released": [...this._TRIGGER_CTRLS, ...this._TRIGGER_ALTS, this._TRIGGER_CAPSLOCK],     "state": this._STATE_SHIFT     },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT], "released": [...this._TRIGGER_CTRLS, ...this._TRIGGER_ALTS, this._TRIGGER_CAPSLOCK],     "state": this._STATE_SHIFT     },
+            { "pressed": [this._TRIGGER_CAPSLOCK],    "released": [...this._TRIGGER_SHIFTS],                                                   "state": this._STATE_SHIFT     },
+            { "pressed": [this._TRIGGER_ALT_RIGHT],   "released": [...this._TRIGGER_SHIFTS, this._TRIGGER_ALT_LEFT, this._TRIGGER_CTRL_RIGHT], "state": this._STATE_RIGHT_ALT }
           ]
         },
         [this._STATE_SHIFT]: {
           "label": this._LABEL_SHIFT,
           "nexts": [
-            { "pressed": [],                                                    "released": [this._TRIGGER_CAPSLOCK, ...this._SHIFT], "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CTRL_LEFT],   "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CTRL_RIGHT],  "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_ALT_LEFT],    "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_ALT_RIGHT],   "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CAPSLOCK],    "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CTRL_LEFT],  "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CTRL_RIGHT], "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_ALT_LEFT],   "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_ALT_RIGHT],  "released": [],                                       "state": this._STATE_NORMAL    },
-            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CAPSLOCK],   "released": [],                                       "state": this._STATE_NORMAL    }
+            { "pressed": [],                                                    "released": [this._TRIGGER_CAPSLOCK, ...this._TRIGGER_SHIFTS], "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CTRL_LEFT],   "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CTRL_RIGHT],  "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_ALT_LEFT],    "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_ALT_RIGHT],   "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CAPSLOCK],    "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CTRL_LEFT],  "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CTRL_RIGHT], "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_ALT_LEFT],   "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_ALT_RIGHT],  "released": [],                                                "state": this._STATE_NORMAL    },
+            { "pressed": [this._TRIGGER_SHIFT_RIGHT, this._TRIGGER_CAPSLOCK],   "released": [],                                                "state": this._STATE_NORMAL    }
           ]
         },
         [this._STATE_RIGHT_ALT]: {
@@ -621,22 +624,8 @@ export class WindowsKeyboardCard extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, updating layout...`));
       if (this.activateNextState()) this.doUpdateCells();
 
-      // Press or release HID key according, whether respectively it is pressed or not pressed after toggling
-      if (code === "KEY_CAPSLOCK") {
-        // Special treatment for the unique CAPSLOCK key that... is a modifier that needs to be physically released to work
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing then releasing ${code}...`));
-        this.appendCode(code);
-        this.removeCode(code);
-      } else {
-        // For any other button, press it if toggled, release it if not toggled
-        if (isBtnPressed) {
-          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing ${code}...`));
-          this.appendCode(code);
-        } else {
-          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, releasing ${code}...`));
-          this.removeCode(code);
-        }
-      }
+      // Press or release HID key
+      this.executePressToggable(btn, code, isBtnPressed);
     } else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
@@ -714,6 +703,25 @@ export class WindowsKeyboardCard extends HTMLElement {
 
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
+  }
+
+  // Press or release HID key according, whether respectively it is pressed or not pressed after toggling
+  executePressToggable(btn, code, isBtnPressed) {
+    if (code === "KEY_CAPSLOCK") {
+      // Special treatment for the unique CAPSLOCK key that... is a modifier that needs to be physically released to work
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing then releasing ${code}...`));
+      this.appendCode(code);
+      this.removeCode(code);
+    } else {
+      // For any other button, press it if toggled, release it if not toggled
+      if (isBtnPressed) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing ${code}...`));
+        this.appendCode(code);
+      } else {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, releasing ${code}...`));
+        this.removeCode(code);
+      }
+    }
   }
 
   executeButtonOverride(btn) {
@@ -795,7 +803,14 @@ export class WindowsKeyboardCard extends HTMLElement {
   toggle(btn) {
     // Toggles button state
     const btnData = this._layoutManager.getElementData(btn);
-    btnData.toggled = !btnData.toggled;
+    return this.setToggle(!btnData.toggled);
+  }
+  
+  setToggle(btn, value) {
+
+    // Toggles button state
+    const btnData = this._layoutManager.getElementData(btn);
+    btnData.toggled = value;
 
     // Update button visuals
     if (btnData.toggled) btn.classList.add("locked");
@@ -844,19 +859,28 @@ export class WindowsKeyboardCard extends HTMLElement {
    this.eventManager.callComponentCommand(hass, 'sync_keyboard').then((response) => {
       // Success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncModifiers:", syncModifiers));
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncKeys:", syncKeys));
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncNumlock:", syncNumlock));
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncCapslock:", syncCapslock));
-      if (this.logger.isDebugEnabled()) console.debug(...this.logger.debug("syncScrolllock:", syncScrolllock));
-      // Update intenal states
-      this.capsLock = syncCapslock;
-      this.shift = syncModifiers && (syncModifiers.includes("MOD_LEFT_SHIFT") || syncModifiers.includes("MOD_RIGHT_SHIFT"));
-      this.ctrl = syncModifiers && (syncModifiers.includes("MOD_LEFT_CONTROL") || syncModifiers.includes("MOD_RIGHT_CONTROL"));
-      this.gui = syncModifiers && (syncModifiers.includes("MOD_LEFT_GUI") || syncModifiers.includes("MOD_RIGHT_GUI"));
-      this.alt = syncModifiers && syncModifiers.includes("MOD_LEFT_ALT");
-      this.altGr = syncModifiers && syncModifiers.includes("MOD_RIGHT_ALT");
-      this.updateLabels();
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Keyboard synchronization: succeed (syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock):', syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock));
+
+      const modifiers = [...(this.syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])];
+
+      // Update triggers
+      this._triggers.clear();
+      const triggers = modifiers.filter(modifier => this.constructor._TRIGGERS.has(modifier));
+      for (const trigger of triggers) {
+        this._triggers.add(trigger);
+      }
+      
+      // Visually toggle pressed/released toggables
+      const pressedToggables = modifiers.filter(modifier => this._toggables.has(modifier));
+      const releasedToggables = this._toggables.filter(toggable => !pressedToggables.has(toggable));
+      for (const cell of (this._elements.cells ?? [])) {
+        if (pressedToggables.includes(cell)) this.setToggle(cell, true);
+        if (releasedToggables.includes(cell)) this.setToggle(cell, false);
+      }
+
+      // Update all cells labels and visuals
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Keyboard synchronization: succeed, updating layout...`));
+      if (this.activateNextState()) this.doUpdateCells();
     })
     .catch((err) => {
       if (this.logger.isErrorEnabled()) console.error(...this.logger.error("Failed to sync keyboard state:", err));
