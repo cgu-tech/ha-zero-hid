@@ -434,6 +434,10 @@ export class EventManager {
   }
 
   executeButtonOverride(btn, overrideConfig) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`executeButtonOverride(btn, overrideConfig): undefined hass. Unable to execute the override action (called too early before HA hass init or HA unresponsive)`, btn, overrideConfig));
+      return;
+    }
 
     // When sensor detected in override configuration, 
     // choose override action to execute according to current sensor state (on/off)
@@ -461,6 +465,10 @@ export class EventManager {
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
   callComponentService(name, args) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callComponentService(name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, name, args));
+      return;
+    }
     this.getHass().callService(Globals.COMPONENT_NAME, name, args);
   }
   
@@ -474,6 +482,10 @@ export class EventManager {
   //   - on command success: ".then((response) => {...})"
   //   - on command error: ".catch((err) => {...})"
   callComponentCommand(name) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callComponentCommand(name): undefined hass. Unable to execute the command (called too early before HA hass init or HA unresponsive)`, name));
+      return;
+    }
     return this.getHass().connection.sendMessagePromise({
       type: `${Globals.COMPONENT_NAME}/${name}`
     });
@@ -488,6 +500,10 @@ export class EventManager {
   //  - detail: the event configuration (knwon configurations: { config: <ui_action_object_retrieved_from_yaml_config>, action: "tap", })
   //  - options: optional object for options (known options: do not specify)
   triggerHaosEvent(target, type, detail, options = {}) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`triggerHaosEvent(target, type, detail, options = {}): undefined hass. Unable to execute the HAOS event (called too early before HA hass init or HA unresponsive)`, target, type, detail, options));
+      return;
+    }
     const event = new CustomEvent(type, {
       bubbles: options.bubbles ?? true,
       cancelable: Boolean(options.cancelable),

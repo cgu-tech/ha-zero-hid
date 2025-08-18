@@ -862,7 +862,7 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   // Synchronize with remote keyboard current state through HA websockets API
   syncKeyboard() {
-    this._eventManager.callComponentCommand(this._hass, 'sync_keyboard').then((response) => {
+    this._eventManager.callComponentCommand('sync_keyboard').then((response) => {
       // Keyboard sync success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
       const modifiers = [...(this.syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])];
