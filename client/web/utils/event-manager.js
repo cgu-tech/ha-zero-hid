@@ -426,7 +426,7 @@ export class EventManager {
   }
 
   preventDefault(evt) {
-    if (typeof evt?.preventDefault === 'function') evt.preventDefault();
+    //if (typeof evt?.preventDefault === 'function') evt.preventDefault();
   }
 
   executeButtonOverride(btn, overrideConfig) {

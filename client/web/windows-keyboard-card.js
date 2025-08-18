@@ -525,7 +525,7 @@ export class WindowsKeyboardCard extends HTMLElement {
       log_level: "warn",
       log_pushback: false,
       buttons_overrides: {},
-      font_scale: 1.4
+      font_scale: 1
     }
   }
 
