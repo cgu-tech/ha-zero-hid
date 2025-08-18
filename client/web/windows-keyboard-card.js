@@ -445,6 +445,9 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   doCell(rowConfig, cellConfig) {
 
+    // Create cell popin config
+    const overrideCellConfig = {};
+
     // Create cell
     const cell = document.createElement("button");
     this._elements.cells.push(cell);
