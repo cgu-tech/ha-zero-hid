@@ -86,6 +86,7 @@ export class WindowsKeyboardCard extends HTMLElement {
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedCellData = new Set(['code', 'special', 'label', 'fallback']);
   _toggables = new Set(['KEY_CAPSLOCK', 'MOD_LEFT_SHIFT', 'MOD_RIGHT_SHIFT', 'MOD_LEFT_CONTROL', 'MOD_RIGHT_CONTROL', 'MOD_LEFT_ALT', 'MOD_RIGHT_ALT', 'MOD_LEFT_GUI', 'MOD_RIGHT_GUI']);
+  _toggablesCodes = new Map();
 
   // private properties
   _config;
@@ -109,6 +110,9 @@ export class WindowsKeyboardCard extends HTMLElement {
     this._resourceManager = new ResourceManager(this, import.meta.url);
 
     this._currentState = this.constructor._STATUS_MAP["init"]["state"];
+    
+    // Create a reversed map of <int_code>,<togglable_string_code>
+    this._toggables.forEach(toggable => this._toggablesCodes.set((toggable.startsWith('KEY_') ? this._keycodes[toggable] : this._consumercodes[toggable]), toggable));
 
     this.doCard();
     this.doStyle();
@@ -870,7 +874,7 @@ export class WindowsKeyboardCard extends HTMLElement {
     if (this._hass) this._eventManager.callComponentCommand('sync_keyboard')?.then((response) => {
       // Keyboard sync success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
-      const modifiers = [...(syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])];
+      const modifiers = [...(syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])].map(intCode => this._toggablesCodes[intCode]);
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Keyboard synchronization: succeed (modifiers):', modifiers));
 
       // Update triggers
