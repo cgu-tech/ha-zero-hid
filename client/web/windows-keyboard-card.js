@@ -614,16 +614,16 @@ export class WindowsKeyboardCard extends HTMLElement {
     if (this.isToggable(code)) {
       // Togglable modifier pressed: they cannot be overriden
 
-      // Press HID key (so if it fails UI wont be updated)
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing ${code}...`));
-      this.appendCode(code);
-
       // Update the toggle button
-      this.toggle(btn);
+      const isBtnPressed = this.toggle(btn);
 
       // Update all cells labels and visuals
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, updating layout...`));
       if (this.activateNextState()) this.doUpdateCells();
+
+      // Press or release HID key according, whether respectively it is pressed or not pressed after toggling
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, pressing ${code}...`));
+      if (isBtnPressed) this.appendCode(code); else this.removeCode(code);
     } else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
@@ -780,21 +780,19 @@ export class WindowsKeyboardCard extends HTMLElement {
   }
 
   toggle(btn) {
+    // Toggles button state
     const btnData = this._layoutManager.getElementData(btn);
-    if (this.isToggable(btnData?.code)) {
-      // Button is toggable
+    btnData.toggled = !btnData.toggled;
 
-      // Toggles button state
-      btnData.toggled = !btnData.toggled;
+    // Update button visuals
+    if (btnData.toggled) btn.classList.add("locked");
+    if (!btnData.toggled) btn.classList.remove("locked");
 
-      // Update button visuals
-      if (btnData.toggled) btn.classList.add("locked");
-      if (!btnData.toggled) btn.classList.remove("locked");
+    // Update triggers
+    if (btnData.toggled) this._triggers.add(btnData.code);
+    if (!btnData.toggled) this._triggers.delete(btnData.code);
 
-      // Update triggers
-      if (btnData.toggled) this._triggers.add(btnData.code);
-      if (!btnData.toggled) this._triggers.delete(btnData.code);
-    }
+    return !!btnData.toggled;
   }
 
   isToggable(code) {
