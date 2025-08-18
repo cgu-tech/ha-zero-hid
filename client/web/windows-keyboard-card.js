@@ -5,7 +5,7 @@ import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
-import * as layoutsDesktops from './layouts/windows/index.js';
+import * as layoutsWindows from './layouts/windows/index.js';
 
 console.info("Loading windows-keyboard-card");
 
@@ -75,6 +75,7 @@ export class WindowsKeyboardCard extends HTMLElement {
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedCellData = new Set(['code', 'special', 'label', 'fallback']);
+  _toggables = new Set(['KEY_CAPSLOCK', 'MOD_LEFT_SHIFT', 'MOD_RIGHT_SHIFT', 'MOD_LEFT_CONTROL', 'MOD_RIGHT_CONTROL', 'MOD_LEFT_ALT', 'MOD_RIGHT_ALT', 'MOD_LEFT_GUI', 'MOD_RIGHT_GUI']);
 
   // private properties
   _config;
@@ -94,7 +95,7 @@ export class WindowsKeyboardCard extends HTMLElement {
 
     this._logger = new Logger(this, "windows-keyboard-card.js");
     this._eventManager = new EventManager(this);
-    this._layoutManager = new LayoutManager(this, layoutsDesktops);
+    this._layoutManager = new LayoutManager(this, layoutsWindows);
     this._resourceManager = new ResourceManager(this, import.meta.url);
 
     this._currentState = this.constructor._STATUS_MAP["init"]["state"];
@@ -147,35 +148,31 @@ export class WindowsKeyboardCard extends HTMLElement {
   }
 
   doUpdateCells() {
-    const statusActions = this.getStatusCurrentActions();
-    const statusLabel = this.getStatusCurrentLabel();
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCells(statusActions, statusLabel):", statusActions, statusLabel));
+    const statusLabel = this.getCurrentLabel();
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCells(statusLabel):", statusLabel));
 
     for (const cell of this._elements.cells) {
 
       const cellConfig = this._layoutManager.getElementData(cell);
       if (!cellConfig) continue;
 
-      this.doUpdateCell(cell, cellConfig, statusActions, statusLabel);
+      this.doUpdateCell(cell, cellConfig, statusLabel);
     }
   }
 
   // Synchronize cell visuals and label with given mode and state
-  doUpdateCell(cell, cellConfig, statusActions, statusLabel) {
-    this.doUpdateCellVisuals(cell, cellConfig, statusActions);
+  doUpdateCell(cell, cellConfig, statusLabel) {
+    this.doUpdateCellVisuals(cell, cellConfig);
     this.doUpdateCellLabel(cell, cellConfig, statusLabel);
   }
 
   // Synchronize cell visuals with given mode and state
   // using per-matching-cell-code configured actions
-  doUpdateCellVisuals(cell, cellConfig, statusActions) {
-    const cellActions = statusActions?.[cellConfig.code] || [];
-    for (const cellAction of cellActions) {
-      const actionName = cellAction["action"];
-      const actionClassList = cellAction["class_list"];
-      if (actionName === "add") cell.classList.add(...actionClassList);
-      if (actionName === "remove") cell.classList.remove(...actionClassList);
-    }
+  doUpdateCellVisuals(cell, cellConfig) {
+
+    // Update button visuals for toggable cells
+    if (btnData.toggled) btn.classList.add("locked");
+    if (!btnData.toggled) btn.classList.remove("locked");
   }
 
   // Synchronize cell label with given mode and state
@@ -470,7 +467,7 @@ export class WindowsKeyboardCard extends HTMLElement {
     this.doListenCellContent();
 
     // Update cell visuals and content label (to match current mode and state)
-    this.doUpdateCell(cell, cellConfig, this.getStatusCurrentActions(), this.getStatusCurrentLabel());
+    this.doUpdateCell(cell, cellConfig, this.getStatusCurrentActions(), this.getCurrentLabel());
 
     return cell;
   }
@@ -531,45 +528,32 @@ export class WindowsKeyboardCard extends HTMLElement {
     return 1;
   }
 
-  getStatusCurrentMode() {
-    return this.constructor._STATUS_MAP["modes"][this._currentMode];
+  getCurrentState() {
+    return this.constructor._STATUS_MAP["states"][this._currentState];
   }
 
-  getStatusCurrentState() {
-    return this.getStatusCurrentMode()["states"][this._currentState];
+  getCurrentLabel() {
+    return this.getCurrentState()["label"];
   }
 
-  getStatusCurrentActions() {
-    return this.getStatusCurrentState()["actions"];
-  }
-  
-  getStatusCurrentLabel() {
-    return this.getStatusCurrentState()["label"];
-  }
-
-  getNextStatusMode(trigger) {
-    return this.getStatusCurrentMode()["nexts"].find(next => next["trigger"].test(trigger));
+  getNextState() {
+    return this.getCurrentState()["nexts"]
+      .find(next => 
+        next["pressed"].every(pressed => this._triggers.has(pressed) && 
+        next["released"].every(released => !this._triggers.has(released)
+      );
   }
 
-  getNextStatusState(trigger) {
-    return this.getStatusCurrentState()["nexts"].find(next => next["trigger"].test(trigger));
+  isNextStateTrigger() {
+    return !!this.getNextState();
   }
 
-  getNextStatus(trigger) {
-    return this.getNextStatusState(trigger) || this.getNextStatusMode(trigger);
-  }
-
-  isNextStatusTrigger(trigger) {
-    return !!this.getNextStatus(trigger);
-  }
-
-  activateNextStatus(trigger) {
-    const nextStatus = this.getNextStatus(trigger);
-    if (nextStatus) {
-      this._currentMode = nextStatus["mode"];
-      this._currentState = nextStatus["state"];
+  activateNextState() {
+    const nextState = this.getNextState();
+    if (nextState) {
+      this._currentState = nextState["state"];
     }
-    return !!nextStatus;
+    return !!nextState;
   }
 
   getStandardLabel(cellConfig, statusLabel) {
@@ -625,27 +609,26 @@ export class WindowsKeyboardCard extends HTMLElement {
 
     // Key code to press
     const code = btnData.code;
-    if (this.isVirtualModifier(code)) {
-      // Virtual modifier pressed: they cannot be overriden
+    if (this.isToggable(code)) {
+      // Togglable modifier pressed: they cannot be overriden
+
+      // Update the toggle button
+      this.toggle(btn);
 
       // Update all cells labels and visuals
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: virtual key detected, updating layout...`));
-      if (this.activateNextStatus(code)) this.doUpdateCells();
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: modifier key detected, updating layout...`));
+      if (this.activateNextState()) this.doUpdateCells();
     } else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
       // Nothing to do: overriden action will be executed on key release
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key detected, nothing to press`));
-    } else if (btnData.special) {
-      // Special key pressed: this type of key contains consummer codes
+    } else {
+      // Standard key pressed
 
       // Press HID key
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: special key detected, pressing ${code}...`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: standard key detected, pressing ${code}...`));
       this.appendCode(code);
-    } else {
-      // Normal key pressed: this type of key contains a sendable key char
-
-      // Do not send pressed key to HID (key will be send to HID on release)
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded event
@@ -660,27 +643,22 @@ export class WindowsKeyboardCard extends HTMLElement {
 
     // Key code to abort
     const code = btnData.code;
-    if (this.isVirtualModifier(code)) {
-      // Virtual modifier pressed: they cannot be overriden
+    if (this.isToggable(code)) {
+      // Togglable modifier pressed: they cannot be overriden
 
       // Nothing to do: action has already been executed on key press
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: virtual key detected, nothing to abort`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: modifier key detected, nothing to abort`));
     }  else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden key detected, nothing to abort`));
-    } else if (btnData.special) {
-      // Special key pressed: this type of key contains consummer codes
+    } else {
+      // Standard key pressed
 
       // Release HID key to prevent infinite key press
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: special key detected, releasing ${code}...`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: standard key detected, releasing ${code}...`));
       this.removeCode(code);
-    } else {
-      // Normal key pressed: this type of key contains a sendable key char
-
-      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: standard key detected, nothing to abort`));
     }
 
     // Send haptic feedback to make user acknownledgable of succeeded event
@@ -696,34 +674,25 @@ export class WindowsKeyboardCard extends HTMLElement {
     // Key code to release
     const code = btnData.code;
     const charToSend = btn._label.textContent || "";
-    if (this.isVirtualModifier(code)) {
-      // Virtual modifier released: they cannot be overriden
+    if (this.isToggable(code)) {
+      // Togglable modifier released: they cannot be overriden
 
       // Nothing to do: action has already been executed on key press
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: virtual key detected, nothing to release`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: modifier key detected, nothing to release`));
     } else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
       // Execute the override action
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected, executing override action...`));
       this.executeButtonOverride(btn);
-      if (this.activateNextStatus(code)) this.doUpdateCells();
-    } else if (btnData.special) {
-      // Special key released: this type of key contains consummer codes
+    } else {
+      // Standard key released
 
       // Release HID key to prevent infinite key press
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: special key detected, releasing ${code}...`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected, releasing ${code}...`));
       this.removeCode(code);
-      if (this.activateNextStatus(code)) this.doUpdateCells();
-    } else {
-      // Normal key released: this type of key contains a sendable key char
-
-      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected, sending char ${charToSend}`));
-        this.sendKeyboardChar(charToSend);
-      if (this.activateNextStatus(code)) this.doUpdateCells();
     }
-    
+
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
   }
@@ -804,9 +773,22 @@ export class WindowsKeyboardCard extends HTMLElement {
     this.sendConsumerUpdate();
   }
 
-  // When key code is a virtual modifier key, returns true. Returns false otherwise.
-  isVirtualModifier(code) {
-    return code === "KEY_MODE" || code === "MOD_LEFT_SHIFT";
+  toggle(btn) {
+    const btnData = this._layoutManager.getElementData(btn);
+    if (this.isToggable(btnData?.code)) {
+      // Button is toggable
+
+      // Toggles button state
+      btnData.toggled = !btnData.toggled;
+
+      // Update triggers
+      if (btnData.toggled) this._triggers.add(code);
+      if (!btnData.toggled) this._triggers.delete(code);
+    }
+  }
+
+  isToggable(code) {
+    return code && this._toggables.has(code);
   }
 
   isKey(code) {
@@ -834,16 +816,6 @@ export class WindowsKeyboardCard extends HTMLElement {
     this._eventManager.callComponentService("conpress", {
       sendCons: Array.from(this._pressedConsumers),
     });
-  }
-
-  // Send clicked char symbols to HID keyboard 
-  // and let it handle the right key-press combination using current kb layout
-  sendKeyboardChar(charToSend) {
-    if (charToSend) {
-      this._eventManager.callComponentService("chartap", {
-        sendChars: charToSend,
-      });
-    }
   }
 
   // Synchronize with remote keyboard current state through HA websockets API
