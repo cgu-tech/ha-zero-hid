@@ -143,10 +143,6 @@ export class WindowsKeyboardCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
-  getTriggerLongClickDelay() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
-  }
-
   doUpdateCells() {
     const statusLabel = this.getCurrentLabel();
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("doUpdateCells(statusLabel):", statusLabel));
@@ -519,8 +515,7 @@ export class WindowsKeyboardCard extends HTMLElement {
       log_level: "warn",
       log_pushback: false,
       buttons_overrides: {},
-      font_scale: 1.4,
-      trigger_long_click_delay: 500
+      font_scale: 1.4
     }
   }
 
