@@ -172,10 +172,7 @@ export class WindowsKeyboardCard extends HTMLElement {
   // Synchronize cell visuals with given mode and state
   // using per-matching-cell-code configured actions
   doUpdateCellVisuals(cell, cellConfig) {
-
-    // Update button visuals for toggable cells
-    if (cellConfig.toggled) cell.classList.add("locked");
-    if (!cellConfig.toggled) cell.classList.remove("locked");
+    // Nothing to do
   }
 
   // Synchronize cell label with given mode and state
@@ -788,6 +785,10 @@ export class WindowsKeyboardCard extends HTMLElement {
 
       // Toggles button state
       btnData.toggled = !btnData.toggled;
+
+      // Update button visuals
+      if (btnData.toggled) btn.classList.add("locked");
+      if (!btnData.toggled) btn.classList.remove("locked");
 
       // Update triggers
       if (btnData.toggled) this._triggers.add(btnData.code);
