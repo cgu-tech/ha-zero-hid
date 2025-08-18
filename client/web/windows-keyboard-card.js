@@ -812,7 +812,7 @@ export class WindowsKeyboardCard extends HTMLElement {
   toggle(btn) {
     // Toggles button state
     const btnData = this._layoutManager.getElementData(btn);
-    return this.setToggle(!btnData.toggled);
+    return this.setToggle(btn, !btnData.toggled);
   }
   
   setToggle(btn, value) {
