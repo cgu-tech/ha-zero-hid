@@ -20,7 +20,7 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   static _LABEL_NORMAL = "normal";
   static _LABEL_SHIFT = "shift";
-  static _LABEL_RIGHT_ALT = "alt";
+  static _LABEL_RIGHT_ALT = "altGr";
 
   static _TRIGGER_CAPSLOCK = 'KEY_CAPSLOCK';
   static _TRIGGER_SHIFT_LEFT = 'MOD_LEFT_SHIFT';
