@@ -18,6 +18,10 @@ export class WindowsKeyboardCard extends HTMLElement {
   static _STATE_SHIFT = '2';
   static _STATE_RIGHT_ALT = '3';
 
+  static _LABEL_NORMAL = "normal";
+  static _LABEL_SHIFT = "shift";
+  static _LABEL_RIGHT_ALT = "alt";
+
   static _TRIGGER_CAPSLOCK = 'KEY_CAPSLOCK';
   static _TRIGGER_SHIFT_LEFT = 'MOD_LEFT_SHIFT';
   static _TRIGGER_SHIFT_RIGHT = 'MOD_RIGHT_SHIFT';
@@ -36,6 +40,7 @@ export class WindowsKeyboardCard extends HTMLElement {
       "init": { "state": this._STATE_NORMAL },
       "states": {
         [this._STATE_NORMAL]: {
+          "label": this._LABEL_NORMAL,
           "nexts": [
             { "pressed": [this._TRIGGER_SHIFT_LEFT],  "released": [...this._CTRL, ...this._ALT, this._TRIGGER_CAPSLOCK],              "state": this._STATE_SHIFT     },
             { "pressed": [this._TRIGGER_SHIFT_RIGHT], "released": [...this._CTRL, ...this._ALT, this._TRIGGER_CAPSLOCK],              "state": this._STATE_SHIFT     },
@@ -44,6 +49,7 @@ export class WindowsKeyboardCard extends HTMLElement {
           ]
         },
         [this._STATE_SHIFT]: {
+          "label": this._LABEL_SHIFT,
           "nexts": [
             { "pressed": [],                                                    "released": [this._TRIGGER_CAPSLOCK, ...this._SHIFT], "state": this._STATE_NORMAL    },
             { "pressed": [this._TRIGGER_SHIFT_LEFT, this._TRIGGER_CTRL_LEFT],   "released": [],                                       "state": this._STATE_NORMAL    },
@@ -59,6 +65,7 @@ export class WindowsKeyboardCard extends HTMLElement {
           ]
         },
         [this._STATE_RIGHT_ALT]: {
+          "label": this._LABEL_RIGHT_ALT,
           "nexts": [
             { "pressed": [],                                                    "released": [this._TRIGGER_ALT_RIGHT],                "state": this._STATE_NORMAL    },
             { "pressed": [this._TRIGGER_ALT_RIGHT, this._TRIGGER_SHIFT_LEFT],   "released": [],                                       "state": this._STATE_NORMAL    },
