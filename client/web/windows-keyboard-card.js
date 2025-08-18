@@ -893,7 +893,7 @@ export class WindowsKeyboardCard extends HTMLElement {
       if (this.activateNextState()) this.doUpdateCells();
     })
     .catch((err) => {
-      if (this.logger.isErrorEnabled()) console.error(...this.logger.error("Failed to sync keyboard state:", err));
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error("Failed to sync keyboard state:", err));
     });
   }
 
