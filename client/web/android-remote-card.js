@@ -1233,7 +1233,7 @@ class AndroidRemoteCard extends HTMLElement {
         overrideLongPressEntry["was-ran"] = true;
 
         // Execute action
-        this._eventManager.executeTypedButtonOverride(btn, this._layoutManager.getButtonOverride(btn), this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS));
+        this._eventManager.executeTypedButtonOverride(btn, this._layoutManager.getButtonOverride(btn), this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
       }
     }, this.getTriggerLongClickDelay()); // long-press duration
   }
