@@ -1105,20 +1105,20 @@ class AndroidRemoteCard extends HTMLElement {
 
   onButtonPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doKeyPress(btn);
+    this.doKeyPress(btn, evt);
   }
 
   onButtonAbortPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doKeyAbortPress(btn);
+    this.doKeyAbortPress(btn, evt);
   }
 
   onButtonRelease(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doKeyRelease(btn);
+    this.doKeyRelease(btn, evt);
   }
 
-  doKeyPress(btn) {
+  doKeyPress(btn, evt) {
 
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
@@ -1156,7 +1156,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._layoutManager.hapticFeedback();
   }
 
-  doKeyAbortPress(btn) {
+  doKeyAbortPress(btn, evt) {
 
     // Remove override long press timeout (when set before)
     this.clearOverrideLongPressTimeout(evt);
@@ -1185,7 +1185,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._layoutManager.hapticFeedback();
   }
 
-  doKeyRelease(btn) {
+  doKeyRelease(btn, evt) {
 
     // Remove override long press timeout (when set before)
     this.clearOverrideLongPressTimeout(evt);
