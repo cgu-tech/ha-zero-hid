@@ -26,6 +26,10 @@ class AndroidRemoteCard extends HTMLElement {
   _cellButtonBg = '#3a3a3a';
   _cellButtonActiveBg = '#4a4a4a';
   _cellButtonPressBg = '#6a6a6a';
+  _OVERRIDE_NORMAL_MODE = 'normal_mode';
+  _OVERRIDE_ALTERNATIVE_MODE = 'alt_mode';
+  _OVERRIDE_TYPE_SHORT_PRESS = 'short_press';
+  _OVERRIDE_TYPE_LONG_PRESS = 'long_press';
 
   // private properties
   _config;
@@ -40,6 +44,8 @@ class AndroidRemoteCard extends HTMLElement {
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
   _threeStatesToggleState;
+  _overrideMode = this._OVERRIDE_NORMAL_MODE;
+  _overrideLongPressTimeouts = new Map();
 
   constructor() {
     super();
@@ -104,6 +110,10 @@ class AndroidRemoteCard extends HTMLElement {
 
   getActivitiesConfig() {
     return this._layoutManager.getFromConfigOrDefaultConfig("activities");
+  }
+
+  getTriggerLongClickDelay() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
   }
 
   getKeyboard() {
@@ -564,13 +574,13 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.wrapper.innerHTML = '';
 
     // Reset cells contents elements (if any)
-    this._elements.cellContents = []
+    this._elements.cellContents = [];
 
     // Reset cells elements (if any)
-    this._elements.cells = []
+    this._elements.cells = [];
 
     // Reset rows elements (if any)
-    this._elements.rows = []
+    this._elements.rows = [];
     
     // Reset attached layout
     this._layoutManager.resetAttachedLayout();
@@ -1066,6 +1076,7 @@ class AndroidRemoteCard extends HTMLElement {
       log_level: "warn",
       log_pushback: false,
       buttons_overrides: {},
+      trigger_long_click_delay: 500,
       keyboard: {},
       trackpad: {},
       activities: {}
@@ -1118,8 +1129,21 @@ class AndroidRemoteCard extends HTMLElement {
     if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
-      // Nothing to do: overriden action will be executed on key release
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key detected, nothing to press`));
+      if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS)) {
+        // Nothing to do: overriden action will be executed on key release
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_SHORT_PRESS} detected, nothing to press`));
+      }
+      if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS)) {
+        // Nothing to do: overriden action will be executed on key release
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
+        this._overrideLongPressTimeouts.set(evt.pointerId, { 
+          "can-run": true,                   // until proven wrong, long press action can be run
+          "was-ran": false,                      // true when action was executed
+          "source": btn,                        // long press source button
+          "source-mode": this._overrideMode,          // long press source mode when timeout starts
+          "timeout": this.addOverrideLongPressTimeout(evt)   // when it expires, triggers the associated inner callback to run the action
+        });
+      }
     } else {
       // Default action
 
@@ -1133,6 +1157,10 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doKeyAbortPress(btn) {
+
+    // Remove override long press timeout (when set before)
+    this.clearOverrideLongPressTimeout(evt);
+    this._overrideLongPressTimeouts.delete(evt.pointerId);
 
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
@@ -1159,6 +1187,10 @@ class AndroidRemoteCard extends HTMLElement {
 
   doKeyRelease(btn) {
 
+    // Remove override long press timeout (when set before)
+    this.clearOverrideLongPressTimeout(evt);
+    this._overrideLongPressTimeouts.delete(evt.pointerId);
+
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
     if (!btnData) return;
@@ -1181,6 +1213,34 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
+  }
+
+  addOverrideLongPressTimeout(evt) {
+    return setTimeout(() => {
+      const overrideLongPressEntry = this._overrideLongPressTimeouts.get(evt.pointerId);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry:`, evt, overrideLongPressEntry));
+
+      // When no poppin entry: key has been released before timeout
+      if (overrideLongPressEntry && overrideLongPressEntry["can-run"] && !overrideLongPressEntry["was-ran"]) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Long action waiting to be executed...`));
+        const cell = overrideLongPressEntry["source"];
+
+        // Check whether or not long click action can be run in current mode
+        overrideLongPressEntry["can-run"] = (overrideLongPressEntry["source-mode"] === this._overrideMode);
+        if (!overrideLongPressEntry["can-run"]) return;
+
+        // Mark action as ran
+        overrideLongPressEntry["was-ran"] = true;
+
+        // Execute action
+        this._eventManager.executeTypedButtonOverride(btn, this._layoutManager.getButtonOverride(btn), this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS));
+      }
+    }, this.getTriggerLongClickDelay()); // long-press duration
+  }
+
+  clearOverrideLongPressTimeout(evt) {
+    const timeout = this._overrideLongPressTimeouts.get(evt.pointerId)?.["timeout"];
+    if (timeout) clearTimeout(timeout);
   }
 
   executeButtonOverride(btn) {

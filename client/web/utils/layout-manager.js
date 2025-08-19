@@ -88,6 +88,14 @@ export class LayoutManager {
     return (btn.id && this.getButtonOverride(btn));
   }
 
+  getTypedButtonOverride(btn) {
+    return this.getButtonsOverrides()[btn.id]?.[mode]?.[type];
+  }
+
+  hasTypedButtonOverride(btn, mode, type) {
+    return (btn.id && this.getTypedButtonOverride(btn, mode, type));
+  }
+
   getLayoutsNames() {
     return this._layoutsNames;
   }

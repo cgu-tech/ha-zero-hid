@@ -434,6 +434,10 @@ export class EventManager {
   }
 
   executeButtonOverride(btn, overrideConfig) {
+    return this.executeTypedButtonOverride(btn, overrideConfig, 'normal_mode', 'short_press');
+  }
+
+  executeTypedButtonOverride(btn, overrideConfig, overrideMode, overrideType) {
     if (!this.getHass()) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`executeButtonOverride(btn, overrideConfig): undefined hass. Unable to execute the override action (called too early before HA hass init or HA unresponsive)`, btn, overrideConfig));
       return;
@@ -442,14 +446,15 @@ export class EventManager {
     // When sensor detected in override configuration, 
     // choose override action to execute according to current sensor state (on/off)
     let overrideAction;
-    if (overrideConfig['sensor']) {
-      if (btn._sensorState && btn._sensorState.toLowerCase() === "on") {
-        overrideAction = overrideConfig['action_when_on'];
+    const overrideTypedConfig = overrideConfig[overrideMode][overrideType];
+    if (overrideTypedConfig['sensor']) {
+      if (btn?._sensorState?.toLowerCase() === 'on') {
+        overrideAction = overrideTypedConfig['action_when_on'];
       } else {
-        overrideAction = overrideConfig['action_when_off'];
+        overrideAction = overrideTypedConfig['action_when_off'];
       }
     } else {
-      overrideAction = overrideConfig['action'];
+      overrideAction = overrideTypedConfig['action'];
     }
 
     // Execute override action

@@ -399,13 +399,13 @@ export class WindowsKeyboardCard extends HTMLElement {
     this._elements.container.innerHTML = '';
 
     // Reset cells contents elements (if any)
-    this._elements.cellContents = []
+    this._elements.cellContents = [];
 
     // Reset cells elements (if any)
-    this._elements.cells = []
+    this._elements.cells = [];
 
     // Reset rows elements (if any)
-    this._elements.rows = []
+    this._elements.rows = [];
 
     // Reset attached layout
     this._layoutManager.resetAttachedLayout();
