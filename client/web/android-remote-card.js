@@ -530,8 +530,7 @@ class AndroidRemoteCard extends HTMLElement {
     Object.keys(overridesConfigs).forEach((btnId) => {
 
       // Search if current override configuration does have a declared sensor
-      const overrideConfig = overridesConfigs[btnId];
-      const sensorEntityId = overrideConfig['sensor'];
+      const sensorEntityId = overridesConfigs[btnId]?.['sensor'];
       if (sensorEntityId) {
 
         // Search if current override configuration matches an element from DOM
