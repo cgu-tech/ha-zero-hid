@@ -366,7 +366,7 @@ export class CarrouselCard extends HTMLElement {
     this.doUpdateElementOrientation(this._elements.container);
     
     // Setup cells orientation
-    for (const cell of this._elements.cells) {
+    for (const cell of (this._elements?.cells ?? [])) {
       this.doUpdateElementOrientation(cell);
     }
   }
