@@ -191,6 +191,8 @@ class AndroidRemoteCard extends HTMLElement {
         font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         max-width: 100%;
+        flex-shrink: 1; /* allow shrinking */
+        min-width: 0;   /* allow content to shrink inside */
         display: flex;
         flex-direction: row;
       }
