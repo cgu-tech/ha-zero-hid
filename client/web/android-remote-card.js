@@ -1139,24 +1139,21 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to press
     const code = btnData.code;
-    if (this._layoutManager.hasButtonOverride(btn)) {
-      // Overriden action
-      
-      if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS)) {
-        // Nothing to do: overriden action will be executed on key release
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_SHORT_PRESS} detected, nothing to press`));
-      }
-      if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS)) {
-        // Nothing to do: overriden action will be executed on key release
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
-        this._overrideLongPressTimeouts.set(evt.pointerId, { 
-          "can-run": true,                   // until proven wrong, long press action can be run
-          "was-ran": false,                      // true when action was executed
-          "source": btn,                        // long press source button
-          "source-mode": this._overrideMode,          // long press source mode when timeout starts
-          "timeout": this.addOverrideLongPressTimeout(evt)   // when it expires, triggers the associated inner callback to run the action
-        });
-      }
+    if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS)) {
+      // Nothing to do: overriden action will be executed on key release
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_SHORT_PRESS} detected, nothing to press`));
+    }
+    if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS)) {
+
+      // Triggering long click timeout
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
+      this._overrideLongPressTimeouts.set(evt.pointerId, { 
+        "can-run": true,                   // until proven wrong, long press action can be run
+        "was-ran": false,                      // true when action was executed
+        "source": btn,                        // long press source button
+        "source-mode": this._overrideMode,          // long press source mode when timeout starts
+        "timeout": this.addOverrideLongPressTimeout(evt)   // when it expires, triggers the associated inner callback to run the action
+      });
     } else {
       // Default action
 
@@ -1181,11 +1178,15 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to abort press
     const code = btnData.code;
-    if (this._layoutManager.hasButtonOverride(btn)) {
+    if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS)) {
+      // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden short key press detected, nothing to abort`));
+    }
+    if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS)) {
       // Overriden action
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden key detected, nothing to abort`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden long key press detected, nothing to abort`));
     } else {
       // Default action
 
@@ -1215,7 +1216,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (overrideLongPressEntry && overrideLongPressEntry["was-ran"]) {
       // Overriden action already executed into its long-press Form
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected but action already executed into ${this._overrideMode} ${this._OVERRIDE_TYPE_LONG_PRESS}, nothing else to do`));
-    } else if (this._layoutManager.hasButtonOverride(btn)) {
+    } else if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS)) {
       // Overriden action
       
       // Execute the override action
