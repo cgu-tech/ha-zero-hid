@@ -157,7 +157,7 @@ class AndroidRemoteCard extends HTMLElement {
         <div class="wrapper">
         </div>
         <div class="side-wrapper">
-          <div class="cell span-1">
+          <div class="cell side-span">
             <button class="side-circle-button">Hello</button>
           </div>
         </div>
@@ -216,6 +216,9 @@ class AndroidRemoteCard extends HTMLElement {
         flex: 1 1 auto; /* Allow growing and shrinking */
         min-width: 0;
         background-color: var(--cell-button-bg);
+      }
+      .side-span {
+        flex: 1 1 auto; /* Allow growing and shrinking */
       }
       .side-circle-button {
         width: 100%;  /* maintain aspect ratio */
