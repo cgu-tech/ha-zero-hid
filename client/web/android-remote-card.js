@@ -562,6 +562,7 @@ class AndroidRemoteCard extends HTMLElement {
   doQueryElements() {
     const card = this._elements.card;
     this._elements.wrapper = card.querySelector(".wrapper");
+    this._elements.sidewrapper = card.querySelector(".side-wrapper");
   }
 
   doListen() {
