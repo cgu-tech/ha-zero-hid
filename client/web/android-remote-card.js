@@ -1200,6 +1200,8 @@ class AndroidRemoteCard extends HTMLElement {
 
   doKeyRelease(btn, evt) {
 
+    const overrideLongPressEntry = this._overrideLongPressTimeouts.get(evt.pointerId);
+    
     // Remove override long press timeout (when set before)
     this.clearOverrideLongPressTimeout(evt);
     this._overrideLongPressTimeouts.delete(evt.pointerId);
@@ -1210,7 +1212,10 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to release
     const code = btnData.code;
-    if (this._layoutManager.hasButtonOverride(btn)) {
+    if (overrideLongPressEntry && overrideLongPressEntry["was-ran"]) {
+      // Overriden action already executed into its long-press Form
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected but action already executed into ${this._overrideMode} ${this._OVERRIDE_TYPE_LONG_PRESS}, nothing else to do`));
+    } else if (this._layoutManager.hasButtonOverride(btn)) {
       // Overriden action
       
       // Execute the override action
@@ -1246,6 +1251,7 @@ class AndroidRemoteCard extends HTMLElement {
         overrideLongPressEntry["was-ran"] = true;
 
         // Execute action
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry: executing ${this._overrideMode} ${this._OVERRIDE_TYPE_LONG_PRESS} action...`, evt, overrideLongPressEntry));
         this.executeButtonOverride(btn, this._OVERRIDE_TYPE_LONG_PRESS);
       }
     }, this.getTriggerLongClickDelay()); // long-press duration
