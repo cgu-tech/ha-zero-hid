@@ -1236,7 +1236,7 @@ class AndroidRemoteCard extends HTMLElement {
       // When no entry: key has been released before timeout
       if (overrideLongPressEntry && overrideLongPressEntry["can-run"] && !overrideLongPressEntry["was-ran"]) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Long action waiting to be executed...`));
-        const cell = overrideLongPressEntry["source"];
+        const btn = overrideLongPressEntry["source"];
 
         // Check whether or not long click action can be run in current mode
         overrideLongPressEntry["can-run"] = (overrideLongPressEntry["source-mode"] === this._overrideMode);
