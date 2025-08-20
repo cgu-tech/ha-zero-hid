@@ -113,7 +113,7 @@ export class CarrouselCard extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("cells");
   }
   getOrientation() {
-    const orientation = this._orientation || this.getFromConfigOrDefaultConfig("orientation");
+    const orientation = this._orientation || this._layoutManager.getFromConfigOrDefaultConfig("orientation");
     const orientationLow = (typeof orientation === 'string' ? orientation?.toLowerCase() : null);
     return (orientationLow === this.constructor._ORIENTATION_VERTICAL ? this.constructor._ORIENTATION_VERTICAL : this.constructor._ORIENTATION_HORIZONTAL);
   }
