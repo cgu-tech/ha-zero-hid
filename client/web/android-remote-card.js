@@ -30,6 +30,7 @@ class AndroidRemoteCard extends HTMLElement {
   _OVERRIDE_ALTERNATIVE_MODE = 'alt_mode';
   _OVERRIDE_TYPE_SHORT_PRESS = 'short_press';
   _OVERRIDE_TYPE_LONG_PRESS = 'long_press';
+  _OVERRIDE_SAME = 'same';
 
   // private properties
   _config;
@@ -1280,7 +1281,19 @@ class AndroidRemoteCard extends HTMLElement {
     const overrideConfig = this._layoutManager.getButtonOverride(btn);
     
     // Retrieve override typed config
-    const overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, pressType);
+    let overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, pressType);
+    
+    // When "same" config specified, retrieve reference config from the other config type
+    if (overrideTypedConfig === this._OVERRIDE_SAME) {
+      const referencePressType = (pressType === this._OVERRIDE_TYPE_SHORT_PRESS ? this._OVERRIDE_TYPE_LONG_PRESS : this._OVERRIDE_TYPE_SHORT_PRESS);
+      overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, referencePressType);
+    }
+
+    // When both config types are "same": error
+    if (overrideTypedConfig === this._OVERRIDE_SAME) {
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`executeButtonOverride(btn): invalid config ${this._overrideMode} for btn ${btn.id} (both ${this._OVERRIDE_TYPE_SHORT_PRESS} and ${this._OVERRIDE_TYPE_LONG_PRESS} reference "${this._OVERRIDE_SAME}". Aborting...`, btn));
+    }
+
     if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
         overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
