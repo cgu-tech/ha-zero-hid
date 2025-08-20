@@ -433,6 +433,10 @@ export class EventManager {
     if (typeof evt?.preventDefault === 'function') evt.preventDefault();
   }
 
+  getTypedButtonOverrideConfig(overrideConfig, overrideMode, overrideType) {
+    return overrideConfig?.[overrideMode]?.[overrideType];
+  }
+
   executeButtonOverride(btn, overrideConfig) {
     return this.executeTypedButtonOverride(btn, overrideConfig, 'normal_mode', 'short_press');
   }
@@ -443,10 +447,17 @@ export class EventManager {
       return;
     }
 
-    // When sensor detected in override configuration, 
+    // Retrieve override typed config
+    const overrideTypedConfig = this.getTypedButtonOverrideConfig(overrideConfig, overrideMode, overrideType);
+    if (!overrideTypedConfig) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`executeButtonOverride(btn, overrideConfig): undefined typed button override. Unable to execute the override action.`, btn, overrideConfig));
+      return;
+    }
+    // Override typed config available
+
+    // When sensor detected in override config, 
     // choose override action to execute according to current sensor state (on/off)
     let overrideAction;
-    const overrideTypedConfig = overrideConfig[overrideMode][overrideType];
     if (overrideTypedConfig['sensor']) {
       if (btn?._sensorState?.toLowerCase() === 'on') {
         overrideAction = overrideTypedConfig['action_when_on'];
@@ -454,10 +465,11 @@ export class EventManager {
         overrideAction = overrideTypedConfig['action_when_off'];
       }
     } else {
+      // Otherwise, retrieve the only action to execute
       overrideAction = overrideTypedConfig['action'];
     }
 
-    // Execute override action
+    // Execute selected override action
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
     this.triggerHaosTapAction(btn, overrideAction);
   }

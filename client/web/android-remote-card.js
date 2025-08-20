@@ -169,6 +169,9 @@ class AndroidRemoteCard extends HTMLElement {
         --cell-button-bg: ${this._cellButtonBg};
         --cell-button-active-bg: ${this._cellButtonActiveBg};
         --cell-button-press-bg: ${this._cellButtonPressBg};
+        --cell-button-locked-bg: #0073e6; /* blue */
+        --cell-button-locked-active-bg: #3399ff; /* blue */
+        --cell-button-locked-press-bg: #80bfff; /* lighter blue */
         --cell-sensor-on-fg: #ffc107;
         display: block;
         box-sizing: border-box;
@@ -245,6 +248,16 @@ class AndroidRemoteCard extends HTMLElement {
       .circle-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background-color: var(--cell-button-press-bg);
         transform: scale(0.95);
+      }
+      .circle-button.locked {
+        background: var(--cell-button-locked-bg);
+        font-weight: bold;
+      }
+      .circle-button.locked.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background: var(--cell-button-locked-active-bg);
+      }
+      .circle-button.locked.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background: var(--cell-button-locked-press-bg);
       }
       .side-button {
         aspect-ratio: 3 / 1;
@@ -1220,7 +1233,7 @@ class AndroidRemoteCard extends HTMLElement {
       const overrideLongPressEntry = this._overrideLongPressTimeouts.get(evt.pointerId);
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry:`, evt, overrideLongPressEntry));
 
-      // When no poppin entry: key has been released before timeout
+      // When no entry: key has been released before timeout
       if (overrideLongPressEntry && overrideLongPressEntry["can-run"] && !overrideLongPressEntry["was-ran"]) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Long action waiting to be executed...`));
         const cell = overrideLongPressEntry["source"];
@@ -1232,8 +1245,28 @@ class AndroidRemoteCard extends HTMLElement {
         // Mark action as ran
         overrideLongPressEntry["was-ran"] = true;
 
-        // Execute action
-        this._eventManager.executeTypedButtonOverride(btn, this._layoutManager.getButtonOverride(btn), this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
+        // Retrieve override config
+        const overrideConfig = this._layoutManager.getButtonOverride(btn);
+        
+        // Retrieve override typed config
+        const overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
+        if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE && 
+            overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
+          // Typed config switches mode
+
+          // Switch mode
+          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry: switching from ${this._overrideMode} to ${overrideTypedConfig}...`, evt, overrideLongPressEntry));
+          this._overrideMode = overrideTypedConfig;
+          if (this._overrideMode === this._OVERRIDE_ALTERNATIVE_MODE) cell.classList.add("locked");
+          if (this._overrideMode === this._OVERRIDE_NORMAL_MODE) cell.classList.remove("locked");
+        } else {
+          // Typed config defines an action (related to sensor state or not)
+
+          // Execute action
+          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry: executing ${this._OVERRIDE_TYPE_LONG_PRESS} action into ${this._overrideMode}...`, evt, overrideLongPressEntry));
+          this._eventManager.executeTypedButtonOverride(btn, overrideConfig, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
+        }
+
       }
     }, this.getTriggerLongClickDelay()); // long-press duration
   }
