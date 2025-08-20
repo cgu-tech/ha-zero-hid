@@ -13,6 +13,9 @@ export class CarrouselCard extends HTMLElement {
   static _CELL_MODE_LABEL = "label";
   static _CELL_MODE_MIXED = "mixed";
 
+  static _ORIENTATION_HORIZONTAL = "horizontal";
+  static _ORIENTATION_VERTICAL = "vertical";
+
   // private constants
   _allowedCellData = new Set(['action', 'cellName', 'imageUrl']);
 
@@ -27,9 +30,13 @@ export class CarrouselCard extends HTMLElement {
 
   _cellModesMap = new Map();
   _reversedCellModesMap = new Map();
+  _orientation;
 
-  constructor() {
+  constructor(orientation) {
     super();    
+
+    // Retrieve and secure constructor args
+    this.setOrientation(orientation);
 
     // Mapping for mode names with their accepted mode names identifiers counterparts
     this._cellModesMap.set(this.constructor._CELL_MODE_IMAGE, ["image", "img", "icon", "ico", "picture", "pic", "photo"]);
@@ -105,6 +112,13 @@ export class CarrouselCard extends HTMLElement {
   }
 
   // Global and overridable per cell config
+  setOrientation(orientation) {
+    const orientationLow = (typeof orientation === 'string' ? orientation?.toLowerCase() : null);
+    this._orientation = (orientationLow === this.constructor._ORIENTATION_VERTICAL ? this.constructor._ORIENTATION_VERTICAL : this.constructor._ORIENTATION_HORIZONTAL);
+  }
+  getOrientation() {
+    return this._orientation;
+  }
   getCellDisplayMode(cellConfig) {
     return this._reversedCellModesMap.get(this.getCellConfigOrDefault(cellConfig, "display_mode"));
   }
@@ -189,6 +203,21 @@ export class CarrouselCard extends HTMLElement {
   }
 
   doStyle() {
+    const carouselContainerHorizontal = `
+        display: flex;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        scroll-behavior: smooth;
+    `;
+    const carouselContainerVertical = `
+        display: flex;
+        flex-direction: column;     /* items stack vertically */
+        height: 100%;               /* optional: fill parent vertically */
+        overflow-y: auto;           /* scroll vertically */
+        scroll-behavior: smooth;
+    `;
+
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
       :host {
@@ -200,21 +229,17 @@ export class CarrouselCard extends HTMLElement {
         --cell-press-bg: #6a6a6a;
       }
       .carrousel-container {
-        display: flex;
-        width: 100%;
-        overflow-x: auto;
-        white-space: nowrap;
-        scroll-behavior: smooth;
+        ${this.getOrientation() === this.constructor._ORIENTATION_VERTICAL 
+          ? carouselContainerVertical
+          : carouselContainerHorizontal}
       }
       .carrousel-cell {
+        ${this.getOrientation() === this.constructor._ORIENTATION_VERTICAL ? "width: 100%;" : ""}
         display: inline-flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        margin-left: 2px;
-        margin-right: 2px;
-        margin-top: 4px;
-        margin-bottom: 4px;
+        margin: 2px;
         background: var(--cell-bg);
         border-radius: 8px;
         overflow: hidden;
