@@ -1263,7 +1263,7 @@ class AndroidRemoteCard extends HTMLElement {
     
     // Retrieve override typed config
     const overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, pressType);
-    if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE && 
+    if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
         overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
 
