@@ -1215,7 +1215,7 @@ class AndroidRemoteCard extends HTMLElement {
       
       // Execute the override action
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected, suppressing ${code} to execute override...`));
-      this.executeButtonOverride(btn);
+      this.executeButtonOverride(btn, this._OVERRIDE_TYPE_SHORT_PRESS);
     } else {
       // Default action
 
@@ -1245,28 +1245,8 @@ class AndroidRemoteCard extends HTMLElement {
         // Mark action as ran
         overrideLongPressEntry["was-ran"] = true;
 
-        // Retrieve override config
-        const overrideConfig = this._layoutManager.getButtonOverride(btn);
-        
-        // Retrieve override typed config
-        const overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
-        if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE && 
-            overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
-          // Typed config switches mode
-
-          // Switch mode
-          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry: switching from ${this._overrideMode} to ${overrideTypedConfig}...`, evt, overrideLongPressEntry));
-          this._overrideMode = overrideTypedConfig;
-          if (this._overrideMode === this._OVERRIDE_ALTERNATIVE_MODE) cell.classList.add("locked");
-          if (this._overrideMode === this._OVERRIDE_NORMAL_MODE) cell.classList.remove("locked");
-        } else {
-          // Typed config defines an action (related to sensor state or not)
-
-          // Execute action
-          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry: executing ${this._OVERRIDE_TYPE_LONG_PRESS} action into ${this._overrideMode}...`, evt, overrideLongPressEntry));
-          this._eventManager.executeTypedButtonOverride(btn, overrideConfig, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
-        }
-
+        // Execute action
+        this.executeButtonOverride(btn, this._OVERRIDE_TYPE_LONG_PRESS);
       }
     }, this.getTriggerLongClickDelay()); // long-press duration
   }
@@ -1276,8 +1256,29 @@ class AndroidRemoteCard extends HTMLElement {
     if (timeout) clearTimeout(timeout);
   }
 
-  executeButtonOverride(btn) {
-    this._eventManager.executeButtonOverride(btn, this._layoutManager.getButtonOverride(btn));
+  executeButtonOverride(btn, pressType) {
+
+    // Retrieve override config
+    const overrideConfig = this._layoutManager.getButtonOverride(btn);
+    
+    // Retrieve override typed config
+    const overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, pressType);
+    if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE && 
+        overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
+      // Typed config switches mode
+
+      // Switch mode
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._overrideMode} to ${overrideTypedConfig}...`, btn));
+      this._overrideMode = overrideTypedConfig;
+      if (this._overrideMode === this._OVERRIDE_ALTERNATIVE_MODE) btn.classList.add("locked");
+      if (this._overrideMode === this._OVERRIDE_NORMAL_MODE) btn.classList.remove("locked");
+    } else {
+      // Typed config defines an action (related to sensor state or not)
+
+      // Execute action whenever sub-config defined (handled by this._eventManager.executeTypedButtonOverride)
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): executing ${pressType} action into ${this._overrideMode}...`, btn));
+      this._eventManager.executeTypedButtonOverride(btn, overrideConfig, this._overrideMode, pressType);
+    }
   }
 
   appendCode(code) {
