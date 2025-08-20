@@ -1240,10 +1240,10 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   hasTypedButtonOverrideShort(btn) {
-    this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS);
+    return this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS);
   }
   hasTypedButtonOverrideLong(btn) {
-    this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
+    return this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
   }
 
   addOverrideLongPressTimeout(evt) {
