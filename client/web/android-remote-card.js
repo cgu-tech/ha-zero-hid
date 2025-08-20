@@ -179,11 +179,12 @@ class AndroidRemoteCard extends HTMLElement {
         --cell-button-locked-active-bg: #3399ff; /* blue */
         --cell-button-locked-press-bg: #80bfff; /* lighter blue */
         --cell-sensor-on-fg: #ffc107;
+        --card-border-radius: 0.5em;
         display: block;
         box-sizing: border-box;
         max-width: 100%;
         background: var(--card-background-color);
-        border-radius: 0.5em;
+        border-radius: var(--card-border-radius);
         overflow: hidden; /* prevent overflow outside card */
         font-family: sans-serif;
       }
@@ -208,6 +209,8 @@ class AndroidRemoteCard extends HTMLElement {
         min-width: 0;
       }
       .side-wrapper {
+        border-top-right-radius: var(--card-corner-radius);
+        border-bottom-right-radius: var(--card-corner-radius);
         display: flex;
         flex-direction: column;
         flex: 1 1 auto; /* Allow growing and shrinking */
