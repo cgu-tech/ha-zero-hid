@@ -179,7 +179,7 @@ class AndroidRemoteCard extends HTMLElement {
         --cell-button-locked-active-bg: #3399ff; /* blue */
         --cell-button-locked-press-bg: #80bfff; /* lighter blue */
         --cell-sensor-on-fg: #ffc107;
-        --card-border-radius: 0.5em;
+        --card-border-radius: 10px;
         display: block;
         box-sizing: border-box;
         max-width: 100%;
