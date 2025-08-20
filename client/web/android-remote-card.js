@@ -128,6 +128,10 @@ class AndroidRemoteCard extends HTMLElement {
   getActivities() {
     return this._elements.foldables.activities;
   }
+  
+  getAddons() {
+    return this._elements.sides.addons;
+  }
 
   getFoldableChild() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getFoldableChild() + _threeStatesToggleState:", this._threeStatesToggleState));
@@ -143,6 +147,11 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.foldables.keyboard = document.createElement("android-keyboard-card");
     this._elements.foldables.trackpad = document.createElement("trackpad-card");
     this._elements.foldables.activities = document.createElement("carrousel-card");
+  }
+
+  createSidesContent() {
+    this._elements.sides = {};
+    this._elements.sides.addons = document.createElement("carrousel-card");
   }
 
   // jobs
