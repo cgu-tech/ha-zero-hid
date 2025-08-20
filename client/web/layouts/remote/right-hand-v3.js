@@ -8,7 +8,7 @@ export const layoutRemoteRightHandV3 = {
           { "name": "remote-button-power-shield-1", "weight": 1 },
           { "name": "remote-button-power-device",   "weight": 1 },
           { "name": "remote-button-settings",       "weight": 1 },
-          { "name": "remote-button-light-bulb",     "weight": 1 },
+          { "name": "remote-button-side-panel",     "weight": 1 },
         ]
       },
       {
