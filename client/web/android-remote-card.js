@@ -175,6 +175,7 @@ class AndroidRemoteCard extends HTMLElement {
     `;
 
     this.createFoldableContent();
+    this.createSidesContent();
   }
 
   doStyle() {
