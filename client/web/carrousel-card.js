@@ -30,7 +30,6 @@ export class CarrouselCard extends HTMLElement {
 
   _cellModesMap = new Map();
   _reversedCellModesMap = new Map();
-  _orientation;
 
   constructor(orientation) {
     super();    
@@ -112,12 +111,8 @@ export class CarrouselCard extends HTMLElement {
   }
 
   // Global and overridable per cell config
-  setOrientation(orientation) {
-    const orientationLow = (typeof orientation === 'string' ? orientation?.toLowerCase() : null);
-    this._orientation = (orientationLow === this.constructor._ORIENTATION_VERTICAL ? this.constructor._ORIENTATION_VERTICAL : this.constructor._ORIENTATION_HORIZONTAL);
-  }
   getOrientation() {
-    return this._orientation;
+    return this.getCellConfigOrDefault(cellConfig, "orientation");
   }
   getCellDisplayMode(cellConfig) {
     return this._reversedCellModesMap.get(this.getCellConfigOrDefault(cellConfig, "display_mode"));
@@ -203,21 +198,6 @@ export class CarrouselCard extends HTMLElement {
   }
 
   doStyle() {
-    const carouselContainerHorizontal = `
-        display: flex;
-        width: 100%;
-        overflow-x: auto;
-        white-space: nowrap;
-        scroll-behavior: smooth;
-    `;
-    const carouselContainerVertical = `
-        display: flex;
-        flex-direction: column;     /* items stack vertically */
-        height: 100%;               /* optional: fill parent vertically */
-        overflow-y: auto;           /* scroll vertically */
-        scroll-behavior: smooth;
-    `;
-
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
       :host {
@@ -229,12 +209,21 @@ export class CarrouselCard extends HTMLElement {
         --cell-press-bg: #6a6a6a;
       }
       .carrousel-container {
-        ${this.getOrientation() === this.constructor._ORIENTATION_VERTICAL 
-          ? carouselContainerVertical
-          : carouselContainerHorizontal}
+        display: flex;
+        scroll-behavior: smooth;
+      }
+      .carrousel-container.horizontal {
+        flex-direction: row;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      .carrousel-container.vertical {
+        flex-direction: column;
+        height: 100%;
+        overflow-y: auto;
       }
       .carrousel-cell {
-        ${this.getOrientation() === this.constructor._ORIENTATION_VERTICAL ? "width: 100%;" : ""}
         display: inline-flex;
         flex-direction: column;
         justify-content: center;
@@ -249,6 +238,9 @@ export class CarrouselCard extends HTMLElement {
         box-sizing: border-box;
         cursor: pointer;
         transition: background-color 0.2s ease;
+      }
+      .carrousel-cell.vertical {
+        width: 100%;
       }
       .carrousel-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background-color: var(--cell-active-bg);
@@ -643,6 +635,7 @@ export class CarrouselCard extends HTMLElement {
       haptic: true,
       log_level: "warn",
       log_pushback: false,
+      orientation: this.constructor._ORIENTATION_HORIZONTAL,
       cell_display_mode: this.constructor._CELL_MODE_MIXED,
       cell_background: "transparent",
       cell_width: 60,
