@@ -1,4 +1,4 @@
-export const layoutRemoteRightHandV2 = {
+export const layoutRemoteRightHandV3 = {
     "Name": "right-hand-v3",
     "Description": "Contains extended right-handed layout for android remote buttons",
     "rows": [
