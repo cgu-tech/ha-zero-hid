@@ -152,6 +152,7 @@ class AndroidRemoteCard extends HTMLElement {
   createSidesContent() {
     this._elements.sides = {};
     this._elements.sides.addons = document.createElement("carrousel-card");
+    this._elements.sides.addons.setOrientation(CarrouselCard.constructor._ORIENTATION_VERTICAL);
   }
 
   // jobs

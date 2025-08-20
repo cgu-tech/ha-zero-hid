@@ -30,12 +30,10 @@ export class CarrouselCard extends HTMLElement {
 
   _cellModesMap = new Map();
   _reversedCellModesMap = new Map();
+  _orientation;
 
-  constructor(orientation) {
+  constructor() {
     super();    
-
-    // Retrieve and secure constructor args
-    this.setOrientation(orientation);
 
     // Mapping for mode names with their accepted mode names identifiers counterparts
     this._cellModesMap.set(this.constructor._CELL_MODE_IMAGE, ["image", "img", "icon", "ico", "picture", "pic", "photo"]);
@@ -85,6 +83,11 @@ export class CarrouselCard extends HTMLElement {
     this.doUpdateConfig();
   }
 
+  setOrientation(orientation) {
+    this._orientation = orientation;
+    this.doUpdateOrientation();
+  }
+
   set hass(hass) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
@@ -112,7 +115,9 @@ export class CarrouselCard extends HTMLElement {
 
   // Global and overridable per cell config
   getOrientation() {
-    return this.getCellConfigOrDefault(cellConfig, "orientation");
+    const orientation = this._orientation || this.getCellConfigOrDefault(cellConfig, "orientation");
+    const orientationLow = (typeof orientation === 'string' ? orientation?.toLowerCase() : null);
+    return (orientationLow === this.constructor._ORIENTATION_VERTICAL ? this.constructor._ORIENTATION_VERTICAL : this.constructor._ORIENTATION_HORIZONTAL);
   }
   getCellDisplayMode(cellConfig) {
     return this._reversedCellModesMap.get(this.getCellConfigOrDefault(cellConfig, "display_mode"));
@@ -192,7 +197,7 @@ export class CarrouselCard extends HTMLElement {
   doCard() {
     this._elements.card = document.createElement("ha-card");
     this._elements.card.innerHTML = `
-      <div class="carrousel-container">
+      <div class="carrousel-container ${this.getOrientation()}">
       </div>
     `;
   }
@@ -343,7 +348,6 @@ export class CarrouselCard extends HTMLElement {
   }
 
   doCreateLayout() {
-
     // Create all cells
     for (const [cellName, cellConfig] of Object.entries(this.getCells())) {
       const cell = this.doCell(cellName, cellConfig);
@@ -351,6 +355,29 @@ export class CarrouselCard extends HTMLElement {
       this.doAttachCell(cell);
       this.doQueryCellElements();
       this.doListenCell(cell);
+    }
+    
+    // Update orientation
+    this.doUpdateOrientation();
+  }
+  
+  doUpdateOrientation() {
+    // Setup container orientation
+    this.doUpdateElementOrientation(this._elements.container);
+    
+    // Setup cells orientation
+    for (const cell of this._elements.cells) {
+      this.doUpdateElementOrientation(cell);
+    }
+  }
+  
+  doUpdateElementOrientation(elt) {
+    if (this.getOrientation() === this.constructor._ORIENTATION_VERTICAL) {
+      elt.classList.remove(this.constructor._ORIENTATION_HORIZONTAL);
+      elt.classList.add(this.constructor._ORIENTATION_VERTICAL);
+    } else {
+      elt.classList.remove(this.constructor._ORIENTATION_VERTICAL);
+      elt.classList.add(this.constructor._ORIENTATION_HORIZONTAL);
     }
   }
 
