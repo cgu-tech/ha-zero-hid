@@ -701,6 +701,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Setup three-states-toggle foldables
     this.setupFoldable();
+
+    // Setup sides addons
+    this.setupSides();
   }
 
   doRow(rowConfig) {
@@ -1164,6 +1167,19 @@ class AndroidRemoteCard extends HTMLElement {
     const flexStr = String(flex);
     const styleId = flexStr.replace(/\./g, '-');
     return `span-${styleId}`;
+  }
+
+  setupSides() {
+    this.doUpdateAddons();
+  }
+  
+  doUpdateAddons() {
+    // Remove addons content from DOM (ie. hide it)
+    const addons = this._elements.sidewrapper;
+    addons.innerHTML = "";
+
+    // Append next addons content into DOM (ie. show it)
+    addons.appendChild(this.getAddons());
   }
 
   // configuration defaults
