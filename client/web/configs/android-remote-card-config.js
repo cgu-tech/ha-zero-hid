@@ -105,7 +105,7 @@ export const androidRemoteCardConfig = {
       </g>
     </svg>`
   },
-  "remote-button-side-panel": {
+  "remote-button-bulb": {
     html: 
     `<svg id="light-bulb" class="standard-grey" preserveAspectRatio="xMidYMid meet" focusable="false" role="img" aria-hidden="true" viewBox="0 0 24 24">
         <g>
