@@ -702,7 +702,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.setupFoldable();
 
     // Setup sides addons
-    this.setupSides();
+    // this.setupSides();
   }
 
   doRow(rowConfig) {
@@ -1174,11 +1174,11 @@ class AndroidRemoteCard extends HTMLElement {
   
   doUpdateAddons() {
     // Remove addons content from DOM (ie. hide it)
-    const addons = this._elements.sidewrapper;
-    addons.innerHTML = "";
+    const sidewrapper = this._elements.sidewrapper;
+    sidewrapper.innerHTML = "";
 
     // Append next addons content into DOM (ie. show it)
-    addons.appendChild(this.getAddons());
+    sidewrapper.appendChild(this.getAddons());
   }
 
   // configuration defaults
