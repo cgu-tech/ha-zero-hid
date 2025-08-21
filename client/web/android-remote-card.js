@@ -24,6 +24,8 @@ class AndroidRemoteCard extends HTMLElement {
   _allowedClickableData = new Set(['code']);
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
+  _sideCellButtonFg = '#7a7a7a';
+  _sideCellButtonBg = '#1e1e1e';
   _cellButtonActiveBg = '#4a4a4a';
   _cellButtonPressBg = '#6a6a6a';
   _OVERRIDE_NORMAL_MODE = 'normal_mode';
@@ -192,6 +194,8 @@ class AndroidRemoteCard extends HTMLElement {
       :host {
         --cell-button-fg: ${this._cellButtonFg};
         --cell-button-bg: ${this._cellButtonBg};
+        --side-cell-button-bg: ${this._sideCellButtonFg};
+        --side-cell-button-fg: ${this._sideCellButtonBg};
         --cell-button-active-bg: ${this._cellButtonActiveBg};
         --cell-button-press-bg: ${this._cellButtonPressBg};
         --cell-button-locked-bg: #0073e6; /* blue */
@@ -246,8 +250,8 @@ class AndroidRemoteCard extends HTMLElement {
         width: 100%;  /* maintain aspect ratio */
         flex: 1 1 0;
         aspect-ratio: 1 / 1;
-        background-color: var(--cell-button-bg);
-        color: var(--cell-button-fg);
+        background-color: var(--side-cell-button-bg);
+        color: var(--side-cell-button-fg);
         border: none;
         outline: none;
         cursor: pointer;
