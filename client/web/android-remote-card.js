@@ -1194,7 +1194,8 @@ class AndroidRemoteCard extends HTMLElement {
       trigger_long_click_delay: 500,
       keyboard: {},
       trackpad: {},
-      activities: {}
+      activities: {},
+      addons: {}
     }
   }
 
