@@ -25,7 +25,7 @@ class AndroidRemoteCard extends HTMLElement {
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
   _sideCellButtonFg = '#bfbfbf';
-  _sideCellButtonBg = '#1e1e1e';
+  _sideCellButtonBg = '#3a3a3a';
   _cellButtonActiveBg = '#4a4a4a';
   _cellButtonPressBg = '#6a6a6a';
   _OVERRIDE_NORMAL_MODE = 'normal_mode';
