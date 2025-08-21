@@ -78,6 +78,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doCheckConfig();
     this.doUpdateConfig();
     this.doUpdateFoldablesConfig();
+    this.doUpdateSidesConfig();
   }
 
   set hass(hass) {
@@ -85,6 +86,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._hass = hass;
     this.doUpdateHass();
     this.doUpdateFoldablesHass();
+    this.doUpdateSidesHass();
   }
 
   connectedCallback() {
@@ -111,6 +113,10 @@ class AndroidRemoteCard extends HTMLElement {
 
   getActivitiesConfig() {
     return this._layoutManager.getFromConfigOrDefaultConfig("activities");
+  }
+  
+  getAddonsConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("addons");
   }
 
   getTriggerLongClickDelay() {
@@ -582,6 +588,12 @@ class AndroidRemoteCard extends HTMLElement {
     foldables.trackpad.setConfig(this.getTrackpadConfig());
     foldables.activities.setConfig(this.getActivitiesConfig());
   }
+  
+  doUpdateSidesConfig() {
+    // Update sides cards configs
+    const sides = this._elements.sides;
+    sides.addons.setConfig(this.getAddonsConfig());
+  }
 
   doUpdateHass() {
 
@@ -631,6 +643,12 @@ class AndroidRemoteCard extends HTMLElement {
     foldables.keyboard.hass = this._hass;
     foldables.trackpad.hass = this._hass;
     foldables.activities.hass = this._hass;
+  }
+
+  doUpdateSidesHass() {
+    // Update sides cards configs
+    const sides = this._elements.sides;
+    sides.addons.hass = this._hass;
   }
 
   doUpdateLayout() {
