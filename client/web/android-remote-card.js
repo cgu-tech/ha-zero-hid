@@ -82,7 +82,6 @@ class AndroidRemoteCard extends HTMLElement {
     this.doCheckConfig();
     this.doUpdateConfig();
     this.doUpdateFoldablesConfig();
-    this.doUpdateSidesConfig();
   }
 
   set hass(hass) {
@@ -90,7 +89,6 @@ class AndroidRemoteCard extends HTMLElement {
     this._hass = hass;
     this.doUpdateHass();
     this.doUpdateFoldablesHass();
-    this.doUpdateSidesHass();
   }
 
   connectedCallback() {
@@ -140,7 +138,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
   
   getAddons() {
-    return this._elements.sides.addons;
+    return this._elements.addons;
   }
 
   getFoldableChild() {
@@ -159,10 +157,8 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.foldables.activities = document.createElement("carrousel-card");
   }
 
-  createSidesContent() {
-    this._elements.sides = {};
-    this._elements.sides.addons = document.createElement("carrousel-card");
-    this._elements.sides.addons.setOrientation(CarrouselCard._ORIENTATION_VERTICAL);
+  createAddonsContent() {
+    this._elements.addons = {};
   }
 
   // jobs
@@ -196,7 +192,7 @@ class AndroidRemoteCard extends HTMLElement {
     `;
 
     this.createFoldableContent();
-    this.createSidesContent();
+    this.createAddonsContent();
   }
 
   doStyle() {
@@ -612,12 +608,6 @@ class AndroidRemoteCard extends HTMLElement {
     foldables.activities.setConfig(this.getActivitiesConfig());
   }
   
-  doUpdateSidesConfig() {
-    // Update sides cards configs
-    const sides = this._elements.sides;
-    sides.addons.setConfig(this.getAddonsConfig());
-  }
-
   doUpdateHass() {
 
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
@@ -658,6 +648,13 @@ class AndroidRemoteCard extends HTMLElement {
         }
       }
     });
+    
+    this.doUpdateAddonsHass();
+  }
+
+  doUpdateAddonsHass() {
+    // Update sides cards configs
+    this._elements.addons.hass = this._hass;
   }
 
   doUpdateFoldablesHass() {
@@ -668,12 +665,6 @@ class AndroidRemoteCard extends HTMLElement {
     foldables.activities.hass = this._hass;
   }
 
-  doUpdateSidesHass() {
-    // Update sides cards configs
-    const sides = this._elements.sides;
-    sides.addons.hass = this._hass;
-  }
-
   doUpdateLayout() {
     this.doResetLayout();
     this.doCreateLayout();
@@ -682,6 +673,9 @@ class AndroidRemoteCard extends HTMLElement {
   doResetLayout() {
     // Clear previous listeners
     this._eventManager.clearListeners("layoutContainer");
+
+    // Detach existing layout from DOM
+    this._elements.sidewrapper.innerHTML = '';
 
     // Detach existing layout from DOM
     this._elements.wrapper.innerHTML = '';
@@ -716,8 +710,8 @@ class AndroidRemoteCard extends HTMLElement {
     // Setup three-states-toggle foldables
     this.setupFoldable();
 
-    // Setup sides addons
-    // this.setupSides();
+    // Setup addons
+    this.setupAddons();
   }
 
   doRow(rowConfig) {
@@ -1183,17 +1177,38 @@ class AndroidRemoteCard extends HTMLElement {
     return `span-${styleId}`;
   }
 
-  setupSides() {
+  setupAddons() {
     this.doUpdateAddons();
   }
   
   doUpdateAddons() {
-    // Remove addons content from DOM (ie. hide it)
-    const sidewrapper = this._elements.sidewrapper;
-    sidewrapper.innerHTML = "";
+    // Create all cells
+    for (const [addonName, addonConfig] of Object.entries(this.getAddonsConfig())) {
+      const addonCell = this.doAddonCell(addonName, addonConfig);
+      this.doStyleAddonCell(addonCell, addonConfig);
+      this.doAttachAddonCell(addonCell);
+      this.doQueryAddonCellElements();
+      this.doListenAddonCell(addonCell);
+    }
+    // Update sides cards configs
+    this._elements.addons.setConfig(this.getAddonsConfig());
+  }
 
-    // Append next addons content into DOM (ie. show it)
-    sidewrapper.appendChild(this.getAddons());
+  doAddonCell(rowConfig, cellConfig) {
+    const cell = document.createElement("div");
+    this._elements.cells.push(cell);
+    cell.classList.add('cell');
+    cell.classList.add(this.createSpanClass(cellConfig.weight));
+    if (rowConfig["no-gap"]) cell.classList.add('no-gap'); // Remove internal padding on cell when required by the row
+
+    // Create cell content
+    const cellContent = this.doCellContent(cellConfig);
+    this.doStyleCellContent();
+    this.doAttachCellContent(cell, cellContent);
+    this.doQueryCellContentElements(cellContent);
+    this.doListenCellContent(cellContent);
+
+    return cell;
   }
 
   // configuration defaults
