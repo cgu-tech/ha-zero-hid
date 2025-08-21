@@ -194,14 +194,14 @@ class AndroidRemoteCard extends HTMLElement {
       :host {
         --cell-button-fg: ${this._cellButtonFg};
         --cell-button-bg: ${this._cellButtonBg};
-        --side-cell-button-bg: ${this._sideCellButtonFg};
-        --side-cell-button-fg: ${this._sideCellButtonBg};
         --cell-button-active-bg: ${this._cellButtonActiveBg};
         --cell-button-press-bg: ${this._cellButtonPressBg};
         --cell-button-locked-bg: #0073e6; /* blue */
         --cell-button-locked-active-bg: #3399ff; /* blue */
         --cell-button-locked-press-bg: #80bfff; /* lighter blue */
         --cell-sensor-on-fg: #ffc107;
+        --side-cell-button-bg: ${this._sideCellButtonBg};
+        --side-cell-button-fg: ${this._sideCellButtonFg};
         --card-border-radius: 10px;
         display: block;
         box-sizing: border-box;
