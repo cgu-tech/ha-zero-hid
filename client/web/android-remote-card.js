@@ -1393,11 +1393,11 @@ class AndroidRemoteCard extends HTMLElement {
       this._sidePanelVisible = !this._sidePanelVisible;
       if (this._sidePanelVisible) {
         btn.classList.add("locked");
-        this._elements.sides.addons.classList.remove("hide");
+        this._elements.sidewrapper.remove("hide");
       }
       if (!this._sidePanelVisible) {
         btn.classList.remove("locked");
-        this._elements.sides.addons.classList.add("hide");
+        this._elements.sidewrapper.remove("hide");
       }
     } else {
       // Typed config defines an action (related to sensor state or not)
