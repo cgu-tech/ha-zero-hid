@@ -24,7 +24,7 @@ class AndroidRemoteCard extends HTMLElement {
   _allowedClickableData = new Set(['code']);
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
-  _sideCellButtonFg = '#7a7a7a';
+  _sideCellButtonFg = '#bfbfbf';
   _sideCellButtonBg = '#1e1e1e';
   _cellButtonActiveBg = '#4a4a4a';
   _cellButtonPressBg = '#6a6a6a';
@@ -261,7 +261,7 @@ class AndroidRemoteCard extends HTMLElement {
         align-items: center;
         justify-content: center;
         display: flex;
-        border-radius: 50%;   /* This makes the button circular */
+        border-radius: 5%;
       }
       .row {
         display: flex;
