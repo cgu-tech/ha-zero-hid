@@ -177,13 +177,11 @@ class AndroidRemoteCard extends HTMLElement {
         <div class="wrapper">
         </div>
         <div class="side-wrapper hide">
-          <div class="cell side-span">
-            <button class="side-circle-button">Hello</button>
-            <button class="side-circle-button">This</button>
-            <button class="side-circle-button">is</button>
-            <button class="side-circle-button">side</button>
-            <button class="side-circle-button">button</button>
-          </div>
+          <div class="cell side-span"><button class="side-circle-button">Hello</button></div>
+          <div class="cell side-span"><button class="side-circle-button">This</button></div>
+          <div class="cell side-span"><button class="side-circle-button">is</button></div>
+          <div class="cell side-span"><button class="side-circle-button">side</button></div>
+          <div class="cell side-span"><button class="side-circle-button">button</button></div>
         </div>
       </div>
     `;
