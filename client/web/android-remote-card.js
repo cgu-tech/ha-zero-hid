@@ -261,7 +261,7 @@ class AndroidRemoteCard extends HTMLElement {
         align-items: center;
         justify-content: center;
         display: flex;
-        border-radius: 5%;
+        border-radius: 10%;
       }
       .row {
         display: flex;
