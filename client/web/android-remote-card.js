@@ -233,7 +233,7 @@ class AndroidRemoteCard extends HTMLElement {
       }
       .side-wrapper {
         border: 1px solid var(--cell-button-bg);
-        border-radius: var(--card-corner-radius);
+        border-radius: var(--card-border-radius);
         display: flex;
         flex-direction: column;
         flex: 1 1 0%; /* Allow growing and shrinking */
