@@ -269,7 +269,7 @@ class AndroidRemoteCard extends HTMLElement {
         align-items: center;
         justify-content: center;
         display: flex;
-        border-radius: 10%;
+        border-radius: 50%;
         margin-bottom: 6px;
       }
       .side-circle-button.bottom {
