@@ -187,7 +187,9 @@ class AndroidRemoteCard extends HTMLElement {
             <button class="side-circle-button">07</button>
             <button class="side-circle-button">08</button>
             <button class="side-circle-button">09</button>
-            <button class="side-circle-button bottom">10</button>
+            <button class="side-circle-button">10</button>
+            <button class="side-circle-button">11</button>
+            <button class="side-circle-button bottom">12</button>
           </div>
         </div>
       </div>
