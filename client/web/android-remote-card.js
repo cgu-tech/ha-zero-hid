@@ -177,16 +177,18 @@ class AndroidRemoteCard extends HTMLElement {
         <div class="wrapper">
         </div>
         <div class="side-wrapper hide">
-          <div class="cell side-span"><button class="side-circle-button">01</button></div>
-          <div class="cell.no-gap side-span"><button class="side-circle-button">02</button></div>
-          <div class="cell.no-gap side-span"><button class="side-circle-button">03</button></div>
-          <div class="cell.no-gap side-span"><button class="side-circle-button">04</button></div>
-          <div class="cell.no-gap side-span"><button class="side-circle-button">05</button></div>
-          <div class="cell.no-gap side-span"><button class="side-circle-button">06</button></div>
-          <div class="cell.no-gap side-span"><button class="side-circle-button">07</button></div>
-          <div class="cell.no-gap side-span"><button class="side-circle-button">08</button></div>
-          <div class="cell.no-gap side-span"><button class="side-circle-button">09</button></div>
-          <div class="cell side-span"><button class="side-circle-button">10</button></div>
+          <div class="cell side-span">
+            <button class="side-circle-button">01</button>
+            <button class="side-circle-button">02</button>
+            <button class="side-circle-button">03</button>
+            <button class="side-circle-button">04</button>
+            <button class="side-circle-button">05</button>
+            <button class="side-circle-button">06</button>
+            <button class="side-circle-button">07</button>
+            <button class="side-circle-button">08</button>
+            <button class="side-circle-button">09</button>
+            <button class="side-circle-button">10</button>
+          </div>
         </div>
       </div>
     `;
@@ -268,6 +270,7 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: center;
         display: flex;
         border-radius: 10%;
+        padding-bottom: 4px;
       }
       .row {
         display: flex;
