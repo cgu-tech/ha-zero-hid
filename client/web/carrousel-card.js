@@ -246,6 +246,7 @@ export class CarrouselCard extends HTMLElement {
       }
       .carrousel-cell.vertical {
         width: 100%;
+        min-width: 0;
       }
       .carrousel-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background-color: var(--cell-active-bg);
@@ -290,16 +291,20 @@ export class CarrouselCard extends HTMLElement {
         height: 100%;
       }
       .carrousel-img {
-        width: 100%;
-        height: 100%;
+        min-width: 0%;
+        min-height: 0%;
+        max-width: 100%;
+        max-height: 100%;
         object-fit: contain;
       }
       .carrousel-label {
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100%;
-        height: 100%;
+        min-width: 0%;
+        min-height: 0%;
+        max-width: 100%;
+        max-height: 100%;
         white-space: normal;       /* allows wrapping */
         word-wrap: break-word;     /* allows breaking long words */
         overflow-wrap: break-word; /* better support for word breaking */
