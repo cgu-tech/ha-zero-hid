@@ -232,13 +232,12 @@ class AndroidRemoteCard extends HTMLElement {
         min-width: 0;
       }
       .side-wrapper {
-        border-top-right-radius: var(--card-corner-radius);
-        border-bottom-right-radius: var(--card-corner-radius);
+        border: 1px solid var(--cell-button-bg);
+        border-radius: var(--card-corner-radius);
         display: flex;
         flex-direction: column;
         flex: 1 1 0%; /* Allow growing and shrinking */
         min-width: 0;
-        background-color: var(--cell-button-bg);
       }
       .hide {
         display: none;
