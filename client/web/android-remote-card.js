@@ -224,7 +224,7 @@ class AndroidRemoteCard extends HTMLElement {
       .wrapper {
         display: flex;
         flex-direction: column;
-        flex: 1 1 auto; /* Allow growing and shrinking */
+        flex: 5 1 0%; /* Allow growing and shrinking */
         min-width: 0;
       }
       .side-wrapper {
@@ -232,7 +232,7 @@ class AndroidRemoteCard extends HTMLElement {
         border-bottom-right-radius: var(--card-corner-radius);
         display: flex;
         flex-direction: column;
-        flex: 1 1 auto; /* Allow growing and shrinking */
+        flex: 1 1 0%; /* Allow growing and shrinking */
         min-width: 0;
         background-color: var(--cell-button-bg);
       }
