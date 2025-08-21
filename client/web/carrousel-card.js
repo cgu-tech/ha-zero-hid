@@ -233,7 +233,7 @@ export class CarrouselCard extends HTMLElement {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        margin: 1px;
+        margin: 2px;
         background: var(--cell-bg);
         border-radius: 8px;
         overflow: hidden;
@@ -272,8 +272,8 @@ export class CarrouselCard extends HTMLElement {
         font-size: 14px;
         box-sizing: border-box;
         height: 95%;
-        width: 95%;       /* fill parent */
-        padding: 2px;      /* keep padding if needed */Z
+        width: 95%;
+        padding: 4px;
       }
       .carrousel-cell-content-part {
         width: 100%;
