@@ -229,7 +229,7 @@ export class CarrouselCard extends HTMLElement {
         overflow-y: auto;
       }
       .carrousel-cell {
-        display: inline-flex;
+        display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -271,9 +271,10 @@ export class CarrouselCard extends HTMLElement {
         color: white;
         font-size: 14px;
         box-sizing: border-box;
-        width: 90%;
-        height: 90%;
-        padding: 4px;
+        height: 100%;
+        width: 100%;       /* fill parent */
+        padding: 4px;      /* keep padding if needed */
+        box-sizing: border-box;
       }
       .carrousel-cell-content-part {
         width: 100%;
