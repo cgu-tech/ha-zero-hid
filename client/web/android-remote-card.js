@@ -28,6 +28,7 @@ class AndroidRemoteCard extends HTMLElement {
   _cellButtonPressBg = '#6a6a6a';
   _OVERRIDE_NORMAL_MODE = 'normal_mode';
   _OVERRIDE_ALTERNATIVE_MODE = 'alt_mode';
+  _OVERRIDE_SWITCH_SIDE_PANEL = 'switch_side';
   _OVERRIDE_TYPE_SHORT_PRESS = 'short_press';
   _OVERRIDE_TYPE_LONG_PRESS = 'long_press';
   _OVERRIDE_SAME = 'same';
@@ -47,6 +48,7 @@ class AndroidRemoteCard extends HTMLElement {
   _threeStatesToggleState;
   _overrideMode = this._OVERRIDE_NORMAL_MODE;
   _overrideLongPressTimeouts = new Map();
+  _sidePanelVisible = false;
 
   constructor() {
     super();
@@ -172,7 +174,7 @@ class AndroidRemoteCard extends HTMLElement {
       <div id="main-container" class="card-content">
         <div class="wrapper">
         </div>
-        <div class="side-wrapper" hidden>
+        <div class="side-wrapper hide">
           <div class="cell side-span">
             <button class="side-circle-button">Hello</button>
           </div>
@@ -233,6 +235,9 @@ class AndroidRemoteCard extends HTMLElement {
         flex: 1 1 auto; /* Allow growing and shrinking */
         min-width: 0;
         background-color: var(--cell-button-bg);
+      }
+      .hide {
+        display: none;
       }
       .side-span {
         flex: 1 1 auto; /* Allow growing and shrinking */
@@ -1380,6 +1385,20 @@ class AndroidRemoteCard extends HTMLElement {
       this._overrideMode = overrideTypedConfig;
       if (this._overrideMode === this._OVERRIDE_ALTERNATIVE_MODE) btn.classList.add("locked");
       if (this._overrideMode === this._OVERRIDE_NORMAL_MODE) btn.classList.remove("locked");
+    } else if (overrideTypedConfig ===  this._OVERRIDE_SWITCH_SIDE_PANEL) {
+      // Typed config switches side panel open/close
+
+      // Switch mode
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._overrideMode} to ${overrideTypedConfig}...`, btn));
+      this._sidePanelVisible = !this._sidePanelVisible;
+      if (this._sidePanelVisible) {
+        btn.classList.add("locked");
+        this._elements.sides.addons.classList.remove("hide");
+      }
+      if (!this._sidePanelVisible) {
+        btn.classList.remove("locked");
+        this._elements.sides.addons.classList.add("hide");
+      }
     } else {
       // Typed config defines an action (related to sensor state or not)
 
