@@ -293,8 +293,8 @@ export class CarrouselCard extends HTMLElement {
       .carrousel-img {
         min-width: 0%;
         min-height: 0%;
-        max-width: 100%;
-        max-height: 100%;
+        width: 100%;
+        height: 100%;
         object-fit: contain;
       }
       .carrousel-label {
@@ -303,8 +303,8 @@ export class CarrouselCard extends HTMLElement {
         align-items: center;
         min-width: 0%;
         min-height: 0%;
-        max-width: 100%;
-        max-height: 100%;
+        width: 100%;
+        height: 100%;
         white-space: normal;       /* allows wrapping */
         word-wrap: break-word;     /* allows breaking long words */
         overflow-wrap: break-word; /* better support for word breaking */
