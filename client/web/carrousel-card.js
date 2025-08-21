@@ -271,8 +271,8 @@ export class CarrouselCard extends HTMLElement {
         color: white;
         font-size: 14px;
         box-sizing: border-box;
-        height: 95%;
-        width: 95%;
+        height: 92%;
+        width: 92%;
         padding: 4px;
       }
       .carrousel-cell-content-part {
