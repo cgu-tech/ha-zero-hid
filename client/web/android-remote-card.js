@@ -257,7 +257,7 @@ class AndroidRemoteCard extends HTMLElement {
       .side-circle-button {
         width: 100%;  /* maintain aspect ratio */
         flex: 1 1 0;
-        aspect-ratio: 15 / 14;
+        aspect-ratio: 1 / 1;
         background-color: var(--side-cell-button-bg);
         color: var(--side-cell-button-fg);
         border: none;
