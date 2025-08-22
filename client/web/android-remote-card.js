@@ -1328,7 +1328,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doAttachAddonCellContent(addonCell, addonCellContent);
     this.doQueryAddonCellContentElements();
     this.doListenAddonCellContent();
-    this.doLoadAddonCellImages(addonCellContent, defaultAddonCellConfig);
+    this.doLoadAddonImage(addonCellContent, defaultAddonCellConfig);
   
     return addonCell;
   }
