@@ -258,7 +258,11 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: center;
         display: flex;
         border-radius: 25%;
-        margin: 4px;
+        margin-top: 2px;
+        margin-bottom: 2px;
+        margin-left: 4px;
+        margin-right: 4px;
+        box-sizing: border-box;
       }
       .addon-button.bottom {
         margin-bottom: 0px;
