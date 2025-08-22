@@ -230,10 +230,13 @@ class AndroidRemoteCard extends HTMLElement {
         box-sizing: border-box;
       }
       .wrapper {
-        width: 100%; /* 5/6 */
+        width: 100%;
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
+      }
+      .wrapper.with-addons {
+        width: 83.3333%; /* 5/6 */
       }
       .addons-wrapper {
         position: absolute;
@@ -1466,9 +1469,11 @@ class AndroidRemoteCard extends HTMLElement {
       this._sidePanelVisible = !this._sidePanelVisible;
       if (this._sidePanelVisible) {
         btn.classList.add("locked");
+        this._elements.wrapper.classList.add("with-addons");
         this._elements.addonsWrapper.classList.remove("hide");
       } else {
         btn.classList.remove("locked");
+        this._elements.wrapper.classList.remove("with-addons");
         this._elements.addonsWrapper.classList.add("hide");
       }
     } else {
