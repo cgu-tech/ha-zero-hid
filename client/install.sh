@@ -166,9 +166,10 @@ extract_keycodes_to_js_class() {
         echo "Output file not found: ${OUTPUT_JS_FILE}. Regenerating..."
     fi
 
-    echo "Existing file changed: regeneration needed. Writing new hash into file ${OUTPUT_JS_FILE}.sum"
+    echo "Generation of ${OUTPUT_JS_FILE} needed: writing new hash into file ${OUTPUT_JS_FILE}.sum..."
     echo -n "$new_hash" > "${OUTPUT_JS_FILE}.sum"
 
+    echo "Generation of ${OUTPUT_JS_FILE} needed: regenerating from ${INPUT_PYTHON_FILE}..."
     # Start the JS class
     {
         echo "export class ${OUTPUT_JS_CLASS} {"
