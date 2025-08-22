@@ -226,7 +226,9 @@ class AndroidRemoteCard extends HTMLElement {
         margin: 0;
         display: inline-flex;
         width: 100%;
+        height: 100%;
         align-items: stretch;
+        justify-content: flex-start; /* Avoid vertical stretching */
       }
       .wrapper {
         display: flex;
@@ -235,16 +237,15 @@ class AndroidRemoteCard extends HTMLElement {
         min-width: 0;
       }
       .addons-wrapper {
-        border: 1px solid var(--cell-button-bg);
-        border-radius: var(--card-border-radius);
         display: flex;
         flex-direction: column;
-        flex: 1 1 0%; /* Allow growing and shrinking */
+        flex: 0 1 auto; /* Allow growing and shrinking */
         align-items: stretch;
-        justify-content: flex-start; /* Avoid vertical stretching */
         overflow-y: auto; /* Scroll if content overflows */
         min-width: 0;
         max-height: 100%;
+        border: 1px solid var(--cell-button-bg);
+        border-radius: var(--card-border-radius);
       }
       .hide {
         display: none;
