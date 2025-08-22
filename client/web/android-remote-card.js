@@ -231,6 +231,8 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         flex-direction: row;
         align-items: flex-start;
+        width: 100%;
+        overflow: hidden;
       }
       .wrapper {
         display: flex;
