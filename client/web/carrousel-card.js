@@ -151,7 +151,7 @@ export class CarrouselCard extends HTMLElement {
     return this.getCellConfigOrDefault(cellConfig, "image_gap");
   }
   getCellAction(cellConfig) {
-    return this.getCellConfigOrDefault(cellConfig, "cell_action");
+    return this.getCellConfigOrDefault(cellConfig, "action");
   }
 
   // Per cell config helper
@@ -176,22 +176,6 @@ export class CarrouselCard extends HTMLElement {
   // jobs
   doCheckConfig() {
     //TODO: check config in details
-    
-    // TODO: check configured display mode
-    //  // Invalid cellDisplayMode specified by user: warn it
-    //  if (!targetDisplayMode) {
-    //    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Unknown display mode '${cellDisplayMode}' for cell '${cellName}': defaulting to '${defaultDisplayMode}'`));
-    //    targetDisplayMode = defaultDisplayMode;
-    //  }
-    //}
-    //
-    //// No cellDisplayMode specified by user: defaulting silently
-    //if (!targetDisplayMode) {
-    //  if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`No display mode provided for cell '${cellName}': defaulting to '${defaultDisplayMode}'`));
-    //  targetDisplayMode = defaultDisplayMode;
-    //}
-    //if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Display mode set to '${targetDisplayMode}' for cell '${cellName}' (user configured mode:'${cellDisplayMode}')`));
-    //return targetDisplayMode;
   }
 
   doCard() {

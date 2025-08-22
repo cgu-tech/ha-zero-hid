@@ -22,6 +22,7 @@ class AndroidRemoteCard extends HTMLElement {
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedClickableData = new Set(['code']);
+  _allowedAddonCellData = new Set(['action', 'cellName', 'iconUrl', 'imageUrl']);
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
   _sideCellButtonFg = '#bfbfbf';
@@ -243,7 +244,10 @@ class AndroidRemoteCard extends HTMLElement {
       .hide {
         display: none;
       }
-      .addon-button {
+      .addon-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         max-width: 100%;
         aspect-ratio: 1 / 1;
         flex: 0 1 0%;
@@ -254,19 +258,74 @@ class AndroidRemoteCard extends HTMLElement {
         cursor: pointer;
         font-family: sans-serif;
         font-size: clamp(1px, 4vw, 24px);
-        transition: background-color 0.2s ease;
-        align-items: center;
-        justify-content: center;
-        display: flex;
         border-radius: 15%;
         margin-top: 4px;
         margin-bottom: 4px;
         margin-left: 4px;
         margin-right: 4px;
         box-sizing: border-box;
+        transition: background-color 0.2s ease;
       }
-      .addon-button.bottom {
-        margin-bottom: 0px;
+      .addon-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+        background-color: var(--cell-active-bg);
+      }
+      .addon-cell.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+        background-color: var(--cell-press-bg);
+        transform: scale(0.95);
+      }
+      .addon-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} * {
+        opacity: 0.95;
+      }
+      .addon-cell.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} * {
+        opacity: 0.85;
+      }
+      .addon-cell-content {
+        display: inline-flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 8px;
+        overflow: hidden;
+        text-align: center;
+        color: white;
+        font-size: 14px;
+        box-sizing: border-box;
+        height: 100%;
+        width: 100%;
+        padding: 2px;
+      }
+      .addon-cell-content-part {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+      }
+      .addon-cell-content-part.img.half {
+        height: 70%;
+      }
+      .addon-cell-content-part.label.half {
+        height: 30%;
+      }
+      .addon-cell-content-part.full {
+        height: 100%;
+      }
+      .addon-img {
+        min-width: 0%;
+        min-height: 0%;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .addon-label {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 0%;
+        min-height: 0%;
+        width: 100%;
+        height: 100%;
+        white-space: normal;       /* allows wrapping */
+        word-wrap: break-word;     /* allows breaking long words */
+        overflow-wrap: break-word; /* better support for word breaking */
       }
       .row {
         display: flex;
@@ -1168,7 +1227,59 @@ class AndroidRemoteCard extends HTMLElement {
     const styleId = flexStr.replace(/\./g, '-');
     return `span-${styleId}`;
   }
-  
+
+  // Per addon cell config
+  getAddonCellLabel(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "label"); 
+  }
+  getAddonCellLabelFontScale(addonCellConfig) {
+    return this._layoutManager.getScaleOrDefault(this.getAddonCellConfigOrDefault(addonCellConfig, "label_font_scale"), "1rem");
+  }
+  getAddonCellLabelColor(addonCellConfig) {
+    return this._sideCellButtonFg;
+  }
+  getAddonCellLabelGap(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "label_gap");
+  }
+  getAddonCellIconUrl(addonCellConfig) {
+    const iconUrl = this.getAddonCellConfigOrDefault(addonCellConfig, "icon_url");
+    return iconUrl ? (this._resourceManager.isValidUrl(iconUrl) ? iconUrl : this._resourceManager.getLocalIconUrl(iconUrl)) : "";
+  }
+  getAddonCellIconGap(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "icon_gap");
+  }
+  getAddonCellImageUrl(addonCellConfig) {
+    const imageUrl = this.getAddonCellConfigOrDefault(addonCellConfig, "image_url");
+    return imageUrl ? (this._resourceManager.isValidUrl(imageUrl) ? imageUrl : this._resourceManager.getLocalIconUrl(imageUrl)) : "";
+  }
+  getAddonCellImageGap(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "image_gap");
+  }
+  getAddonCellAction(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "action");
+  }
+
+  // Per cell config helper
+  getAddonCellConfigOrDefault(addonCellConfig, property) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getAddonCellConfigOrDefault(addonCellConfig, property):", addonCellConfig, property));
+    const cellProperty = `cell_${property}`;
+    return addonCellConfig?.[property] || this._layoutManager.getFromConfigOrDefaultConfig(cellProperty);
+  }
+
+  // Dynamic config
+  getDynamicAddonCellName(defaultAddonCellConfig) {
+    return defaultAddonCellConfig["addonCellName"]; 
+  }
+  getDynamicAddonCellIconUrl(defaultAddonCellConfig) {
+    return defaultAddonCellConfig["addonCellIconUrl"]; 
+  }
+  getDynamicAddonCellImageUrl(defaultAddonCellConfig) {
+    return defaultAddonCellConfig["addonCellImageUrl"]; 
+  }
+  createDynamicAddonCellConfig(addonName, addonCellConfig) {
+    return { "addonCellName": addonName, "addonCellIconUrl": this.getAddonCellIconUrl(addonCellConfig), "addonCellImageUrl": this.getAddonCellImageUrl(addonCellConfig) };
+  }
+
   doUpdateAddons() {
     this.doResetAddons();
     this.doCreateAddons();
@@ -1197,22 +1308,27 @@ class AndroidRemoteCard extends HTMLElement {
       this.doQueryAddonCellElements();
       this.doListenAddonCell(addonCell);
     }
-    // Update sides cards configs
-    //this._elements.addons.setConfig(this.getAddonsConfig());
   }
 
-  doAddonCell(cellConfig) {
+  doAddonCell(addonName, addonCellConfig) {
+
+    // Define cell default config
+    const defaultAddonCellConfig = this.createDynamicAddonCellConfig(addonName, addonCellConfig);
+
+    // Create a new addon cell
     const addonCell = document.createElement("div");
     this._elements.addonsCells.push(addonCell);
-    addonCell.classList.add('addon-button');
+    addonCell.classList.add('addon-cell');
+    addonCell.id = addonName;
+    this.setAddonCellData(cell, addonCellConfig, defaultAddonCellConfig);
 
-    //TODO
-    // Create cell content
-    //const cellContent = this.doCellContent(cellConfig);
-    //this.doStyleCellContent();
-    //this.doAttachCellContent(cell, cellContent);
-    //this.doQueryCellContentElements(cellContent);
-    //this.doListenCellContent(cellContent);
+    // Create addon cell content
+    const addonCellContent = this.doAddonCellContent(addonCellConfig, defaultAddonCellConfig);
+    this.doStyleAddonCellContent(addonCellContent, addonCellConfig);
+    this.doAttachAddonCellContent(cell, addonCellContent);
+    this.doQueryAddonCellContentElements();
+    this.doListenAddonCellContent();
+    this.doLoadAddonCellImages(addonCellContent, defaultAddonCellConfig);
   
     return addonCell;
   }
@@ -1227,7 +1343,186 @@ class AndroidRemoteCard extends HTMLElement {
     //TODO
   }
   doListenAddonCell(addonCell) {
-    //TODO
+    // Action and visual events
+    this._eventManager.addButtonListeners("addonsContainer", cell, 
+      {
+        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onAddonCellPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onAddonCellAbortPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onAddonCellRelease.bind(this)
+      }
+    );
+  }
+
+  onAddonCellPress(cell, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    //this.doCellPress(cell);
+  }
+
+  onAddonCellAbortPress(cell, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    //this.doCellAbortPress(cell);
+  }
+
+  onAddonCellRelease(cell, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    //this.doCellRelease(cell);
+  }
+
+  doAddonCellContent(addonName, addonCellConfig) {
+    // Create addon cell content
+    const addonCellContent = document.createElement("div");
+    addonCellContent.className = "addon-cell-content";
+
+    // Create addon cell content inner label
+    const addonCellContentLabel = this.doAddonCellContentLabel(addonCellConfig, defaultAddonCellConfig);
+    this.doStyleAddonCellContentLabel(addonCellContentLabel, addonCellConfig);
+    this.doAttachAddonCellContentLabel(addonCellContent, addonCellContentLabel);
+    this.doQueryAddonCellContentLabelElements(addonCellContent, addonCellContentLabel);
+    this.doListenAddonCellContentLabel();
+
+    // Create addon cell content inner image
+    const addonCellContentImage = this.doCellContentImage(addonCellConfig, defaultAddonCellConfig);
+    this.doStyleAddonCellContentImage(addonCellContentImage, addonCellConfig);
+    this.doAttachAddonCellContentImage();
+    this.doQueryAddonCellContentImageElements(addonCellContent, addonCellContentImage, defaultAddonCellConfig);
+    this.doListenAddonCellContentImage(addonCellContent, addonCellConfig, defaultAddonCellConfig);
+
+    return addonCellContent;
+  }
+
+  doStyleAddonCellContent(addonCellContent, addonCellConfig) {
+    // Nothing to do here
+  }
+
+  doAttachAddonCellContent(addonCell, addonCellContent) {
+    addonCell.appendChild(addonCellContent);
+  }
+
+  doQueryAddonCellContentElements() {
+    // Nothing to do here: element already referenced and sub-elements are not needed
+  }
+
+  doListenAddonCellContent() {
+    // Nothing to do here: no events needed on cell content
+  }
+
+  doAddonCellContentLabel(addonCellConfig, defaultAddonCellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doAddonCellContentLabel(addonCellConfig, defaultAddonCellConfig):`, addonCellConfig, defaultAddonCellConfig));
+
+    // Instanciates a content wrapper for layout consistency, relatives to image layout circument of chromium-based browser bugs
+    const addonCellContentLabel = document.createElement("div");
+    addonCellContentLabel.className = "addon-cell-content-part label";
+    addonCellContentLabel.classList.add('full'); // Always make the label taking full cell space first as fallback
+
+    // Instanciates a new label
+    const label = document.createElement("div");
+    addonCellContentLabel._label = label;
+    label.className = "addon-label";
+    label.textContent = this.getAddonCellLabel(addonCellConfig) || this.getDynamicAddonCellName(defaultAddonCellConfig);
+
+    // Append and return wrapper (not label itself)
+    addonCellContentLabel.appendChild(label);
+    return addonCellContentLabel;
+  }
+
+  doStyleAddonCellContentLabel(addonCellContentLabel, addonCellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doStyleAddonCellContentLabel(addonCellContentLabel, addonCellConfig):`, addonCellContentLabel, addonCellConfig));
+
+    // Apply user preferences on cell content label container style
+    addonCellContentLabel.style.padding = this.getAddonCellLabelGap(addonCellConfig);
+    
+    // Apply user preferences on cell content label style
+    addonCellContentLabel._label.style.color = this.getAddonCellLabelColor(addonCellConfig);
+    addonCellContentLabel._label.style.fontSize = this.getAddonCellLabelFontScale(addonCellConfig);
+  }
+
+  doAttachAddonCellContentLabel(addonCellContent, addonCellContentLabel) {
+    addonCellContent.appendChild(addonCellContentLabel); // Always attach label first as fallback
+  }
+
+  doQueryAddonCellContentLabelElements(addonCellContent, addonCellContentLabel) {
+    // Keep content label wrapper reference into addonCellContent for further operations
+    addonCellContent._addonCellContentLabel = addonCellContentLabel;
+  }
+
+  doListenAddonCellContentLabel() {
+    // Nothing to do here: no events needed on cell content label
+  }
+
+  doAddonCellContentImage(addonCellConfig, defaultAddonCellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(addonCellConfig, defaultAddonCellConfig):`, addonCellConfig, defaultAddonCellConfig));
+
+    // Instanciates a content wrapper to avoid chromium-based browser bugs
+    // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
+    const addonCellContentImage = document.createElement("div");
+    addonCellContentImage.className = "addon-cell-content-part img";
+
+    // Instanciates image (but load its content later)
+    const img = document.createElement("img");
+    addonCellContentImage._image = img;
+    img.className = "addon-img";
+    img.alt = this.getDynamicAddonCellName(defaultAddonCellConfig);
+
+    // Append and return wrapper (not image itself)
+    addonCellContentImage.appendChild(img);
+    return addonCellContentImage;
+  }
+
+  doStyleAddonCellContentImage(addonCellContentImage, addonCellConfig) {
+
+    // Apply user preferences on image style
+    if (addonCellContentImage) addonCellContentImage.style.padding = this.getAddonCellImageGap(addonCellConfig);
+  }
+
+  doAttachAddonCellContentImage() {
+    // Nothing to do here: content image will be attached to DOM later, once successfully loaded
+  }
+
+  doQueryAddonCellContentImageElements(addonCellContent, addonCellContentImage) {
+    // Keep content image wrapper reference into addonCellContent for further operations
+    addonCellContent._addonCellContentImage = addonCellContentImage;
+  }
+
+  doListenAddonCellContentImage(addonCellContent, addonCellConfig, defaultAddonCellConfig) {
+    const img = addonCellContent._addonCellContentImage?._image;
+    if (img) this._eventManager.addLoadListenerToContainer("addonsContainer", img, this.onLoadAddonImageSuccess.bind(this, addonCellContent, addonCellConfig, defaultAddonCellConfig));
+    if (img) this._eventManager.addErrorListenerToContainer("addonsContainer", img, this.onLoadAddonImageError.bind(this, addonCellContent, addonCellConfig, defaultAddonCellConfig));
+  }
+
+  doLoadAddonImage(addonCellContent, defaultAddonCellConfig) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doLoadAddonImage(addonCellContent, defaultAddonCellConfig):', addonCellContent, defaultAddonCellConfig));
+    const addonCellImageUrl = this.getDynamicAddonCellImageUrl(defaultAddonCellConfig);
+    const img = addonCellContent._addonCellContentImage?._image;
+    if (img && addonCellImageUrl) img.src = addonCellImageUrl; // Starts loading image asynchronously
+  }
+
+  onLoadAddonImageSuccess(addonCellContent, addonCellConfig, defaultAddonCellConfig) {
+    const addonCellName = this.getDynamicAddonCellName(defaultAddonCellConfig);
+    const addonCellImageUrl = this.getDynamicAddonCellImageUrl(defaultAddonCellConfig);
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cell ${addonCellName} image successfully loaded from URL '${addonCellImageUrl}'`));
+
+    const addonCellContentLabel = addonCellContent._addonCellContentLabel;
+    const addonCellContentImage = addonCellContent._addonCellContentImage;
+
+    // 1. Reset fallback label
+    addonCellContentLabel.remove();      // Remove from DOM
+    addonCellContentLabel.classList.remove('full'); // Remove full class
+
+    // 2. update visuals for image + label
+    addonCellContentImage.classList.add('half');
+    addonCellContentLabel.classList.add('half');
+
+    // 3. attach and position: image into cell content top, label into cell content bottom
+    addonCellContent.appendChild(addonCellContentImage);
+    addonCellContent.appendChild(addonCellContentLabel);
+  }
+
+  onLoadAddonImageError(addonCellContent, addonCellConfig, defaultAddonCellConfig, err) {
+    const addonCellName = this.getDynamicAddonCellName(defaultAddonCellConfig);
+    const addonCellImageUrl = this.getDynamicAddonCellImageUrl(defaultAddonCellConfig);
+    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Cell ${addonCellName} image failed to load from URL '${addonCellImageUrl}' with error:`, err));
+
+    // Nothing more to do: let label as-is into cell content as fallback for image fail
   }
 
   // configuration defaults
@@ -1249,6 +1544,11 @@ class AndroidRemoteCard extends HTMLElement {
 
   getCardSize() {
     return 4;
+  }
+
+  // Set key data
+  setAddonCellData(cell, defaultConfig, overrideConfig) {
+    this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedAddonCellData.has(key));
   }
 
   // Set key data
