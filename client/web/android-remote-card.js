@@ -253,8 +253,8 @@ class AndroidRemoteCard extends HTMLElement {
       }
       .addon-button {
         width: 100%;  /* maintain aspect ratio */
-        flex: 1 1 0;
         aspect-ratio: 1 / 1;
+        flex: 0 0 auto;
         background-color: var(--side-cell-button-bg);
         color: var(--side-cell-button-fg);
         border: none;
