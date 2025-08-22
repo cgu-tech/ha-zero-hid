@@ -218,9 +218,11 @@ class AndroidRemoteCard extends HTMLElement {
         overflow: hidden; /* prevent overflow outside card */
         font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-size: var(--base-font-size);
+        height: 100%;
       }
       .card-content {
         padding: 0 !important;
+        height: 100% !important;
       }
       #main-container {
         margin: 0;
@@ -229,6 +231,7 @@ class AndroidRemoteCard extends HTMLElement {
         height: 100%;
         align-items: stretch;
         justify-content: flex-start; /* Avoid vertical stretching */
+        overflow: hidden; /* Prevent overall scroll */
       }
       .wrapper {
         display: flex;
@@ -239,9 +242,10 @@ class AndroidRemoteCard extends HTMLElement {
       .addons-wrapper {
         display: flex;
         flex-direction: column;
-        flex: 1 1 auto; /* Allow growing and shrinking */
+        flex: 1 0 auto; /* Allow growing and shrinking */
         overflow-y: auto; /* Scroll if content overflows */
         min-width: 0;
+        min-height: 0; /* Important for scroll to work inside flex container */
         height: 100%;
         border: 1px solid var(--cell-button-bg);
         border-radius: var(--card-border-radius);
