@@ -230,7 +230,7 @@ class AndroidRemoteCard extends HTMLElement {
         box-sizing: border-box;
       }
       .wrapper {
-        width: 83.3333%; /* 5/6 */
+        width: 100%; /* 5/6 */
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
