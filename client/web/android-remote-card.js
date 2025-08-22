@@ -236,7 +236,7 @@ class AndroidRemoteCard extends HTMLElement {
       .wrapper {
         display: flex;
         flex-direction: column;
-        flex: 6 1 0%; /* Allow growing and shrinking */
+        flex: 6 0 0%; /* Allow growing and shrinking */
         min-width: 0;
       }
       .addons-wrapper {
