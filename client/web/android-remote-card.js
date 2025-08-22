@@ -247,6 +247,7 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: flex-start; /* Avoid vertical stretching */
         overflow-y: auto; /* Scroll if content overflows */
         min-width: 0;
+        min-height: 0; /* allows scrolling inside */
         max-height: 100%;
       }
       .hide {
