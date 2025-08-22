@@ -219,10 +219,11 @@ class AndroidRemoteCard extends HTMLElement {
         height: 100%;
       }
       ha-card {
-        height: 100%;
+        height: 100% !important;
       }
       .card-content {
         padding: 0 !important;
+        height: 100% !important;
       }
       #main-container {
         --base-font-size: 1rem; /* base scaling unit */
