@@ -174,18 +174,6 @@ class AndroidRemoteCard extends HTMLElement {
         <div class="wrapper">
         </div>
         <div class="addons-wrapper hide">
-          <button class="addon-button">01</button>
-          <button class="addon-button">02</button>
-          <button class="addon-button">03</button>
-          <button class="addon-button">04</button>
-          <button class="addon-button">05</button>
-          <button class="addon-button">06</button>
-          <button class="addon-button">07</button>
-          <button class="addon-button">08</button>
-          <button class="addon-button">09</button>
-          <button class="addon-button">10</button>
-          <button class="addon-button">11</button>
-          <button class="addon-button bottom">12</button>
         </div>
       </div>
     `;
@@ -236,13 +224,13 @@ class AndroidRemoteCard extends HTMLElement {
         box-sizing: border-box;
       }
       .wrapper.with-addons {
-        width: 83.3333%; /* 5/6 */
+        width: 85.7142%; /* 6/7 */
       }
       .addons-wrapper {
+        width: 14.2858%; /* 1/7 */
         position: absolute;
         top: 0;
         right: 0;
-        width: 16.6666%; /* 1/6 */
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -270,7 +258,7 @@ class AndroidRemoteCard extends HTMLElement {
         justify-content: center;
         display: flex;
         border-radius: 25%;
-        margin-bottom: 4px;
+        margin: 4px;
       }
       .addon-button.bottom {
         margin-bottom: 0px;
