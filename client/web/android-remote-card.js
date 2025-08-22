@@ -231,6 +231,7 @@ class AndroidRemoteCard extends HTMLElement {
         font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         max-width: 100%;
+        align-items: flex-start;
         flex-shrink: 1; /* allow shrinking */
         min-width: 0;   /* allow content to shrink inside */
         display: flex;
@@ -252,6 +253,7 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         flex-direction: column;
         min-width: 0;
+        max-height: 100%;  /* this defines height constraint */
         align-items: stretch;
         justify-content: flex-start; /* Avoid vertical stretching */
         overflow-x: hidden;
