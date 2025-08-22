@@ -1320,12 +1320,12 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.addonsCells.push(addonCell);
     addonCell.classList.add('addon-cell');
     addonCell.id = addonName;
-    this.setAddonCellData(cell, addonCellConfig, defaultAddonCellConfig);
+    this.setAddonCellData(addonCell, addonCellConfig, defaultAddonCellConfig);
 
     // Create addon cell content
     const addonCellContent = this.doAddonCellContent(addonCellConfig, defaultAddonCellConfig);
     this.doStyleAddonCellContent(addonCellContent, addonCellConfig);
-    this.doAttachAddonCellContent(cell, addonCellContent);
+    this.doAttachAddonCellContent(addonCell, addonCellContent);
     this.doQueryAddonCellContentElements();
     this.doListenAddonCellContent();
     this.doLoadAddonCellImages(addonCellContent, defaultAddonCellConfig);
@@ -1344,7 +1344,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
   doListenAddonCell(addonCell) {
     // Action and visual events
-    this._eventManager.addButtonListeners("addonsContainer", cell, 
+    this._eventManager.addButtonListeners("addonsContainer", addonCell, 
       {
         [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onAddonCellPress.bind(this),
         [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onAddonCellAbortPress.bind(this),
@@ -1353,19 +1353,19 @@ class AndroidRemoteCard extends HTMLElement {
     );
   }
 
-  onAddonCellPress(cell, evt) {
+  onAddonCellPress(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    //this.doCellPress(cell);
+    //this.doCellPress(addonCell);
   }
 
-  onAddonCellAbortPress(cell, evt) {
+  onAddonCellAbortPress(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    //this.doCellAbortPress(cell);
+    //this.doCellAbortPress(addonCell);
   }
 
-  onAddonCellRelease(cell, evt) {
+  onAddonCellRelease(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    //this.doCellRelease(cell);
+    //this.doCellRelease(addonCell);
   }
 
   doAddonCellContent(addonName, addonCellConfig) {
