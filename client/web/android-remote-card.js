@@ -230,6 +230,9 @@ class AndroidRemoteCard extends HTMLElement {
         min-width: 0;   /* allow content to shrink inside */
         display: flex;
         flex-direction: row;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
       }
       .wrapper {
         flex: 6 1 0%; /* Allow growing and shrinking */
