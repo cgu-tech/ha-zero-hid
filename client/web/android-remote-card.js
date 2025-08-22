@@ -1368,7 +1368,7 @@ class AndroidRemoteCard extends HTMLElement {
     //this.doCellRelease(addonCell);
   }
 
-  doAddonCellContent(addonName, addonCellConfig) {
+  doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {
     // Create addon cell content
     const addonCellContent = document.createElement("div");
     addonCellContent.className = "addon-cell-content";
