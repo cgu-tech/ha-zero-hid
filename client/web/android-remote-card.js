@@ -323,7 +323,7 @@ class AndroidRemoteCard extends HTMLElement {
         aspect-ratio: 1 / 1;
         top: 0px;
         left: 0px;
-        padding: 0;
+        padding: 2%;
         background: transparent !important;
         transition: none !important;
       }
