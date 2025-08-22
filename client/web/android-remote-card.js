@@ -172,21 +172,19 @@ class AndroidRemoteCard extends HTMLElement {
       <div id="main-container" class="card-content">
         <div class="wrapper">
         </div>
-        <div class="side-wrapper hide">
-          <div class="cell side-span">
-            <button class="side-circle-button">01</button>
-            <button class="side-circle-button">02</button>
-            <button class="side-circle-button">03</button>
-            <button class="side-circle-button">04</button>
-            <button class="side-circle-button">05</button>
-            <button class="side-circle-button">06</button>
-            <button class="side-circle-button">07</button>
-            <button class="side-circle-button">08</button>
-            <button class="side-circle-button">09</button>
-            <button class="side-circle-button">10</button>
-            <button class="side-circle-button">11</button>
-            <button class="side-circle-button bottom">12</button>
-          </div>
+        <div class="addons-wrapper hide">
+          <button class="addon-button">01</button>
+          <button class="addon-button">02</button>
+          <button class="addon-button">03</button>
+          <button class="addon-button">04</button>
+          <button class="addon-button">05</button>
+          <button class="addon-button">06</button>
+          <button class="addon-button">07</button>
+          <button class="addon-button">08</button>
+          <button class="addon-button">09</button>
+          <button class="addon-button">10</button>
+          <button class="addon-button">11</button>
+          <button class="addon-button bottom">12</button>
         </div>
       </div>
     `;
@@ -238,7 +236,7 @@ class AndroidRemoteCard extends HTMLElement {
         flex: 6 1 0%; /* Allow growing and shrinking */
         min-width: 0;
       }
-      .side-wrapper {
+      .addons-wrapper {
         border: 1px solid var(--cell-button-bg);
         border-radius: var(--card-border-radius);
         display: flex;
@@ -249,10 +247,7 @@ class AndroidRemoteCard extends HTMLElement {
       .hide {
         display: none;
       }
-      .side-span {
-        flex: 1 1 auto; /* Allow growing and shrinking */
-      }
-      .side-circle-button {
+      .addon-button {
         width: 100%;  /* maintain aspect ratio */
         flex: 1 1 0;
         aspect-ratio: 1 / 1;
@@ -270,7 +265,7 @@ class AndroidRemoteCard extends HTMLElement {
         border-radius: 25%;
         margin-bottom: 4px;
       }
-      .side-circle-button.bottom {
+      .addon-button.bottom {
         margin-bottom: 0px;
       }
       .row {
@@ -587,7 +582,7 @@ class AndroidRemoteCard extends HTMLElement {
   doQueryElements() {
     const card = this._elements.card;
     this._elements.wrapper = card.querySelector(".wrapper");
-    this._elements.sidewrapper = card.querySelector(".side-wrapper");
+    this._elements.addonsWrapper = card.querySelector(".addons-wrapper");
   }
 
   doListen() {
@@ -675,7 +670,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.clearListeners("layoutContainer");
 
     // Detach existing layout from DOM
-    this._elements.sidewrapper.innerHTML = '';
+    this._elements.addonsWrapper.innerHTML = '';
 
     // Detach existing layout from DOM
     this._elements.wrapper.innerHTML = '';
@@ -1183,33 +1178,33 @@ class AndroidRemoteCard extends HTMLElement {
   
   doUpdateAddons() {
     // Create all cells
-    for (const [addonName, addonConfig] of Object.entries(this.getAddonsConfig())) {
-      const addonCell = this.doAddonCell(addonName, addonConfig);
-      this.doStyleAddonCell(addonCell, addonConfig);
-      this.doAttachAddonCell(addonCell);
-      this.doQueryAddonCellElements();
-      this.doListenAddonCell(addonCell);
-    }
+    //for (const [addonName, addonConfig] of Object.entries(this.getAddonsConfig())) {
+    //  const addonCell = this.doAddonCell(addonName, addonConfig);
+    //  this.doStyleAddonCell(addonCell, addonConfig);
+    //  this.doAttachAddonCell(addonCell);
+    //  this.doQueryAddonCellElements();
+    //  this.doListenAddonCell(addonCell);
+    //}
     // Update sides cards configs
     this._elements.addons.setConfig(this.getAddonsConfig());
   }
 
-  doAddonCell(rowConfig, cellConfig) {
-    const cell = document.createElement("div");
-    this._elements.cells.push(cell);
-    cell.classList.add('cell');
-    cell.classList.add(this.createSpanClass(cellConfig.weight));
-    if (rowConfig["no-gap"]) cell.classList.add('no-gap'); // Remove internal padding on cell when required by the row
-
-    // Create cell content
-    const cellContent = this.doCellContent(cellConfig);
-    this.doStyleCellContent();
-    this.doAttachCellContent(cell, cellContent);
-    this.doQueryCellContentElements(cellContent);
-    this.doListenCellContent(cellContent);
-
-    return cell;
-  }
+  //doAddonCell(rowConfig, cellConfig) {
+  //  const cell = document.createElement("div");
+  //  this._elements.cells.push(cell);
+  //  cell.classList.add('cell');
+  //  cell.classList.add(this.createSpanClass(cellConfig.weight));
+  //  if (rowConfig["no-gap"]) cell.classList.add('no-gap'); // Remove internal padding on cell when required by the row
+  //
+  //  // Create cell content
+  //  const cellContent = this.doCellContent(cellConfig);
+  //  this.doStyleCellContent();
+  //  this.doAttachCellContent(cell, cellContent);
+  //  this.doQueryCellContentElements(cellContent);
+  //  this.doListenCellContent(cellContent);
+  //
+  //  return cell;
+  //}
 
   // configuration defaults
   static getStubConfig() {
@@ -1443,10 +1438,10 @@ class AndroidRemoteCard extends HTMLElement {
       this._sidePanelVisible = !this._sidePanelVisible;
       if (this._sidePanelVisible) {
         btn.classList.add("locked");
-        this._elements.sidewrapper.classList.remove("hide");
+        this._elements.addonsWrapper.classList.remove("hide");
       } else {
         btn.classList.remove("locked");
-        this._elements.sidewrapper.classList.add("hide");
+        this._elements.addonsWrapper.classList.add("hide");
       }
     } else {
       // Typed config defines an action (related to sensor state or not)
