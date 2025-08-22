@@ -216,14 +216,9 @@ class AndroidRemoteCard extends HTMLElement {
         border-radius: var(--card-border-radius);
         overflow: hidden; /* prevent overflow outside card */
         font-family: sans-serif;
-        height: 100%;
-      }
-      ha-card {
-        height: 100% !important;
       }
       .card-content {
         padding: 0 !important;
-        height: 100% !important;
       }
       #main-container {
         --base-font-size: 1rem; /* base scaling unit */
@@ -231,35 +226,32 @@ class AndroidRemoteCard extends HTMLElement {
         font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         max-width: 100%;
-        align-items: flex-start;
         flex-shrink: 1; /* allow shrinking */
         min-width: 0;   /* allow content to shrink inside */
         display: flex;
         flex-direction: row;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
+        align-items: flex-start;
       }
       .wrapper {
-        flex: 6 1 0%; /* Allow growing and shrinking */
         display: flex;
         flex-direction: column;
+        flex: 6 1 0%; /* Allow growing and shrinking */
         min-width: 0;
-        max-height: 100%;  /* this defines height constraint */
-        overflow: hidden;  /* prevent any scroll */
       }
       .addons-wrapper {
-        flex: 1 1 0%; /* Allow growing and shrinking */
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-        max-height: 100%;  /* this defines height constraint */
-        align-items: stretch;
-        justify-content: flex-start; /* Avoid vertical stretching */
-        overflow-x: hidden;
-        overflow-y: auto; /* Scroll if content overflows */
         border: 1px solid var(--cell-button-bg);
         border-radius: var(--card-border-radius);
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 0%; /* Allow growing and shrinking */
+        align-items: stretch;
+        justify-content: flex-start; /* Avoid vertical stretching */
+        overflow-y: auto; /* Scroll if content overflows */
+        min-width: 0;
+        max-height: 100%;
+      }
+      .hide {
+        display: none;
       }
       .addon-button {
         width: 100%;  /* maintain aspect ratio */
@@ -281,9 +273,6 @@ class AndroidRemoteCard extends HTMLElement {
       }
       .addon-button.bottom {
         margin-bottom: 0px;
-      }
-      .hide {
-        display: none;
       }
       .row {
         display: flex;
