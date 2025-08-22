@@ -46,7 +46,18 @@ HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_
 # - dependencies (zero-hid repository)
 cleanup() {
     local should_delete_config="$1"
-    
+
+    # Cleaning up component custom config file when explicitely required
+    if [ "${should_delete_config}" == "true" ]; then
+      echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} config file (${HA_ZERO_HID_CLIENT_CONFIG_FILE})..."
+      rm "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" >/dev/null 2>&1 || true
+    else
+      mv "${HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE}" "./keycodes.js.bak"
+      mv "${HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE}.sum" "./keycodes.js.sum.bak"
+      mv "${HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE}" "./consumercodes.js.bak"
+      mv "${HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE}.sum" "./consumercodes.js.sum.bak"
+    fi
+
     # Unregister component from HAOS configuration to disable it
     echo "Unregistering ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} from HAOS configuration (${HAOS_CONFIG_FILE})..."
     sed -i "/^${HA_ZERO_HID_CLIENT_COMPONENT_NAME}:$/d" "${HAOS_CONFIG_FILE}"
@@ -59,15 +70,21 @@ cleanup() {
     echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} web resources files (${HA_ZERO_HID_CLIENT_RESOURCES_DIR})..."
     rm -rf "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}" >/dev/null 2>&1 || true
 
-    # Cleaning up component custom config file when explicitely required
-    if [ "${should_delete_config}" == "true" ]; then
-      echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} config file (${HA_ZERO_HID_CLIENT_CONFIG_FILE})..."
-      rm "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" >/dev/null 2>&1 || true
-    fi
-
     # Cleaning up component dependencies
     echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} zero-hid dependency (${ZERO_HID_REPO_DIR})..."
     rm -rf "${ZERO_HID_REPO_DIR}" >/dev/null 2>&1 || true
+    
+    # Restoring files to keep
+    if [ "${should_delete_config}" == "true" ]; then
+      echo "All files deleted"
+    else
+      mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}"
+      mv "./keycodes.js.bak" "${HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE}"
+      mv "./keycodes.js.sum.bak" "${HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE}.sum"
+      mv "./consumercodes.js.bak" "${HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE}"
+      mv "./consumercodes.js.sum.bak" "${HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE}.sum"
+      echo "Config and static files preserved"
+    fi
 }
 
 # Updates component to latest GIT available version of specified branch (or default branch when not specified)
@@ -124,6 +141,28 @@ extract_keycodes_to_js_class() {
     if [[ ! -f "${INPUT_PYTHON_FILE}" ]]; then
         echo "Input file not found: ${INPUT_PYTHON_FILE}"
         return 1
+    fi
+    
+    # When output file already exists, check whether or not regeneration is needed
+    if [[ -f "${OUTPUT_JS_FILE}" ]]; then
+        if [[ -f "${OUTPUT_JS_FILE}.sum" ]]; then
+            echo "Output file already exists: ${OUTPUT_JS_FILE}. Checking if regeneration is needed..."
+
+            # Retrieve old hash
+            old_hash=$(<"${OUTPUT_JS_FILE}.sum")
+
+            # Compute new hash
+            new_hash=$(cksum "${INPUT_PYTHON_FILE}")
+
+            # Compare the two
+            if [ "$old_hash" = "$new_hash" ]; then
+              echo "Existing file did not changed. Skipping generation from ${INPUT_PYTHON_FILE}."
+              return 0
+            else
+              echo "Existing file changed: regeneration needed. Writing new hash into file ${OUTPUT_JS_FILE}.sum"
+              echo -n "$new_hash" > "${OUTPUT_JS_FILE}.sum"
+            fi
+        fi
     fi
 
     # Start the JS class
