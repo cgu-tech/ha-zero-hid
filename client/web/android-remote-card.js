@@ -1186,7 +1186,7 @@ class AndroidRemoteCard extends HTMLElement {
     //  this.doListenAddonCell(addonCell);
     //}
     // Update sides cards configs
-    this._elements.addons.setConfig(this.getAddonsConfig());
+    //this._elements.addons.setConfig(this.getAddonsConfig());
   }
 
   //doAddonCell(rowConfig, cellConfig) {
