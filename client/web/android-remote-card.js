@@ -1381,7 +1381,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doListenAddonCellContentLabel();
 
     // Create addon cell content inner image
-    const addonCellContentImage = this.doCellContentImage(addonCellConfig, defaultAddonCellConfig);
+    const addonCellContentImage = this.doAddonCellContentImage(addonCellConfig, defaultAddonCellConfig);
     this.doStyleAddonCellContentImage(addonCellContentImage, addonCellConfig);
     this.doAttachAddonCellContentImage();
     this.doQueryAddonCellContentImageElements(addonCellContent, addonCellContentImage, defaultAddonCellConfig);
