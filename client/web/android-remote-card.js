@@ -238,6 +238,7 @@ class AndroidRemoteCard extends HTMLElement {
         flex-direction: column;
         flex: 6 0 0%; /* Allow growing and shrinking */
         min-width: 0;
+        height: 100%;
       }
       .addons-wrapper {
         display: flex;
@@ -246,7 +247,7 @@ class AndroidRemoteCard extends HTMLElement {
         overflow-y: auto; /* Scroll if content overflows */
         min-width: 0;
         min-height: 0; /* Important for scroll to work inside flex container */
-        height: 100%;
+        max-height: 100%;
         border: 1px solid var(--cell-button-bg);
         border-radius: var(--card-border-radius);
       }
