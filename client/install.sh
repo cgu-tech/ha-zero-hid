@@ -143,6 +143,9 @@ extract_keycodes_to_js_class() {
         return 1
     fi
     
+    # Compute new hash
+    local new_hash=$(cksum "${INPUT_PYTHON_FILE}")
+    
     # When output file already exists, check whether or not regeneration is needed
     if [[ -f "${OUTPUT_JS_FILE}" ]]; then
         echo "Output file already exists: ${OUTPUT_JS_FILE}. Checking if regeneration is needed..."
@@ -150,24 +153,21 @@ extract_keycodes_to_js_class() {
             echo "Checksum file already exists: ${OUTPUT_JS_FILE}.sum. Checking if regeneration is needed..."
 
             # Retrieve old hash
-            old_hash=$(<"${OUTPUT_JS_FILE}.sum")
-
-            # Compute new hash
-            new_hash=$(cksum "${INPUT_PYTHON_FILE}")
+            local old_hash=$(<"${OUTPUT_JS_FILE}.sum")
 
             # Compare the two
             if [ "$old_hash" = "$new_hash" ]; then
               echo "Existing file did not changed. Skipping generation from ${INPUT_PYTHON_FILE}."
               return 0
-            else
-              echo "Existing file changed: regeneration needed. Writing new hash into file ${OUTPUT_JS_FILE}.sum"
-              echo -n "$new_hash" > "${OUTPUT_JS_FILE}.sum"
             fi
         else
             echo "Checksum file not found: ${OUTPUT_JS_FILE}.sum. Regenerating..."
         fi
         echo "Output file not found: ${OUTPUT_JS_FILE}. Regenerating..."
     fi
+
+    echo "Existing file changed: regeneration needed. Writing new hash into file ${OUTPUT_JS_FILE}.sum"
+    echo -n "$new_hash" > "${OUTPUT_JS_FILE}.sum"
 
     # Start the JS class
     {
