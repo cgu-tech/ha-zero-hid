@@ -228,7 +228,7 @@ class AndroidRemoteCard extends HTMLElement {
         max-width: 100%;
         flex-shrink: 1; /* allow shrinking */
         min-width: 0;   /* allow content to shrink inside */
-        display: flex;
+        display: inline-flex;
         flex-direction: row;
         align-items: flex-start;
         width: 100%;
