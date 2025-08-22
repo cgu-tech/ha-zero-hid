@@ -216,6 +216,7 @@ class AndroidRemoteCard extends HTMLElement {
         border-radius: var(--card-border-radius);
         overflow: hidden; /* prevent overflow outside card */
         font-family: sans-serif;
+        height: 100%;
       }
       .card-content {
         padding: 0 !important;
