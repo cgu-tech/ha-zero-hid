@@ -67,6 +67,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doListen();
 
     this.doUpdateLayout();
+    this.doUpdateAddons();
   }
 
   getLogger() {
@@ -593,6 +594,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (this._layoutManager.configuredLayoutChanged()) {
       this.doUpdateLayout();
     }
+    this.doUpdateAddons();
   }
   
   doUpdateFoldablesConfig() {
@@ -604,7 +606,11 @@ class AndroidRemoteCard extends HTMLElement {
   }
   
   doUpdateHass() {
+    this.doUpdateLayoutHass();
+    this.doUpdateAddonsHass();
+  }
 
+  doUpdateLayoutHass() {
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
     const overridesConfigs = this._layoutManager.getButtonsOverrides();
     Object.keys(overridesConfigs).forEach((btnId) => {
@@ -643,8 +649,6 @@ class AndroidRemoteCard extends HTMLElement {
         }
       }
     });
-    
-    this.doUpdateAddonsHass();
   }
 
   doUpdateAddonsHass() {
@@ -668,9 +672,6 @@ class AndroidRemoteCard extends HTMLElement {
   doResetLayout() {
     // Clear previous listeners
     this._eventManager.clearListeners("layoutContainer");
-
-    // Detach existing layout from DOM
-    this._elements.addonsWrapper.innerHTML = '';
 
     // Detach existing layout from DOM
     this._elements.wrapper.innerHTML = '';
@@ -704,9 +705,6 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Setup three-states-toggle foldables
     this.setupFoldable();
-
-    // Setup addons
-    this.setupAddons();
   }
 
   doRow(rowConfig) {
@@ -1171,40 +1169,67 @@ class AndroidRemoteCard extends HTMLElement {
     const styleId = flexStr.replace(/\./g, '-');
     return `span-${styleId}`;
   }
-
-  setupAddons() {
-    this.doUpdateAddons();
-  }
   
   doUpdateAddons() {
-    // Create all cells
-    //for (const [addonName, addonConfig] of Object.entries(this.getAddonsConfig())) {
-    //  const addonCell = this.doAddonCell(addonName, addonConfig);
-    //  this.doStyleAddonCell(addonCell, addonConfig);
-    //  this.doAttachAddonCell(addonCell);
-    //  this.doQueryAddonCellElements();
-    //  this.doListenAddonCell(addonCell);
-    //}
+    this.doResetAddons();
+    this.doCreateAddons();
+  }
+
+  doResetAddons() {
+    // Clear previous listeners
+    this._eventManager.clearListeners("addonsContainer");
+
+    // Detach existing layout from DOM
+    this._elements.addonsWrapper.innerHTML = '';
+
+    // Reset addons cells contents elements (if any)
+    this._elements.addonsCellContents = [];
+
+    // Reset addons cells elements (if any)
+    this._elements.addonsCells = [];
+  }
+
+  doCreateAddons() {
+    // Create all addons cells
+    for (const [addonName, addonConfig] of Object.entries(this.getAddonsConfig())) {
+      const addonCell = this.doAddonCell(addonName, addonConfig);
+      this.doStyleAddonCell(addonCell, addonConfig);
+      this.doAttachAddonCell(addonCell);
+      this.doQueryAddonCellElements();
+      this.doListenAddonCell(addonCell);
+    }
     // Update sides cards configs
     //this._elements.addons.setConfig(this.getAddonsConfig());
   }
 
-  //doAddonCell(rowConfig, cellConfig) {
-  //  const cell = document.createElement("div");
-  //  this._elements.cells.push(cell);
-  //  cell.classList.add('cell');
-  //  cell.classList.add(this.createSpanClass(cellConfig.weight));
-  //  if (rowConfig["no-gap"]) cell.classList.add('no-gap'); // Remove internal padding on cell when required by the row
-  //
-  //  // Create cell content
-  //  const cellContent = this.doCellContent(cellConfig);
-  //  this.doStyleCellContent();
-  //  this.doAttachCellContent(cell, cellContent);
-  //  this.doQueryCellContentElements(cellContent);
-  //  this.doListenCellContent(cellContent);
-  //
-  //  return cell;
-  //}
+  doAddonCell(cellConfig) {
+    const addonCell = document.createElement("div");
+    this._elements.addonsCells.push(addonCell);
+    addonCell.classList.add('addon-button');
+
+    //TODO
+    // Create cell content
+    //const cellContent = this.doCellContent(cellConfig);
+    //this.doStyleCellContent();
+    //this.doAttachCellContent(cell, cellContent);
+    //this.doQueryCellContentElements(cellContent);
+    //this.doListenCellContent(cellContent);
+  
+    return addonCell;
+  }
+
+  doStyleAddonCell(addonCell, addonConfig) {
+    //TODO
+  }
+  doAttachAddonCell(addonCell) {
+    this._elements.addonsWrapper.appendChild(addonCell);
+  }
+  doQueryAddonCellElements() {
+    //TODO
+  }
+  doListenAddonCell(addonCell) {
+    //TODO
+  }
 
   // configuration defaults
   static getStubConfig() {
