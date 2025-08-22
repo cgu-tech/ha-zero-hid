@@ -338,7 +338,6 @@ class AndroidRemoteCard extends HTMLElement {
         width: auto;
         fill: var(--side-cell-button-fg);
         stroke: var(--side-cell-button-fg);
-        filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.6));
         cursor: pointer;
       }
       .addon-img {
