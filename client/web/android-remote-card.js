@@ -249,7 +249,7 @@ class AndroidRemoteCard extends HTMLElement {
         white-space: nowrap;
         text-overflow: ellipsis;
         aspect-ratio: 1 / 1;
-        flex: 0 1 0%;
+        flex: 1 1 0%;
         background-color: var(--side-cell-button-bg);
         color: var(--side-cell-button-fg);
         border: none;
