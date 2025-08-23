@@ -1432,17 +1432,55 @@ class AndroidRemoteCard extends HTMLElement {
 
   onAddonCellPress(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    //this.doCellPress(addonCell);
+    this.doAddonCellPress(addonCell, evt);
   }
 
   onAddonCellAbortPress(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    //this.doCellAbortPress(addonCell);
+    this.doAddonCellAbortPress(addonCell);
   }
 
   onAddonCellRelease(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    //this.doCellRelease(addonCell);
+    this.doAddonCellRelease(addonCell);
+  }
+
+  doAddonCellPress(addonCell, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Addon cell ${addonCell.id} press: action will be triggered on release, nothing to do`));
+
+    // Retrieve addon cell config
+    const addonCellConfig = this._layoutManager.getElementData(addonCell);
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doAddonCellAbortPress(addonCell, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Addon cell ${addonCell.id} abort press: action wont be triggered at all, nothing to do`));
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doAddonCellRelease(addonCell, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Addon cell ${addonCell.id} release: triggering associated action...`));
+
+    // Retrieve addon cell config
+    const addonCellConfig = this._layoutManager.getElementData(addonCell);
+
+    // Retrieve service parameters
+    const entityId = this.getAddonCellEntity(addonCellConfig);
+    const entityState = this.getHassEntity(entityId)?.state;
+    const domain = entityId?.split('.')?.[0];
+    const service = entityState === 'on' ? 'turn_off' : 'turn_on';
+
+    // Call service to sitch the entity state
+    this._eventManager.callService(domain, service, {
+      "entity_id": entityId,
+    });
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
   }
 
   doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {

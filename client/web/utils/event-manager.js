@@ -482,11 +482,23 @@ export class EventManager {
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
   callComponentService(name, args) {
+    this.callService(Globals.COMPONENT_NAME, name, args);
+  }
+  
+  // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
+  // 
+  // Parameters:
+  //  - domain: the domain where service belongs to (ex: switch, light, ha-zero-hid)
+  //  - name: the service name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  // 
+  // Returns: 
+  //  - void (this is a fire-and-forget HAOS integration call)
+  callService(domain, name, args) {
     if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callComponentService(name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, name, args));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, domain, name, args));
       return;
     }
-    this.getHass().callService(Globals.COMPONENT_NAME, name, args);
+    this.getHass().callService(domain, name, args);
   }
   
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
