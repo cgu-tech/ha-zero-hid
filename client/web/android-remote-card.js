@@ -186,9 +186,9 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getAddonCellConfigOrDefault(addonCellConfig, property):", addonCellConfig, property));
     const cellProperty = `cell_${property}`;
     return addonCellConfig?.[property] || 
-          (this._layoutManager.isConfigDefined("addons") && this._layoutManager.isDefined(this.getFromConfig("addons")?.[cellProperty]) 
-            ? this.getFromConfig("addons")?.[cellProperty] 
-            : this.getFromDefaultConfig("addons")?.[cellProperty]);
+          (this._layoutManager.isDefined(this._layoutManager.getFromConfig("addons")?.[cellProperty]) 
+            ? this._layoutManager.getFromConfig("addons")?.[cellProperty] 
+            : this._layoutManager.getFromDefaultConfig("addons")?.[cellProperty]);
   }
 
   // Dynamic config
