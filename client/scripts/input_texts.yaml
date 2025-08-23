@@ -1,6 +1,0 @@
-# Place this file into /config/input_texts.yaml
-# Ensure "configuration.yaml" has this line (without comment): 
-# input_text: !include input_texts.yaml
-disney_castle_color_rgb:
-  name: Disney Castle Color (RGB)
-  initial: "255,255,255"

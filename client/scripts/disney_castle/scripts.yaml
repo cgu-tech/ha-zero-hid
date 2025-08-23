@@ -1,10 +1,25 @@
 # Place this file into /config/scripts.yaml
-# Ensure "configuration.yaml" has this line (without comment): 
+# Ensure "configuration.yaml" has this line (without comment):
 # script: !include scripts.yaml
 
 disney_castle_turn_on:
   alias: "Turns ON Disney Castle"
   sequence:
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.disney_castle_r
+      data:
+        value: 230
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.disney_castle_g
+      data:
+        value: 221
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.disney_castle_b
+      data:
+        value: 189
     - service: script.briksmax_disney_castle_power_on
     - service: input_boolean.turn_on
       target:
@@ -23,13 +38,21 @@ disney_castle_set_level:
   sequence:
     - service: input_number.set_value
       target:
-        entity_id: input_boolean.disney_castle_brightness
+        entity_id: input_number.disney_castle_brightness
       data:
         value: "{{ brightness }}"
 
 disney_castle_set_color:
   alias: "Set Disney Castle Color"
+  mode: queued
+  fields:
+    rgb_color:
+      description: "RGB color list"
+      example: "[255, 0, 0]"
   sequence:
+    - condition: template
+      value_template: >
+        {{ rgb_color is defined and rgb_color | length == 3 }}
     - service: python_script.led_color_match
       data:
         color: "{{ rgb_color }}"
@@ -70,11 +93,6 @@ disney_castle_set_color:
             hex: "#E6DDBD"
             service_domain: script
             service_name: briksmax_disney_castle_color_white
-    - service: input_text.set_value
-      data:
-        entity_id: input_text.disney_castle_color_rgb
-        value: "{{ rgb_color[0] }},{{ rgb_color[1] }},{{ rgb_color[2] }}"
-
 
 # Mock scripts (replace with real ones that call remote)
 briksmax_disney_castle_power_on:
