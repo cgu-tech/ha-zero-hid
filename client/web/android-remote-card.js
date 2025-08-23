@@ -124,6 +124,10 @@ class AndroidRemoteCard extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("addons");
   }
 
+  getAddonsCellsConfig() {
+    return this.getAddonsConfig()?.["cells"];
+  }
+
   getTriggerLongClickDelay() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
   }
@@ -1357,25 +1361,25 @@ class AndroidRemoteCard extends HTMLElement {
 
   doCreateAddons() {
     // Create all addons cells
-    for (const [addonName, addonConfig] of Object.entries(this.getAddonsConfig())) {
-      const addonCell = this.doAddonCell(addonName, addonConfig);
-      this.doStyleAddonCell(addonCell, addonConfig);
+    for (const [addonCellName, addonCellConfig] of Object.entries(this.getAddonsCellsConfig())) {
+      const addonCell = this.doAddonCell(addonCellName, addonCellConfig);
+      this.doStyleAddonCell(addonCell, addonCellConfig);
       this.doAttachAddonCell(addonCell);
       this.doQueryAddonCellElements();
       this.doListenAddonCell(addonCell);
     }
   }
 
-  doAddonCell(addonName, addonCellConfig) {
+  doAddonCell(addonCellName, addonCellConfig) {
 
     // Define cell default config
-    const defaultAddonCellConfig = this.createDynamicAddonCellConfig(addonName, addonCellConfig);
+    const defaultAddonCellConfig = this.createDynamicAddonCellConfig(addonCellName, addonCellConfig);
 
     // Create a new addon cell
     const addonCell = document.createElement("div");
     this._elements.addonsCells.push(addonCell);
     addonCell.classList.add('addon-cell');
-    addonCell.id = addonName;
+    addonCell.id = addonCellName;
     this.setAddonCellData(addonCell, addonCellConfig, defaultAddonCellConfig);
 
     // Create addon cell content
