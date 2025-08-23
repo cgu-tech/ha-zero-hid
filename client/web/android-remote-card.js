@@ -6,6 +6,7 @@ import { LayoutManager } from './utils/layout-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 import { androidRemoteCardConfig } from './configs/android-remote-card-config.js';
+import { iconsConfig } from './configs/icons-config.js';
 import * as layoutsRemote from './layouts/remote/index.js';
 
 // <ha_resources_version> dynamically injected at install time
@@ -1274,15 +1275,13 @@ class AndroidRemoteCard extends HTMLElement {
     return this.getAddonCellConfigOrDefault(addonCellConfig, "label_gap");
   }
   getAddonCellIconUrl(addonCellConfig) {
-    const iconUrl = this.getAddonCellConfigOrDefault(addonCellConfig, "icon_url");
-    return iconUrl ? (this._resourceManager.isValidUrl(iconUrl) ? iconUrl : this._resourceManager.getLocalIconUrl(iconUrl)) : "";
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "icon_url");
   }
   getAddonCellIconGap(addonCellConfig) {
     return this.getAddonCellConfigOrDefault(addonCellConfig, "icon_gap");
   }
   getAddonCellImageUrl(addonCellConfig) {
-    const imageUrl = this.getAddonCellConfigOrDefault(addonCellConfig, "image_url");
-    return imageUrl ? (this._resourceManager.isValidUrl(imageUrl) ? imageUrl : this._resourceManager.getLocalIconUrl(imageUrl)) : "";
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "image_url");
   }
   getAddonCellImageGap(addonCellConfig) {
     return this.getAddonCellConfigOrDefault(addonCellConfig, "image_gap");
@@ -1498,10 +1497,10 @@ class AndroidRemoteCard extends HTMLElement {
     addonCellContentImage.className = "addon-cell-content-part img";
 
     // Instanciates image (but load its content later)
-    const img = document.createElement("img");
+    const img = document.createElement("div");
     addonCellContentImage._image = img;
     img.className = "addon-img";
-    img.alt = this.getDynamicAddonCellName(defaultAddonCellConfig);
+    img.innerHTML = this.getAddonCellImageUrl(addonCellConfig) ? iconsConfig[this.getAddonCellImageUrl(addonCellConfig)] : '';
 
     // Append and return wrapper (not image itself)
     addonCellContentImage.appendChild(img);
@@ -1524,19 +1523,12 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doListenAddonCellContentImage(addonCellContent, addonCellConfig, defaultAddonCellConfig) {
-    const img = addonCellContent._addonCellContentImage?._image;
-    if (img) this._eventManager.addLoadListenerToContainer("addonsContainer", img, this.onLoadAddonImageSuccess.bind(this, addonCellContent, addonCellConfig, defaultAddonCellConfig));
-    if (img) this._eventManager.addErrorListenerToContainer("addonsContainer", img, this.onLoadAddonImageError.bind(this, addonCellContent, addonCellConfig, defaultAddonCellConfig));
+      // Nothing to do here
   }
 
   doLoadAddonImage(addonCellContent, defaultAddonCellConfig) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doLoadAddonImage(addonCellContent, defaultAddonCellConfig):', addonCellContent, defaultAddonCellConfig));
-    const addonCellImageUrl = this.getDynamicAddonCellImageUrl(defaultAddonCellConfig);
-    const img = addonCellContent._addonCellContentImage?._image;
-    if (img && addonCellImageUrl) img.src = addonCellImageUrl; // Starts loading image asynchronously
-  }
 
-  onLoadAddonImageSuccess(addonCellContent, addonCellConfig, defaultAddonCellConfig) {
     const addonCellName = this.getDynamicAddonCellName(defaultAddonCellConfig);
     const addonCellImageUrl = this.getDynamicAddonCellImageUrl(defaultAddonCellConfig);
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cell ${addonCellName} image successfully loaded from URL '${addonCellImageUrl}'`));
