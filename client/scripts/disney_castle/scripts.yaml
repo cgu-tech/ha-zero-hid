@@ -33,15 +33,6 @@ disney_castle_turn_off:
       target:
         entity_id: input_boolean.disney_castle_power
 
-disney_castle_set_level:
-  alias: "Set Disney Castle Brightness"
-  sequence:
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.disney_castle_brightness
-      data:
-        value: "{{ brightness }}"
-
 disney_castle_set_color:
   alias: "Set Disney Castle Color"
   mode: queued

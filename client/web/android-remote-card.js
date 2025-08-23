@@ -826,23 +826,55 @@ class AndroidRemoteCard extends HTMLElement {
       const addonCellConfig = this._layoutManager.getElementData(addonCell);
 
       // Checks whether cell configured entity is ON (when entity is configured and exists into HA)
-      const isHassEntityOn = this.isHassEntityOn(this.getAddonCellEntity(addonCellConfig));
-      this.setSensorClass(addonCell, isHassEntityOn);
+      const entityId = this.getAddonCellEntity(addonCellConfig);
+      const isHassEntityOn = this.isHassEntityOn(entityId);
+      this.setSensorClass(addonCell, entityId, isHassEntityOn);
     }
   }
 
   getHassEntity(entityId) {
     return this._hass?.states?.[entityId];
   }
-  
+
+  getEntityRgbColor(entityId) {
+    return entityId && this.getHassEntity(entityId)?.attributes?.rgb_color ?? null;
+  }
+
   isHassEntityOn(entityId) {
     return entityId && (this.getHassEntity(entityId)?.state === 'on');
   }
   
-  setSensorClass(addonCell, isSensorOn) {
+  setSensorClass(addonCell, entityId, isSensorOn) {
     const img = addonCell?._img;
-    if (img && isSensorOn) img.classList.add("sensor-on");
-    if (img && !isSensorOn) img.classList.remove("sensor-on");
+    if (img) {
+      const svg = img.querySelector('svg');
+      const rgbColor = this.getEntityRgbColor(entityId);
+      if (svg && rgbColor) {
+        // RGB color available
+
+        // Remove "sensor-on" class just in case (to avoid styles collision)
+        img.classList.remove("sensor-on");
+
+        // Store the original color (once when needed)
+        if (svg && !img._originalFill) img._originalFill = svg.style.fill;
+        if (svg && !img._originalStroke) img._originalStroke = svg.style.stroke;
+
+        // Apply RGB color
+        const [r, g, b] = rgbColor;
+        const color = `rgb(${r}, ${g}, ${b})`;
+        svg.style.fill = color;
+        svg.style.stroke = color;
+      } else {
+        // RGB color unavailable (entity could be off, or could be unrelated to lights - ie. a switch)
+        
+        // Revert to original styles or empty string
+        if (svg && img._originalFill) svg.style.fill = img._originalFill || '';
+        if (svg && img._originalStroke) svg.style.stroke = img._originalStroke || '';
+        
+        if (isSensorOn) img.classList.add("sensor-on");
+        if (!isSensorOn) img.classList.remove("sensor-on");
+      }
+    }
   }
   
   doUpdateFoldablesHass() {
