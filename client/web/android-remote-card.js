@@ -1414,7 +1414,7 @@ class AndroidRemoteCard extends HTMLElement {
 
 
     // Create addon cell content inner image
-    const imgHtml = this.getAddonCellImageUrl(addonCellConfig) ? iconsConfig[this.getAddonCellImageUrl(addonCellConfig)] : '';
+    const imgHtml = this.getAddonCellImageUrl(addonCellConfig) ? iconsConfig[this.getAddonCellImageUrl(addonCellConfig)]?.["html"] : '';
     const img = document.createElement("div");
     img.className = "addon-img";
     img.innerHTML = imgHtml;
@@ -1426,7 +1426,7 @@ class AndroidRemoteCard extends HTMLElement {
 
 
     // Create addon cell content inner icon
-    const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? iconsConfig[this.getAddonCellIconUrl(addonCellConfig)] : '';
+    const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? iconsConfig[this.getAddonCellIconUrl(addonCellConfig)]?.["html"] : '';
     const ico = document.createElement("div");
     ico.className = "addon-icon";
     ico.innerHTML = icoHtml;
