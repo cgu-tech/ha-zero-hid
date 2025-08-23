@@ -840,11 +840,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
   
   setSensorClass(addonCell, isSensorOn) {
-    const children = Array.from(addonCell?.children ?? []);
-    for (const child of children) {
-      if (isSensorOn) child.classList.add("sensor-on");
-      if (!isSensorOn) child.classList.remove("sensor-on");
-    }
+    const img = addonCell?._img;
+    if (img && isSensorOn) img.classList.add("sensor-on");
+    if (img && !isSensorOn) img.classList.remove("sensor-on");
   }
   
   doUpdateFoldablesHass() {
@@ -1404,7 +1402,7 @@ class AndroidRemoteCard extends HTMLElement {
     const addonCellContent = this.doAddonCellContent(addonCellConfig, defaultAddonCellConfig);
     this.doStyleAddonCellContent(addonCellContent, addonCellConfig);
     this.doAttachAddonCellContent(addonCell, addonCellContent);
-    this.doQueryAddonCellContentElements();
+    this.doQueryAddonCellContentElements(addonCell, addonCellContent);
     this.doListenAddonCellContent();
   
     return addonCell;
@@ -1539,8 +1537,8 @@ class AndroidRemoteCard extends HTMLElement {
     addonCell.appendChild(addonCellContent);
   }
 
-  doQueryAddonCellContentElements() {
-    // Nothing to do here: element already referenced and sub-elements are not needed
+  doQueryAddonCellContentElements(addonCell, addonCellContent) {
+    addonCell._img = addonCellContent.querySelector(".addon-img");
   }
 
   doListenAddonCellContent() {
