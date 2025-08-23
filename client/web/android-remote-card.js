@@ -837,7 +837,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getEntityRgbColor(entityId) {
-    return entityId && this.getHassEntity(entityId)?.attributes?.rgb_color ?? null;
+    return (this.getHassEntity(entityId)?.attributes?.rgb_color ?? null);
   }
 
   isHassEntityOn(entityId) {
