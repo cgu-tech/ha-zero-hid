@@ -23,7 +23,7 @@ class AndroidRemoteCard extends HTMLElement {
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedClickableData = new Set(['code']);
-  _allowedAddonCellData = new Set(['action', 'cellName', 'iconUrl', 'imageUrl']);
+  _allowedAddonCellData = new Set(['name', 'action', 'entity']);
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
   _sideCellButtonFg = '#bfbfbf';
@@ -143,13 +143,13 @@ class AndroidRemoteCard extends HTMLElement {
   getActivities() {
     return this._elements.foldables.activities;
   }
-  
-  getAddons() {
-    return this._elements.addons;
+    
+  getAddonsWrapper() {
+    return this._elements.addons.wrapper;
   }
   
   getAddonsCells() {
-    return this.getAddons()?.cells;
+    return this._elements.addons.cells;
   }
 
   // Per addon cell config
@@ -180,6 +180,9 @@ class AndroidRemoteCard extends HTMLElement {
   getAddonCellAction(addonCellConfig) {
     return this.getAddonCellConfigOrDefault(addonCellConfig, "action");
   }
+  getAddonCellEntity(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "entity");
+  }
 
   // Per cell config helper
   getAddonCellConfigOrDefault(addonCellConfig, property) {
@@ -193,16 +196,10 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Dynamic config
   getDynamicAddonCellName(defaultAddonCellConfig) {
-    return defaultAddonCellConfig["addonCellName"]; 
+    return defaultAddonCellConfig["name"]; 
   }
-  getDynamicAddonCellIconUrl(defaultAddonCellConfig) {
-    return defaultAddonCellConfig["addonCellIconUrl"]; 
-  }
-  getDynamicAddonCellImageUrl(defaultAddonCellConfig) {
-    return defaultAddonCellConfig["addonCellImageUrl"]; 
-  }
-  createDynamicAddonCellConfig(addonName, addonCellConfig) {
-    return { "addonCellName": addonName, "addonCellIconUrl": this.getAddonCellIconUrl(addonCellConfig), "addonCellImageUrl": this.getAddonCellImageUrl(addonCellConfig) };
+  createDynamicAddonCellConfig(addonCellName) {
+    return { "name": addonCellName };
   }
 
   getFoldableChild() {
@@ -753,7 +750,7 @@ class AndroidRemoteCard extends HTMLElement {
   doQueryElements() {
     const card = this._elements.card;
     this._elements.wrapper = card.querySelector(".wrapper");
-    this._elements.addonsWrapper = card.querySelector(".addons-wrapper");
+    this._elements.addons.wrapper = card.querySelector(".addons-wrapper");
   }
 
   doListen() {
@@ -822,10 +819,34 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateAddonsHass() {
-    // Update addons using new config
-    this._elements.addons.hass = this._hass;
+    // Update all addons cells according to bound entities
+    for (const addonCell of this.getAddonsCells()) {
+
+      // Retrieve addon cell config
+      const addonCellConfig = this._layoutManager.getElementData(addonCell);
+
+      // Checks whether cell configured entity is ON (when entity is configured and exists into HA)
+      const isHassEntityOn = this.isHassEntityOn(this.getAddonCellEntity(addonCellConfig));
+      this.setSensorClass(addonCell, isHassEntityOn);
+    }
   }
 
+  getHassEntity(entityId) {
+    return this._hass?.states?.[entityId];
+  }
+  
+  isHassEntityOn(entityId) {
+    return entityId && (this.getHassEntity(entityId)?.state === 'on');
+  }
+  
+  setSensorClass(addonCell, isSensorOn) {
+    const children = Array.from(addonCell?.children ?? []);
+    for (const child of children) {
+      if (isSensorOn) child.classList.add("sensor-on");
+      if (!isSensorOn) child.classList.remove("sensor-on");
+    }
+  }
+  
   doUpdateFoldablesHass() {
     // Update foldables cards configs
     const foldables = this._elements.foldables;
@@ -1350,13 +1371,10 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.clearListeners("addonsContainer");
 
     // Detach existing layout from DOM
-    this._elements.addonsWrapper.innerHTML = '';
-
-    // Reset addons cells contents elements (if any)
-    this._elements.addonsCellContents = [];
+    this._elements.addons.wrapper.innerHTML = '';
 
     // Reset addons cells elements (if any)
-    this._elements.addonsCells = [];
+    this._elements.addons.cells = [];
   }
 
   doCreateAddons() {
@@ -1373,11 +1391,11 @@ class AndroidRemoteCard extends HTMLElement {
   doAddonCell(addonCellName, addonCellConfig) {
 
     // Define cell default config
-    const defaultAddonCellConfig = this.createDynamicAddonCellConfig(addonCellName, addonCellConfig);
+    const defaultAddonCellConfig = this.createDynamicAddonCellConfig(addonCellName);
 
     // Create a new addon cell
     const addonCell = document.createElement("div");
-    this._elements.addonsCells.push(addonCell);
+    this.getAddonsCells().push(addonCell);
     addonCell.classList.add('addon-cell');
     addonCell.id = addonCellName;
     this.setAddonCellData(addonCell, addonCellConfig, defaultAddonCellConfig);
@@ -1393,13 +1411,13 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doStyleAddonCell(addonCell, addonConfig) {
-    //TODO
+    // Nothing to do
   }
   doAttachAddonCell(addonCell) {
-    this._elements.addonsWrapper.appendChild(addonCell);
+    this.getAddonsWrapper().appendChild(addonCell);
   }
   doQueryAddonCellElements() {
-    //TODO
+    // Nothing to do
   }
   doListenAddonCell(addonCell) {
     // Action and visual events
@@ -1734,11 +1752,11 @@ class AndroidRemoteCard extends HTMLElement {
       if (this._sidePanelVisible) {
         btn.classList.add("locked");
         this._elements.wrapper.classList.add("with-addons");
-        this._elements.addonsWrapper.classList.remove("hide");
+        this.getAddonsWrapper().classList.remove("hide");
       } else {
         btn.classList.remove("locked");
         this._elements.wrapper.classList.remove("with-addons");
-        this._elements.addonsWrapper.classList.add("hide");
+        this.getAddonsWrapper().classList.add("hide");
       }
     } else {
       // Typed config defines an action (related to sensor state or not)
