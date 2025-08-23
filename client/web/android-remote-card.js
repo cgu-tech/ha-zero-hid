@@ -383,7 +383,7 @@ class AndroidRemoteCard extends HTMLElement {
         width: auto;
         height: 30%;
         aspect-ratio: 1 / 1;
-        top: 2%;
+        top: 0px;
         left: 0px;
         padding: 0;
         background: transparent !important;
@@ -1506,7 +1506,8 @@ class AndroidRemoteCard extends HTMLElement {
       activities: {},
       addons: {
         cell_label_font_scale: '0.8em',
-        cell_image_gap: '0.2em 0em 0.2em 0em',
+        cell_image_gap: '0.8em 0.8em 0em 0.8em',
+        cell_icon_gap: '0.2em 0.2em 0em 0em',
         cells: {}
       }
     }
