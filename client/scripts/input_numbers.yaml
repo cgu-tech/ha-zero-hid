@@ -1,0 +1,9 @@
+# Place this file into /config/input_numbers.yaml
+# Ensure "configuration.yaml" has this line (without comment): 
+# input_number: !include input_numbers.yaml
+disney_castle_brightness:
+  name: Disney Castle Brightness
+  min: 0
+  max: 255
+  step: 1
+  initial: 128

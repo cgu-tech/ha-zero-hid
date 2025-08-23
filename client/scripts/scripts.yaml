@@ -1,0 +1,173 @@
+# Place this file into /config/scripts.yaml
+# Ensure "configuration.yaml" has this line (without comment): 
+# script: !include scripts.yaml
+
+disney_castle_turn_on:
+  alias: "Turns ON Disney Castle"
+  sequence:
+    - service: script.briksmax_disney_castle_power_on
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.disney_castle_power
+
+disney_castle_turn_off:
+  alias: "Turns OFF Disney Castle"
+  sequence:
+    - service: script.briksmax_disney_castle_power_off
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.disney_castle_power
+
+disney_castle_set_level:
+  alias: "Set Disney Castle Brightness"
+  sequence:
+    - service: input_number.set_value
+      target:
+        entity_id: input_boolean.disney_castle_brightness
+      data:
+        value: "{{ brightness }}"
+
+disney_castle_set_color:
+  alias: "Set Disney Castle Color"
+  sequence:
+    - service: python_script.led_color_match
+      data:
+        color: "{{ rgb_color }}"
+        color_map:
+          red:
+            hex: "#BD2A19"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_red
+          green:
+            hex: "#348C52"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_green
+          blue:
+            hex: "#0A62B5"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_blue
+          orange:
+            hex: "#C74613"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_orange
+          purple:
+            hex: "#781F50"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_purple
+          cyan:
+            hex: "#5C99BD"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_cyan
+          pink:
+            hex: "#C48C83"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_pink
+          yellow:
+            hex: "#D4C560"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_yellow
+          white:
+            hex: "#E6DDBD"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_white
+    - service: input_text.set_value
+      data:
+        entity_id: input_text.disney_castle_color_rgb
+        value: "{{ rgb_color[0] }},{{ rgb_color[1] }},{{ rgb_color[2] }}"
+
+
+# Mock scripts (replace with real ones that call remote)
+briksmax_disney_castle_power_on:
+  alias: "Mock: Set Color to red"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+
+briksmax_disney_castle_power_off:
+  alias: "Mock: Set Color to red"
+  sequence:
+    - service: light.turn_off
+      target:
+        entity_id: light.bed_light
+
+briksmax_disney_castle_color_red:
+  alias: "Mock: Set Color to red"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [189, 42, 25]
+
+briksmax_disney_castle_color_green:
+  alias: "Mock: Set Color to green"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [52, 140, 82]
+
+briksmax_disney_castle_color_blue:
+  alias: "Mock: Set Color to blue"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [10, 98, 181]
+
+briksmax_disney_castle_color_orange:
+  alias: "Mock: Set Color to orange"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [199, 70, 19]
+
+briksmax_disney_castle_color_purple:
+  alias: "Mock: Set Color to purple"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [120, 31, 80]
+
+briksmax_disney_castle_color_cyan:
+  alias: "Mock: Set Color to cyan"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [92, 153, 189]
+
+briksmax_disney_castle_color_pink:
+  alias: "Mock: Set Color to pink"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [196, 140, 131]
+
+briksmax_disney_castle_color_yellow:
+  alias: "Mock: Set Color to yellow"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [212, 197, 96]
+
+briksmax_disney_castle_color_white:
+  alias: "Mock: Set Color to white"
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.bed_light
+      data:
+        rgb_color: [230, 221, 189]

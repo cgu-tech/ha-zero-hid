@@ -1,0 +1,49 @@
+# Place this file into /config/lights.yaml
+# Ensure "configuration.yaml" has this line (without comment): 
+# light: !include lights.yaml
+- platform: template
+  lights:
+    disney_castle_light:
+      friendly_name: "Disney Castle Light"
+      value_template: "{{ is_state('input_boolean.disney_castle_power', 'on') }}"
+      level_template: "{{ states('input_number.disney_castle_brightness') | int }}"
+      color_template: >
+        {% set rgb = states('input_text.disney_castle_color_rgb').split(',') | map('int') | list %}
+        {% if rgb | length == 3 %}
+          {% set r = rgb[0] / 255 %}
+          {% set g = rgb[1] / 255 %}
+          {% set b = rgb[2] / 255 %}
+          {% set max = [r, g, b] | max %}
+          {% set min = [r, g, b] | min %}
+          {% set delta = max - min %}
+          {% set h = 0 %}
+          {% if delta != 0 %}
+            {% if max == r %}
+              {% set h = ((g - b) / delta) % 6 %}
+            {% elif max == g %}
+              {% set h = ((b - r) / delta) + 2 %}
+            {% else %}
+              {% set h = ((r - g) / delta) + 4 %}
+            {% endif %}
+            {% set h = (h * 60) | round(0, 'half') %}
+            {% if h < 0 %}
+              {% set h = h + 360 %}
+            {% endif %}
+          {% endif %}
+          {% set s = 0 if max == 0 else (delta / max) * 100 %}
+          [{{ h | int }}, {{ s | round(0) | int }}]
+        {% else %}
+          [0, 0]
+        {% endif %}
+      turn_on:
+        service: script.disney_castle_turn_on
+      turn_off:
+        service: script.disney_castle_turn_off
+      set_level:
+        service: script.disney_castle_set_level
+        data:
+          brightness: "{{ brightness }}"
+      set_color:
+        service: script.disney_castle_set_color
+        data:
+          rgb_color: "{{ rgb_color }}"
