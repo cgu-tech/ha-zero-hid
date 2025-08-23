@@ -1359,8 +1359,6 @@ class AndroidRemoteCard extends HTMLElement {
     this.doAttachAddonCellContent(addonCell, addonCellContent);
     this.doQueryAddonCellContentElements();
     this.doListenAddonCellContent();
-    this.doLoadAddonImage(addonCellContent, defaultAddonCellConfig);
-    this.doLoadAddonIcon(addonCellContent, defaultAddonCellConfig);
   
     return addonCell;
   }
@@ -1401,31 +1399,50 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {
+
+    // Create addon cell content inner label
+    const label = document.createElement("div");
+    label.className = "addon-label";
+    label.textContent = this.getAddonCellLabel(addonCellConfig) || this.getDynamicAddonCellName(defaultAddonCellConfig);
+    label.style.color = this.getAddonCellLabelColor(addonCellConfig);
+    label.style.fontSize = this.getAddonCellLabelFontScale(addonCellConfig);
+
+    const addonCellContentLabel = document.createElement("div");
+    addonCellContentLabel.className = "addon-cell-content-part label half";
+    addonCellContentLabel.style.padding = this.getAddonCellLabelGap(addonCellConfig);
+    addonCellContentLabel.appendChild(label);
+
+
+    // Create addon cell content inner image
+    const imgHtml = this.getAddonCellImageUrl(addonCellConfig) ? iconsConfig[this.getAddonCellImageUrl(addonCellConfig)] : '';
+    const img = document.createElement("div");
+    img.className = "addon-img";
+    img.innerHTML = imgHtml;
+
+    const addonCellContentImage = document.createElement("div");
+    addonCellContentImage.className = "addon-cell-content-part img half";
+    addonCellContentImage.style.padding = this.getAddonCellImageGap(addonCellConfig);
+    addonCellContentImage.appendChild(img);
+
+
+    // Create addon cell content inner icon
+    const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? iconsConfig[this.getAddonCellIconUrl(addonCellConfig)] : '';
+    const ico = document.createElement("div");
+    ico.className = "addon-icon";
+    ico.innerHTML = icoHtml;
+
+    const addonCellContentIcon = document.createElement("div");
+    addonCellContentIcon.className = "addon-icon-wrapper";
+    addonCellContentIcon.style.padding = this.getAddonCellIconGap(addonCellConfig);
+    addonCellContentIcon.appendChild(ico);
+
+
     // Create addon cell content
     const addonCellContent = document.createElement("div");
     addonCellContent.className = "addon-cell-content";
-
-    // Create addon cell content inner label
-    const addonCellContentLabel = this.doAddonCellContentLabel(addonCellConfig, defaultAddonCellConfig);
-    this.doStyleAddonCellContentLabel(addonCellContentLabel, addonCellConfig);
-    this.doAttachAddonCellContentLabel(addonCellContent, addonCellContentLabel);
-    this.doQueryAddonCellContentLabelElements(addonCellContent, addonCellContentLabel);
-    this.doListenAddonCellContentLabel();
-
-    // Create addon cell content inner image
-    const addonCellContentImage = this.doAddonCellContentImage(addonCellConfig, defaultAddonCellConfig);
-    this.doStyleAddonCellContentImage(addonCellContentImage, addonCellConfig);
-    this.doAttachAddonCellContentImage();
-    this.doQueryAddonCellContentImageElements(addonCellContent, addonCellContentImage, defaultAddonCellConfig);
-    this.doListenAddonCellContentImage(addonCellContent, addonCellConfig, defaultAddonCellConfig);
-
-    // Create addon cell content inner icon
-    const addonCellContentIcon = this.doAddonCellContentIcon(addonCellConfig, defaultAddonCellConfig);
-    this.doStyleAddonCellContentIcon(addonCellContentIcon, addonCellConfig);
-    this.doAttachAddonCellContentIcon();
-    this.doQueryAddonCellContentIconElements(addonCellContent, addonCellContentIcon, defaultAddonCellConfig);
-    this.doListenAddonCellContentIcon(addonCellContent, addonCellConfig, defaultAddonCellConfig);
-
+    addonCellContent.appendChild(addonCellContentLabel);
+    addonCellContent.appendChild(addonCellContentImage);
+    addonCellContent.appendChild(addonCellContentIcon);
     return addonCellContent;
   }
 
@@ -1443,182 +1460,6 @@ class AndroidRemoteCard extends HTMLElement {
 
   doListenAddonCellContent() {
     // Nothing to do here: no events needed on cell content
-  }
-
-  doAddonCellContentLabel(addonCellConfig, defaultAddonCellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doAddonCellContentLabel(addonCellConfig, defaultAddonCellConfig):`, addonCellConfig, defaultAddonCellConfig));
-
-    // Instanciates a content wrapper for layout consistency, relatives to image layout circument of chromium-based browser bugs
-    const addonCellContentLabel = document.createElement("div");
-    addonCellContentLabel.className = "addon-cell-content-part label";
-    addonCellContentLabel.classList.add('full'); // Always make the label taking full cell space first as fallback
-
-    // Instanciates a new label
-    const label = document.createElement("div");
-    addonCellContentLabel._label = label;
-    label.className = "addon-label";
-    label.textContent = this.getAddonCellLabel(addonCellConfig) || this.getDynamicAddonCellName(defaultAddonCellConfig);
-
-    // Append and return wrapper (not label itself)
-    addonCellContentLabel.appendChild(label);
-    return addonCellContentLabel;
-  }
-
-  doStyleAddonCellContentLabel(addonCellContentLabel, addonCellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doStyleAddonCellContentLabel(addonCellContentLabel, addonCellConfig):`, addonCellContentLabel, addonCellConfig));
-
-    // Apply user preferences on cell content label container style
-    addonCellContentLabel.style.padding = this.getAddonCellLabelGap(addonCellConfig);
-    
-    // Apply user preferences on cell content label style
-    addonCellContentLabel._label.style.color = this.getAddonCellLabelColor(addonCellConfig);
-    addonCellContentLabel._label.style.fontSize = this.getAddonCellLabelFontScale(addonCellConfig);
-  }
-
-  doAttachAddonCellContentLabel(addonCellContent, addonCellContentLabel) {
-    addonCellContent.appendChild(addonCellContentLabel); // Always attach label first as fallback
-  }
-
-  doQueryAddonCellContentLabelElements(addonCellContent, addonCellContentLabel) {
-    // Keep content label wrapper reference into addonCellContent for further operations
-    addonCellContent._addonCellContentLabel = addonCellContentLabel;
-  }
-
-  doListenAddonCellContentLabel() {
-    // Nothing to do here: no events needed on cell content label
-  }
-
-  doAddonCellContentImage(addonCellConfig, defaultAddonCellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentImage(addonCellConfig, defaultAddonCellConfig):`, addonCellConfig, defaultAddonCellConfig));
-
-    // Instanciates a content wrapper to avoid chromium-based browser bugs
-    // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
-    const addonCellContentImage = document.createElement("div");
-    addonCellContentImage.className = "addon-cell-content-part img";
-
-    // Instanciates image (but load its content later)
-    const img = document.createElement("div");
-    addonCellContentImage._image = img;
-    img.className = "addon-img";
-    img.innerHTML = this.getAddonCellImageUrl(addonCellConfig) ? iconsConfig[this.getAddonCellImageUrl(addonCellConfig)] : '';
-
-    // Append and return wrapper (not image itself)
-    addonCellContentImage.appendChild(img);
-    return addonCellContentImage;
-  }
-
-  doStyleAddonCellContentImage(addonCellContentImage, addonCellConfig) {
-
-    // Apply user preferences on image style
-    if (addonCellContentImage) addonCellContentImage.style.padding = this.getAddonCellImageGap(addonCellConfig);
-  }
-
-  doAttachAddonCellContentImage() {
-    // Nothing to do here: content image will be attached to DOM later, once successfully loaded
-  }
-
-  doQueryAddonCellContentImageElements(addonCellContent, addonCellContentImage) {
-    // Keep content image wrapper reference into addonCellContent for further operations
-    addonCellContent._addonCellContentImage = addonCellContentImage;
-  }
-
-  doListenAddonCellContentImage(addonCellContent, addonCellConfig, defaultAddonCellConfig) {
-      // Nothing to do here
-  }
-
-  doLoadAddonImage(addonCellContent, defaultAddonCellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doLoadAddonImage(addonCellContent, defaultAddonCellConfig):', addonCellContent, defaultAddonCellConfig));
-
-    const addonCellName = this.getDynamicAddonCellName(defaultAddonCellConfig);
-    const addonCellImageUrl = this.getDynamicAddonCellImageUrl(defaultAddonCellConfig);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cell ${addonCellName} image successfully loaded from URL '${addonCellImageUrl}'`));
-
-    const addonCellContentLabel = addonCellContent._addonCellContentLabel;
-    const addonCellContentImage = addonCellContent._addonCellContentImage;
-
-    // 1. Reset fallback label
-    addonCellContentLabel.remove();      // Remove from DOM
-    addonCellContentLabel.classList.remove('full'); // Remove full class
-
-    // 2. update visuals for image + label
-    addonCellContentImage.classList.add('half');
-    addonCellContentLabel.classList.add('half');
-
-    // 3. attach and position: image into cell content top, label into cell content bottom
-    addonCellContent.appendChild(addonCellContentImage);
-    addonCellContent.appendChild(addonCellContentLabel);
-  }
-
-  onLoadAddonImageError(addonCellContent, addonCellConfig, defaultAddonCellConfig, err) {
-    const addonCellName = this.getDynamicAddonCellName(defaultAddonCellConfig);
-    const addonCellImageUrl = this.getDynamicAddonCellImageUrl(defaultAddonCellConfig);
-    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Cell ${addonCellName} image failed to load from URL '${addonCellImageUrl}' with error:`, err));
-
-    // Nothing more to do: let label as-is into cell content as fallback for image fail
-  }
-
-  doAddonCellContentIcon(addonCellConfig, defaultAddonCellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doCellContentIcon(addonCellConfig, defaultAddonCellConfig):`, addonCellConfig, defaultAddonCellConfig));
-
-    // Instanciates a content wrapper to avoid chromium-based browser bugs
-    // (chromium does not properly apply padding to <img> elements inside flex containers—especially when img is 100% width/height and using object-fit)
-    const addonCellContentIcon = document.createElement("div");
-    addonCellContentIcon.className = "addon-icon-wrapper";
-
-    // Instanciates image (but load its content later)
-    const img = document.createElement("img");
-    addonCellContentIcon._image = img;
-    img.className = "addon-icon";
-    img.alt = this.getDynamicAddonCellName(defaultAddonCellConfig);
-
-    // Append and return wrapper (not image itself)
-    addonCellContentIcon.appendChild(img);
-    return addonCellContentIcon;
-  }
-
-  doStyleAddonCellContentIcon(addonCellContentIcon, addonCellConfig) {
-
-    // Apply user preferences on image style
-    if (addonCellContentIcon) addonCellContentIcon.style.padding = this.getAddonCellIconGap(addonCellConfig);
-  }
-
-  doAttachAddonCellContentIcon() {
-    // Nothing to do here: content image will be attached to DOM later, once successfully loaded
-  }
-
-  doQueryAddonCellContentIconElements(addonCellContent, addonCellContentIcon) {
-    // Keep content image wrapper reference into addonCellContent for further operations
-    addonCellContent._addonCellContentIcon = addonCellContentIcon;
-  }
-
-  doListenAddonCellContentIcon(addonCellContent, addonCellConfig, defaultAddonCellConfig) {
-    const img = addonCellContent._addonCellContentIcon?._image;
-    if (img) this._eventManager.addLoadListenerToContainer("addonsContainer", img, this.onLoadAddonIconSuccess.bind(this, addonCellContent, addonCellConfig, defaultAddonCellConfig));
-    if (img) this._eventManager.addErrorListenerToContainer("addonsContainer", img, this.onLoadAddonIconError.bind(this, addonCellContent, addonCellConfig, defaultAddonCellConfig));
-  }
-
-  doLoadAddonIcon(addonCellContent, defaultAddonCellConfig) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doLoadAddonIcon(addonCellContent, defaultAddonCellConfig):', addonCellContent, defaultAddonCellConfig));
-    const addonCellIconUrl = this.getDynamicAddonCellIconUrl(defaultAddonCellConfig);
-    const img = addonCellContent._addonCellContentIcon?._image;
-    if (img && addonCellIconUrl) img.src = addonCellIconUrl; // Starts loading image asynchronously
-  }
-
-  onLoadAddonIconSuccess(addonCellContent, addonCellConfig, defaultAddonCellConfig) {
-    const addonCellName = this.getDynamicAddonCellName(defaultAddonCellConfig);
-    const addonCellIconUrl = this.getDynamicAddonCellIconUrl(defaultAddonCellConfig);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Cell ${addonCellName} icon successfully loaded from URL '${addonCellIconUrl}'`));
-
-    const addonCellContentIcon = addonCellContent._addonCellContentIcon;
-    addonCellContent.appendChild(addonCellContentIcon);
-  }
-
-  onLoadAddonIconError(addonCellContent, addonCellConfig, defaultAddonCellConfig, err) {
-    const addonCellName = this.getDynamicAddonCellName(defaultAddonCellConfig);
-    const addonCellIconUrl = this.getDynamicAddonCellIconUrl(defaultAddonCellConfig);
-    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Cell ${addonCellName} icon failed to load from URL '${addonCellIconUrl}' with error:`, err));
-
-    // Nothing more to do: let label as-is into cell content as fallback for image fail
   }
 
   // configuration defaults
