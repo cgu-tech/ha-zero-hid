@@ -143,6 +143,63 @@ class AndroidRemoteCard extends HTMLElement {
   getAddons() {
     return this._elements.addons;
   }
+  
+  getAddonsCells() {
+    return this.getAddons()?.cells;
+  }
+
+  // Per addon cell config
+  getAddonCellLabel(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "label"); 
+  }
+  getAddonCellLabelFontScale(addonCellConfig) {
+    return this._layoutManager.getScaleOrDefault(this.getAddonCellConfigOrDefault(addonCellConfig, "label_font_scale"), "1rem");
+  }
+  getAddonCellLabelColor(addonCellConfig) {
+    return this._sideCellButtonFg;
+  }
+  getAddonCellLabelGap(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "label_gap");
+  }
+  getAddonCellIconUrl(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "icon_url");
+  }
+  getAddonCellIconGap(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "icon_gap");
+  }
+  getAddonCellImageUrl(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "image_url");
+  }
+  getAddonCellImageGap(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "image_gap");
+  }
+  getAddonCellAction(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "action");
+  }
+
+  // Per cell config helper
+  getAddonCellConfigOrDefault(addonCellConfig, property) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getAddonCellConfigOrDefault(addonCellConfig, property):", addonCellConfig, property));
+    const cellProperty = `cell_${property}`;
+    return addonCellConfig?.[property] || 
+          (this._layoutManager.isConfigDefined("addons") && this._layoutManager.isDefined(this.getFromConfig("addons")?.[cellProperty]) 
+            ? this.getFromConfig("addons")?.[cellProperty] 
+            : this.getFromDefaultConfig("addons")?.[cellProperty]);
+  }
+
+  // Dynamic config
+  getDynamicAddonCellName(defaultAddonCellConfig) {
+    return defaultAddonCellConfig["addonCellName"]; 
+  }
+  getDynamicAddonCellIconUrl(defaultAddonCellConfig) {
+    return defaultAddonCellConfig["addonCellIconUrl"]; 
+  }
+  getDynamicAddonCellImageUrl(defaultAddonCellConfig) {
+    return defaultAddonCellConfig["addonCellImageUrl"]; 
+  }
+  createDynamicAddonCellConfig(addonName, addonCellConfig) {
+    return { "addonCellName": addonName, "addonCellIconUrl": this.getAddonCellIconUrl(addonCellConfig), "addonCellImageUrl": this.getAddonCellImageUrl(addonCellConfig) };
+  }
 
   getFoldableChild() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getFoldableChild() + _threeStatesToggleState:", this._threeStatesToggleState));
@@ -761,7 +818,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateAddonsHass() {
-    // Update sides cards configs
+    // Update addons using new config
     this._elements.addons.hass = this._hass;
   }
 
@@ -1279,56 +1336,6 @@ class AndroidRemoteCard extends HTMLElement {
     return `span-${styleId}`;
   }
 
-  // Per addon cell config
-  getAddonCellLabel(addonCellConfig) {
-    return this.getAddonCellConfigOrDefault(addonCellConfig, "label"); 
-  }
-  getAddonCellLabelFontScale(addonCellConfig) {
-    return this._layoutManager.getScaleOrDefault(this.getAddonCellConfigOrDefault(addonCellConfig, "label_font_scale"), "1rem");
-  }
-  getAddonCellLabelColor(addonCellConfig) {
-    return this._sideCellButtonFg;
-  }
-  getAddonCellLabelGap(addonCellConfig) {
-    return this.getAddonCellConfigOrDefault(addonCellConfig, "label_gap");
-  }
-  getAddonCellIconUrl(addonCellConfig) {
-    return this.getAddonCellConfigOrDefault(addonCellConfig, "icon_url");
-  }
-  getAddonCellIconGap(addonCellConfig) {
-    return this.getAddonCellConfigOrDefault(addonCellConfig, "icon_gap");
-  }
-  getAddonCellImageUrl(addonCellConfig) {
-    return this.getAddonCellConfigOrDefault(addonCellConfig, "image_url");
-  }
-  getAddonCellImageGap(addonCellConfig) {
-    return this.getAddonCellConfigOrDefault(addonCellConfig, "image_gap");
-  }
-  getAddonCellAction(addonCellConfig) {
-    return this.getAddonCellConfigOrDefault(addonCellConfig, "action");
-  }
-
-  // Per cell config helper
-  getAddonCellConfigOrDefault(addonCellConfig, property) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getAddonCellConfigOrDefault(addonCellConfig, property):", addonCellConfig, property));
-    const cellProperty = `cell_${property}`;
-    return addonCellConfig?.[property] || this._layoutManager.getFromConfigOrDefaultConfig(cellProperty);
-  }
-
-  // Dynamic config
-  getDynamicAddonCellName(defaultAddonCellConfig) {
-    return defaultAddonCellConfig["addonCellName"]; 
-  }
-  getDynamicAddonCellIconUrl(defaultAddonCellConfig) {
-    return defaultAddonCellConfig["addonCellIconUrl"]; 
-  }
-  getDynamicAddonCellImageUrl(defaultAddonCellConfig) {
-    return defaultAddonCellConfig["addonCellImageUrl"]; 
-  }
-  createDynamicAddonCellConfig(addonName, addonCellConfig) {
-    return { "addonCellName": addonName, "addonCellIconUrl": this.getAddonCellIconUrl(addonCellConfig), "addonCellImageUrl": this.getAddonCellImageUrl(addonCellConfig) };
-  }
-
   doUpdateAddons() {
     this.doResetAddons();
     this.doCreateAddons();
@@ -1493,7 +1500,11 @@ class AndroidRemoteCard extends HTMLElement {
       keyboard: {},
       trackpad: {},
       activities: {},
-      addons: {}
+      addons: {
+        cell_label_font_scale: '0.8em',
+        cell_image_gap: '0.2em 0em 0.2em 0em',
+        cells: {}
+      }
     }
   }
 
