@@ -855,10 +855,6 @@ class AndroidRemoteCard extends HTMLElement {
         // Remove "sensor-on" class just in case (to avoid styles collision)
         img.classList.remove("sensor-on");
 
-        // Store the original color (once when needed)
-        if (svg && !img._originalFill) img._originalFill = svg.style.fill;
-        if (svg && !img._originalStroke) img._originalStroke = svg.style.stroke;
-
         // Apply RGB color
         const [r, g, b] = rgbColor;
         const color = `rgb(${r}, ${g}, ${b})`;
@@ -1533,12 +1529,13 @@ class AndroidRemoteCard extends HTMLElement {
     const img = document.createElement("div");
     img.className = "addon-img";
     img.innerHTML = imgHtml;
+    img._originalFill = this._sideCellButtonFg;
+    img._originalStroke = this._sideCellButtonFg;
 
     const addonCellContentImage = document.createElement("div");
     addonCellContentImage.className = "addon-cell-content-part img half";
     addonCellContentImage.style.padding = this.getAddonCellImageGap(addonCellConfig);
     addonCellContentImage.appendChild(img);
-
 
     // Create addon cell content inner icon
     const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? iconsConfig[this.getAddonCellIconUrl(addonCellConfig)]?.["html"] : '';
@@ -1571,6 +1568,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   doQueryAddonCellContentElements(addonCell, addonCellContent) {
     addonCell._img = addonCellContent.querySelector(".addon-img");
+    addonCell._svg = addonCell._img.querySelector('svg');
   }
 
   doListenAddonCellContent() {
