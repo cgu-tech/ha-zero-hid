@@ -363,10 +363,10 @@ class AndroidRemoteCard extends HTMLElement {
         box-sizing: border-box;
       }
       .addon-cell-content-part.img.half {
-        height: 70%;
+        height: 60%;
       }
       .addon-cell-content-part.label.half {
-        height: 30%;
+        height: 40%;
       }
       .addon-cell-content-part.full {
         height: 100%;
