@@ -148,63 +148,42 @@ remove_yaml_block() {
 
 remove_yaml_subblock() {
   local file="$1"
-  local type="$2"
-  local unique_id="$3"
+  local unique_id="$2"
 
-  awk -v type="$type" -v uid="$unique_id" '
+  awk -v uid="$unique_id" '
   function leading_spaces(line) {
     match(line, /^[ \t]*/)
     return RLENGTH
   }
 
   BEGIN {
-    inside_type=0
     skip=0
     skip_indent=-1
   }
 
   {
-    # Print for debugging (can comment out later)
-    # print "Processing line: [" $0 "]" > "/dev/stderr"
-
-    # Detect entering type block, e.g. "- light:"
-    if (inside_type == 0) {
-      if ($0 ~ ("^[ \t]*-[ \t]*" type ":")) {
-        inside_type=1
-        print $0
-        next
-      }
-      print $0
-      next
-    }
-
     # If currently skipping lines belonging to the target unique_id block
     if (skip == 1) {
-      # Check indentation of current line
       cur_indent = leading_spaces($0)
 
-      # If indentation less or equal than unique_id line, stop skipping
-      # Also stop skipping if line is empty (to avoid skipping blank lines belonging to next block)
-      if (cur_indent <= skip_indent && $0 ~ /^[ \t]*-/) {
+      # Stop skipping when encountering new top-level item (starts with "- ")
+      if ($0 ~ /^[ \t]*-[ \t]+/) {
         skip=0
         skip_indent=-1
       } else {
-        # Still inside sub-block, skip line
-        # print "Skipping line inside target: " $0 > "/dev/stderr"
         next
       }
     }
 
-    # Trim leading spaces for checking unique_id line
+    # Trim leading spaces for matching
     line_trim = $0
     gsub(/^[ \t]+/, "", line_trim)
     gsub(/[ \t]+$/, "", line_trim)
 
-    # Detect unique_id line (allow optional leading dash)
+    # Match line like "- unique_id: my_light" or "unique_id: my_light"
     if (line_trim ~ ("^-?[ \t]*unique_id:[ \t]*" uid "$")) {
       skip=1
       skip_indent = leading_spaces($0)
-      # print "Skipping block with unique_id: " uid > "/dev/stderr"
       next
     }
 
@@ -413,18 +392,24 @@ DIR_CONFIG="/config"
 
 FILE_CONFIG_NAME="configuration.yaml"
 FILE_TEMPLATES_NAME="templates.yaml"
+FILE_LIGHT_TEMPLATES_NAME="lights.yaml"
+FILE_SWITCH_TEMPLATES_NAME="switches.yaml"
 FILE_SCRIPTS_NAME="scripts.yaml"
 FILE_INPUT_NUMBERS_NAME="input_numbers.yaml"
 FILE_INPUT_BOOLEANS_NAME="input_booleans.yaml"
 
 FILE_CONFIG="${DIR_CONFIG}/${FILE_CONFIG_NAME}"
 FILE_TEMPLATES="${DIR_CONFIG}/${FILE_TEMPLATES_NAME}"
+FILE_LIGHT_TEMPLATES="${DIR_CONFIG}/${FILE_LIGHT_TEMPLATES_NAME}"
+FILE_SWITCH_TEMPLATES="${DIR_CONFIG}/${FILE_SWITCH_TEMPLATES_NAME}"
 FILE_SCRIPTS="${DIR_CONFIG}/${FILE_SCRIPTS_NAME}"
 FILE_INPUT_NUMBERS="${DIR_CONFIG}/${FILE_INPUT_NUMBERS_NAME}"
 FILE_INPUT_BOOLEANS="${DIR_CONFIG}/${FILE_INPUT_BOOLEANS_NAME}"
 
 FILE_SAV_CONFIG="${DIR_CONFIG}/${TIMESTAMP}_${FILE_CONFIG_NAME}.sav"
 FILE_SAV_TEMPLATES="${DIR_CONFIG}/${TIMESTAMP}_${FILE_TEMPLATES_NAME}.sav"
+FILE_SAV_LIGHT_TEMPLATES="${DIR_CONFIG}/${TIMESTAMP}_${FILE_LIGHT_TEMPLATES_NAME}.sav"
+FILE_SAV_SWITCH_TEMPLATES="${DIR_CONFIG}/${TIMESTAMP}_${FILE_SWITCH_TEMPLATES_NAME}.sav"
 FILE_SAV_SCRIPTS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_SCRIPTS_NAME}.sav"
 FILE_SAV_INPUT_NUMBERS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_INPUT_NUMBERS_NAME}.sav"
 FILE_SAV_INPUT_BOOLEANS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_INPUT_BOOLEANS_NAME}.sav"
@@ -446,10 +431,22 @@ INPUT_NUMBER_BRIGHTNESS="${ENTITY_ID}_brightness"
 
 INPUT_BOOLEAN_POWER="${ENTITY_ID}_power"
 
+# Define target template file
+FILE_TEMPLATE_FOR_TYPE=""
+if [ "${ENTITY_TYPE}" == "light" ]; then
+  FILE_TEMPLATE_FOR_TYPE="${FILE_LIGHT_TEMPLATES}"
+fi
+if [ "${ENTITY_TYPE}" == "switch" ]; then
+  FILE_TEMPLATE_FOR_TYPE="${FILE_SWITCH_TEMPLATES}"
+fi
+
+
 # Check that needed files exist
 echo "Ensure HA configurations exists..."
 ensure_file_exists "${FILE_CONFIG}"
 ensure_file_exists "${FILE_TEMPLATES}"
+ensure_file_exists "${FILE_LIGHT_TEMPLATES}"
+ensure_file_exists "${FILE_SWITCH_TEMPLATES}"
 ensure_file_exists "${FILE_SCRIPTS}"
 ensure_file_exists "${FILE_INPUT_NUMBERS}"
 ensure_file_exists "${FILE_INPUT_BOOLEANS}"
@@ -458,6 +455,8 @@ ensure_file_exists "${FILE_INPUT_BOOLEANS}"
 echo "Backuping HA configurations..."
 cp "${FILE_CONFIG}" "${FILE_SAV_CONFIG}"
 cp "${FILE_TEMPLATES}" "${FILE_SAV_TEMPLATES}"
+cp "${FILE_LIGHT_TEMPLATES}" "${FILE_SAV_LIGHT_TEMPLATES}"
+cp "${FILE_SWITCH_TEMPLATES}" "${FILE_SAV_SWITCH_TEMPLATES}"
 cp "${FILE_SCRIPTS}" "${FILE_SAV_SCRIPTS}"
 cp "${FILE_INPUT_NUMBERS}" "${FILE_SAV_INPUT_NUMBERS}"
 cp "${FILE_INPUT_BOOLEANS}" "${FILE_SAV_INPUT_BOOLEANS}"
@@ -469,7 +468,11 @@ sed -i "/^template:/d" "${FILE_CONFIG}"
 sed -i "/^script:/d" "${FILE_CONFIG}"
 sed -i "/^input_number:/d" "${FILE_CONFIG}"
 sed -i "/^input_boolean:/d" "${FILE_CONFIG}"
-remove_yaml_subblock "${FILE_TEMPLATES}" "${ENTITY_TYPE}" "${ENTITY_ID}"
+
+sed -i "/^- light:/d" "${FILE_TEMPLATES}"
+sed -i "/^- switch:/d" "${FILE_TEMPLATES}"
+
+remove_yaml_subblock "${FILE_TEMPLATE_FOR_TYPE}" "${ENTITY_ID}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_ON}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_OFF}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_SET_COLOR}"
@@ -486,6 +489,9 @@ grep -qxF "template:" "${FILE_CONFIG}" || echo "template: !include templates.yam
 grep -qxF "script:" "${FILE_CONFIG}" || echo "script: !include scripts.yaml" >> "${FILE_CONFIG}"
 grep -qxF "input_number:" "${FILE_CONFIG}" || echo "input_number: !include input_numbers.yaml" >> "${FILE_CONFIG}"
 grep -qxF "input_boolean:" "${FILE_CONFIG}" || echo "input_boolean: !include input_booleans.yaml" >> "${FILE_CONFIG}"
+
+grep -qxF "- light:" "${FILE_TEMPLATES}" || echo "- light: !include lights.yaml" >> "${FILE_TEMPLATES}"
+grep -qxF "- switch:" "${FILE_TEMPLATES}" || echo "- switch: !include switches.yaml" >> "${FILE_TEMPLATES}"
 
 # Write python helper script (create or overwrite)
 mkdir -p "${DIR_PYTHON_SCRIPTS}"
@@ -715,26 +721,20 @@ fi
 
 # Write entity template (create or append)
 echo "Writing template..."
-DISPLAY_ENTITY_TYPE="- ${ENTITY_TYPE}:"
-if grep -qE "^[[:space:]]*-[[:space:]]*${ENTITY_TYPE}:[[:space:]]*$" "${FILE_TEMPLATES}"; then
-  DISPLAY_ENTITY_TYPE=""
-fi
-
 echo "Adding entity start template..."
 { echo; cat <<EOF
-${DISPLAY_ENTITY_TYPE}
-    - unique_id: ${ENTITY_ID}
-      name: "${ENTITY_NAME}"
-      state: "{{ is_state('input_boolean.${INPUT_BOOLEAN_POWER}', 'on') }}"
+- unique_id: ${ENTITY_ID}
+  name: "${ENTITY_NAME}"
+  state: "{{ is_state('input_boolean.${INPUT_BOOLEAN_POWER}', 'on') }}"
 EOF
-} >> "${FILE_TEMPLATES}"
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Adding entity rgb template..."
 { cat <<EOF
       rgb: "({{states('input_number.${INPUT_NUMBER_R}') | int}}, {{states('input_number.${INPUT_NUMBER_G}') | int}}, {{states('input_number.${INPUT_NUMBER_B}') | int}})"
 EOF
-} >> "${FILE_TEMPLATES}"
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
 fi
 
 echo "Adding entity turn_on/turn_off templates..."
@@ -744,7 +744,7 @@ echo "Adding entity turn_on/turn_off templates..."
       turn_off:
         action: script.${SCRIPT_NAME_TURN_OFF}
 EOF
-} >> "${FILE_TEMPLATES}"
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Adding entity set_rgb template..."
@@ -770,7 +770,7 @@ echo "Adding entity set_rgb template..."
               - "{{ b }}"
 
 EOF
-} >> "${FILE_TEMPLATES}"
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
 fi
 
 echo "Entity ${ENTITY_FULL_ID} created:"
