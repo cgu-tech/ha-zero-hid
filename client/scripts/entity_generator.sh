@@ -732,42 +732,42 @@ EOF
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Adding entity rgb template..."
 { cat <<EOF
-      rgb: "({{states('input_number.${INPUT_NUMBER_R}') | int}}, {{states('input_number.${INPUT_NUMBER_G}') | int}}, {{states('input_number.${INPUT_NUMBER_B}') | int}})"
+  rgb: "({{states('input_number.${INPUT_NUMBER_R}') | int}}, {{states('input_number.${INPUT_NUMBER_G}') | int}}, {{states('input_number.${INPUT_NUMBER_B}') | int}})"
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 fi
 
 echo "Adding entity turn_on/turn_off templates..."
 { cat <<EOF
-      turn_on:
-        action: script.${SCRIPT_NAME_TURN_ON}
-      turn_off:
-        action: script.${SCRIPT_NAME_TURN_OFF}
+  turn_on:
+    action: script.${SCRIPT_NAME_TURN_ON}
+  turn_off:
+    action: script.${SCRIPT_NAME_TURN_OFF}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Adding entity set_rgb template..."
 { cat <<EOF
-      set_rgb:
-        - action: input_number.set_value
-          data:
-            value: "{{ r }}"
-            entity_id: input_number.${INPUT_NUMBER_R}
-        - action: input_number.set_value
-          data:
-            value: "{{ g }}"
-            entity_id: input_number.${INPUT_NUMBER_G}
-        - action: input_number.set_value
-          data:
-            value: "{{ b }}"
-            entity_id: input_number.${INPUT_NUMBER_B}
-        - action: script.${SCRIPT_NAME_SET_COLOR}
-          data:
-            rgb_color:
-              - "{{ r }}"
-              - "{{ g }}"
-              - "{{ b }}"
+  set_rgb:
+    - action: input_number.set_value
+      data:
+        value: "{{ r }}"
+        entity_id: input_number.${INPUT_NUMBER_R}
+    - action: input_number.set_value
+      data:
+        value: "{{ g }}"
+        entity_id: input_number.${INPUT_NUMBER_G}
+    - action: input_number.set_value
+      data:
+        value: "{{ b }}"
+        entity_id: input_number.${INPUT_NUMBER_B}
+    - action: script.${SCRIPT_NAME_SET_COLOR}
+      data:
+        rgb_color:
+          - "{{ r }}"
+          - "{{ g }}"
+          - "{{ b }}"
 
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
