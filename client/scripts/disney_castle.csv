@@ -1,11 +1,12 @@
 ENTITY_TYPE,light
 ENTITY_ID,disney_castle_light
-ENTITY_NAME,Disney Castle
+ENTITY_NAME,Disney Castle light
 POWER_ON_SCRIPT,briksmax_disney_castle_power_on
 POWER_OFF_SCRIPT,briksmax_disney_castle_power_off
 START_COLOR_R,230
 START_COLOR_G,221
 START_COLOR_B,189
+START_RESET,true
 COLOR_#BD2A19,briksmax_disney_castle_color_red
 COLOR_#348C52,briksmax_disney_castle_color_green
 COLOR_#0A62B5,briksmax_disney_castle_color_blue

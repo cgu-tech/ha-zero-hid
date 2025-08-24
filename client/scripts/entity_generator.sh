@@ -377,19 +377,21 @@ echo "Retrieving required values..."
 ENTITY_TYPE=$(get_value_for_key "ENTITY_TYPE")
 ENTITY_ID=$(get_value_for_key "ENTITY_ID")
 ENTITY_NAME=$(get_value_for_key "ENTITY_NAME")
-ENTITY_CONFIG_POWER_ON_SCRIPT=$(get_value_for_key "POWER_ON_SCRIPT")
-ENTITY_CONFIG_POWER_OFF_SCRIPT=$(get_value_for_key "POWER_OFF_SCRIPT")
-ENTITY_CONFIG_START_COLOR_R=$(get_value_for_key "START_COLOR_R")
-ENTITY_CONFIG_START_COLOR_G=$(get_value_for_key "START_COLOR_G")
-ENTITY_CONFIG_START_COLOR_B=$(get_value_for_key "START_COLOR_B")
+ENTITY_POWER_ON_SCRIPT=$(get_value_for_key "POWER_ON_SCRIPT")
+ENTITY_POWER_OFF_SCRIPT=$(get_value_for_key "POWER_OFF_SCRIPT")
+ENTITY_START_COLOR_R=$(get_value_for_key "START_COLOR_R")
+ENTITY_START_COLOR_G=$(get_value_for_key "START_COLOR_G")
+ENTITY_START_COLOR_B=$(get_value_for_key "START_COLOR_B")
+ENTITY_START_RESET=$(get_value_for_key "START_RESET")
 echo "Retrieved ENTITY_TYPE=$ENTITY_TYPE"
 echo "Retrieved ENTITY_ID=$ENTITY_ID"
 echo "Retrieved ENTITY_NAME=$ENTITY_NAME"
-echo "Retrieved ENTITY_CONFIG_POWER_ON_SCRIPT=$ENTITY_CONFIG_POWER_ON_SCRIPT"
-echo "Retrieved ENTITY_CONFIG_POWER_OFF_SCRIPT=$ENTITY_CONFIG_POWER_OFF_SCRIPT"
-echo "Retrieved ENTITY_CONFIG_START_COLOR_R=$ENTITY_CONFIG_START_COLOR_R"
-echo "Retrieved ENTITY_CONFIG_START_COLOR_G=$ENTITY_CONFIG_START_COLOR_G"
-echo "Retrieved ENTITY_CONFIG_START_COLOR_B=$ENTITY_CONFIG_START_COLOR_B"
+echo "Retrieved ENTITY_POWER_ON_SCRIPT=$ENTITY_POWER_ON_SCRIPT"
+echo "Retrieved ENTITY_POWER_OFF_SCRIPT=$ENTITY_POWER_OFF_SCRIPT"
+echo "Retrieved ENTITY_START_COLOR_R=$ENTITY_START_COLOR_R"
+echo "Retrieved ENTITY_START_COLOR_G=$ENTITY_START_COLOR_G"
+echo "Retrieved ENTITY_START_COLOR_B=$ENTITY_START_COLOR_B"
+echo "Retrieved ENTITY_START_RESET=$ENTITY_START_RESET"
 
 DIR_CONFIG="/config"
 FILE_CONFIG="${DIR_CONFIG}/configuration.yaml"
@@ -542,21 +544,21 @@ ${INPUT_NUMBER_R}:
   min: 0
   max: 255
   step: 1
-  initial: ${ENTITY_CONFIG_START_COLOR_R}
+  initial: ${ENTITY_START_COLOR_R}
 
 ${INPUT_NUMBER_G}:
   name: ${ENTITY_NAME} Green value
   min: 0
   max: 255
   step: 1
-  initial: ${ENTITY_CONFIG_START_COLOR_G}
+  initial: ${ENTITY_START_COLOR_G}
 
 ${INPUT_NUMBER_B}:
   name: ${ENTITY_NAME} Blue value
   min: 0
   max: 255
   step: 1
-  initial: ${ENTITY_CONFIG_START_COLOR_B}
+  initial: ${ENTITY_START_COLOR_B}
 
 ${INPUT_NUMBER_BRIGHTNESS}:
   name: ${ENTITY_NAME} Brightness
@@ -574,22 +576,34 @@ echo "Writing script..."
 ${SCRIPT_NAME_TURN_ON}:
   alias: "Turns ON ${ENTITY_NAME}"
   sequence:
+EOF
+} >> "${FILE_SCRIPTS}"
+
+if [ "${ENTITY_START_RESET}" == "true" ]; then
+  echo "Adding reset on start capabilites into turn_on service script..."
+{ echo; cat <<EOF
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_R}
       data:
-        value: ${ENTITY_CONFIG_START_COLOR_R}
+        value: ${ENTITY_START_COLOR_R}
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_G}
       data:
-        value: ${ENTITY_CONFIG_START_COLOR_G}
+        value: ${ENTITY_START_COLOR_G}
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_B}
       data:
-        value: ${ENTITY_CONFIG_START_COLOR_B}
-    - service: script.${ENTITY_CONFIG_POWER_ON_SCRIPT}
+        value: ${ENTITY_START_COLOR_B}
+EOF
+} >> "${FILE_SCRIPTS}"
+fi
+
+echo "Adding turn_on/turn_off/set_level/set_color services into script..."
+{ echo; cat <<EOF
+    - service: script.${ENTITY_POWER_ON_SCRIPT}
     - service: input_boolean.turn_on
       target:
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
@@ -597,7 +611,7 @@ ${SCRIPT_NAME_TURN_ON}:
 ${SCRIPT_NAME_TURN_OFF}:
   alias: "Turns OFF ${ENTITY_NAME}"
   sequence:
-    - service: script.${ENTITY_CONFIG_POWER_OFF_SCRIPT}
+    - service: script.${ENTITY_POWER_OFF_SCRIPT}
     - service: input_boolean.turn_off
       target:
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
@@ -617,7 +631,7 @@ ${SCRIPT_NAME_SET_COLOR}:
   fields:
     rgb_color:
       description: "Expected [R,G,B] color to set (will default on nearest color when not available)"
-      example: "[${ENTITY_CONFIG_START_COLOR_R}, ${ENTITY_CONFIG_START_COLOR_G}, ${ENTITY_CONFIG_START_COLOR_B}]"
+      example: "[${ENTITY_START_COLOR_R}, ${ENTITY_START_COLOR_G}, ${ENTITY_START_COLOR_B}]"
   sequence:
     - condition: template
       value_template: >
@@ -629,7 +643,7 @@ ${SCRIPT_NAME_SET_COLOR}:
 EOF
 } >> "${FILE_SCRIPTS}"
 
-echo "Adding color_map entries into script..."
+echo "Adding color_map entries into set_color service script..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_HEX="${COLOR_KEY#COLOR_}"
