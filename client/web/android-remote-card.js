@@ -1464,12 +1464,12 @@ class AndroidRemoteCard extends HTMLElement {
 
   onAddonCellAbortPress(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doAddonCellAbortPress(addonCell);
+    this.doAddonCellAbortPress(addonCell, evt);
   }
 
   onAddonCellRelease(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    this.doAddonCellRelease(addonCell);
+    this.doAddonCellRelease(addonCell, evt);
   }
 
   doAddonCellPress(addonCell, evt) {
