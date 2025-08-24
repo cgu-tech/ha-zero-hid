@@ -366,7 +366,7 @@ echo "Loading CSV file that contains entity configurations..."
 load_config_map "${ENTITY_CONFIG_FILE}"
 
 echo "Checking required keys from loaded CSV file..."
-required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME" "POWER_ON_SCRIPT" "POWER_OFF_SCRIPT" "START_COLOR_R" "START_COLOR_G" "START_COLOR_B")
+required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME" "POWER_ON_SCRIPT" "POWER_OFF_SCRIPT")
 if ! check_required_keys "${required[@]}"; then
   echo "Missing keys. Exiting."
   exit 1
@@ -379,19 +379,35 @@ ENTITY_ID=$(get_value_for_key "ENTITY_ID")
 ENTITY_NAME=$(get_value_for_key "ENTITY_NAME")
 ENTITY_POWER_ON_SCRIPT=$(get_value_for_key "POWER_ON_SCRIPT")
 ENTITY_POWER_OFF_SCRIPT=$(get_value_for_key "POWER_OFF_SCRIPT")
-ENTITY_START_COLOR_R=$(get_value_for_key "START_COLOR_R")
-ENTITY_START_COLOR_G=$(get_value_for_key "START_COLOR_G")
-ENTITY_START_COLOR_B=$(get_value_for_key "START_COLOR_B")
-ENTITY_START_RESET=$(get_value_for_key "START_RESET")
 echo "Retrieved ENTITY_TYPE=$ENTITY_TYPE"
 echo "Retrieved ENTITY_ID=$ENTITY_ID"
 echo "Retrieved ENTITY_NAME=$ENTITY_NAME"
 echo "Retrieved ENTITY_POWER_ON_SCRIPT=$ENTITY_POWER_ON_SCRIPT"
 echo "Retrieved ENTITY_POWER_OFF_SCRIPT=$ENTITY_POWER_OFF_SCRIPT"
-echo "Retrieved ENTITY_START_COLOR_R=$ENTITY_START_COLOR_R"
-echo "Retrieved ENTITY_START_COLOR_G=$ENTITY_START_COLOR_G"
-echo "Retrieved ENTITY_START_COLOR_B=$ENTITY_START_COLOR_B"
-echo "Retrieved ENTITY_START_RESET=$ENTITY_START_RESET"
+
+ENTITY_START_COLOR_R=""
+ENTITY_START_COLOR_G=""
+ENTITY_START_COLOR_B=""
+ENTITY_START_RESET=""
+if [ "${ENTITY_TYPE}" == "light" ]; then
+  echo "Checking required keys for light from loaded CSV file..."
+  required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME" "POWER_ON_SCRIPT" "POWER_OFF_SCRIPT")
+  if ! check_required_keys "${required[@]}"; then
+    echo "Missing keys for light. Exiting."
+    exit 1
+  fi
+  echo "All required keys found! ($required)"
+  
+  echo "Retrieving required light values..."
+  ENTITY_START_COLOR_R=$(get_value_for_key "START_COLOR_R")
+  ENTITY_START_COLOR_G=$(get_value_for_key "START_COLOR_G")
+  ENTITY_START_COLOR_B=$(get_value_for_key "START_COLOR_B")
+  ENTITY_START_RESET=$(get_value_for_key "START_RESET")
+  echo "Retrieved ENTITY_START_COLOR_R=$ENTITY_START_COLOR_R"
+  echo "Retrieved ENTITY_START_COLOR_G=$ENTITY_START_COLOR_G"
+  echo "Retrieved ENTITY_START_COLOR_B=$ENTITY_START_COLOR_B"
+  echo "Retrieved ENTITY_START_RESET=$ENTITY_START_RESET"
+fi
 
 DIR_CONFIG="/config"
 
@@ -552,6 +568,8 @@ EOF
 
 # Write input_numbers (create or append)
 echo "Writing input_numbers..."
+
+if [ "${ENTITY_TYPE}" == "light" ]; then
 { echo; cat <<EOF
 ${INPUT_NUMBER_R}:
   name: ${ENTITY_NAME} Red value
@@ -583,9 +601,13 @@ ${INPUT_NUMBER_BRIGHTNESS}:
 
 EOF
 } >> "${FILE_INPUT_NUMBERS}"
+fi
 
 # Write scripts (create or append)
 echo "Writing script..."
+
+# Write "turn_on" script
+echo "Adding turn_on service start into script..."
 { echo; cat <<EOF
 ${SCRIPT_NAME_TURN_ON}:
   alias: "Turns ON ${ENTITY_NAME}"
@@ -593,8 +615,9 @@ ${SCRIPT_NAME_TURN_ON}:
 EOF
 } >> "${FILE_SCRIPTS}"
 
+if [ "${ENTITY_TYPE}" == "light" ]; then
 if [ "${ENTITY_START_RESET}" == "true" ]; then
-  echo "Adding reset on start capabilites into turn_on service script..."
+  echo "Adding turn_on \"reset on start\" capabilites to turn_on service into script..."
 { cat <<EOF
     - service: input_number.set_value
       target:
@@ -614,14 +637,20 @@ if [ "${ENTITY_START_RESET}" == "true" ]; then
 EOF
 } >> "${FILE_SCRIPTS}"
 fi
+fi
 
-echo "Adding turn_on/turn_off/set_level/set_color services into script..."
+echo "Adding turn_on service start into script..."
 { cat <<EOF
     - service: script.${ENTITY_POWER_ON_SCRIPT}
     - service: input_boolean.turn_on
       target:
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
+EOF
+} >> "${FILE_SCRIPTS}"
 
+# Write "turn_off" script
+echo "Adding turn_off service into script..."
+{ echo; cat <<EOF
 ${SCRIPT_NAME_TURN_OFF}:
   alias: "Turns OFF ${ENTITY_NAME}"
   sequence:
@@ -629,7 +658,13 @@ ${SCRIPT_NAME_TURN_OFF}:
     - service: input_boolean.turn_off
       target:
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
+EOF
+} >> "${FILE_SCRIPTS}"
 
+# Write "set_level" (of brightness) script
+if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Adding set_level service into script..."
+{ echo; cat <<EOF
 ${SCRIPT_NAME_SET_LEVEL}:
   alias: "Set ${ENTITY_NAME} Brightness"
   sequence:
@@ -638,7 +673,14 @@ ${SCRIPT_NAME_SET_LEVEL}:
         entity_id: input_number.${INPUT_NUMBER_BRIGHTNESS}
       data:
         value: "{{ brightness }}"
+EOF
+} >> "${FILE_SCRIPTS}"
+fi
 
+# Write "set_color" (using RGB) script
+if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Adding set_color service start into script..."
+{ echo; cat <<EOF
 ${SCRIPT_NAME_SET_COLOR}:
   alias: "Set ${ENTITY_NAME} Color"
   mode: restart
@@ -657,7 +699,7 @@ ${SCRIPT_NAME_SET_COLOR}:
 EOF
 } >> "${FILE_SCRIPTS}"
 
-echo "Adding color_map entries into set_color service script..."
+echo "Adding set_color \"color_map\" capabilities to set_color service into script..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_HEX="${COLOR_KEY#COLOR_}"
@@ -669,6 +711,7 @@ for COLOR_KEY in $COLOR_KEYS; do
 EOF
 } >> "${FILE_SCRIPTS}"
 done
+fi
 
 # Write entity template (create or append)
 echo "Writing template..."
@@ -676,16 +719,36 @@ DISPLAY_ENTITY_TYPE="- ${ENTITY_TYPE}:"
 if grep -qE "^[[:space:]]*-[[:space:]]*${ENTITY_TYPE}:[[:space:]]*$" "${FILE_TEMPLATES}"; then
   DISPLAY_ENTITY_TYPE=""
 fi
+
+echo "Adding entity start template..."
 { echo; cat <<EOF
 ${DISPLAY_ENTITY_TYPE}
     - unique_id: ${ENTITY_ID}
       name: "${ENTITY_NAME}"
       state: "{{ is_state('input_boolean.${INPUT_BOOLEAN_POWER}', 'on') }}"
+EOF
+} >> "${FILE_TEMPLATES}"
+
+if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Adding entity rgb template..."
+{ cat <<EOF
       rgb: "({{states('input_number.${INPUT_NUMBER_R}') | int}}, {{states('input_number.${INPUT_NUMBER_G}') | int}}, {{states('input_number.${INPUT_NUMBER_B}') | int}})"
+EOF
+} >> "${FILE_TEMPLATES}"
+fi
+
+echo "Adding entity turn_on/turn_off templates..."
+{ cat <<EOF
       turn_on:
         action: script.${SCRIPT_NAME_TURN_ON}
       turn_off:
         action: script.${SCRIPT_NAME_TURN_OFF}
+EOF
+} >> "${FILE_TEMPLATES}"
+
+if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Adding entity set_rgb template..."
+{ cat <<EOF
       set_rgb:
         - action: input_number.set_value
           data:
@@ -708,5 +771,17 @@ ${DISPLAY_ENTITY_TYPE}
 
 EOF
 } >> "${FILE_TEMPLATES}"
+fi
 
-echo "Entity ${ENTITY_FULL_ID} created: restart HA to ensure python script is correctly loaded (otherwise you can simply reload HA scripts)"
+echo "Entity ${ENTITY_FULL_ID} created:"
+echo "- Ensure these scripts exist (create them when manually missing):"
+echo "  - Power ON: ${ENTITY_POWER_ON_SCRIPT}"
+echo "  - Power OFF: ${ENTITY_POWER_OFF_SCRIPT}"
+if [ "${ENTITY_TYPE}" == "light" ]; then
+  for COLOR_KEY in $COLOR_KEYS; do
+    COLOR_HEX="${COLOR_KEY#COLOR_}"
+    COLOR_SCRIPT=$(get_value_for_key "${COLOR_KEY}")
+    echo "  - Color ${COLOR_HEX}: ${COLOR_SCRIPT}"
+  done
+fi
+echo "- Then restart HA to ensure everything is correctly reloaded (python scripts in particular)"
