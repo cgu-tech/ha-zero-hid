@@ -247,7 +247,7 @@ remove_yaml_top_level_block() {
     }
   ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
 
-  echo "Done removing '${block_name}' from '${file}'"
+  #echo "Done removing '${block_name}' from '${file}'"
 }
 
 # Indexed arrays to hold keys and values
@@ -394,11 +394,25 @@ echo "Retrieved ENTITY_START_COLOR_B=$ENTITY_START_COLOR_B"
 echo "Retrieved ENTITY_START_RESET=$ENTITY_START_RESET"
 
 DIR_CONFIG="/config"
-FILE_CONFIG="${DIR_CONFIG}/configuration.yaml"
-FILE_TEMPLATES="${DIR_CONFIG}/templates.yaml"
-FILE_SCRIPTS="${DIR_CONFIG}/scripts.yaml"
-FILE_INPUT_NUMBERS="${DIR_CONFIG}/input_numbers.yaml"
-FILE_INPUT_BOOLEANS="${DIR_CONFIG}/input_booleans.yaml"
+
+FILE_CONFIG_NAME="configuration.yaml"
+FILE_TEMPLATES_NAME="templates.yaml"
+FILE_SCRIPTS_NAME="scripts.yaml"
+FILE_INPUT_NUMBERS_NAME="input_numbers.yaml"
+FILE_INPUT_BOOLEANS_NAME="input_booleans.yaml"
+
+FILE_CONFIG="${DIR_CONFIG}/${FILE_CONFIG_NAME}"
+FILE_TEMPLATES="${DIR_CONFIG}/${FILE_TEMPLATES_NAME}"
+FILE_SCRIPTS="${DIR_CONFIG}/${FILE_SCRIPTS_NAME}"
+FILE_INPUT_NUMBERS="${DIR_CONFIG}/${FILE_INPUT_NUMBERS_NAME}"
+FILE_INPUT_BOOLEANS="${DIR_CONFIG}/${FILE_INPUT_BOOLEANS_NAME}"
+
+FILE_SAV_CONFIG="${DIR_CONFIG}/${TIMESTAMP}_${FILE_CONFIG_NAME}.sav"
+FILE_SAV_TEMPLATES="${DIR_CONFIG}/${TIMESTAMP}_${FILE_TEMPLATES_NAME}.sav"
+FILE_SAV_SCRIPTS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_SCRIPTS_NAME}.sav"
+FILE_SAV_INPUT_NUMBERS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_INPUT_NUMBERS_NAME}.sav"
+FILE_SAV_INPUT_BOOLEANS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_INPUT_BOOLEANS_NAME}.sav"
+
 DIR_PYTHON_SCRIPTS="${DIR_CONFIG}/python_scripts"
 FILE_LED_COLOR_MATCH_SCRIPT="${DIR_PYTHON_SCRIPTS}/led_color_match.py"
 
@@ -426,11 +440,11 @@ ensure_file_exists "${FILE_INPUT_BOOLEANS}"
 
 # Create timestamped save backup of files before editing them
 echo "Backuping HA configurations..."
-cp "${FILE_CONFIG}" "${TIMESTAMP}_${FILE_CONFIG}.sav"
-cp "${FILE_TEMPLATES}" "${TIMESTAMP}_${FILE_TEMPLATES}.sav"
-cp "${FILE_SCRIPTS}" "${TIMESTAMP}_${FILE_SCRIPTS}.sav"
-cp "${FILE_INPUT_NUMBERS}" "${TIMESTAMP}_${FILE_INPUT_NUMBERS}.sav"
-cp "${FILE_INPUT_BOOLEANS}" "${TIMESTAMP}_${FILE_INPUT_BOOLEANS}.sav"
+cp "${FILE_CONFIG}" "${FILE_SAV_CONFIG}"
+cp "${FILE_TEMPLATES}" "${FILE_SAV_TEMPLATES}"
+cp "${FILE_SCRIPTS}" "${FILE_SAV_SCRIPTS}"
+cp "${FILE_INPUT_NUMBERS}" "${FILE_SAV_INPUT_NUMBERS}"
+cp "${FILE_INPUT_BOOLEANS}" "${FILE_SAV_INPUT_BOOLEANS}"
 
 # Remove previous entity artifacts from configurations files (to be able to restart from a clean base)
 echo "Cleaning ${ENTITY_FULL_ID} from HA configurations..."
