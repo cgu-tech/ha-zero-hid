@@ -1567,8 +1567,8 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Checks whether cell configured entity is ON (when entity is configured and exists into HA)
     const entityId = this.getAddonCellEntity(addonCellConfig);
-    const haEntity = document.querySelector("home-assistant");
-    this._eventManager.triggerHaosEvent(haEntity, entityId);
+    // const haEntity = document.querySelector("home-assistant");
+    this._eventManager.triggerHaosMoreInfoAction(addonCell, entityId);
   }
 
   doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {
