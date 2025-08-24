@@ -506,7 +506,7 @@ if not color_map:
 min_dist = float("inf")
 closest_entry = None
 
-for entry in color_map.items():
+for entry in color_map:
     hex_color = entry.get('hex')
     if not hex_color:
         logger.warning(f"At least one entry with missing hex color.")
