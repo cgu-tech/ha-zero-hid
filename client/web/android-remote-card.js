@@ -203,6 +203,23 @@ class AndroidRemoteCard extends HTMLElement {
     return { "name": addonCellName };
   }
 
+  getTypedOverride(overrideId, overrideConfig, pressType) {
+    // Retrieve override typed config
+    let overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, pressType);
+    
+    // When "same" config specified, retrieve reference config from the other config type
+    if (overrideTypedConfig === this._OVERRIDE_SAME) {
+      const referencePressType = (pressType === this._OVERRIDE_TYPE_SHORT_PRESS ? this._OVERRIDE_TYPE_LONG_PRESS : this._OVERRIDE_TYPE_SHORT_PRESS);
+      overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, referencePressType);
+    }
+
+    // When both config types are "same": error
+    if (overrideTypedConfig === this._OVERRIDE_SAME) {
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`getTypedOverride(overrideId, overrideConfig, pressType): invalid config ${this._overrideMode} for overrideId ${overrideId} (both ${this._OVERRIDE_TYPE_SHORT_PRESS} and ${this._OVERRIDE_TYPE_LONG_PRESS} reference "${this._OVERRIDE_SAME}"`));
+    }
+    return overrideTypedConfig;
+  }
+
   getFoldableChild() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getFoldableChild() + _threeStatesToggleState:", this._threeStatesToggleState));
     if (this._threeStatesToggleState === 0) return this.getKeyboard();
@@ -781,42 +798,30 @@ class AndroidRemoteCard extends HTMLElement {
   doUpdateLayoutHass() {
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
     const overridesConfigs = this._layoutManager.getButtonsOverrides();
-    Object.keys(overridesConfigs).forEach((btnId) => {
+    for (const [overrideId, overrideConfig] of Object.entries(overridesConfigs)) {
+        
+      // Retrieve short or long press config (whatever is defined, in this order)
+      const overrideTypedConfigShort = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_SHORT_PRESS);
+      const overrideTypedConfigLong = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_LONG_PRESS);
 
-      // Search if current override configuration does have a declared sensor
-      const sensorEntityId = overridesConfigs[btnId]?.['sensor'];
+      const sensorEntityId = overrideTypedConfigShort?.['sensor'] ?? overrideTypedConfigLong?.['sensor'];
       if (sensorEntityId) {
 
         // Search if current override configuration matches an element from DOM
         const btn = this._elements.wrapper.querySelector(`#${btnId}`);
         if (btn) {
 
-          // The current override configuration does have a declared sensor and matches an element from DOM
-
           // Update overriden button with up-to-date sensor state
-          const sensorState = this._hass.states[sensorEntityId];
-          if (sensorState) {
-            btn._sensorState = sensorState.state;
-          } else {
-            btn._sensorState = sensorState;
-          }
+          const isSensorOn = this.isHassEntityOn(sensorEntityId);
 
           // Set overriden button content classes relative to sensor current state, for visual feedback
-          if (btn.children) {
-            const children = Array.from(btn.children);
-            const isSensorOn = btn._sensorState && btn._sensorState === 'on';
-            children.forEach(child => {
-              if (isSensorOn) {
-                child.classList.add("sensor-on");
-              } else {
-                child.classList.remove("sensor-on");
-              }
-            });
+          for (const child of (btn.children ? Array.from(btn.children) : [])) {
+            if (isSensorOn) child.classList.add("sensor-on");
+            if (!isSensorOn) child.classList.remove("sensor-on");
           }
-          if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Updated ${btnId} with ${sensorEntityId} state:`, btn._sensorState));
         }
       }
-    });
+    }
   }
 
   doUpdateAddonsHass() {
@@ -1517,9 +1522,8 @@ class AndroidRemoteCard extends HTMLElement {
 
       // Retrieve service parameters
       const entityId = this.getAddonCellEntity(addonCellConfig);
-      const entityState = this.getHassEntity(entityId)?.state;
       const domain = entityId?.split('.')?.[0];
-      const service = entityState === 'on' ? 'turn_off' : 'turn_on';
+      const service = this.isHassEntityOn(entityId) ? 'turn_off' : 'turn_on';
 
       // Call service to sitch the entity state
       this._eventManager.callService(domain, service, {
@@ -1849,19 +1853,8 @@ class AndroidRemoteCard extends HTMLElement {
     const overrideConfig = this._layoutManager.getButtonOverride(btn);
     
     // Retrieve override typed config
-    let overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, pressType);
-    
-    // When "same" config specified, retrieve reference config from the other config type
-    if (overrideTypedConfig === this._OVERRIDE_SAME) {
-      const referencePressType = (pressType === this._OVERRIDE_TYPE_SHORT_PRESS ? this._OVERRIDE_TYPE_LONG_PRESS : this._OVERRIDE_TYPE_SHORT_PRESS);
-      overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this._overrideMode, referencePressType);
-    }
-
-    // When both config types are "same": error
-    if (overrideTypedConfig === this._OVERRIDE_SAME) {
-      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`executeButtonOverride(btn): invalid config ${this._overrideMode} for btn ${btn.id} (both ${this._OVERRIDE_TYPE_SHORT_PRESS} and ${this._OVERRIDE_TYPE_LONG_PRESS} reference "${this._OVERRIDE_SAME}". Aborting...`, btn));
-    }
-
+    const overrideId = btn.id;
+    const overrideTypedConfig = this.getTypedOverride(overrideId, overrideConfig, pressType);
     if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
         overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
