@@ -1,0 +1,6 @@
+# Place this file into /config/input_booleans.yaml
+# Ensure "configuration.yaml" has this line (without comment): 
+# input_boolean: !include input_booleans.yaml
+disney_castle_power:
+  name: Disney Castle Power
+  initial: off
