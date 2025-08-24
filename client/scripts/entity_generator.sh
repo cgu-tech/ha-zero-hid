@@ -674,7 +674,7 @@ done
 echo "Writing template..."
 DISPLAY_ENTITY_TYPE="- ${ENTITY_TYPE}:"
 if grep -qE "^[[:space:]]*-[[:space:]]*${ENTITY_TYPE}:[[:space:]]*$" "${FILE_TEMPLATES}"; then
-  echo DISPLAY_ENTITY_TYPE=""
+  DISPLAY_ENTITY_TYPE=""
 fi
 { echo; cat <<EOF
 ${DISPLAY_ENTITY_TYPE}
