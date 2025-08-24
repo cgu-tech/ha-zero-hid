@@ -555,6 +555,22 @@ export class EventManager {
     });
   }
 
+  // Trigger a tap action into HAOS, target
+  // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
+  // 
+  // Parameters:
+  //  - target: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - actionConfig: the <config> section for the tap action to trigger
+  triggerHaosMoreInfoAction(target, entityId) {
+    this.triggerHaosEvent(target, "hass-more-info", {
+      "entityId": entityId 
+    },
+    {
+      "bubbles": true,
+      "composed": true,
+    });
+  }
+
   addBlurListener(target, callback, options = null) { return this.addBlurListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addErrorListener(target, callback, options = null) { return this.addErrorListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addLoadListener(target, callback, options = null) { return this.addLoadListenerToContainer(this._defaultContainerName, target, callback, options ); }

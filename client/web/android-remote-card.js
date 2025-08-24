@@ -52,6 +52,7 @@ class AndroidRemoteCard extends HTMLElement {
   _threeStatesToggleState;
   _overrideMode = this._OVERRIDE_NORMAL_MODE;
   _overrideLongPressTimeouts = new Map();
+  _moreInfoLongPressTimeouts = new Map();
   _sidePanelVisible = false;
 
   constructor() {
@@ -1474,8 +1475,13 @@ class AndroidRemoteCard extends HTMLElement {
   doAddonCellPress(addonCell, evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Addon cell ${addonCell.id} press: action will be triggered on release, nothing to do`));
 
-    // Retrieve addon cell config
-    const addonCellConfig = this._layoutManager.getElementData(addonCell);
+    // Trigger long press timeout
+    this._moreInfoLongPressTimeouts.set(evt.pointerId, { 
+      "can-run": true,                   // until proven wrong, long press action can be run
+      "was-ran": false,                      // true when action was executed
+      "source": addonCell,                        // long press source button
+      "timeout": this.addMoreInfoLongPressTimeout(evt)   // when it expires, triggers the associated inner callback to run the action
+    });
 
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
@@ -1484,6 +1490,10 @@ class AndroidRemoteCard extends HTMLElement {
   doAddonCellAbortPress(addonCell, evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Addon cell ${addonCell.id} abort press: action wont be triggered at all, nothing to do`));
 
+    // Remove more info long press timeout (when set before)
+    this.clearMoreInfoLongPressTimeout(evt);
+    this._moreInfoLongPressTimeouts.delete(evt.pointerId);
+
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
   }
@@ -1491,22 +1501,73 @@ class AndroidRemoteCard extends HTMLElement {
   doAddonCellRelease(addonCell, evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Addon cell ${addonCell.id} release: triggering associated action...`));
 
+    const moreInfoLongPressEntry = this._moreInfoLongPressTimeouts.get(evt.pointerId);
+    
+    // Remove override long press timeout (when set before)
+    this.clearMoreInfoLongPressTimeout(evt);
+    this._moreInfoLongPressTimeouts.delete(evt.pointerId);
+
+    // Retrieve addon cell config
+    const addonCellConfig = this._layoutManager.getElementData(addonCell);
+    if (moreInfoLongPressEntry && moreInfoLongPressEntry["was-ran"]) {
+      // more info action already executed into its long-press Form
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Addon cell ${addonCell.id} release: more info action already executed, nothing else to do`));
+    } else {
+      // no "more info" action executed: execute standard release Action
+
+      // Retrieve service parameters
+      const entityId = this.getAddonCellEntity(addonCellConfig);
+      const entityState = this.getHassEntity(entityId)?.state;
+      const domain = entityId?.split('.')?.[0];
+      const service = entityState === 'on' ? 'turn_off' : 'turn_on';
+
+      // Call service to sitch the entity state
+      this._eventManager.callService(domain, service, {
+        "entity_id": entityId,
+      });
+    }
+    
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  addMoreInfoLongPressTimeout(evt) {
+    return setTimeout(() => {
+      const moreInfoLongPressEntry = this._moreInfoLongPressTimeouts.get(evt.pointerId);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addMoreInfoLongPressTimeout(evt) + moreInfoLongPressEntry:`, evt, moreInfoLongPressEntry));
+
+      // When no entry: key has been released before timeout
+      if (moreInfoLongPressEntry && moreInfoLongPressEntry["can-run"] && !moreInfoLongPressEntry["was-ran"]) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Long more info action waiting to be executed...`));
+        const addonCell = moreInfoLongPressEntry["source"];
+
+        // Check whether or not long click action can be run in current mode
+        moreInfoLongPressEntry["can-run"] = (moreInfoLongPressEntry["source-mode"] === this._overrideMode);
+        if (!moreInfoLongPressEntry["can-run"]) return;
+
+        // Mark action as ran
+        moreInfoLongPressEntry["was-ran"] = true;
+
+        // Execute action
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addMoreInfoLongPressTimeout(evt) + moreInfoLongPressEntry: executing more info action...`, evt, moreInfoLongPressEntry));
+        this.executeMoreInfo(addonCell);
+      }
+    }, this.getTriggerLongClickDelay()); // long-press duration
+  }
+
+  clearMoreInfoLongPressTimeout(evt) {
+    const timeout = this._moreInfoLongPressTimeouts.get(evt.pointerId)?.["timeout"];
+    if (timeout) clearTimeout(timeout);
+  }
+  
+  executeMoreInfo(addonCell) {
+
     // Retrieve addon cell config
     const addonCellConfig = this._layoutManager.getElementData(addonCell);
 
-    // Retrieve service parameters
+    // Checks whether cell configured entity is ON (when entity is configured and exists into HA)
     const entityId = this.getAddonCellEntity(addonCellConfig);
-    const entityState = this.getHassEntity(entityId)?.state;
-    const domain = entityId?.split('.')?.[0];
-    const service = entityState === 'on' ? 'turn_off' : 'turn_on';
-
-    // Call service to sitch the entity state
-    this._eventManager.callService(domain, service, {
-      "entity_id": entityId,
-    });
-
-    // Send haptic feedback to make user acknownledgable of succeeded event
-    this._layoutManager.hapticFeedback();
+    this._eventManager.triggerHaosEvent(addonCell, entityId);
   }
 
   doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {
