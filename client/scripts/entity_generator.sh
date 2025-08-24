@@ -595,7 +595,7 @@ EOF
 
 if [ "${ENTITY_START_RESET}" == "true" ]; then
   echo "Adding reset on start capabilites into turn_on service script..."
-{ echo; cat <<EOF
+{ cat <<EOF
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_R}
@@ -616,7 +616,7 @@ EOF
 fi
 
 echo "Adding turn_on/turn_off/set_level/set_color services into script..."
-{ echo; cat <<EOF
+{ cat <<EOF
     - service: script.${ENTITY_POWER_ON_SCRIPT}
     - service: input_boolean.turn_on
       target:
@@ -662,7 +662,7 @@ COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_HEX="${COLOR_KEY#COLOR_}"
   COLOR_SCRIPT=$(get_value_for_key "${COLOR_KEY}")
-{ echo; cat <<EOF
+{ cat <<EOF
           - hex: "${COLOR_HEX}"
             service_domain: script
             service_name: ${COLOR_SCRIPT}
