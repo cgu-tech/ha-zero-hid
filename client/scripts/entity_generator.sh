@@ -409,6 +409,8 @@ FILE_TEMPLATES="${DIR_CONFIG}/templates.yaml"
 FILE_SCRIPTS="${DIR_CONFIG}/scripts.yaml"
 FILE_INPUT_NUMBERS="${DIR_CONFIG}/input_numbers.yaml"
 FILE_INPUT_BOOLEANS="${DIR_CONFIG}/input_booleans.yaml"
+DIR_PYTHON_SCRIPTS="${DIR_CONFIG}/python_scripts"
+FILE_LED_COLOR_MATCH_SCRIPT="${DIR_PYTHON_SCRIPTS}/led_color_match.py"
 
 ENTITY_FULL_ID="${ENTITY_TYPE}.${ENTITY_ID}"
 
@@ -442,6 +444,7 @@ cp "${FILE_INPUT_BOOLEANS}" "${TIMESTAMP}_${FILE_INPUT_BOOLEANS}.sav"
 
 # Remove previous entity artifacts from configurations files (to be able to restart from a clean base)
 echo "Cleaning ${ENTITY_FULL_ID} from HA configurations..."
+sed -i "/^python_script:/d" "${FILE_CONFIG}"
 sed -i "/^template:/d" "${FILE_CONFIG}"
 sed -i "/^script:/d" "${FILE_CONFIG}"
 sed -i "/^input_number:/d" "${FILE_CONFIG}"
@@ -458,30 +461,83 @@ remove_yaml_top_level_block "${FILE_INPUT_BOOLEANS}" "${INPUT_BOOLEAN_POWER}"
 
 # Register detached configurations files into main configuration file
 echo "Registering HA detached configurations into HA main configuration ${FILE_CONFIG}..."
+grep -qxF "python_script:" "${FILE_CONFIG}" || echo "python_script:" >> "${FILE_CONFIG}"
 grep -qxF "template:" "${FILE_CONFIG}" || echo "template: !include templates.yaml" >> "${FILE_CONFIG}"
 grep -qxF "script:" "${FILE_CONFIG}" || echo "script: !include scripts.yaml" >> "${FILE_CONFIG}"
 grep -qxF "input_number:" "${FILE_CONFIG}" || echo "input_number: !include input_numbers.yaml" >> "${FILE_CONFIG}"
 grep -qxF "input_boolean:" "${FILE_CONFIG}" || echo "input_boolean: !include input_booleans.yaml" >> "${FILE_CONFIG}"
 
+# Write python helper script (create or overwrite)
+mkdir -p "${DIR_PYTHON_SCRIPTS}"
+{ echo; cat <<'EOF'
+# led_color_match.py
 
-ENTITY_TYPE="${1:-}"
-ENTITY_ID="${2:-}"
-ENTITY_NAME="${3:-}"
-ENTITY_FULL_ID="${ENTITY_TYPE}.${ENTITY_ID}"
+def hex_to_rgb(hex_color):
+    """Convert hex color string to RGB tuple."""
+    hex_color = hex_color.lstrip('#')
+    return (
+        int(hex_color[0:2], 16),
+        int(hex_color[2:4], 16),
+        int(hex_color[4:6], 16)
+    )
 
-SCRIPT_NAME_TURN_ON="${ENTITY_ID}_turn_on"
-SCRIPT_NAME_TURN_OFF="${ENTITY_ID}_turn_off"
-SCRIPT_NAME_SET_COLOR="${ENTITY_ID}_set_color"
-SCRIPT_NAME_SET_LEVEL="${ENTITY_ID}_set_level"
+def color_distance(rgb1, rgb2):
+    """Calculate Euclidean distance between two RGB colors."""
+    return ((rgb1[0] - rgb2[0]) ** 2 +
+            (rgb1[1] - rgb2[1]) ** 2 +
+            (rgb1[2] - rgb2[2]) ** 2) ** 0.5
 
-INPUT_NUMBER_R="${ENTITY_ID}_r"
-INPUT_NUMBER_G="${ENTITY_ID}_g"
-INPUT_NUMBER_B="${ENTITY_ID}_b"
-INPUT_NUMBER_BRIGHTNESS="${ENTITY_ID}_brightness"
+input_color = data.get('color')
+color_map = data.get("color_map", [])
 
-INPUT_BOOLEAN_POWER="${ENTITY_ID}_power"
+if not input_color or len(input_color) != 3:
+    logger.error("Missing or invalid 'color' input.")
+    raise ValueError("Invalid color input")
 
-# Write input_booleans
+if not color_map:
+    logger.error("Missing or invalid 'color_map' input.")
+    raise ValueError("Invalid color map")
+
+# Find closest match
+min_dist = float("inf")
+closest_entry = None
+
+for entry in color_map.items():
+    hex_color = entry.get('hex')
+    if not hex_color:
+        logger.warning(f"At least one entry with missing hex color.")
+        continue
+    rgb = hex_to_rgb(hex_color)
+    dist = color_distance(input_color, rgb)
+
+    if dist < min_dist:
+        min_dist = dist
+        closest_entry = entry
+
+if closest_entry:
+    service_domain = closest_entry.get('service_domain')
+    service_name = closest_entry.get('service_name')
+
+    if service_domain and service_name:
+        logger.info(f"Calling service: {service_domain}.{service_name}")
+        hass.services.call(
+            service_domain,
+            service_name,
+            {},
+            False
+        )
+    else:
+        logger.error("Closest match found but service info is missing.")
+        raise ValueError("Closest service found, but missing service info")
+else:
+    logger.error(f"No closest color match found for: {input_color}")
+    raise ValueError("No match found")
+
+EOF
+} > "${FILE_LED_COLOR_MATCH_SCRIPT}"
+
+# Write input_booleans (create or append)
+echo "Writing input_booleans..."
 { echo; cat <<EOF
 ${INPUT_BOOLEAN_POWER}:
   name: ${ENTITY_NAME} Power
@@ -490,7 +546,8 @@ ${INPUT_BOOLEAN_POWER}:
 EOF
 } >> "${FILE_INPUT_BOOLEANS}"
 
-# Write input_numbers
+# Write input_numbers (create or append)
+echo "Writing input_numbers..."
 { echo; cat <<EOF
 ${INPUT_NUMBER_R}:
   name: ${ENTITY_NAME} Red value
@@ -523,7 +580,8 @@ ${INPUT_NUMBER_BRIGHTNESS}:
 EOF
 } >> "${FILE_INPUT_NUMBERS}"
 
-# Write scripts
+# Write scripts (create or append)
+echo "Writing script..."
 { echo; cat <<EOF
 ${SCRIPT_NAME_TURN_ON}:
   alias: "Turns ON ${ENTITY_NAME}"
@@ -583,9 +641,8 @@ ${SCRIPT_NAME_SET_COLOR}:
 EOF
 } >> "${FILE_SCRIPTS}"
 
-# Assume csv_keys=("apple" "appetizer" "banana" "application" "berry")
-COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 echo "Adding color_map entries into script..."
+COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_HEX="${COLOR_KEY#COLOR_}"
   COLOR_SCRIPT=$(get_value_for_key "${COLOR_KEY}")
@@ -595,10 +652,10 @@ for COLOR_KEY in $COLOR_KEYS; do
             service_name: ${COLOR_SCRIPT}
 EOF
 } >> "${FILE_SCRIPTS}"
-
 done
 
-# Write entity template
+# Write entity template (create or append)
+echo "Writing template..."
 DISPLAY_ENTITY_TYPE="- ${ENTITY_TYPE}:"
 if grep -qE "^[[:space:]]*-[[:space:]]*${ENTITY_TYPE}:[[:space:]]*$" "${FILE_TEMPLATES}"; then
   echo DISPLAY_ENTITY_TYPE=""
@@ -635,3 +692,5 @@ ${DISPLAY_ENTITY_TYPE}
 
 EOF
 } >> "${FILE_TEMPLATES}"
+
+echo "Entity ${ENTITY_FULL_ID} created: restart HA to ensure python script is correctly loaded (otherwise you can simply reload HA scripts)"
