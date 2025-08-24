@@ -373,6 +373,7 @@ INPUT_BOOLEAN_POWER="${ENTITY_ID}_power"
 ${INPUT_BOOLEAN_POWER}:
   name: ${ENTITY_NAME} Power
   initial: off
+
 EOF
 } >> "${FILE_INPUT_BOOLEANS}"
 
@@ -405,11 +406,103 @@ ${INPUT_NUMBER_BRIGHTNESS}:
   max: 255
   step: 1
   initial: 128
+
 EOF
 } >> "${FILE_INPUT_NUMBERS}"
 
 # Write scripts
 { echo; cat <<EOF
+${SCRIPT_NAME_TURN_ON}:
+  alias: "Turns ON ${ENTITY_NAME}"
+  sequence:
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.${INPUT_NUMBER_R}
+      data:
+        value: 230
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.${INPUT_NUMBER_G}
+      data:
+        value: 221
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.${INPUT_NUMBER_B}
+      data:
+        value: 189
+    - service: script.briksmax_disney_castle_power_on
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
+
+${SCRIPT_NAME_TURN_OFF}:
+  alias: "Turns OFF ${ENTITY_NAME}"
+  sequence:
+    - service: script.briksmax_disney_castle_power_off
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
+
+${SCRIPT_NAME_SET_COLOR}:
+  alias: "Set ${ENTITY_NAME} Color"
+  mode: restart
+  fields:
+    rgb_color:
+      description: "RGB color list"
+      example: "[255, 0, 0]"
+  sequence:
+    - condition: template
+      value_template: >
+        {{ rgb_color is defined and rgb_color | length == 3 }}
+    - service: python_script.led_color_match
+      data:
+        color: "{{ rgb_color }}"
+        color_map:
+          red:
+            hex: "#BD2A19"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_red
+          green:
+            hex: "#348C52"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_green
+          blue:
+            hex: "#0A62B5"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_blue
+          orange:
+            hex: "#C74613"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_orange
+          purple:
+            hex: "#781F50"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_purple
+          cyan:
+            hex: "#5C99BD"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_cyan
+          pink:
+            hex: "#C48C83"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_pink
+          yellow:
+            hex: "#D4C560"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_yellow
+          white:
+            hex: "#E6DDBD"
+            service_domain: script
+            service_name: briksmax_disney_castle_color_white
+
+${SCRIPT_NAME_SET_LEVEL}:
+  alias: "Set ${ENTITY_NAME} Brightness"
+  sequence:
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.${INPUT_NUMBER_BRIGHTNESS}
+      data:
+        value: "{{ brightness }}"
 
 EOF
 } >> "${FILE_SCRIPTS}"
@@ -448,5 +541,6 @@ ${DISPLAY_ENTITY_TYPE}
               - "{{ r }}"
               - "{{ g }}"
               - "{{ b }}"
+
 EOF
 } >> "${FILE_TEMPLATES}"
