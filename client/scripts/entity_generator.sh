@@ -355,25 +355,7 @@ ask_confirm() {
 ########
 
 # Parameters (from command-line args, if provided)
-ENTITY_TYPE="${1:-}"
-ENTITY_ID="${2:-}"
-ENTITY_NAME="${3:-}"
-ENTITY_CONFIG_FILE="${4:-}"
-
-# Prompt until ENTITY_TYPE is filled
-while [ -z "$ENTITY_TYPE" ]; do
-  read -rp "Enter the entity type (e.g., light, switch, sensor): " ENTITY_TYPE
-done
-
-# Prompt until ENTITY_ID is filled
-while [ -z "$ENTITY_ID" ]; do
-  read -rp "Enter the entity ID without type prefix and lowercase (e.g., illuminated_brick_game): " ENTITY_ID
-done
-
-# Prompt until ENTITY_NAME is filled
-while [ -z "$ENTITY_NAME" ]; do
-  read -rp "Enter the friendly name for the entity (e.g., Illuminated Brick Game): " ENTITY_NAME
-done
+ENTITY_CONFIG_FILE="${1:-}"
 
 # Prompt until ENTITY_CONFIG_FILE is filled
 while [ -z "$ENTITY_CONFIG_FILE" ]; do
@@ -384,7 +366,7 @@ echo "Loading CSV file that contains entity configurations..."
 load_config_map "${ENTITY_CONFIG_FILE}"
 
 echo "Checking required keys from loaded CSV file..."
-required=("POWER_ON_SCRIPT" "POWER_OFF_SCRIPT" "START_COLOR_R" "START_COLOR_G" "START_COLOR_B")
+required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME" "POWER_ON_SCRIPT" "POWER_OFF_SCRIPT" "START_COLOR_R" "START_COLOR_G" "START_COLOR_B")
 if ! check_required_keys "${required[@]}"; then
   echo "Missing keys. Exiting."
   exit 1
@@ -392,11 +374,17 @@ fi
 echo "All required keys found! ($required)"
 
 echo "Retrieving required values..."
+ENTITY_TYPE=$(get_value_for_key "ENTITY_TYPE")
+ENTITY_ID=$(get_value_for_key "ENTITY_ID")
+ENTITY_NAME=$(get_value_for_key "ENTITY_NAME")
 ENTITY_CONFIG_POWER_ON_SCRIPT=$(get_value_for_key "POWER_ON_SCRIPT")
 ENTITY_CONFIG_POWER_OFF_SCRIPT=$(get_value_for_key "POWER_OFF_SCRIPT")
 ENTITY_CONFIG_START_COLOR_R=$(get_value_for_key "START_COLOR_R")
 ENTITY_CONFIG_START_COLOR_G=$(get_value_for_key "START_COLOR_G")
 ENTITY_CONFIG_START_COLOR_B=$(get_value_for_key "START_COLOR_B")
+echo "Retrieved ENTITY_TYPE=$ENTITY_TYPE"
+echo "Retrieved ENTITY_ID=$ENTITY_ID"
+echo "Retrieved ENTITY_NAME=$ENTITY_NAME"
 echo "Retrieved ENTITY_CONFIG_POWER_ON_SCRIPT=$ENTITY_CONFIG_POWER_ON_SCRIPT"
 echo "Retrieved ENTITY_CONFIG_POWER_OFF_SCRIPT=$ENTITY_CONFIG_POWER_OFF_SCRIPT"
 echo "Retrieved ENTITY_CONFIG_START_COLOR_R=$ENTITY_CONFIG_START_COLOR_R"

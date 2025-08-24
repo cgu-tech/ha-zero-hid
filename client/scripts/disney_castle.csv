@@ -1,0 +1,17 @@
+ENTITY_TYPE,light
+ENTITY_ID,disney_castle_light
+ENTITY_NAME,Disney Castle
+POWER_ON_SCRIPT,briksmax_disney_castle_power_on
+POWER_OFF_SCRIPT,briksmax_disney_castle_power_off
+START_COLOR_R,230
+START_COLOR_G,221
+START_COLOR_B,189
+COLOR_#BD2A19,briksmax_disney_castle_color_red
+COLOR_#348C52,briksmax_disney_castle_color_green
+COLOR_#0A62B5,briksmax_disney_castle_color_blue
+COLOR_#C74613,briksmax_disney_castle_color_orange
+COLOR_#781F50,briksmax_disney_castle_color_purple
+COLOR_#5C99BD,briksmax_disney_castle_color_cyan
+COLOR_#C48C83,briksmax_disney_castle_color_pink
+COLOR_#D4C560,briksmax_disney_castle_color_yellow
+COLOR_#E6DDBD,briksmax_disney_castle_color_white
