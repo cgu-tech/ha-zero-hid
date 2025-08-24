@@ -150,82 +150,74 @@ remove_yaml_block() {
   mv "$tmpfile" "$file"
 }
 
-
 remove_yaml_subblock() {
   local file="$1"
   local type="$2"
   local unique_id="$3"
 
-  local indent=""
-  local inside_type=0
-  local inside_target=0
-  local skip=0
-
   awk -v type="$type" -v uid="$unique_id" '
-  function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
-  function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
-  function trim(s)  { return rtrim(ltrim(s)); }
+  function leading_spaces(line) {
+    match(line, /^[ \t]*/)
+    return RLENGTH
+  }
 
   BEGIN {
     inside_type=0
-    inside_target=0
     skip=0
-    indent=""
+    skip_indent=-1
   }
 
   {
+    # Print for debugging (can comment out later)
+    # print "Processing line: [" $0 "]" > "/dev/stderr"
+
+    # Detect entering type block, e.g. "- light:"
     if (inside_type == 0) {
-      # Detect the '- type:' line, print it, start inside_type block
-      if ($0 ~ "^[[:space:]]*-[[:space:]]*" type ":") {
-        print $0
+      if ($0 ~ ("^[ \t]*-[ \t]*" type ":")) {
         inside_type=1
-        indent = ""
+        print $0
         next
       }
-      # Outside the type block: just print
       print $0
       next
     }
 
-    # Inside the type block, detect sub-blocks
-    if (indent == "") {
-      # Determine indent of first sub-block line (next after '- light:')
-      if ($0 ~ "^[[:space:]]*-[[:space:]]+") {
-        match($0, /^([[:space:]]*)-/, m)
-        indent = m[1]
+    # If currently skipping lines belonging to the target unique_id block
+    if (skip == 1) {
+      # Check indentation of current line
+      cur_indent = leading_spaces($0)
+
+      # If indentation less or equal than unique_id line, stop skipping
+      # Also stop skipping if line is empty (to avoid skipping blank lines belonging to next block)
+      if (cur_indent <= skip_indent && $0 ~ /^[ \t]*-/) {
+        skip=0
+        skip_indent=-1
       } else {
-        # Something else, print line and continue
-        print $0
+        # Still inside sub-block, skip line
+        # print "Skipping line inside target: " $0 > "/dev/stderr"
         next
       }
     }
 
-    # Now inside sub-blocks
-    if ($0 ~ "^" indent "-[[:space:]]*") {
-      # New sub-block starts
-      inside_target=0
-      skip=0
-    }
+    # Trim leading spaces for checking unique_id line
+    line_trim = $0
+    gsub(/^[ \t]+/, "", line_trim)
+    gsub(/[ \t]+$/, "", line_trim)
 
-    # Check if inside target block to skip
-    if (skip == 1) {
-      # Skip this line
-      next
-    }
-
-    # Check if this line matches unique_id inside sub-block
-    if ($0 ~ "^[[:space:]]*unique_id:[[:space:]]*" uid "[[:space:]]*$") {
-      inside_target=1
+    # Detect unique_id line (allow optional leading dash)
+    if (line_trim ~ ("^-?[ \t]*unique_id:[ \t]*" uid "$")) {
       skip=1
-      # Skip this line as well
+      skip_indent = leading_spaces($0)
+      # print "Skipping block with unique_id: " uid > "/dev/stderr"
       next
     }
 
-    # Print line if not skipping
     print $0
   }
   ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
 }
+
+
 
 
 ask_confirm() {
@@ -270,7 +262,7 @@ ensure_file_exists "${FILE_TEMPLATES}"
 if search_yaml_block "${FILE_TEMPLATES}" "${ENTITY_TYPE}" "${ENTITY_ID}"; then
   if ask_confirm "Entity ${ENTITY_FULL_ID} already exist. Do you want to override it?"; then
     echo "Entity ${ENTITY_FULL_ID} will be overriden: erasing existing entity..."
-    #remove_yaml_subblock templates.yaml "${ENTITY_TYPE}" "${ENTITY_ID}"
+    remove_yaml_subblock templates.yaml "${ENTITY_TYPE}" "${ENTITY_ID}"
   else
     echo "Entity ${ENTITY_FULL_ID} will NOT be overriden: aborting..."
     exit 1
