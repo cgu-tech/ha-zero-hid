@@ -497,21 +497,21 @@ ${INPUT_NUMBER_R}:
   min: 0
   max: 255
   step: 1
-  initial: 230
+  initial: ${ENTITY_CONFIG_START_COLOR_R}
 
 ${INPUT_NUMBER_G}:
   name: ${ENTITY_NAME} Green value
   min: 0
   max: 255
   step: 1
-  initial: 221
+  initial: ${ENTITY_CONFIG_START_COLOR_G}
 
 ${INPUT_NUMBER_B}:
   name: ${ENTITY_NAME} Blue value
   min: 0
   max: 255
   step: 1
-  initial: 189
+  initial: ${ENTITY_CONFIG_START_COLOR_B}
 
 ${INPUT_NUMBER_BRIGHTNESS}:
   name: ${ENTITY_NAME} Brightness
@@ -532,18 +532,18 @@ ${SCRIPT_NAME_TURN_ON}:
       target:
         entity_id: input_number.${INPUT_NUMBER_R}
       data:
-        value: 230
+        value: ${ENTITY_CONFIG_START_COLOR_R}
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_G}
       data:
-        value: 221
+        value: ${ENTITY_CONFIG_START_COLOR_G}
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_B}
       data:
-        value: 189
-    - service: script.briksmax_disney_castle_power_on
+        value: ${ENTITY_CONFIG_START_COLOR_B}
+    - service: script.${ENTITY_CONFIG_POWER_ON_SCRIPT}
     - service: input_boolean.turn_on
       target:
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
@@ -551,62 +551,10 @@ ${SCRIPT_NAME_TURN_ON}:
 ${SCRIPT_NAME_TURN_OFF}:
   alias: "Turns OFF ${ENTITY_NAME}"
   sequence:
-    - service: script.briksmax_disney_castle_power_off
+    - service: script.${ENTITY_CONFIG_POWER_OFF_SCRIPT}
     - service: input_boolean.turn_off
       target:
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
-
-${SCRIPT_NAME_SET_COLOR}:
-  alias: "Set ${ENTITY_NAME} Color"
-  mode: restart
-  fields:
-    rgb_color:
-      description: "RGB color list"
-      example: "[255, 0, 0]"
-  sequence:
-    - condition: template
-      value_template: >
-        {{ rgb_color is defined and rgb_color | length == 3 }}
-    - service: python_script.led_color_match
-      data:
-        color: "{{ rgb_color }}"
-        color_map:
-          red:
-            hex: "#BD2A19"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_red
-          green:
-            hex: "#348C52"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_green
-          blue:
-            hex: "#0A62B5"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_blue
-          orange:
-            hex: "#C74613"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_orange
-          purple:
-            hex: "#781F50"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_purple
-          cyan:
-            hex: "#5C99BD"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_cyan
-          pink:
-            hex: "#C48C83"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_pink
-          yellow:
-            hex: "#D4C560"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_yellow
-          white:
-            hex: "#E6DDBD"
-            service_domain: script
-            service_name: briksmax_disney_castle_color_white
 
 ${SCRIPT_NAME_SET_LEVEL}:
   alias: "Set ${ENTITY_NAME} Brightness"
@@ -617,8 +565,38 @@ ${SCRIPT_NAME_SET_LEVEL}:
       data:
         value: "{{ brightness }}"
 
+${SCRIPT_NAME_SET_COLOR}:
+  alias: "Set ${ENTITY_NAME} Color"
+  mode: restart
+  fields:
+    rgb_color:
+      description: "Expected [R,G,B] color to set (will default on nearest color when not available)"
+      example: "[${ENTITY_CONFIG_START_COLOR_R}, ${ENTITY_CONFIG_START_COLOR_G}, ${ENTITY_CONFIG_START_COLOR_B}]"
+  sequence:
+    - condition: template
+      value_template: >
+        {{ rgb_color is defined and rgb_color | length == 3 }}
+    - service: python_script.led_color_match
+      data:
+        color: "{{ rgb_color }}"
+        color_map:
 EOF
 } >> "${FILE_SCRIPTS}"
+
+# Assume csv_keys=("apple" "appetizer" "banana" "application" "berry")
+COLOR_KEYS=$(get_keys_starting_with "COLOR_")
+echo "Adding color_map entries into script..."
+for COLOR_KEY in $COLOR_KEYS; do
+  COLOR_HEX="${COLOR_KEY#COLOR_}"
+  COLOR_SCRIPT=$(get_value_for_key "${COLOR_KEY}")
+{ echo; cat <<EOF
+          - hex: "${COLOR_HEX}"
+            service_domain: script
+            service_name: ${COLOR_SCRIPT}
+EOF
+} >> "${FILE_SCRIPTS}"
+
+done
 
 # Write entity template
 DISPLAY_ENTITY_TYPE="- ${ENTITY_TYPE}:"

@@ -16,7 +16,7 @@ def color_distance(rgb1, rgb2):
             (rgb1[2] - rgb2[2]) ** 2) ** 0.5
 
 input_color = data.get('color')
-color_map = data.get('color_map')
+color_map = data.get("color_map", [])
 
 if not input_color or len(input_color) != 3:
     logger.error("Missing or invalid 'color' input.")
@@ -30,10 +30,10 @@ if not color_map:
 min_dist = float("inf")
 closest_entry = None
 
-for name, entry in color_map.items():
+for entry in color_map.items():
     hex_color = entry.get('hex')
     if not hex_color:
-        logger.warning(f"Skipping color '{name}' with no hex defined.")
+        logger.warning(f"At least one entry with missing hex color.")
         continue
     rgb = hex_to_rgb(hex_color)
     dist = color_distance(input_color, rgb)
