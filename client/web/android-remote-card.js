@@ -1542,7 +1542,7 @@ class AndroidRemoteCard extends HTMLElement {
         const addonCell = moreInfoLongPressEntry["source"];
 
         // Check whether or not long click action can be run in current mode
-        moreInfoLongPressEntry["can-run"] = (moreInfoLongPressEntry["source-mode"] === this._overrideMode);
+        moreInfoLongPressEntry["can-run"] = true;
         if (!moreInfoLongPressEntry["can-run"]) return;
 
         // Mark action as ran
