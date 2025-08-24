@@ -1,4 +1,5 @@
 #!/bin/bash
+TIMESTAMP=$(date +%Y%m%d%H%M%S)$(awk -F. '{printf "%03d", $2/1000}' /proc/uptime)
 CURRENT_DIR="$(pwd)"
 
 # Parameters (from command-line args, if provided)
@@ -218,6 +219,42 @@ remove_yaml_subblock() {
 }
 
 
+remove_yaml_top_level_block() {
+  local file="$1"
+  local block_name="$2"
+
+  echo "Removing block '${block_name}' from '${file}'"
+
+  awk -v block="$block_name" '
+    BEGIN {
+      skip=0
+      block_regex = "^[[:space:]]*" block ":"
+      # print "DEBUG: Looking for block \"" block "\" in file" > "/dev/stderr"
+    }
+    {
+      if (skip) {
+        if ($0 ~ /^[[:space:]]+/) {
+          # print "DEBUG: Skipping line inside block: " $0 > "/dev/stderr"
+          next
+        } else {
+          # print "DEBUG: Block ended before line: " $0 > "/dev/stderr"
+          skip=0
+        }
+      }
+      if (!skip && $0 ~ block_regex) {
+        # print "DEBUG: Found block start: " $0 > "/dev/stderr"
+        skip=1
+        next
+      }
+      if (!skip) {
+        print $0
+      }
+    }
+  ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+
+  echo "Done removing '${block_name}' from '${file}'"
+}
+
 
 
 ask_confirm() {
@@ -245,7 +282,7 @@ done
 
 # Prompt until ENTITY_ID is filled
 while [ -z "$ENTITY_ID" ]; do
-  read -rp "Enter the entity ID without type prefix (e.g., illuminated_brick_game): " ENTITY_ID
+  read -rp "Enter the entity ID without type prefix and lowercase (e.g., illuminated_brick_game): " ENTITY_ID
 done
 
 # Prompt until ENTITY_NAME is filled
@@ -253,20 +290,163 @@ while [ -z "$ENTITY_NAME" ]; do
   read -rp "Enter the friendly name for the entity (e.g., Illuminated Brick Game): " ENTITY_NAME
 done
 
-ENTITY_FULL_ID="${ENTITY_TYPE}.${ENTITY_ID}"
 DIR_CONFIG="/config"
+FILE_CONFIG="${DIR_CONFIG}/configuration.yaml"
 FILE_TEMPLATES="${DIR_CONFIG}/templates.yaml"
+FILE_SCRIPTS="${DIR_CONFIG}/scripts.yaml"
+FILE_INPUT_NUMBERS="${DIR_CONFIG}/input_numbers.yaml"
+FILE_INPUT_BOOLEANS="${DIR_CONFIG}/input_booleans.yaml"
 
-# Ensure entity does not already exist
+ENTITY_FULL_ID="${ENTITY_TYPE}.${ENTITY_ID}"
+
+SCRIPT_NAME_TURN_ON="${ENTITY_ID}_turn_on"
+SCRIPT_NAME_TURN_OFF="${ENTITY_ID}_turn_off"
+SCRIPT_NAME_SET_COLOR="${ENTITY_ID}_set_color"
+SCRIPT_NAME_SET_LEVEL="${ENTITY_ID}_set_level"
+
+INPUT_NUMBER_R="${ENTITY_ID}_r"
+INPUT_NUMBER_G="${ENTITY_ID}_g"
+INPUT_NUMBER_B="${ENTITY_ID}_b"
+INPUT_NUMBER_BRIGHTNESS="${ENTITY_ID}_brightness"
+
+INPUT_BOOLEAN_POWER="${ENTITY_ID}_power"
+
+# Check that needed files exist
+echo "Ensure configurations exists..."
+ensure_file_exists "${FILE_CONFIG}"
 ensure_file_exists "${FILE_TEMPLATES}"
-if search_yaml_block "${FILE_TEMPLATES}" "${ENTITY_TYPE}" "${ENTITY_ID}"; then
-  if ask_confirm "Entity ${ENTITY_FULL_ID} already exist. Do you want to override it?"; then
-    echo "Entity ${ENTITY_FULL_ID} will be overriden: erasing existing entity..."
-    remove_yaml_subblock templates.yaml "${ENTITY_TYPE}" "${ENTITY_ID}"
-  else
-    echo "Entity ${ENTITY_FULL_ID} will NOT be overriden: aborting..."
-    exit 1
-  fi
-else
-  echo "Entity ${ENTITY_FULL_ID} does not already exist: creating the entity..."
+ensure_file_exists "${FILE_SCRIPTS}"
+ensure_file_exists "${FILE_INPUT_NUMBERS}"
+ensure_file_exists "${FILE_INPUT_BOOLEANS}"
+
+# Create timestamped save backup of files before editing them
+echo "Backuping configurations..."
+cp "${FILE_CONFIG}" "${TIMESTAMP}_${FILE_CONFIG}.sav"
+cp "${FILE_TEMPLATES}" "${TIMESTAMP}_${FILE_TEMPLATES}.sav"
+cp "${FILE_SCRIPTS}" "${TIMESTAMP}_${FILE_SCRIPTS}.sav"
+cp "${FILE_INPUT_NUMBERS}" "${TIMESTAMP}_${FILE_INPUT_NUMBERS}.sav"
+cp "${FILE_INPUT_BOOLEANS}" "${TIMESTAMP}_${FILE_INPUT_BOOLEANS}.sav"
+
+# Remove previous entity artifacts from configurations files (to be able to restart from a clean base)
+echo "Cleaning ${ENTITY_FULL_ID} from configurations..."
+sed -i "/^template:/d" "${FILE_CONFIG}"
+sed -i "/^script:/d" "${FILE_CONFIG}"
+sed -i "/^input_number:/d" "${FILE_CONFIG}"
+sed -i "/^input_boolean:/d" "${FILE_CONFIG}"
+remove_yaml_subblock "${FILE_TEMPLATES}" "${ENTITY_TYPE}" "${ENTITY_ID}"
+remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_ON}"
+remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_OFF}"
+remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_SET_COLOR}"
+remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_R}"
+remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_G}"
+remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_B}"
+remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_BRIGHTNESS}"
+remove_yaml_top_level_block "${FILE_INPUT_BOOLEANS}" "${INPUT_BOOLEAN_POWER}"
+
+# Register detached configurations files into main configuration file
+echo "Registering configurations into ${FILE_CONFIG}..."
+grep -qxF "template:" "${FILE_CONFIG}" || echo "template: !include templates.yaml" >> "${FILE_CONFIG}"
+grep -qxF "script:" "${FILE_CONFIG}" || echo "script: !include scripts.yaml" >> "${FILE_CONFIG}"
+grep -qxF "input_number:" "${FILE_CONFIG}" || echo "input_number: !include input_numbers.yaml" >> "${FILE_CONFIG}"
+grep -qxF "input_boolean:" "${FILE_CONFIG}" || echo "input_boolean: !include input_booleans.yaml" >> "${FILE_CONFIG}"
+
+
+ENTITY_TYPE="${1:-}"
+ENTITY_ID="${2:-}"
+ENTITY_NAME="${3:-}"
+ENTITY_FULL_ID="${ENTITY_TYPE}.${ENTITY_ID}"
+
+SCRIPT_NAME_TURN_ON="${ENTITY_ID}_turn_on"
+SCRIPT_NAME_TURN_OFF="${ENTITY_ID}_turn_off"
+SCRIPT_NAME_SET_COLOR="${ENTITY_ID}_set_color"
+SCRIPT_NAME_SET_LEVEL="${ENTITY_ID}_set_level"
+
+INPUT_NUMBER_R="${ENTITY_ID}_r"
+INPUT_NUMBER_G="${ENTITY_ID}_g"
+INPUT_NUMBER_B="${ENTITY_ID}_b"
+INPUT_NUMBER_BRIGHTNESS="${ENTITY_ID}_brightness"
+
+INPUT_BOOLEAN_POWER="${ENTITY_ID}_power"
+
+# Write input_booleans
+{ echo; cat <<EOF
+${INPUT_BOOLEAN_POWER}:
+  name: ${ENTITY_NAME} Power
+  initial: off
+EOF
+} >> "${FILE_INPUT_BOOLEANS}"
+
+# Write input_numbers
+{ echo; cat <<EOF
+${INPUT_NUMBER_R}:
+  name: ${ENTITY_NAME} Red value
+  min: 0
+  max: 255
+  step: 1
+  initial: 230
+
+${INPUT_NUMBER_G}:
+  name: ${ENTITY_NAME} Green value
+  min: 0
+  max: 255
+  step: 1
+  initial: 221
+
+${INPUT_NUMBER_B}:
+  name: ${ENTITY_NAME} Blue value
+  min: 0
+  max: 255
+  step: 1
+  initial: 189
+
+${INPUT_NUMBER_BRIGHTNESS}:
+  name: ${ENTITY_NAME} Brightness
+  min: 0
+  max: 255
+  step: 1
+  initial: 128
+EOF
+} >> "${FILE_INPUT_NUMBERS}"
+
+# Write scripts
+{ echo; cat <<EOF
+
+EOF
+} >> "${FILE_SCRIPTS}"
+
+# Write entity template
+DISPLAY_ENTITY_TYPE="- ${ENTITY_TYPE}:"
+if grep -qE "^[[:space:]]*-[[:space:]]*${ENTITY_TYPE}:[[:space:]]*$" "${FILE_TEMPLATES}"; then
+  echo DISPLAY_ENTITY_TYPE=""
 fi
+{ echo; cat <<EOF
+${DISPLAY_ENTITY_TYPE}
+    - unique_id: ${ENTITY_ID}
+      name: "${ENTITY_NAME}"
+      state: "{{ is_state('input_boolean.${INPUT_BOOLEAN_POWER}', 'on') }}"
+      rgb: "({{states('input_number.${INPUT_NUMBER_R}') | int}}, {{states('input_number.${INPUT_NUMBER_G}') | int}}, {{states('input_number.${INPUT_NUMBER_B}') | int}})"
+      turn_on:
+        action: script.${SCRIPT_NAME_TURN_ON}
+      turn_off:
+        action: script.${SCRIPT_NAME_TURN_OFF}
+      set_rgb:
+        - action: input_number.set_value
+          data:
+            value: "{{ r }}"
+            entity_id: input_number.${INPUT_NUMBER_R}
+        - action: input_number.set_value
+          data:
+            value: "{{ g }}"
+            entity_id: input_number.${INPUT_NUMBER_G}
+        - action: input_number.set_value
+          data:
+            value: "{{ b }}"
+            entity_id: input_number.${INPUT_NUMBER_B}
+        - action: script.${SCRIPT_NAME_SET_COLOR}
+          data:
+            rgb_color:
+              - "{{ r }}"
+              - "{{ g }}"
+              - "{{ b }}"
+EOF
+} >> "${FILE_TEMPLATES}"
