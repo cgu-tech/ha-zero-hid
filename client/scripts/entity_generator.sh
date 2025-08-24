@@ -2,11 +2,6 @@
 TIMESTAMP=$(date +%Y%m%d%H%M%S)$(awk -F. '{printf "%03d", $2/1000}' /proc/uptime)
 CURRENT_DIR="$(pwd)"
 
-# Parameters (from command-line args, if provided)
-ENTITY_TYPE="${1:-}"
-ENTITY_ID="${2:-}"
-ENTITY_NAME="${3:-}"
-
 # Function to ensure specified path points to an existing file
 ensure_file_exists() {
   local file="$1"
@@ -255,7 +250,91 @@ remove_yaml_top_level_block() {
   echo "Done removing '${block_name}' from '${file}'"
 }
 
+# Indexed arrays to hold keys and values
+CONFIG_KEYS=()
+CONFIG_VALUES=()
 
+load_config_map() {
+  local file="$1"
+  local key value line line_num=0
+
+  if [[ ! -f "$file" ]]; then
+    echo "ERROR: File not found: $file" >&2
+    return 1
+  fi
+
+  while IFS=',' read -r key value; do
+    line_num=$((line_num + 1))
+
+    # Skip comments and empty lines
+    [[ -z "$key" || "$key" == \#* ]] && continue
+
+    # Trim whitespace and remove optional surrounding quotes
+    key=$(echo "$key" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
+    value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
+
+    CONFIG_KEYS+=("$key")
+    CONFIG_VALUES+=("$value")
+  done < "$file"
+}
+
+check_required_keys() {
+  local required_keys=("$@")
+  local missing=()
+  local key found
+
+  for key in "${required_keys[@]}"; do
+    found=0
+    for existing_key in "${CONFIG_KEYS[@]}"; do
+      if [[ "$existing_key" == "$key" ]]; then
+        found=1
+        break
+      fi
+    done
+    if [[ $found -eq 0 ]]; then
+      missing+=("$key")
+    fi
+  done
+
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    echo "ERROR: Missing required keys: ${missing[*]}" >&2
+    return 1
+  fi
+
+  return 0
+}
+
+get_value_for_key() {
+  local search_key="$1"
+  local i
+
+  for i in "${!CONFIG_KEYS[@]}"; do
+    if [[ "${CONFIG_KEYS[i]}" == "$search_key" ]]; then
+      echo "${CONFIG_VALUES[i]}"
+      return 0
+    fi
+  done
+
+  # Return empty if not found (or you can return an error code)
+  return 1
+}
+
+get_keys_starting_with() {
+  local prefix="$1"
+  local i
+  local matched_keys=()
+
+  for i in "${!CONFIG_KEYS[@]}"; do
+    if [[ "${CONFIG_KEYS[i]}" == "$prefix"* ]]; then
+      matched_keys+=("${CONFIG_KEYS[i]}")
+    fi
+  done
+
+  # Print all matched keys separated by newlines
+  for key in "${matched_keys[@]}"; do
+    echo "$key"
+  done
+}
 
 ask_confirm() {
   local prompt="$1"
@@ -275,6 +354,12 @@ ask_confirm() {
 # MAIN #
 ########
 
+# Parameters (from command-line args, if provided)
+ENTITY_TYPE="${1:-}"
+ENTITY_ID="${2:-}"
+ENTITY_NAME="${3:-}"
+ENTITY_CONFIG_FILE="${4:-}"
+
 # Prompt until ENTITY_TYPE is filled
 while [ -z "$ENTITY_TYPE" ]; do
   read -rp "Enter the entity type (e.g., light, switch, sensor): " ENTITY_TYPE
@@ -289,6 +374,34 @@ done
 while [ -z "$ENTITY_NAME" ]; do
   read -rp "Enter the friendly name for the entity (e.g., Illuminated Brick Game): " ENTITY_NAME
 done
+
+# Prompt until ENTITY_CONFIG_FILE is filled
+while [ -z "$ENTITY_CONFIG_FILE" ]; do
+  read -rp "Enter the CSV file path that contains entity configurations (e.g., illuminated_brick_game.csv): " ENTITY_CONFIG_FILE
+done
+
+echo "Loading CSV file that contains entity configurations..."
+load_config_map "${ENTITY_CONFIG_FILE}"
+
+echo "Checking required keys from loaded CSV file..."
+required=("POWER_ON_SCRIPT" "POWER_OFF_SCRIPT" "START_COLOR_R" "START_COLOR_G" "START_COLOR_B")
+if ! check_required_keys "${required[@]}"; then
+  echo "Missing keys. Exiting."
+  exit 1
+fi
+echo "All required keys found! ($required)"
+
+echo "Retrieving required values..."
+ENTITY_CONFIG_POWER_ON_SCRIPT=$(get_value_for_key "POWER_ON_SCRIPT")
+ENTITY_CONFIG_POWER_OFF_SCRIPT=$(get_value_for_key "POWER_OFF_SCRIPT")
+ENTITY_CONFIG_START_COLOR_R=$(get_value_for_key "START_COLOR_R")
+ENTITY_CONFIG_START_COLOR_G=$(get_value_for_key "START_COLOR_G")
+ENTITY_CONFIG_START_COLOR_B=$(get_value_for_key "START_COLOR_B")
+echo "Retrieved ENTITY_CONFIG_POWER_ON_SCRIPT=$ENTITY_CONFIG_POWER_ON_SCRIPT"
+echo "Retrieved ENTITY_CONFIG_POWER_OFF_SCRIPT=$ENTITY_CONFIG_POWER_OFF_SCRIPT"
+echo "Retrieved ENTITY_CONFIG_START_COLOR_R=$ENTITY_CONFIG_START_COLOR_R"
+echo "Retrieved ENTITY_CONFIG_START_COLOR_G=$ENTITY_CONFIG_START_COLOR_G"
+echo "Retrieved ENTITY_CONFIG_START_COLOR_B=$ENTITY_CONFIG_START_COLOR_B"
 
 DIR_CONFIG="/config"
 FILE_CONFIG="${DIR_CONFIG}/configuration.yaml"
@@ -312,7 +425,7 @@ INPUT_NUMBER_BRIGHTNESS="${ENTITY_ID}_brightness"
 INPUT_BOOLEAN_POWER="${ENTITY_ID}_power"
 
 # Check that needed files exist
-echo "Ensure configurations exists..."
+echo "Ensure HA configurations exists..."
 ensure_file_exists "${FILE_CONFIG}"
 ensure_file_exists "${FILE_TEMPLATES}"
 ensure_file_exists "${FILE_SCRIPTS}"
@@ -320,7 +433,7 @@ ensure_file_exists "${FILE_INPUT_NUMBERS}"
 ensure_file_exists "${FILE_INPUT_BOOLEANS}"
 
 # Create timestamped save backup of files before editing them
-echo "Backuping configurations..."
+echo "Backuping HA configurations..."
 cp "${FILE_CONFIG}" "${TIMESTAMP}_${FILE_CONFIG}.sav"
 cp "${FILE_TEMPLATES}" "${TIMESTAMP}_${FILE_TEMPLATES}.sav"
 cp "${FILE_SCRIPTS}" "${TIMESTAMP}_${FILE_SCRIPTS}.sav"
@@ -328,7 +441,7 @@ cp "${FILE_INPUT_NUMBERS}" "${TIMESTAMP}_${FILE_INPUT_NUMBERS}.sav"
 cp "${FILE_INPUT_BOOLEANS}" "${TIMESTAMP}_${FILE_INPUT_BOOLEANS}.sav"
 
 # Remove previous entity artifacts from configurations files (to be able to restart from a clean base)
-echo "Cleaning ${ENTITY_FULL_ID} from configurations..."
+echo "Cleaning ${ENTITY_FULL_ID} from HA configurations..."
 sed -i "/^template:/d" "${FILE_CONFIG}"
 sed -i "/^script:/d" "${FILE_CONFIG}"
 sed -i "/^input_number:/d" "${FILE_CONFIG}"
@@ -344,7 +457,7 @@ remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_BRIGHTNESS}"
 remove_yaml_top_level_block "${FILE_INPUT_BOOLEANS}" "${INPUT_BOOLEAN_POWER}"
 
 # Register detached configurations files into main configuration file
-echo "Registering configurations into ${FILE_CONFIG}..."
+echo "Registering HA detached configurations into HA main configuration ${FILE_CONFIG}..."
 grep -qxF "template:" "${FILE_CONFIG}" || echo "template: !include templates.yaml" >> "${FILE_CONFIG}"
 grep -qxF "script:" "${FILE_CONFIG}" || echo "script: !include scripts.yaml" >> "${FILE_CONFIG}"
 grep -qxF "input_number:" "${FILE_CONFIG}" || echo "input_number: !include input_numbers.yaml" >> "${FILE_CONFIG}"
