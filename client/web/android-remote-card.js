@@ -813,6 +813,7 @@ class AndroidRemoteCard extends HTMLElement {
 
           // Update overriden button with up-to-date sensor state
           const isSensorOn = this.isHassEntityOn(sensorEntityId);
+          btn._sensorState = isSensorOn ? 'on' : 'off';
 
           // Set overriden button content classes relative to sensor current state, for visual feedback
           for (const child of (btn.children ? Array.from(btn.children) : [])) {
