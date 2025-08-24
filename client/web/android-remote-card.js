@@ -865,8 +865,8 @@ class AndroidRemoteCard extends HTMLElement {
         // RGB color unavailable (entity could be off, or could be unrelated to lights - ie. a switch)
         
         // Revert to original styles or empty string
-        if (svg && img._originalFill) svg.style.fill = img._originalFill || '';
-        if (svg && img._originalStroke) svg.style.stroke = img._originalStroke || '';
+        if (svg) svg.style.removeProperty('fill');
+        if (svg) svg.style.removeProperty('stroke');
         
         if (isSensorOn) img.classList.add("sensor-on");
         if (!isSensorOn) img.classList.remove("sensor-on");
