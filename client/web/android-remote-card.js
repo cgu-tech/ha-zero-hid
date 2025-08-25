@@ -94,6 +94,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._hass = hass;
     this.doUpdateHass();
     this.doUpdateFoldablesHass();
+    this._eventManager.hassCallback(); // TODO: handle onServersSuccess, onServersError
   }
 
   connectedCallback() {
@@ -1532,7 +1533,7 @@ class AndroidRemoteCard extends HTMLElement {
         "entity_id": entityId,
       });
     }
-    
+
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
   }
@@ -1977,6 +1978,7 @@ class AndroidRemoteCard extends HTMLElement {
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate() {
     this._eventManager.callComponentService("keypress", {
+      [EventManager._HID_SERVER_ID]: this._eventManager.getCurrentServer();
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
     });
@@ -1985,6 +1987,7 @@ class AndroidRemoteCard extends HTMLElement {
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate() {
     this._eventManager.callComponentService("conpress", {
+      [EventManager._HID_SERVER_ID]: this._eventManager.getCurrentServer();
       sendCons: Array.from(this._pressedConsumers),
     });
   }

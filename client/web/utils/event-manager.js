@@ -219,6 +219,11 @@ export class EventManager {
     }
   }
 
+  hassCallback(onServersSuccess, onServersError) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback(onServersSuccess, onServersError)", onServersSuccess, onServersError));
+    this.getServers(onServersSuccess, onServersError);
+  }
+
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
     this.addGlobalListeners();
@@ -496,6 +501,12 @@ export class EventManager {
   //   - on command error: ".catch((err) => {...})"
   getServers(onSuccess, onError) {
 
+    // Servers successfully loaded in the past
+    if (this._areServersLoaded) {
+      if (onSuccess) onSuccess(`Valid servers list successfully retrieved once in the past`, this.getCurrentServer());
+      return;
+    }
+
     // Ensure not loading and not loaded and HASS object initialized
     if (!this._areServersLoaded && !this._areServersLoading && this.getHass()) {
 
@@ -512,7 +523,7 @@ export class EventManager {
         if (!servers || !Array.isArray(servers) || this._servers.length < 1) {
 
           // Invalid servers
-          onError(`HA responded with empty or invalid servers list: ${servers}`, response);
+          if (onError) onError(`HA responded with empty or invalid servers list: ${servers}`, response);
           return;
         }
 
@@ -527,14 +538,14 @@ export class EventManager {
 
         // Setup first server as current server
         const firstServer = this.activateNextServer();
-        onSuccess(`Valid servers list successfully retrieved (using first server as current server now)`, firstServer);
+        if (onSuccess) onSuccess(`Valid servers list successfully retrieved for the first time (using first server as current server now)`, firstServer);
       })
       .catch((err) => {
         // Update loading lock
         this._areServersLoading = false;
 
         // Error while trying to communicate with HA
-        onError(`Error while communicating with underlying 'list_servers' HA command: ${err}`, err);
+        if (onError) onError(`Error while communicating with underlying 'list_servers' HA command: ${err}`, err);
       });
     }
   }
