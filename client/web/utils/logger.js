@@ -32,6 +32,10 @@ export class Logger {
     return this._origin?._hass;
   }
 
+  getServerId() {
+    return this._origin?._serverId;
+  }
+
   getLevel() {
     const level = this._origin?._config?.['log_level'] || 'warn';
     return this._levels[level] ?? -1;
@@ -105,7 +109,7 @@ export class Logger {
       // Call to HA backend service for custom log pushback
       if (serializedArgs.length > 0) {
         hass.callService(
-          Globals.COMPONENT_NAME, "log", { "level": header, "origin": this._originName, "logger_id": this._guid, "highlight": useHighlight, "logs": serializedArgs }
+          Globals.COMPONENT_NAME, "log", { "si": this.getServerId(), "level": header, "origin": this._originName, "logger_id": this._guid, "highlight": useHighlight, "logs": serializedArgs }
         ).catch(err => {
           // Pushback fail fallback: notify pushback fail into web console without resorting to this logger
           console.warn("Unable to do log pushback (log might be too long or HA unresponsive):", err);

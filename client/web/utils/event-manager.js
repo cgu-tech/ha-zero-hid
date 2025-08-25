@@ -5,6 +5,7 @@ import { Logger } from './logger.js';
 export class EventManager {
 
   // private init required constants
+  static _HID_SERVER_ID = 'si';
   static _BUTTON_STATUS_MAP;
 
   static _BUTTON_INIT = '1';                  // "init"
@@ -123,6 +124,10 @@ export class EventManager {
   _globalListeners = new Map(); // Callback with global scopes (document, window) for buttons management
   _buttons = new Set(); // Managed buttons
   _popins = new Set(); // Managed popins
+  _servers = []; // Available HID servers
+  _currentServer = -1; // Current selected server
+  _areServersLoading = false; // Available servers loading in progress lock
+  _areServersLoaded = false; // Available servers loaded once lock
 
   constructor(origin) {
     this._origin = origin;
@@ -161,6 +166,14 @@ export class EventManager {
 
   getHass() {
     return this._origin?._hass;
+  }
+
+  getCurrentServer() {
+    return this._areServersLoaded ? this._servers[this._currentServer] : null;
+  }
+    
+  activateNextServer() {
+    return this._areServersLoaded ? this._servers[++this._currentServer] : null;
   }
 
   // Get elapsed time between a start event and an end event (in milliseconds)
@@ -472,6 +485,58 @@ export class EventManager {
     // Execute selected override action
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
     this.triggerHaosTapAction(btn, overrideAction);
+  }
+
+  // Retrieves authorized list of HID servers asynchronously. 
+  // After a call to this function, use "areServersLoaded()" to ensure async call finished.
+  // 
+  // Returns: 
+  //  A promyze :
+  //   - on command success: ".then((response) => {...})"
+  //   - on command error: ".catch((err) => {...})"
+  getServers(onSuccess, onError) {
+
+    // Ensure not loading and not loaded and HASS object initialized
+    if (!this._areServersLoaded && !this._areServersLoading && this.getHass()) {
+
+      // Update loading lock
+      this._areServersLoading = true;
+
+      // Start loading
+      this.callComponentCommand('list_servers')?.then((response) => {
+
+        // Retrieve responded servers
+        const { servers } = response;
+
+        // Check responded servers
+        if (!servers || !Array.isArray(servers) || this._servers.length < 1) {
+
+          // Invalid servers
+          onError(`HA responded with empty or invalid servers list: ${servers}`, response);
+          return;
+        }
+
+        // Valid servers: store retrieved servers
+        for (const server of (servers ?? [])) {
+          this._servers.set(server['id'], server);
+        }
+
+        // Update loading+loaded locks
+        this._areServersLoaded = true;
+        this._areServersLoading = false;
+
+        // Setup first server as current server
+        const firstServer = this.activateNextServer();
+        onSuccess(`Valid servers list successfully retrieved (using first server as current server now)`, firstServer);
+      })
+      .catch((err) => {
+        // Update loading lock
+        this._areServersLoading = false;
+
+        // Error while trying to communicate with HA
+        onError(`Error while communicating with underlying 'list_servers' HA command: ${err}`, err);
+      });
+    }
   }
 
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.

@@ -42,6 +42,7 @@ class AndroidRemoteCard extends HTMLElement {
   _hass;
   _elements = {};
   _logger;
+  _serverId;
   _eventManager;
   _layoutManager;
   _resourceManager;
