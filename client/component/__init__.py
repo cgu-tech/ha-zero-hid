@@ -10,15 +10,18 @@ from homeassistant.components.websocket_api import websocket_command, async_resp
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from typing import Set
+from typing import Set, TypedDict, List, Any
 
 from .resources_manager import ResourcesVersions, synchronize_resources, synchronize_resources_heuristically
 from .websocket_handler import WebSocketClient
-from .const import DOMAIN, MIN_RANGE, MAX_RANGE, SERVER_HOST, SERVER_PORT, SERVER_SECRET, AUTHORIZED_USERS_IDS
+from .const import DOMAIN, MIN_RANGE, MAX_RANGE, WEBSOCKET_SERVERS
 
 _LOGGER = logging.getLogger(__name__)
 
-AUTHORIZED_USERS: Set[str] = set(ip.strip() for ip in AUTHORIZED_USERS_IDS.split(","))
+class WSServerInfo(TypedDict):
+    ws_client: WebSocketClient
+    authorized_users: Set[str]
+    services: Set[str]
 
 # Use empty_config_schema because the component does not have any config options
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
@@ -32,6 +35,7 @@ def clamp_to_range(value, min_val, max_val):
     return max(min_val, min(max_val, value))
 
 MOVE_SERVICE_SCHEMA = vol.Schema({
+    vol.Required("si"): cv.string,
     vol.Required("x"): lambda v: clamp_to_range(v, MIN_RANGE, MAX_RANGE),
     vol.Required("y"): lambda v: clamp_to_range(v, MIN_RANGE, MAX_RANGE),
 })
@@ -44,6 +48,7 @@ def ensure_string_or_empty(val):
     return str(val)
 
 CHARTAP_SERVICE_SCHEMA = vol.Schema({
+    vol.Required("si"): cv.string,
     vol.Optional("sendChars", default=""): vol.All(lambda v: v or "", ensure_string_or_empty),
 })
 
@@ -55,15 +60,18 @@ def ensure_list_or_empty(val):
     return [val]
 
 KEYPRESS_SERVICE_SCHEMA = vol.Schema({
+    vol.Required("si"): cv.string,
     vol.Optional("sendModifiers", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
     vol.Optional("sendKeys", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
 CONPRESS_SERVICE_SCHEMA = vol.Schema({
+    vol.Required("si"): cv.string,
     vol.Optional("sendCons", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
 LOG_SERVICE_SCHEMA = vol.Schema({
+    vol.Required("si"): cv.string,
     vol.Required("level"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("origin"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("logger_id"): vol.All(lambda v: v or "", ensure_string_or_empty),
@@ -71,19 +79,29 @@ LOG_SERVICE_SCHEMA = vol.Schema({
     vol.Required("logs"): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
-def get_ws_client(hass: HomeAssistant) -> WebSocketClient:
-    return hass.data[DOMAIN]["ws_client"]
+def get_ws_server_infos(hass: HomeAssistant) -> List[Any]:
+    return hass.data[DOMAIN]["ws_servers"]
 
-def get_authorized_users(hass: HomeAssistant) -> Set[str]:
-    return hass.data[DOMAIN]["authorized_users"]
+def get_ws_server_info_by_id(hass: HomeAssistant, server_id: str) -> WSServerInfo:
+    return get_ws_server_infos(hass).get(server_id)
 
-def is_user_authorized(hass: HomeAssistant, user_id: str) -> bool:
+def get_ws_server_info(hass: HomeAssistant, call: ServiceCall) -> WSServerInfo:
+    server_id = call.data.get("si")
+    return get_ws_server_info_by_id(hass, server_id)
+
+def get_ws_client(info: WSServerInfo) -> WebSocketClient:
+    return info.get("ws_client")
+
+def get_authorized_users(info: WSServerInfo) -> Set[str]:
+    return info.get("authorized_users")
+
+def is_user_authorized(info: WSServerInfo, user_id: str) -> bool:
     """Check if the user is authorized."""
     if user_id is None:
         _LOGGER.debug("Unauthenticated: no user ID found")
         return False
 
-    authorized_users = get_authorized_users(hass)
+    authorized_users = get_authorized_users(info)
     if user_id not in authorized_users:
         _LOGGER.debug(f"Unauthenticated: user ID ({user_id}) is not authorized")
         return False
@@ -91,32 +109,58 @@ def is_user_authorized(hass: HomeAssistant, user_id: str) -> bool:
     _LOGGER.debug(f"Authenticated: user ID ({user_id}) is authorized")
     return True
 
-def is_user_authorized_from_service(hass: HomeAssistant, call: ServiceCall) -> bool:
+def is_user_authorized_from_service(info: WSServerInfo, call: ServiceCall) -> bool:
     context = call.context
     if not context:
         _LOGGER.debug("Unauthenticated: no context found")
         return False
 
     user_id = context.user_id
-    return is_user_authorized(hass, user_id)
+    return is_user_authorized(info, user_id)
 
-def is_user_authorized_from_command(hass: HomeAssistant, connection: ActiveConnection) -> bool:
+def is_user_authorized_from_command(info: WSServerInfo, connection: ActiveConnection) -> bool:
     user = connection.user
     if not user:
         _LOGGER.debug("Unauthenticated: no user found")
         return False
 
     user_id = user.id
-    return is_user_authorized(hass, user_id)
+    return is_user_authorized(info, user_id)
+
+def get_user_authorized_servers(hass: HomeAssistant, connection: ActiveConnection) -> List[Any]:
+    user = connection.user
+    if not user:
+        _LOGGER.debug("Unauthenticated: no user found")
+        return False
+
+    user_id = user.id
+
+    # Retrieve authorized servers for user (only those will be advertised)
+    servers = []
+    for server_id, info in get_ws_server_infos(hass).items():
+        if is_user_authorized(info, user_id):
+            _LOGGER.debug(f"Server {server_id} authorized for user ({user_id})")
+            servers.append({
+                "id": server_id,
+                "name": info.get("name"),
+            })
+    return servers
+
+@websocket_command({vol.Required("type"): DOMAIN + "/list_servers"})
+@async_response
+async def websocket_list_servers(hass: HomeAssistant, connection: ActiveConnection, msg):
+    servers = get_user_authorized_servers(hass, connection)
+    connection.send_result(msg["id"], {"servers": servers})
 
 @websocket_command({vol.Required("type"): DOMAIN + "/sync_keyboard"})
 @async_response
 async def websocket_sync_keyboard(hass: HomeAssistant, connection: ActiveConnection, msg):
-    authorized = is_user_authorized_from_command(hass, connection)
+    info: WSServerInfo = get_ws_server_info_by_id(hass, msg["si"])
+    authorized = is_user_authorized_from_command(info, connection)
     if not authorized:
         return
 
-    ws_client = get_ws_client(hass)
+    ws_client = get_ws_client(info)
     try:
         sync_state = await ws_client.sync_keyboard()
         _LOGGER.debug(f"sync_keyboard(): {sync_state}")
@@ -143,17 +187,24 @@ async def websocket_sync_resources(hass: HomeAssistant, connection: ActiveConnec
         connection.send_error(msg["id"], "resources_version_failed", str(e))
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the websocket global client."""
-    ws_client = WebSocketClient(f"wss://{SERVER_HOST}:{SERVER_PORT}", SERVER_SECRET)
+    """Set up the websockets servers configs and clients."""
+    for server in WEBSOCKET_SERVERS:
+        ws_client = WebSocketClient(f"{server['protocol']}://{server['host']}:{server['port']}", server["secret"])
+        ws_servers = {}
+        ws_servers[server["id"]] = {
+            "name": server["name"],
+            "ws_client": ws_client,
+            "authorized_users": set(authorized_user.strip() for authorized_user in server["authorized_users"].split(","))
+        }
     hass.data[DOMAIN] = {
-        "ws_client": ws_client,
-        "authorized_users": AUTHORIZED_USERS,
+        "ws_servers": ws_servers,
     }
 
     """Handle scrolling mouse."""
     @callback
     async def handle_scroll(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
@@ -163,7 +214,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             _LOGGER.debug(f"handle_scroll.call.data.x: {x}")
             _LOGGER.debug(f"handle_scroll.call.data.y: {y}")
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_scroll(x, y)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
@@ -174,7 +225,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle moving mouse cursor."""
     @callback
     async def handle_move(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
@@ -184,7 +236,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             _LOGGER.debug(f"handle_move.call.data.x: {x}")
             _LOGGER.debug(f"handle_move.call.data.y: {y}")
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_move(x, y)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
@@ -195,11 +247,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle pressing left mouse button."""
     @callback
     async def handle_clickleft(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_clickleft()
             _LOGGER.debug("ws_client.send_clickleft")
@@ -209,11 +262,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle pressing middle mouse button."""
     @callback
     async def handle_clickmiddle(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_clickmiddle()
             _LOGGER.debug("ws_client.send_clickmiddle")
@@ -223,11 +277,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle pressing right mouse button."""
     @callback
     async def handle_clickright(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_clickright()
             _LOGGER.debug("ws_client.send_clickright")
@@ -237,11 +292,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle releasing all mouse buttons."""
     @callback
     async def handle_clickrelease(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_clickrelease()
             _LOGGER.debug("ws_client.send_clickrelease")
@@ -251,7 +307,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle taping keyboard chars."""
     @callback
     async def handle_chartap(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
@@ -259,7 +316,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"handle_chartap.call.data.sendChars: {chars}")
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_chartap(chars)
             _LOGGER.debug(f"ws_client.send_chartap(chars): {chars}")
@@ -269,7 +326,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle pressing/releasing keyboard keys."""
     @callback
     async def handle_keypress(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
@@ -279,7 +337,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             _LOGGER.debug(f"handle_keypress.call.data.sendModifiers: {modifiers}")
             _LOGGER.debug(f"handle_keypress.call.data.sendKeys: {keys}")
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_keypress(modifiers, keys)
             _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
@@ -289,7 +347,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle pressing/releasing consumer keyboard keys."""
     @callback
     async def handle_conpress(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
@@ -297,7 +356,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"handle_conpress.call.data.sendCons: {cons}")
 
-        ws_client = get_ws_client(hass)
+        ws_client = get_ws_client(info)
         try:
             await ws_client.send_conpress(cons)
             _LOGGER.debug(f"ws_client.send_conpress(cons): {cons}")
@@ -307,7 +366,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle logging to home assistant backend."""
     @callback
     async def handle_log(call: ServiceCall) -> None:
-        authorized = is_user_authorized_from_service(hass, call)
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
         if not authorized:
             return
 
@@ -350,6 +410,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "log", handle_log, schema=LOG_SERVICE_SCHEMA)
 
     # Register WebSocket command
+    async_register_command(hass, websocket_list_servers)
     async_register_command(hass, websocket_sync_keyboard)
     async_register_command(hass, websocket_sync_resources)
 
