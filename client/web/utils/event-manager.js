@@ -529,7 +529,7 @@ export class EventManager {
 
         // Valid servers: store retrieved servers
         for (const server of (servers ?? [])) {
-          this._servers.set(server['id'], server);
+          this._servers.push(server);
         }
 
         // Update loading+loaded locks
