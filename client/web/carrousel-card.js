@@ -91,7 +91,8 @@ export class CarrouselCard extends HTMLElement {
   set hass(hass) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
-    this.doUpdateHass()
+    this.doUpdateHass();
+    this._eventManager.hassCallback();
   }
 
   connectedCallback() {

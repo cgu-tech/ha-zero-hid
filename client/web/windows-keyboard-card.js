@@ -140,7 +140,8 @@ export class WindowsKeyboardCard extends HTMLElement {
   set hass(hass) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
-    this.doUpdateHass()
+    this.doUpdateHass();
+    this._eventManager.hassCallback();
   }
 
   connectedCallback() {
@@ -854,7 +855,7 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate() {
-    this._eventManager.callComponentService("keypress", {
+    this._eventManager.callComponentServiceWithServerId("keypress", {
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
     });
@@ -862,7 +863,7 @@ export class WindowsKeyboardCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate() {
-    this._eventManager.callComponentService("conpress", {
+    this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
     });
   }
@@ -871,7 +872,7 @@ export class WindowsKeyboardCard extends HTMLElement {
   syncKeyboard() {
     // Sync keyboard will be called indirectly from constructor: 
     // at this time hass is not already initialized, do we should conditionnaly call the sync keyboard only when hass is updated
-    if (this._hass) this._eventManager.callComponentCommand('sync_keyboard')?.then((response) => {
+    if (this._hass) this._eventManager.callComponentCommandWithServerId('sync_keyboard', {})?.then((response) => {
       // Keyboard sync success handler
       const { syncModifiers, syncKeys, syncNumlock, syncCapslock, syncScrolllock } = response;
       const modifiers = [...(syncModifiers ?? []), ...(syncCapslock ? [this.constructor._TRIGGER_CAPSLOCK] : [])].map(intCode => this._toggablesCodes.get(intCode));

@@ -554,6 +554,28 @@ export class EventManager {
     }
   }
 
+  // Injects current server id into args["si"] (inject null into the field when not available)
+  injectServerId(args) {
+    let argsWithServerId = args;
+    if (args)
+      args[EventManager._HID_SERVER_ID] = this.getCurrentServerId();
+    else
+      argsWithServerId = { args[EventManager._HID_SERVER_ID]: this.getCurrentServerId() };
+    return argsWithServerId;
+  }
+
+  // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets. 
+  // Current HID server id is injected before aalling the service.
+  // 
+  // Parameters:
+  //  - name: the service name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  // 
+  // Returns: 
+  //  - void (this is a fire-and-forget HAOS integration call)
+  callComponentServiceWithServerId(name, args) {
+    this.callComponentService(name, this.injectServerId(args));
+  }
+
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
   // 
   // Parameters:
@@ -580,7 +602,21 @@ export class EventManager {
     }
     this.getHass().callService(domain, name, args);
   }
-  
+
+  // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
+  // Current HID server id is injected before aalling the service.
+  // 
+  // Parameters:
+  //  - name: the command name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  // 
+  // Returns:
+  //  A promyze :
+  //   - on command success: ".then((response) => {...})"
+  //   - on command error: ".catch((err) => {...})"
+  callComponentCommandWithServerId(name, args) {
+    this.callComponentCommand(name, this.injectServerId(args));
+  }
+
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
   // 
   // Parameters:
@@ -590,16 +626,30 @@ export class EventManager {
   //  A promyze :
   //   - on command success: ".then((response) => {...})"
   //   - on command error: ".catch((err) => {...})"
-  callComponentCommand(name) {
+  callComponentCommand(name, args) {
+    return this.callCommand(Globals.COMPONENT_NAME, name, args);
+  }
+
+  // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
+  // 
+  // Parameters:
+  //  - name: the command name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  // 
+  // Returns:
+  //  A promyze :
+  //   - on command success: ".then((response) => {...})"
+  //   - on command error: ".catch((err) => {...})"
+  callCommand(domain, name, args) {
     if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callComponentCommand(name): undefined hass. Unable to execute the command (called too early before HA hass init or HA unresponsive)`, name));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callCommand(name): undefined hass. Unable to execute the command (called too early before HA hass init or HA unresponsive)`, name));
       return null;
     }
-    return this.getHass().connection.sendMessagePromise({
-      type: `${Globals.COMPONENT_NAME}/${name}`
-    });
+    const msg = {};
+    msg["type"] = `${domain}/${name}`;
+    if (args) Object.assign(msg, args);
+    return this.getHass().connection.sendMessagePromise(msg);
   }
-  
+
   // Trigger an event into HAOS.
   // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
   // 

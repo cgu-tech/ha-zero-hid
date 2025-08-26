@@ -42,7 +42,6 @@ class AndroidRemoteCard extends HTMLElement {
   _hass;
   _elements = {};
   _logger;
-  _serverId;
   _eventManager;
   _layoutManager;
   _resourceManager;
@@ -1977,8 +1976,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate() {
-    this._eventManager.callComponentService("keypress", {
-      [EventManager._HID_SERVER_ID]: this._eventManager.getCurrentServerId(),
+    this._eventManager.callComponentServiceWithServerId("keypress", {
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
     });
@@ -1986,8 +1984,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate() {
-    this._eventManager.callComponentService("conpress", {
-      [EventManager._HID_SERVER_ID]: this._eventManager.getCurrentServerId(),
+    this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
     });
   }

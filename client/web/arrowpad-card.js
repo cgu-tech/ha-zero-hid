@@ -59,7 +59,8 @@ class ArrowPadCard extends HTMLElement {
   set hass(hass) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
-    this.doUpdateHass()
+    this.doUpdateHass();
+    this._eventManager.hassCallback();
   }
 
   connectedCallback() {
@@ -587,7 +588,7 @@ class ArrowPadCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate() {
-    this._eventManager.callComponentService("keypress", {
+    this._eventManager.callComponentServiceWithServerId("keypress", {
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
     });
@@ -595,7 +596,7 @@ class ArrowPadCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate() {
-    this._eventManager.callComponentService("conpress", {
+    this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
     });
   }
