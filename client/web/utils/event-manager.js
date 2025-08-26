@@ -171,7 +171,11 @@ export class EventManager {
   getCurrentServer() {
     return this._areServersLoaded ? this._servers[this._currentServer] : null;
   }
-    
+
+  getCurrentServerId() {
+    return this.getCurrentServer()?.["id"];
+  }
+
   activateNextServer() {
     return this._areServersLoaded ? this._servers[++this._currentServer] : null;
   }
