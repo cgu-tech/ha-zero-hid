@@ -520,7 +520,7 @@ export class EventManager {
         const { servers } = response;
 
         // Check responded servers
-        if (!servers || !Array.isArray(servers) || this._servers.length < 1) {
+        if (!servers || !Array.isArray(servers) || this.servers.length < 1) {
 
           // Invalid servers
           if (onError) onError(`HA responded with empty or invalid servers list: ${servers}`, response);
