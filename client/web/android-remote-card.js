@@ -596,6 +596,9 @@ class AndroidRemoteCard extends HTMLElement {
         font-weight: bold;
       }
       .quarter {
+        background: transparent !important;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
         cursor: pointer;
         transition: fill 0.2s ease;
       }
