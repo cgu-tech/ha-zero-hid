@@ -49,7 +49,7 @@ MAX_RANGE = 127
 WEBSOCKET_SERVERS = [
     {
         "id": "1",
-        "name", "livingroom",
+        "name": "livingroom",
         "protocol": "wss",
         "host": "<websocket_server_ip>",
         "port": <websocket_server_port>,
