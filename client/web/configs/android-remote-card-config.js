@@ -348,7 +348,7 @@ export const androidRemoteCardConfig = {
   },
   "remote-button-hid-server": {
     html: 
-    `<div id="addon-label" class="addon-label" style="color: inherit; font-size: 1em;">
+    `<div id="addon-label" class="addon-label" style="color: inherit; font-size: 1rem;">
       No HID
     </div>`
   }
