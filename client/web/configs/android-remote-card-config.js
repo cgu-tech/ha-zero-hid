@@ -348,14 +348,8 @@ export const androidRemoteCardConfig = {
   },
   "remote-button-hid-server": {
     html: 
-    `<svg id="volumeup-icon" viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <!-- Speaker body with fill -->
-      <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
-
-      <!-- Volume arcs (wire view) -->
-      <path d="M38 26 A6 6 0 0 1 38 38" />
-      <path d="M42 22 A10 10 0 0 1 42 42" />
-      <path d="M46 18 A14 14 0 0 1 46 46" />
-    </svg>`
+    `<div id="addon-label" class="addon-label" style="color: inherit; font-size: inherit;">
+      No HID
+    </div>`
   }
 };
