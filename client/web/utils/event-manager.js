@@ -560,7 +560,7 @@ export class EventManager {
     if (args)
       args[EventManager._HID_SERVER_ID] = this.getCurrentServerId();
     else
-      argsWithServerId = { args[EventManager._HID_SERVER_ID]: this.getCurrentServerId() };
+      argsWithServerId = { [EventManager._HID_SERVER_ID]: this.getCurrentServerId() };
     return argsWithServerId;
   }
 
