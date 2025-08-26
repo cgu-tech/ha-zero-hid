@@ -1978,7 +1978,7 @@ class AndroidRemoteCard extends HTMLElement {
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate() {
     this._eventManager.callComponentService("keypress", {
-      [EventManager._HID_SERVER_ID]: this._eventManager.getCurrentServer();
+      [EventManager._HID_SERVER_ID]: this._eventManager.getCurrentServer(),
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
     });
@@ -1987,7 +1987,7 @@ class AndroidRemoteCard extends HTMLElement {
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate() {
     this._eventManager.callComponentService("conpress", {
-      [EventManager._HID_SERVER_ID]: this._eventManager.getCurrentServer();
+      [EventManager._HID_SERVER_ID]: this._eventManager.getCurrentServer(),
       sendCons: Array.from(this._pressedConsumers),
     });
   }
