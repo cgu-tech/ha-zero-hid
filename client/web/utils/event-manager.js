@@ -181,7 +181,14 @@ export class EventManager {
   }
 
   activateNextServer() {
-    return this._areServersLoaded ? this._servers[++this._currentServer] : null;
+    if (!this._areServersLoaded) return null;
+
+    this._currentServer = 
+      (this._currentServer < this._servers.length - 1)
+        ? this._currentServer + 1
+        : 0;
+
+    return this._servers[this._currentServer];
   }
 
   // Get elapsed time between a start event and an end event (in milliseconds)
