@@ -93,7 +93,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._hass = hass;
     this.doUpdateHass();
     this.doUpdateFoldablesHass();
-    this._eventManager.hassCallback(); // TODO: handle onServersSuccess, onServersError
+    this._eventManager.hassCallback(this.onServersInitSucess.bind(this), this.onServersInitError.bind(this));
   }
 
   connectedCallback() {
@@ -785,7 +785,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
     this.doUpdateAddons();
   }
-  
+
   doUpdateFoldablesConfig() {
     // Update foldables cards configs
     const foldables = this._elements.foldables;
@@ -793,7 +793,7 @@ class AndroidRemoteCard extends HTMLElement {
     foldables.trackpad.setConfig(this.getTrackpadConfig());
     foldables.activities.setConfig(this.getActivitiesConfig());
   }
-  
+
   doUpdateHass() {
     this.doUpdateLayoutHass();
     this.doUpdateAddonsHass();
@@ -803,7 +803,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
     const overridesConfigs = this._layoutManager.getButtonsOverrides();
     for (const [overrideId, overrideConfig] of Object.entries(overridesConfigs)) {
-        
+
       // Retrieve short or long press config (whatever is defined, in this order)
       const overrideTypedConfigShort = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_SHORT_PRESS);
       const overrideTypedConfigLong = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_LONG_PRESS);
@@ -892,6 +892,16 @@ class AndroidRemoteCard extends HTMLElement {
     foldables.activities.hass = this._hass;
   }
 
+  onServersInitSucess() {
+    const serverLabel = this._elements.serverLabel;
+    if (serverLabel) serverLabel.innerHTML = this.getCurrentServerName();
+  }
+
+  onServersInitError() {
+    const serverLabel = this._elements.serverLabel;
+    if (serverLabel) serverLabel.innerHTML = 'No server';
+  }
+
   doUpdateLayout() {
     this.doResetLayout();
     this.doCreateLayout();
@@ -903,6 +913,12 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Detach existing layout from DOM
     this._elements.wrapper.innerHTML = '';
+
+    // Reset HID server label element (if any)
+    this._elements.serverLabel = null;
+
+    // Reset HID server element (if any)
+    this._elements.server = null;
 
     // Reset cells contents elements (if any)
     this._elements.cellContents = [];
@@ -1073,6 +1089,12 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContent?.id === "foldable-container") {
       const foldable = cellContent;
       this._elements.threeStatesToggleFoldable = foldable;
+    }
+    // Query HID server button
+    if (cellContent?.id = "remote-button-hid-server") {
+      const server = cellContent;
+      this._elements.server = server;
+      this._elements.serverLabel = server.querySelector("#hid-server-status");
     }
   }
 

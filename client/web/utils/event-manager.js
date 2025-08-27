@@ -176,6 +176,10 @@ export class EventManager {
     return this.getCurrentServer()?.["id"];
   }
 
+  getCurrentServerName() {
+    return this.getCurrentServer()?.["name"];
+  }
+
   activateNextServer() {
     return this._areServersLoaded ? this._servers[++this._currentServer] : null;
   }
@@ -223,9 +227,9 @@ export class EventManager {
     }
   }
 
-  hassCallback(onServersSuccess, onServersError) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback(onServersSuccess, onServersError)", onServersSuccess, onServersError));
-    this.getServers(onServersSuccess, onServersError);
+  hassCallback(onServersInitSucess, onServersInitError) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback(onServersInitSucess, onServersInitError)", onServersInitSucess, onServersInitError));
+    this.getServers(onServersInitSucess, onServersInitError);
   }
 
   connectedCallback() {
@@ -503,11 +507,11 @@ export class EventManager {
   //  A promyze :
   //   - on command success: ".then((response) => {...})"
   //   - on command error: ".catch((err) => {...})"
-  getServers(onSuccess, onError) {
+  getServers(onServersInitSucess, onServersInitError) {
 
     // Servers successfully loaded in the past
     if (this._areServersLoaded) {
-      if (onSuccess) onSuccess(`Valid servers list successfully retrieved once in the past`, this.getCurrentServer());
+      if (onServersInitSucess) onServersInitSucess(`Valid servers list successfully retrieved once in the past`, this.getCurrentServer());
       return;
     }
 
@@ -527,7 +531,7 @@ export class EventManager {
         if (!servers || !Array.isArray(servers) || servers.length < 1) {
 
           // Invalid servers
-          if (onError) onError(`HA responded with empty or invalid servers list: ${servers}`, response);
+          if (onServersInitError) onServersInitError(`HA responded with empty or invalid servers list: ${servers}`, response);
           return;
         }
 
@@ -542,14 +546,14 @@ export class EventManager {
 
         // Setup first server as current server
         const firstServer = this.activateNextServer();
-        if (onSuccess) onSuccess(`Valid servers list successfully retrieved for the first time (using first server as current server now)`, firstServer);
+        if (onServersInitSucess) onServersInitSucess(`Valid servers list successfully retrieved for the first time (using first server as current server now)`, firstServer);
       })
       .catch((err) => {
         // Update loading lock
         this._areServersLoading = false;
 
         // Error while trying to communicate with HA
-        if (onError) onError(`Error while communicating with underlying 'list_servers' HA command: ${err}`, err);
+        if (onServersInitError) onServersInitError(`Error while communicating with underlying 'list_servers' HA command: ${err}`, err);
       });
     }
   }
