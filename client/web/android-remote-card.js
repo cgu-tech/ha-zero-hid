@@ -894,7 +894,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   onServersInitSucess() {
     const serverLabel = this._elements.serverLabel;
-    if (serverLabel) serverLabel.innerHTML = this.getCurrentServerName();
+    if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName();
   }
 
   onServersInitError() {
