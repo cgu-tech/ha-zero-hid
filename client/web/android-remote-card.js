@@ -1091,7 +1091,7 @@ class AndroidRemoteCard extends HTMLElement {
       this._elements.threeStatesToggleFoldable = foldable;
     }
     // Query HID server button
-    if (cellContent?.id = "remote-button-hid-server") {
+    if (cellContent?.id === "remote-button-hid-server") {
       const server = cellContent;
       this._elements.server = server;
       this._elements.serverLabel = server.querySelector("#hid-server-status");
