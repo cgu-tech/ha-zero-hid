@@ -1738,16 +1738,16 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to press
     const code = btnData.code;
-    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn)) {
+    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn)) {
 
       // Nothing to do: overriden action will be executed on key release
       if (this.hasTypedButtonOverrideShort(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_SHORT_PRESS} detected, nothing to press`));
       }
 
-      // Triggering long click timeout
-      if (this.hasTypedButtonOverrideLong(btn)) {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
+      // Triggering override long click timeout
+      if (this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn)) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: server switch or overridden key for ${this._overrideMode} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
         this._overrideLongPressTimeouts.set(evt.pointerId, { 
           "can-run": true,                   // until proven wrong, long press action can be run
           "was-ran": false,                      // true when action was executed
@@ -1780,7 +1780,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to abort press
     const code = btnData.code;
-    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn)) {
+    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn)) {
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
       if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS)) {
@@ -1844,6 +1844,9 @@ class AndroidRemoteCard extends HTMLElement {
   hasTypedButtonOverrideLong(btn) {
     return this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
   }
+  isServerButton(btn) {
+    return (btn && this._elements.server === btn);
+  }
 
   addOverrideLongPressTimeout(evt) {
     return setTimeout(() => {
@@ -1882,12 +1885,19 @@ class AndroidRemoteCard extends HTMLElement {
     // Retrieve override typed config
     const overrideId = btn.id;
     const overrideTypedConfig = this.getTypedOverride(overrideId, overrideConfig, pressType);
-    if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
+    if (this.isServerButton(btn)) {
+      // Server button retrieved
+      
+      // switch to next available HID server
+      const currentServer = this._eventManager.getCurrentServer();
+      const nextServer = this._eventManager.activateNextServer();
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this.currentServer} server to ${nextServer} server...`, btn));
+    } else if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
         overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
 
       // Switch mode
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._overrideMode} to ${overrideTypedConfig}...`, btn));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._overrideMode} mode to ${overrideTypedConfig} mode ...`, btn));
       this._overrideMode = overrideTypedConfig;
       if (this._overrideMode === this._OVERRIDE_ALTERNATIVE_MODE) btn.classList.add("locked");
       if (this._overrideMode === this._OVERRIDE_NORMAL_MODE) btn.classList.remove("locked");
@@ -1895,7 +1905,7 @@ class AndroidRemoteCard extends HTMLElement {
       // Typed config switches side panel open/close
 
       // Switch mode
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._overrideMode} to ${overrideTypedConfig}...`, btn));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching side panel visibility (from ${this._sidePanelVisible} to ${!this._sidePanelVisible})...`, btn));
       this._sidePanelVisible = !this._sidePanelVisible;
       if (this._sidePanelVisible) {
         btn.classList.add("locked");
