@@ -1891,7 +1891,7 @@ class AndroidRemoteCard extends HTMLElement {
       // switch to next available HID server
       const currentServer = this._eventManager.getCurrentServer();
       const nextServer = this._eventManager.activateNextServer();
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${currentServer} server to ${nextServer} server...`, btn));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
     } else if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
         overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode

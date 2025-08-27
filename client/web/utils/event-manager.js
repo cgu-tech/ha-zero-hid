@@ -177,7 +177,11 @@ export class EventManager {
   }
 
   getCurrentServerName() {
-    return this.getCurrentServer()?.["name"];
+    return this.getServerName(this.getCurrentServer());
+  }
+  
+  getServerName(server) {
+    return server?.["name"];
   }
 
   activateNextServer() {
