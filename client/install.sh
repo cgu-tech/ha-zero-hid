@@ -266,16 +266,28 @@ install() {
         fi
 
         # Validate each "server" entry has required fields (id, name, protocol)
-        if [ ! jq -e '.servers[] | select(has("id") and has("name") and has("protocol"))' config.json > /dev/null ]; then
-          echo "Error: One or more server entries are missing from 'servers' array in config.json are missing required fields (id, name, protocol)"
+        if [ ! jq -e '.servers[] | select(has("id") and has("name") and has("protocol") and has("host") and has("port") and has("secret") and has("authorized_users"))' config.json > /dev/null ]; then
+          echo "Error: One or more server entries are missing from 'servers' array in config.json are missing required fields (id, name, protocol, host, port, secret, authorized_users)"
           exit 1
         fi
 
-        # Convert to python-style syntax: use jq to get the servers array, then use python to convert to valid syntax
-        servers_py=$(jq -c '.servers' config.json > | python3 -c "import sys, json, pprint; print(pprint.pformat(json.load(sys.stdin)))")
+        # Convert JSON to Python-style syntax using jq only
+        servers_py=$(jq -r '
+          .servers 
+          | map("{\"id\": \"\(.id)\", \"name\": \"\(.name)\", \"protocol\": \"\(.protocol)\", \"host\": \"\(.host)\", \"port\": \(.port), \"secret\": \"\(.secret)\", \"authorized_users\": \"\(.authorized_users)\"}") 
+          | "[" + join(", ") + "]"
+        ' config.json)
+
+        "id": "1",
+        "name": "livingroom",
+        "protocol": "wss",
+        "host": "<websocket_server_ip>",
+        "port": <websocket_server_port>,
+        "secret": "<websocket_server_secret>",
+        "authorized_users": "<websocket_authorized_users_ids>",
 
         # Inject into consts.py
-        sed "s|<servers>|$servers_py|" template_contsts.py > consts.py
+        sed "s|<servers>|$servers_py|" template_consts.py > consts.py
 
         # Automatic setup of "websocket_server_ip"
         websocket_server_ip=$(grep "^websocket_server_ip:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
