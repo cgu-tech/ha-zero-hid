@@ -28,40 +28,21 @@ MAX_RANGE = 127
 
 # List of available websockets servers
 # {
-#     "id": "livingroom",
+#     "id": "1",
+#     "name": "livingroom",
+#     "protocol": "wss",
 #     "host": "192.168.1.10",
 #     "port": 8765,
 #     "secret": "abc123",
 #     "authorized_users": ["user_id_1", "user_id_2"],
 # },
 # {
-#     "id": "kitchen",
+#     "id": "2",
+#     "name": "kitchen",
+#     "protocol": "wss",
 #     "host": "192.168.1.11",
 #     "port": 8765,
 #     "secret": "xyz456",
 #     "authorized_users": ["user_id_1"],
 # },
-
-# TO REPLACE WITH + install script modifications (once fully tested)
-# WEBSOCKET_SERVERS = [
-# <websocket_servers>
-# ]
-WEBSOCKET_SERVERS = [
-    {
-        "id": "1",
-        "name": "livingroom",
-        "protocol": "wss",
-        "host": "<websocket_server_ip>",
-        "port": <websocket_server_port>,
-        "secret": "<websocket_server_secret>",
-        "authorized_users": "<websocket_authorized_users_ids>",
-    },
-]
-
-# TO REMOVE:
-# # Backend server config
-# SERVER_HOST = "<websocket_server_ip>"
-# SERVER_PORT = <websocket_server_port>
-# SERVER_SECRET = "<websocket_server_secret>"
-# # This component users whitelist enforcement
-# AUTHORIZED_USERS_IDS = "<websocket_authorized_users_ids>"
+WEBSOCKET_SERVERS = <servers>

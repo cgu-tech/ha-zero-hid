@@ -207,6 +207,108 @@ extract_keycodes_to_js_class() {
     echo "Python constants from ${INPUT_PYTHON_FILE} converted to JS class ${OUTPUT_JS_CLASS} in ${OUTPUT_JS_FILE}"
 }
 
+create_server_config() {
+    local CONFIG_JSON="$1"
+    local websocket_server_id=$(jq -r '
+      if (.servers | type == "array") and (.servers | length > 0) then
+        [.servers[].id | select(.) | tonumber] | if length == 0 then "1" else ((max + 1) | tostring) end
+      else
+        "1"
+      end
+    ' ${CONFIG_JSON})
+
+    # Manual setup of "websocket_server_name":
+    regex='^.+$'
+    while true; do
+        read -p "Server ${websocket_server_id}: enter server friendly name (ex: livingroom): " websocket_server_name </dev/tty
+        websocket_server_name=$(echo "$websocket_server_name" | xargs) # Trims whitespace
+        if [[ ${websocket_server_name} =~ ${regex} ]]; then
+            break
+        else
+            echo "Please answer a well-formed friendly name (non-empty and non-whitespaces-only expected)"
+        fi
+    done
+
+    # Manual setup of "websocket_server_protocol":
+    regex='^(wss|ws)$'
+    while true; do
+        read -p "Server ${websocket_server_id}: enter server websockets protocol (wss or ws): " websocket_server_protocol </dev/tty
+        websocket_server_protocol=$(echo "$websocket_server_protocol" | xargs) # Trims whitespace
+        if [[ ${websocket_server_protocol} =~ ${regex} ]]; then
+            break
+        else
+            echo "Please answer a well-formed server websockets protocol (wss or ws expected)"
+        fi
+    done
+
+    # Manual setup of "websocket_server_ip":
+    regex='^((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\.){3}(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))$'
+    while true; do
+        read -p "Server ${websocket_server_id}: enter USB gadget IPv4 address (ex: 192.168.1.15): " websocket_server_ip </dev/tty
+        websocket_server_ip=$(echo "$websocket_server_ip" | xargs) # Trims whitespace
+        if [[ ${websocket_server_ip} =~ ${regex} ]]; then
+            break
+        else
+            echo "Please answer a well-formed IPv4 address (vvv.xxx.yyy.zzz expected, where 0 <= vvv <= 255, etc)"
+        fi
+    done
+
+    # Manual setup of "websocket_server_port":
+    regex='^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$'
+    while true; do
+        read -p "Server ${websocket_server_id}: enter USB gadget websockets port (default: 8765): " websocket_server_port </dev/tty
+        websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
+        if [ -z "${websocket_server_port}" ]; then
+            websocket_server_port="8765"
+            echo "Using default 8765 server port"
+            break
+        elif [[ ${websocket_server_port} =~ ${regex} ]]; then
+            break
+        else
+            echo "Please answer a well-formed server port (vvvvv expected, where 1 <= vvvvv <= 65535)"
+        fi
+    done
+
+    # Manual setup of "websocket_server_secret":
+    regex='^.+$'
+    while true; do
+        read -p "Server ${websocket_server_id}: enter HA-ZERO-HID server secret (ex: myServerSecret): " websocket_server_secret </dev/tty
+        websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
+        if [[ "$websocket_server_secret" =~ $regex ]]; then
+            break
+        else
+            echo "Please answer a well-formed secret (non-empty and non-whitespaces-only expected)"
+        fi
+    done
+
+    # Manual setup of "websocket_authorized_users_ids":
+    regex='^ *[^ ]* *(, *[^ ]* *)* *$'
+    while true; do
+
+        # Display existing users
+        /bin/bash user_activity_report.sh
+
+        read -p "Server ${websocket_server_id}: enter list of authorized users ids (ex: userid_1,..,userid_n): " websocket_authorized_users_ids </dev/tty
+        websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
+        if [[ "$websocket_authorized_users_ids" =~ $regex ]]; then
+            break
+        else
+            echo "Please answer a well-formed list of authorized users id (userid_1,..,userid_n expected)"
+        fi
+    done
+
+    # Write updated config file (id, name, protocol, host, port, secret, authorized_users)
+    tmp_file="${HA_ZERO_HID_CLIENT_RESOURCES_VERSION}_tmp"
+    jq ".servers += [{\"id\": \"${websocket_server_id}\"}]" "${CONFIG_JSON}" > "${tmp_file}" && mv "${tmp_file}" "${CONFIG_JSON}"
+    jq "(.servers[] | select(.id == \"${websocket_server_id}\")) += {\"name\": \"${websocket_server_name}\"}" "${CONFIG_JSON}" > "${tmp_file}" && mv "${tmp_file}" "${CONFIG_JSON}"
+    jq "(.servers[] | select(.id == \"${websocket_server_id}\")) += {\"protocol\": \"${websocket_server_protocol}\"}" "${CONFIG_JSON}" > "${tmp_file}" && mv "${tmp_file}" "${CONFIG_JSON}"
+    jq "(.servers[] | select(.id == \"${websocket_server_id}\")) += {\"host\": \"${websocket_server_ip}\"}" "${CONFIG_JSON}" > "${tmp_file}" && mv "${tmp_file}" "${CONFIG_JSON}"
+    jq "(.servers[] | select(.id == \"${websocket_server_id}\")) += {\"port\": \"${websocket_server_port}\"}" "${CONFIG_JSON}" > "${tmp_file}" && mv "${tmp_file}" "${CONFIG_JSON}"
+    jq "(.servers[] | select(.id == \"${websocket_server_id}\")) += {\"secret\": \"${websocket_server_secret}\"}" "${CONFIG_JSON}" > "${tmp_file}" && mv "${tmp_file}" "${CONFIG_JSON}"
+    jq "(.servers[] | select(.id == \"${websocket_server_id}\")) += {\"authorized_users\": \"${websocket_authorized_users_ids}\"}" "${CONFIG_JSON}" > "${tmp_file}" && mv "${tmp_file}" "${CONFIG_JSON}"
+    rm "${tmp_file}"
+}
+
 install() {
     # ------------------
     # Installing raw components files
@@ -235,180 +337,49 @@ install() {
     # Retrieving configs
     # ------------------
 
-    # Config parameters
-    websocket_server_ip=""
-    websocket_server_port=""
-    websocket_server_secret=""
-    websocket_authorized_users_ids=""
-
-    # Config flags
-    conf_websocket_server_ip=false
-    conf_websocket_server_port=false
-    conf_websocket_server_secret=false
-    conf_websocket_authorized_users_ids=false
+    # Config valid flags
+    websocket_servers_config_valid=false
 
     # Automatic setup : try loading config file
     if [ -f "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" ]; then
-
-        #TODO: adjust the logic given a new target base config.json file:
-        {
-          "servers": [
-            {"id": "1", "name": "srv1", "protocol": "wss"},
-            {"id": "2", "name": "srv2", "protocol": "ws"}
-          ]
-        }
-        # Validate JSON format
+        # Config file found: validate JSON format
 
         # Validate "servers" exists and is an array
         if [ ! jq -e '.servers | type == "array"' config.json > /dev/null ]; then
-          echo "Error: 'servers' must be an array in config.json"
-          exit 1
-        fi
-
-        # Validate each "server" entry has required fields (id, name, protocol)
-        if [ ! jq -e '.servers[] | select(has("id") and has("name") and has("protocol") and has("host") and has("port") and has("secret") and has("authorized_users"))' config.json > /dev/null ]; then
-          echo "Error: One or more server entries are missing from 'servers' array in config.json are missing required fields (id, name, protocol, host, port, secret, authorized_users)"
-          exit 1
-        fi
-
-        # Convert JSON to Python-style syntax using jq only
-        servers_py=$(jq -r '
-          .servers 
-          | map("{\"id\": \"\(.id)\", \"name\": \"\(.name)\", \"protocol\": \"\(.protocol)\", \"host\": \"\(.host)\", \"port\": \(.port), \"secret\": \"\(.secret)\", \"authorized_users\": \"\(.authorized_users)\"}") 
-          | "[" + join(", ") + "]"
-        ' config.json)
-
-        "id": "1",
-        "name": "livingroom",
-        "protocol": "wss",
-        "host": "<websocket_server_ip>",
-        "port": <websocket_server_port>,
-        "secret": "<websocket_server_secret>",
-        "authorized_users": "<websocket_authorized_users_ids>",
-
-        # Inject into consts.py
-        sed "s|<servers>|$servers_py|" template_consts.py > consts.py
-
-        # Automatic setup of "websocket_server_ip"
-        websocket_server_ip=$(grep "^websocket_server_ip:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
-        websocket_server_ip=$(echo "$websocket_server_ip" | xargs) # Trims whitespace
-        if [ -n "${websocket_server_ip}" ]; then
-            conf_websocket_server_ip=true
-            echo "Using pre-configured 'websocket_server_ip' value ${websocket_server_ip} from ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
+            echo "Error: 'servers' must be an array in config.json"
         else
-            echo "Key 'websocket_server_ip' not found or has no value in ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
+            # Validate each "server" entry has required fields (id, name, protocol)
+            if [ ! jq -e '.servers[] | select(has("id") and has("name") and has("protocol") and has("host") and has("port") and has("secret") and has("authorized_users"))' config.json > /dev/null ]; then
+                echo "Error: One or more server entries are missing from 'servers' array in config.json are missing required fields (id, name, protocol, host, port, secret, authorized_users)"
+            else
+                # Config is valid
+                websocket_servers_config_valid=true
+            fi
         fi
-        
-        # Automatic setup of "websocket_server_port"
-        websocket_server_port=$(grep "^websocket_server_port:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
-        websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
-        if [ -n "${websocket_server_port}" ]; then
-            conf_websocket_server_port=true
-            echo "Using pre-configured 'websocket_server_port' value ${websocket_server_port} from ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
-        else
-            echo "Key 'websocket_server_port' not found or has no value in ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
-        fi
+    fi
 
-        # Automatic setup of "websocket_server_secret"
-        websocket_server_secret=$(grep "^websocket_server_secret:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
-        websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
-        # Remove surrounding single quotes, if any:
-        websocket_server_secret="${websocket_server_secret#\'}"
-        websocket_server_secret="${websocket_server_secret%\'}"
-        if [ -n "${websocket_server_secret}" ]; then
-            conf_websocket_server_secret=true
-            echo "Using pre-configured 'websocket_server_secret' value ${websocket_server_secret} from ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
-        else
-            echo "Key 'websocket_server_secret' not found or has no value in ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
-        fi
+    # Invalid or missing config: will need to ask user for a correct config dynamically
+    if [ "${websocket_servers_config_valid}" != "true" ]; then
 
-        # Automatic setup of "websocket_authorized_users_ids"
-        websocket_authorized_users_ids=$(grep "^websocket_authorized_users_ids:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
-        websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
-        if [ -n "${websocket_authorized_users_ids}" ]; then
-            conf_websocket_authorized_users_ids=true
-            echo "Using pre-configured 'websocket_authorized_users_ids' value ${websocket_authorized_users_ids} from ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
-        else
-            echo "Key 'websocket_authorized_users_ids' not found or has no value in ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
-        fi
-
-    else
         # Automatic setup : no config file or config file not accessible
-        echo "Config file not found: ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
+        echo "Config file not found or invalid: ${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
+
+        # Initialize File with Empty Array
+        echo "Initializing a new config file at ${HA_ZERO_HID_CLIENT_CONFIG_FILE}..."
+        echo '{ "servers": [] }' > "${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
+
+        create_server_config "${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
     fi
 
-    # Manual setup of "websocket_server_ip":
-    if [ "${conf_websocket_server_ip}" != "true" ]; then
-        regex='^((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\.){3}(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))$'
-        while true; do
-            read -p "Enter your USB gadget server IPv4 address (ex: 192.168.1.15): " websocket_server_ip </dev/tty
-            websocket_server_ip=$(echo "$websocket_server_ip" | xargs) # Trims whitespace
-            if [[ ${websocket_server_ip} =~ ${regex} ]]; then
-                break
-            else
-                echo "Please answer a well-formed IPv4 address (vvv.xxx.yyy.zzz expected, where 0 <= vvv <= 255, etc)"
-            fi
-        done
-    fi
+    # Convert JSON to Python-style syntax using jq only
+    servers_py=$(jq -r '
+      .servers 
+      | map("{\"id\": \"\(.id)\", \"name\": \"\(.name)\", \"protocol\": \"\(.protocol)\", \"host\": \"\(.host)\", \"port\": \(.port), \"secret\": \"\(.secret)\", \"authorized_users\": \"\(.authorized_users)\"}") 
+      | "[" + join(", ") + "]"
+    ' "${HA_ZERO_HID_CLIENT_CONFIG_FILE}")
 
-    # Manual setup of "websocket_server_port":
-    if [ "${conf_websocket_server_port}" != "true" ]; then
-        regex='^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$'
-        while true; do
-            read -p "Enter your USB gadget server port (default: 8765): " websocket_server_port </dev/tty
-            websocket_server_port=$(echo "$websocket_server_port" | xargs) # Trims whitespace
-            if [ -z "${websocket_server_port}" ]; then
-                websocket_server_port="8765"
-                echo "Using default 8765 server port"
-                break
-            elif [[ ${websocket_server_port} =~ ${regex} ]]; then
-                break
-            else
-                echo "Please answer a well-formed server port (vvvvv expected, where 1 <= vvvvv <= 65535)"
-            fi
-        done
-    fi
-
-    # Manual setup of "websocket_server_secret":
-    if [ "${conf_websocket_server_secret}" != "true" ]; then
-        regex='^.+$'
-        while true; do
-            read -p "Enter your server secret (ex: myServerSecret): " websocket_server_secret </dev/tty
-            websocket_server_secret=$(echo "$websocket_server_secret" | xargs) # Trims whitespace
-            if [[ "$websocket_server_secret" =~ $regex ]]; then
-                break
-            else
-                echo "Please answer a well-formed secret (non-empty and non-whitespaces-only secret expected)"
-            fi
-        done
-    fi
-
-    # Manual setup of "websocket_authorized_users_ids":
-    if [ "${conf_websocket_authorized_users_ids}" != "true" ]; then
-        regex='^ *[^ ]* *(, *[^ ]* *)* *$'
-        while true; do
-
-            # Display existing users
-            /bin/bash user_activity_report.sh
-
-            read -p "Enter list of authorized users ids (ex: userid_1,..,userid_n): " websocket_authorized_users_ids </dev/tty
-            websocket_authorized_users_ids=$(echo "$websocket_authorized_users_ids" | xargs) # Trims whitespace
-            if [[ "$websocket_authorized_users_ids" =~ $regex ]]; then
-                break
-            else
-                echo "Please answer a well-formed list of authorized users id (userid_1,..,userid_n expected)"
-            fi
-        done
-    fi
-
-    # Write updated config file
-    echo "Writing config file ${HA_ZERO_HID_CLIENT_CONFIG_FILE}..."
-    cat <<EOF > "${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
-websocket_server_ip: ${websocket_server_ip}
-websocket_server_port: ${websocket_server_port}
-websocket_server_secret: '${websocket_server_secret}'
-websocket_authorized_users_ids: ${websocket_authorized_users_ids}
-EOF
+    # Inject into consts.py
+    sed "s|<servers>|$servers_py|" template_consts.py > "${HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE}"
 
     # ------------------
     # Templating raw component files
@@ -421,24 +392,14 @@ EOF
     sed -i "s|<ha_component_name>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
     sed -i "s|<ha_component_label>|${HA_ZERO_HID_CLIENT_COMPONENT_LABEL}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
 
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component name into component global Python constants ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
-    sed -i "s|<ha_component_name>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
-
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server LAN address to ${websocket_server_ip}:${websocket_server_port} into component ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
-    sed -i "s|<websocket_server_ip>|${websocket_server_ip}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
-    sed -i "s|<websocket_server_port>|${websocket_server_port}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
-
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} server secret to ${websocket_server_secret} into component ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
-    sed -i "s|<websocket_server_secret>|${websocket_server_secret}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
-
-    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component authorized users ids to ${websocket_authorized_users_ids} into component ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
-    sed -i "s|<websocket_authorized_users_ids>|${websocket_authorized_users_ids}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
-
     echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component resources directory name to ${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME} into component ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
     sed -i "s|<ha_resources_domain>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
 
     echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component resources version to ${HA_ZERO_HID_CLIENT_RESOURCES_VERSION} into component ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
     sed -i "s|<ha_resources_version>|${HA_ZERO_HID_CLIENT_RESOURCES_VERSION}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
+
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component servers into component global Python constants ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
+    sed -i "s|<servers>|${servers_py}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
 
     # Templating client component raw files with configurations
     echo "Configuring ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
