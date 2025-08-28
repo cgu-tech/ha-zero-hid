@@ -250,8 +250,15 @@ install() {
     # Automatic setup : try loading config file
     if [ -f "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" ]; then
 
+        #TODO: adjust the logic given a new target base config.json file:
+        {
+          "servers": [
+            {"id": "1", "name": "srv1", "protocol": "wss"},
+            {"id": "2", "name": "srv2", "protocol": "ws"}
+          ]
+        }
         # Validate JSON format
-        
+
         # Validate "servers" exists and is an array
         if [ ! jq -e '.servers | type == "array"' config.json > /dev/null ]; then
           echo "Error: 'servers' must be an array in config.json"
@@ -263,7 +270,7 @@ install() {
           echo "Error: One or more server entries are missing from 'servers' array in config.json are missing required fields (id, name, protocol)"
           exit 1
         fi
-        
+
         # Convert to python-style syntax: use jq to get the servers array, then use python to convert to valid syntax
         servers_py=$(jq -c '.servers' config.json > | python3 -c "import sys, json, pprint; print(pprint.pformat(json.load(sys.stdin)))")
 
