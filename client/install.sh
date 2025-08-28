@@ -249,7 +249,27 @@ install() {
 
     # Automatic setup : try loading config file
     if [ -f "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" ]; then
-    
+
+        # Validate JSON format
+        
+        # Validate "servers" exists and is an array
+        if [ ! jq -e '.servers | type == "array"' config.json > /dev/null ]; then
+          echo "Error: 'servers' must be an array in config.json"
+          exit 1
+        fi
+
+        # Validate each "server" entry has required fields (id, name, protocol)
+        if [ ! jq -e '.servers[] | select(has("id") and has("name") and has("protocol"))' config.json > /dev/null ]; then
+          echo "Error: One or more server entries are missing from 'servers' array in config.json are missing required fields (id, name, protocol)"
+          exit 1
+        fi
+        
+        # Convert to python-style syntax: use jq to get the servers array, then use python to convert to valid syntax
+        servers_py=$(jq -c '.servers' config.json > | python3 -c "import sys, json, pprint; print(pprint.pformat(json.load(sys.stdin)))")
+
+        # Inject into consts.py
+        sed "s|<servers>|$servers_py|" template_contsts.py > consts.py
+
         # Automatic setup of "websocket_server_ip"
         websocket_server_ip=$(grep "^websocket_server_ip:" "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" | cut -d':' -f2- ) # Retrieve from file
         websocket_server_ip=$(echo "$websocket_server_ip" | xargs) # Trims whitespace
