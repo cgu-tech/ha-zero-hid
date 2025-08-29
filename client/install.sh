@@ -345,11 +345,11 @@ install() {
         # Config file found: validate JSON format
 
         # Validate "servers" exists and is an array
-        if ! jq -e '.servers | type == "array"' config.json > /dev/null; then
+        if ! jq -e '.servers | type == "array"' "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" > /dev/null; then
             echo "Error: 'servers' must be an array in config.json"
         else
             # Validate each "server" entry has required fields (id, name, protocol)
-            if ! jq -e '.servers[] | select(has("id") and has("name") and has("protocol") and has("host") and has("port") and has("secret") and has("authorized_users"))' config.json > /dev/null; then
+            if ! jq -e '.servers[] | select(has("id") and has("name") and has("protocol") and has("host") and has("port") and has("secret") and has("authorized_users"))' "${HA_ZERO_HID_CLIENT_CONFIG_FILE}" > /dev/null; then
                 echo "Error: One or more server entries are missing from 'servers' array in config.json are missing required fields (id, name, protocol, host, port, secret, authorized_users)"
             else
                 # Config is valid
