@@ -788,10 +788,9 @@ class AndroidRemoteCard extends HTMLElement {
 
   doUpdateFoldablesConfig() {
     // Update foldables cards configs
-    const foldables = this._elements.foldables;
-    foldables.keyboard.setConfig(this.getKeyboardConfig());
-    foldables.trackpad.setConfig(this.getTrackpadConfig());
-    foldables.activities.setConfig(this.getActivitiesConfig());
+    this.getKeyboard().setConfig(this.getKeyboardConfig());
+    this.getTrackpad().setConfig(this.getTrackpadConfig());
+    this.getActivities().setConfig(this.getActivitiesConfig());
   }
 
   doUpdateHass() {
@@ -886,15 +885,17 @@ class AndroidRemoteCard extends HTMLElement {
   
   doUpdateFoldablesHass() {
     // Update foldables cards configs
-    const foldables = this._elements.foldables;
-    foldables.keyboard.hass = this._hass;
-    foldables.trackpad.hass = this._hass;
-    foldables.activities.hass = this._hass;
+    this.getKeyboard().hass = this._hass;
+    this.getTrackpad().hass = this._hass;
+    this.getActivities().hass = this._hass;
   }
   
   doUpdateServer() {
     const serverLabel = this._elements.serverLabel;
     if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
+    this.getKeyboard().setConfig(this.getKeyboardConfig());
+    this.getTrackpad().setConfig(this.getTrackpadConfig());
+    this.getActivities().setConfig(this.getActivitiesConfig());
   }
 
   onServersInitSucess() {

@@ -168,6 +168,10 @@ export class EventManager {
     return this._origin?._hass;
   }
 
+  isManaged() {
+    return this._origin?._isManaged;
+  }
+
   getCurrentServer() {
     return this._areServersLoaded ? this._servers[this._currentServer] : null;
   }
