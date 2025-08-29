@@ -190,14 +190,15 @@ async def websocket_sync_resources(hass: HomeAssistant, connection: ActiveConnec
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websockets servers configs and clients."""
+    ws_servers = {}
     for server in WEBSOCKET_SERVERS:
         ws_client = WebSocketClient(f"{server['protocol']}://{server['host']}:{server['port']}", server["secret"])
-        ws_servers = {}
         ws_servers[server["id"]] = {
             "name": server["name"],
             "ws_client": ws_client,
             "authorized_users": set(authorized_user.strip() for authorized_user in server["authorized_users"].split(","))
         }
+        _LOGGER.debug(f"Discovered server {server['protocol']}://{server['host']}:{server['port']}")
     hass.data[DOMAIN] = {
         "ws_servers": ws_servers,
     }
