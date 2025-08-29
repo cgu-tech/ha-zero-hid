@@ -891,15 +891,18 @@ class AndroidRemoteCard extends HTMLElement {
     foldables.trackpad.hass = this._hass;
     foldables.activities.hass = this._hass;
   }
+  
+  doUpdateServer() {
+    const serverLabel = this._elements.serverLabel;
+    if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
+  }
 
   onServersInitSucess() {
-    const serverLabel = this._elements.serverLabel;
-    if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName();
+    this.doUpdateServer();
   }
 
   onServersInitError() {
-    const serverLabel = this._elements.serverLabel;
-    if (serverLabel) serverLabel.innerHTML = 'No server';
+    this.doUpdateServer();
   }
 
   doUpdateLayout() {
@@ -1892,6 +1895,7 @@ class AndroidRemoteCard extends HTMLElement {
       const currentServer = this._eventManager.getCurrentServer();
       const nextServer = this._eventManager.activateNextServer();
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
+      this.doUpdateServer();
     } else if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
         overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
