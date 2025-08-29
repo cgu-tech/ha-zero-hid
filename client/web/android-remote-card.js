@@ -802,7 +802,7 @@ class AndroidRemoteCard extends HTMLElement {
   doUpdateLayoutHass() {
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
     const overridesConfigs = this._layoutManager.getButtonsOverridesForServer(this._eventManager.getCurrentServerId());
-    for (const [overrideId, overrideConfig] of Object.entries(overridesConfigs)) {
+    for (const [overrideId, overrideConfig] of Object.entries(overridesConfigs ?? {})) {
 
       // Retrieve short or long press config (whatever is defined, in this order)
       const overrideTypedConfigShort = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_SHORT_PRESS);
