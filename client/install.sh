@@ -389,6 +389,9 @@ install() {
     sed -i "s|<ha_component_name>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
     sed -i "s|<ha_component_label>|${HA_ZERO_HID_CLIENT_COMPONENT_LABEL}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_MANIFEST_FILE}"
 
+    echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component name into component global Python constants ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
+    sed -i "s|<ha_component_name>|${HA_ZERO_HID_CLIENT_COMPONENT_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
+
     echo "Templating ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component resources directory name to ${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME} into component ${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}..."
     sed -i "s|<ha_resources_domain>|${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}|g" "${HA_ZERO_HID_CLIENT_COMPONENT_CONST_FILE}"
 
