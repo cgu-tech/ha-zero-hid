@@ -38,6 +38,20 @@ HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_
 HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/keycodes.js"
 HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/consumercodes.js"
 
+ask_confirm() {
+  local prompt="$1"
+  local answer
+
+  while true; do
+    read -rp "$prompt (y/n): " answer
+    case "$answer" in
+      [Yy]) return 0 ;;  # yes
+      [Nn]) return 1 ;;  # no
+      *) echo "Please answer y or n." ;;
+    esac
+  done
+}
+
 # Clean-up:
 # - component from HAOS config (yaml)
 # - component resources (py, ...)
@@ -310,6 +324,8 @@ create_server_config() {
 }
 
 install() {
+    local INTERACTIVE="${1:-}"
+
     # ------------------
     # Installing raw components files
     # ------------------
@@ -369,6 +385,13 @@ install() {
         echo '{ "servers": [] }' > "${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
 
         create_server_config "${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
+    fi
+
+    # Ask user for additional servers
+    if [ -z "${INTERACTIVE}" ]; then
+        while ask_confirm "Do you want to add a new server?"; do
+          create_server_config "${HA_ZERO_HID_CLIENT_CONFIG_FILE}"
+        done
     fi
 
     # Convert JSON to Python-style syntax using jq only
@@ -471,7 +494,7 @@ if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
                 echo "Updating & reinstalling (auto)"
                 uninstall "NON_INTERACTIVE"
                 update "${ZERO_HID_REPO_BRANCH}"
-                install
+                install "NON_INTERACTIVE"
                 echo "Updated & reinstalled HA zero-hid client integration (auto)."
                 exit 0
                 ;;
@@ -529,7 +552,7 @@ if [ -d "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" ]; then
         echo "Updating & reinstalling (auto)"
         uninstall "NON_INTERACTIVE"
         update "${ZERO_HID_REPO_BRANCH}"
-        install
+        install "NON_INTERACTIVE"
         echo "Updated & reinstalled HA zero-hid client integration (auto)."
         exit 0
     fi
