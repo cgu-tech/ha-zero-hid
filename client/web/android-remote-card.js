@@ -801,7 +801,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   doUpdateLayoutHass() {
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
-    const overridesConfigs = this._layoutManager.getButtonsOverrides();
+    const overridesConfigs = this._layoutManager.getButtonsOverridesForServer(this._eventManager.getCurrentServerId());
     for (const [overrideId, overrideConfig] of Object.entries(overridesConfigs)) {
 
       // Retrieve short or long press config (whatever is defined, in this order)
@@ -1783,12 +1783,12 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn)) {
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
-      if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS)) {
+      if (this.hasTypedButtonOverrideShort(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden short key press detected, nothing to abort`));
       }
 
       // Overriden long click did not happened: nothing to do, overriden action has not (and wont be) executed because key release wont happen
-      if (this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS)) {
+      if (this.hasTypedButtonOverrideLong(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden long key press detected, nothing to abort`));
       }
     } else {
@@ -1839,10 +1839,10 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   hasTypedButtonOverrideShort(btn) {
-    return this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS);
+    return this._layoutManager.hasTypedButtonOverrideForServer(this._eventManager.getCurrentServerId(), btn, this._overrideMode, this._OVERRIDE_TYPE_SHORT_PRESS);
   }
   hasTypedButtonOverrideLong(btn) {
-    return this._layoutManager.hasTypedButtonOverride(btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
+    return this._layoutManager.hasTypedButtonOverrideForServer(this._eventManager.getCurrentServerId(), btn, this._overrideMode, this._OVERRIDE_TYPE_LONG_PRESS);
   }
   isServerButton(btn) {
     return (btn && this._elements.server === btn);
@@ -1880,8 +1880,8 @@ class AndroidRemoteCard extends HTMLElement {
   executeButtonOverride(btn, pressType) {
 
     // Retrieve override config
-    const overrideConfig = this._layoutManager.getButtonOverride(btn);
-    
+    const overrideConfig = this._layoutManager.getButtonOverrideForServer(this._eventManager.getCurrentServerId(), btn);
+
     // Retrieve override typed config
     const overrideId = btn.id;
     const overrideTypedConfig = this.getTypedOverride(overrideId, overrideConfig, pressType);

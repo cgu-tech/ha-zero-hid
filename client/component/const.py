@@ -27,22 +27,24 @@ MAX_RANGE = 127
 
 
 # List of available websockets servers
-# {
-#     "id": "1",
-#     "name": "livingroom",
-#     "protocol": "wss",
-#     "host": "192.168.1.10",
-#     "port": 8765,
-#     "secret": "abc123",
-#     "authorized_users": ["user_id_1", "user_id_2"],
-# },
-# {
-#     "id": "2",
-#     "name": "kitchen",
-#     "protocol": "wss",
-#     "host": "192.168.1.11",
-#     "port": 8765,
-#     "secret": "xyz456",
-#     "authorized_users": ["user_id_1"],
-# },
+# [
+#   {
+#       "id": "1",
+#       "name": "livingroom",
+#       "protocol": "wss",
+#       "host": "192.168.1.10",
+#       "port": 8765,
+#       "secret": "abc123",
+#       "authorized_users": ["user_id_1", "user_id_2"],
+#   },
+#   {
+#       "id": "2",
+#       "name": "kitchen",
+#       "protocol": "wss",
+#       "host": "192.168.1.11",
+#       "port": 8765,
+#       "secret": "xyz456",
+#       "authorized_users": ["user_id_1"],
+#   },
+# ]
 WEBSOCKET_SERVERS = <servers>
