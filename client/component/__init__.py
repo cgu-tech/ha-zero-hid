@@ -144,6 +144,8 @@ def get_user_authorized_servers(hass: HomeAssistant, connection: ActiveConnectio
                 "id": server_id,
                 "name": info.get("name"),
             })
+        else
+            _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
     return servers
 
 @websocket_command({vol.Required("type"): DOMAIN + "/list_servers"})
