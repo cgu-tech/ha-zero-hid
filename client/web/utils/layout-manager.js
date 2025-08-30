@@ -35,6 +35,7 @@ export class LayoutManager {
     return this._origin.constructor.getStubConfig();
   }
 
+  // Without server versions
   getFromConfig(configName) {
     return this.getConfig()?.[configName];
   }
@@ -54,23 +55,6 @@ export class LayoutManager {
   getFromConfigOrDefaultConfig(configName) {
     const configValue = this.getFromConfig(configName);
     return this.isDefined(configValue) ? configValue : this.getFromDefaultConfig(configName);
-  }
-
-  getForServer(config, serverId) {
-    return config?.[serverId];
-  }
-
-  getFromConfigForServer(serverId, configName) {
-    return this.getForServer(this.getConfig(), serverId)?.[configName];
-  }
-  
-  getFromDefaultConfigForServer(serverId, configName) {
-    return this.getForServer(this.getStubConfig(), serverId)?.[configName];
-  }
-
-  getFromConfigOrDefaultConfigForServer(serverId, configName) {
-    const configValue = this.getFromConfigForServer(serverId, configName);
-    return this.isDefined(configValue) ? configValue : this.getFromDefaultConfigForServer(serverId, configName);
   }
 
   getHaptic() {
@@ -97,7 +81,6 @@ export class LayoutManager {
     return this.getFromConfigOrDefaultConfig('buttons_overrides');
   }
 
-  // Without server versions
   getButtonOverride(btn) {
     return this.getButtonsOverrides()[btn.id];
   }
@@ -115,16 +98,29 @@ export class LayoutManager {
   }
 
   // With server versions
-  getButtonsOverridesForServer(serverId) {
-    return this.getConfigForServer(this.getButtonsOverrides(), serverId);
+  getFromConfigForServer(serverId, configName) {
+    return this.getConfig()?.[serverId]?.[configName];
   }
-  
+
+  getFromDefaultConfigForServer(serverId, configName) {
+    return this.getStubConfig()?.[serverId]?.[configName];
+  }
+
+  getFromConfigOrDefaultConfigForServer(serverId, configName) {
+    const configValue = this.getFromConfigForServer(serverId, configName);
+    return this.isDefined(configValue) ? configValue : this.getFromDefaultConfigForServer(serverId, configName);
+  }
+
+  getButtonsOverridesForServer(serverId) {
+    return this.getFromConfigOrDefaultConfigForServer(serverId, 'buttons_overrides');
+  }
+
   getButtonOverrideForServer(serverId, btn) {
     return this.getButtonsOverridesForServer(serverId)?.[btn.id];
   }
   
   hasButtonOverrideForServer(serverId, btn) {
-    return (btn.id && this.getButtonOverrideForServer(serverId));
+    return (btn.id && this.getButtonOverrideForServer(serverId, btn));
   }
 
   getTypedButtonOverrideForServer(serverId, btn, mode, type) {
