@@ -86,6 +86,7 @@ export class CarrouselCard extends HTMLElement {
   setCurrentServer(server) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentServer(server):", server));
     this._eventManager.setCurrentServer(server);
+    this.doUpdateCurrentServer();
   }
 
   setConfig(config) {
@@ -334,6 +335,11 @@ export class CarrouselCard extends HTMLElement {
   doUpdateHass() {
     // Nothing to do here: no specific HA entity state to listen for this card
     //TODO: treat auto-refresh for all cards: this._resourceManager.synchronizeResources(this._hass);
+  }
+
+  doUpdateCurrentServer() {
+    // Update layout according to current server
+    this.doUpdateLayout();
   }
 
   doUpdateLayout() {
