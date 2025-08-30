@@ -547,7 +547,7 @@ export class EventManager {
       if (!servers || !Array.isArray(servers) || servers.length < 1) {
 
         // Invalid servers
-        if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error('Empty or invalid servers list:', servers));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Empty or invalid servers list:', servers));
         return false;
       }
 
