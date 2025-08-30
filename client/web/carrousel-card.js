@@ -115,10 +115,10 @@ export class CarrouselCard extends HTMLElement {
 
   // Global config
   getCells() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("cells");
+    return this._layoutManager.getFromConfigOrDefaultConfigForServerOrAny(this._eventManager.getCurrentServerId(), "cells");
   }
   getOrientation() {
-    const orientation = this._orientation || this._layoutManager.getFromConfigOrDefaultConfig("orientation");
+    const orientation = this._orientation || this._layoutManager.getFromConfigOrDefaultConfigForServerOrAny(this._eventManager.getCurrentServerId(), "orientation");
     const orientationLow = (typeof orientation === 'string' ? orientation?.toLowerCase() : null);
     return (orientationLow === this.constructor._ORIENTATION_VERTICAL ? this.constructor._ORIENTATION_VERTICAL : this.constructor._ORIENTATION_HORIZONTAL);
   }
@@ -160,10 +160,10 @@ export class CarrouselCard extends HTMLElement {
   }
 
   // Per cell config helper
-  getCellConfigOrDefault(cellConfig, property) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getCellConfigOrDefault(cellConfig, property):", cellConfig, property));
-    const cellProperty = `cell_${property}`;
-    return cellConfig?.[property] || this._layoutManager.getFromConfigOrDefaultConfig(cellProperty);
+  getCellConfigOrDefault(cellConfig, configName) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getCellConfigOrDefault(cellConfig, configName):", cellConfig, configName));
+    const cellConfigName = `cell_${configName}`;
+    return cellConfig?.[configName] || this._layoutManager.getFromConfigOrDefaultConfigForServerOrAny(this._eventManager.getCurrentServerId(), cellConfigName);
   }
 
   // Dynamic config

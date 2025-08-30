@@ -56,6 +56,18 @@ export class LayoutManager {
     return this.isDefined(configValue) ? configValue : this.getFromDefaultConfig(configName);
   }
 
+  getConfigForServer(config, serverId) {
+    return config?.[serverId];
+  }
+
+  getFromConfigOrDefaultConfigForServer(serverId, configName) {
+    return this.getConfigForServer(this.getFromConfigOrDefaultConfig(configName), serverId);
+  }
+
+  getFromConfigOrDefaultConfigForServerOrAny(serverId, configName) {
+    return this.getFromConfigOrDefaultConfigForServer(serverId, configName) || this.getFromConfigOrDefaultConfig(configName);
+  }
+
   getHaptic() {
     return this.getFromConfigOrDefaultConfig('haptic');
   }
@@ -79,7 +91,7 @@ export class LayoutManager {
   getButtonsOverrides() {
     return this.getFromConfigOrDefaultConfig('buttons_overrides');
   }
-  
+
   // Without server versions
   getButtonOverride(btn) {
     return this.getButtonsOverrides()[btn.id];
@@ -99,7 +111,7 @@ export class LayoutManager {
 
   // With server versions
   getButtonsOverridesForServer(serverId) {
-    return this.getButtonsOverrides()[serverId];
+    return this.getConfigForServer(this.getButtonsOverrides(), serverId);
   }
   
   getButtonOverrideForServer(serverId, btn) {
