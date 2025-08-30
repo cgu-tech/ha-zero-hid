@@ -77,6 +77,10 @@ class AndroidRemoteCard extends HTMLElement {
     return this._logger;
   }
 
+  getEventManager() {
+    return this._eventManager;
+  }
+
   setConfig(config) {
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
@@ -232,9 +236,14 @@ class AndroidRemoteCard extends HTMLElement {
 
   createFoldableContent() {
     this._elements.foldables = {};
+
     this._elements.foldables.keyboard = document.createElement("android-keyboard-card");
     this._elements.foldables.trackpad = document.createElement("trackpad-card");
     this._elements.foldables.activities = document.createElement("carrousel-card");
+
+    this.getKeyboard().getEventManager().setManaged(true);
+    this.getTrackpad().getEventManager().setManaged(true);
+    this.getActivities().getEventManager().setManaged(true);
   }
 
   createAddonsContent() {
@@ -891,11 +900,21 @@ class AndroidRemoteCard extends HTMLElement {
   }
   
   doUpdateServer() {
+    // Update managed servers (when not already set)
+    const servers = this._eventManager.getServers();
+    this.getKeyboard().getEventManager().setServers(servers);
+    this.getTrackpad().getEventManager().setServers(servers);
+    this.getActivities().getEventManager().setServers(servers);
+
+    // Update managed current server
+    const servers = this._eventManager.getServers();
+    this.getKeyboard().getEventManager().setServers(servers);
+    this.getTrackpad().getEventManager().setServers(servers);
+    this.getActivities().getEventManager().setServers(servers);
+
+    // Update remote UI to display current server to end user
     const serverLabel = this._elements.serverLabel;
     if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
-    this.getKeyboard().setConfig(this.getKeyboardConfig());
-    this.getTrackpad().setConfig(this.getTrackpadConfig());
-    this.getActivities().setConfig(this.getActivitiesConfig());
   }
 
   onServersInitSucess() {

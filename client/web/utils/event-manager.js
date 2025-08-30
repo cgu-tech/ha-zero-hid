@@ -128,6 +128,7 @@ export class EventManager {
   _currentServer = -1; // Current selected server
   _areServersLoading = false; // Available servers loading in progress lock
   _areServersLoaded = false; // Available servers loaded once lock
+  _isManaged = false; // indicates whether or not this event manager origin card is managed by another card (and transitively whether or not some events managements should be delegated to the manager card of the origin card)
 
   constructor(origin) {
     this._origin = origin;
@@ -168,8 +169,12 @@ export class EventManager {
     return this._origin?._hass;
   }
 
+  setManaged(managed) {
+    this._isManaged = managed;
+  }
+
   isManaged() {
-    return this._origin?._isManaged;
+    return this._isManaged;
   }
 
   getCurrentServer() {
@@ -515,6 +520,37 @@ export class EventManager {
     this.triggerHaosTapAction(btn, overrideAction);
   }
 
+  setServers(servers) {
+
+    // Ensure not loaded
+    if (!this._areServersLoaded) {
+
+      // Check responded servers
+      if (!servers || !Array.isArray(servers) || servers.length < 1) {
+
+        // Invalid servers
+        if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error('Empty or invalid servers list:', servers));
+        return false;
+      }
+
+      // Valid servers: store retrieved servers
+      for (const server of (servers ?? [])) {
+        this._servers.push(server);
+      }
+
+      // Update loaded lock
+      this._areServersLoaded = true;
+
+      // Setup first server as current server
+      const firstServer = this.activateNextServer();
+      if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info('Valid servers list set, will use first server:', servers, firstServer));
+      return true;
+    } else {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Servers list already set (won\'t set):', servers));
+      return false;
+    }
+  }
+
   // Retrieves authorized list of HID servers asynchronously. 
   // After a call to this function, use "areServersLoaded()" to ensure async call finished.
   // 
@@ -524,53 +560,65 @@ export class EventManager {
   //   - on command error: ".catch((err) => {...})"
   getServers(onServersInitSucess, onServersInitError) {
 
-    // Servers successfully loaded in the past
+    // Servers already successfully loaded
     if (this._areServersLoaded) {
-      if (onServersInitSucess) onServersInitSucess(`Valid servers list successfully retrieved once in the past`, this.getCurrentServer());
+      if (onServersInitSucess) onServersInitSucess();
       return;
     }
 
-    // Ensure not loading and not loaded and HASS object initialized
-    if (!this._areServersLoaded && !this._areServersLoading && this.getHass()) {
+    // Command to send to HA backend to get servers list
+    const serversListCommand = 'list_servers';
 
-      // Update loading lock
-      this._areServersLoading = true;
-
-      // Start loading
-      this.callComponentCommand('list_servers')?.then((response) => {
-
-        // Retrieve responded servers
-        const { servers } = response;
-
-        // Check responded servers
-        if (!servers || !Array.isArray(servers) || servers.length < 1) {
-
-          // Invalid servers
-          if (onServersInitError) onServersInitError(`HA responded with empty or invalid servers list: ${servers}`, response);
-          return;
-        }
-
-        // Valid servers: store retrieved servers
-        for (const server of (servers ?? [])) {
-          this._servers.push(server);
-        }
-
-        // Update loading+loaded locks
-        this._areServersLoaded = true;
-        this._areServersLoading = false;
-
-        // Setup first server as current server
-        const firstServer = this.activateNextServer();
-        if (onServersInitSucess) onServersInitSucess(`Valid servers list successfully retrieved for the first time (using first server as current server now)`, firstServer);
-      })
-      .catch((err) => {
-        // Update loading lock
-        this._areServersLoading = false;
-
-        // Error while trying to communicate with HA
-        if (onServersInitError) onServersInitError(`Error while communicating with underlying 'list_servers' HA command: ${err}`, err);
-      });
+    // Ensure not managed
+    if (this.isManaged()) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Event manager origin is managed (wont try to call '${serversListCommand}' HA command)`));
+      if (onServersInitError) onServersInitError();
     }
+
+    // Ensure servers not loading
+    if (this._areServersLoading) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Servers already loading (wont try to call '${serversListCommand}' HA command)`));
+      if (onServersInitError) onServersInitError();
+    }
+
+    // Ensure HASS object initialized
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`HASS object not initialized (wont try to call '${serversListCommand}' HA command)`));
+      if (onServersInitError) onServersInitError();
+    }
+
+    // Update loading lock (start)
+    this._areServersLoading = true;
+
+    // Start loading servers list asynchronously
+    this.callComponentCommand(serversListCommand)?.then((response) => {
+
+      // Retrieve responded servers
+      const { servers } = response;
+
+      // Define servers and call backs
+      if (this.setServers(servers)) {
+
+        // Update loading lock (end) + execute callback (success)
+        this._areServersLoading = false;
+        if (onServersInitSucess) onServersInitSucess();
+
+      } else {
+
+        // Update loading lock (end) + execute callback (fail logically)
+        this._areServersLoading = false;
+        if (onServersInitError) onServersInitError();
+      }
+
+    })
+    .catch((err) => {
+      // Error while trying to communicate with HA
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Error while calling '${serversListCommand}' HA command:`, err));
+
+      // Update loading lock (end) + execute callback (fail technically)
+      this._areServersLoading = false;
+      if (onServersInitError) onServersInitError();
+    });
   }
 
   // Injects current server id into args["si"] (inject null into the field when not available)

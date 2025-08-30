@@ -119,6 +119,10 @@ export class AndroidKeyboardCard extends HTMLElement {
   getLogger() {
     return this._logger;
   }
+  
+  getEventManager() {
+    return this._eventManager;
+  }
 
   setConfig(config) {
     this._config = config;
