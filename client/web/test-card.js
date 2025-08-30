@@ -235,12 +235,12 @@ export class TestCard extends HTMLElement {
       let deltaY = beta - this._lastBeta;
 
       // Dead zone filtering
-      if (Math.abs(deltaX) < deadZone) deltaX = 0;
-      if (Math.abs(deltaY) < deadZone) deltaY = 0;
+      if (Math.abs(deltaX) < this._deadZone) deltaX = 0;
+      if (Math.abs(deltaY) < this._deadZone) deltaY = 0;
 
       // Apply sensitivity
-      deltaX *= sensitivity;
-      deltaY *= sensitivity;
+      deltaX *= this._sensitivity;
+      deltaY *= this._sensitivity;
 
       // Update cursor
       this._cursorX = clamp(this._cursorX + deltaX, 0, window.innerWidth);
