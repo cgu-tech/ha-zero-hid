@@ -912,13 +912,15 @@ class AndroidRemoteCard extends HTMLElement {
     this.getActivities().hass = this._hass;
   }
 
-  doUpdateCurrentServer() {
+  doUpdateServers() {
     // Update managed servers (when not already set)
     const servers = this._eventManager.getServers();
     this.getKeyboard().setServers(servers);
     this.getTrackpad().setServers(servers);
     this.getActivities().setServers(servers);
+  }
 
+  doUpdateCurrentServer() {
     // Update managed current server
     const server = this._eventManager.getCurrentServer();
     this.getKeyboard().setCurrentServer(server);
