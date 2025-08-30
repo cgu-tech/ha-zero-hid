@@ -591,18 +591,21 @@ export class EventManager {
     if (this.isManaged()) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Event manager origin is managed (wont try to call '${serversListCommand}' HA command)`));
       if (onServersInitError) onServersInitError();
+      return null;
     }
 
     // Ensure servers not loading
     if (this._areServersLoading) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Servers already loading (wont try to call '${serversListCommand}' HA command)`));
       if (onServersInitError) onServersInitError();
+      return null;
     }
 
     // Ensure HASS object initialized
     if (!this.getHass()) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`HASS object not initialized (wont try to call '${serversListCommand}' HA command)`));
       if (onServersInitError) onServersInitError();
+      return null;
     }
 
     // Update loading lock (start)
