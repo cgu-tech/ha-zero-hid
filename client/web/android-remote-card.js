@@ -36,6 +36,7 @@ class AndroidRemoteCard extends HTMLElement {
   _OVERRIDE_TYPE_SHORT_PRESS = 'short_press';
   _OVERRIDE_TYPE_LONG_PRESS = 'long_press';
   _OVERRIDE_SAME = 'same';
+  _OVERRIDE_NONE = 'none';
 
   // private properties
   _config;
@@ -235,6 +236,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (overrideTypedConfig === this._OVERRIDE_SAME) {
       if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`getTypedOverride(overrideId, overrideConfig, pressType): invalid config ${this._overrideMode} for overrideId ${overrideId} (both ${this._OVERRIDE_TYPE_SHORT_PRESS} and ${this._OVERRIDE_TYPE_LONG_PRESS} reference "${this._OVERRIDE_SAME}"`));
     }
+
     return overrideTypedConfig;
   }
 
@@ -1923,6 +1925,9 @@ class AndroidRemoteCard extends HTMLElement {
       const nextServer = this._eventManager.activateNextServer();
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
       this.doUpdateServer();
+    } else if (overrideTypedConfig ===  this._OVERRIDE_NONE) {
+      // Typed config "none"
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${this._overrideMode} mode ${pressType} press, nothing to do`, btn));
     } else if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
         overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
