@@ -123,11 +123,11 @@ export class TrackpadCard extends HTMLElement {
   _cursorDeadZone = 0.5; // Dead zone micromovements filter trigger
   onDeviceMotion(evt) {
     // Gyroscope equivalent: rotationRate (deg/s)
-    const gx = evt.rotationRate.alpha || 0; // X-axis
-    const gy = evt.rotationRate.beta || 0;  // Y-axis
+    const gx = evt.rotationRate.beta || 0; // X-axis
+    const gy = evt.rotationRate.alpha || 0;  // Y-axis
     const gz = evt.rotationRate.gamma || 0; // Z-axis
 
-    // You could process gx, gy, gz similar to the Arduino code
+    // Process gx, gy, gz
     const vx = -gz / this._cursorSpeed;
     const vy = gy / this._cursorSpeed;
 

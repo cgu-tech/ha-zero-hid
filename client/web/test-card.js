@@ -270,7 +270,7 @@ export class TestCard extends HTMLElement {
     const gy = evt.rotationRate.beta || 0;  // Y-axis
     const gz = evt.rotationRate.gamma || 0; // Z-axis
 
-    // You could process gx, gy, gz similar to the Arduino code
+    // Process gx, gy, gz
     const vx = -gz / this._cursorSpeed;
     const vy = gy / this._cursorSpeed;
 
