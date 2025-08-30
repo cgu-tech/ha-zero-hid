@@ -71,7 +71,6 @@ CONPRESS_SERVICE_SCHEMA = vol.Schema({
 })
 
 LOG_SERVICE_SCHEMA = vol.Schema({
-    vol.Required("si"): cv.string,
     vol.Required("level"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("origin"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("logger_id"): vol.All(lambda v: v or "", ensure_string_or_empty),
@@ -369,11 +368,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Handle logging to home assistant backend."""
     @callback
     async def handle_log(call: ServiceCall) -> None:
-        info: WSServerInfo = get_ws_server_info(hass, call)
-        authorized = is_user_authorized_from_service(info, call)
-        if not authorized:
-            return
-
         level = call.data.get("level")
         origin = call.data.get("origin")
         logger_id = call.data.get("logger_id")
