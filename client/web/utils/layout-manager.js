@@ -64,10 +64,6 @@ export class LayoutManager {
     return this.getConfigForServer(this.getFromConfigOrDefaultConfig(configName), serverId);
   }
 
-  getFromConfigOrDefaultConfigForServerOrAny(serverId, configName) {
-    return this.getFromConfigOrDefaultConfigForServer(serverId, configName) || this.getFromConfigOrDefaultConfig(configName);
-  }
-
   getHaptic() {
     return this.getFromConfigOrDefaultConfig('haptic');
   }
