@@ -33,7 +33,7 @@ export class Logger {
   }
 
   getServerId() {
-    return this._origin?._serverId;
+    return this._origin?._eventManager?.getCurrentServerId();
   }
 
   getLevel() {
