@@ -136,8 +136,11 @@ export class TrackpadCard extends HTMLElement {
       // Simulate action (e.g., mouse move)
       const dx = vx.toFixed(1);
       const dy = vy.toFixed(1);
-      // if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Move cursor by: dx=${dx}, dy=${dy}`));
-      if (this._hass && this._eventManager.getCurrentServer()) this.sendMouseMove(dx, dy); //TODO: refactor
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Move cursor by: dx=${dx}, dy=${dy}`));
+      if (this._hass) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`this.sendMouseMove(dx, dy): dx=${dx}, dy=${dy}`));
+        this.sendMouseMove(dx, dy); //TODO: refactor
+      }
     }
   }
 
