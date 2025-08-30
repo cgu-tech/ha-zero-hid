@@ -115,7 +115,7 @@ export class CarrouselCard extends HTMLElement {
 
   // Global config
   getCells() {
-    return this._layoutManager.getFromConfigOrDefaultConfigForServer(this._eventManager.getCurrentServerId(), "cells");
+    return this._layoutManager.getFromConfigOrDefaultConfigForServer(this._eventManager.getCurrentServerId(), "cells") || {};
   }
   getOrientation() {
     const orientation = this._orientation || this._layoutManager.getFromConfigOrDefaultConfigForServer(this._eventManager.getCurrentServerId(), "orientation");
