@@ -907,10 +907,10 @@ class AndroidRemoteCard extends HTMLElement {
     this.getActivities().getEventManager().setServers(servers);
 
     // Update managed current server
-    const servers = this._eventManager.getServers();
-    this.getKeyboard().getEventManager().setServers(servers);
-    this.getTrackpad().getEventManager().setServers(servers);
-    this.getActivities().getEventManager().setServers(servers);
+    const server = this._eventManager.getCurrentServer();
+    this.getKeyboard().getEventManager().setCurrentServer(server);
+    this.getTrackpad().getEventManager().setCurrentServer(server);
+    this.getActivities().getEventManager().setCurrentServer(server);
 
     // Update remote UI to display current server to end user
     const serverLabel = this._elements.serverLabel;

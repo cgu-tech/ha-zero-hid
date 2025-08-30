@@ -177,20 +177,38 @@ export class EventManager {
     return this._isManaged;
   }
 
+  getServerId(server) {
+    return server?.["id"];
+  }
+
+  getServerName(server) {
+    return server?.["name"];
+  }
+
+  setCurrentServer(server) {
+    if (!this._areServersLoaded) return false;
+
+    const serverId = this.getServerId(server);
+    const indexes = this._servers ? this._servers.length : 0;
+    for (let index = 0; index < indexes; index++) {
+      if (this.getServerId(this._servers[index]) === serverId) {
+        this._currentServer = index;
+        return true;
+      }
+    }
+    return false;
+  }
+
   getCurrentServer() {
     return this._areServersLoaded ? this._servers[this._currentServer] : null;
   }
 
   getCurrentServerId() {
-    return this.getCurrentServer()?.["id"];
+    return this.getServerId(this.getCurrentServer());
   }
 
   getCurrentServerName() {
     return this.getServerName(this.getCurrentServer());
-  }
-  
-  getServerName(server) {
-    return server?.["name"];
   }
 
   activateNextServer() {
