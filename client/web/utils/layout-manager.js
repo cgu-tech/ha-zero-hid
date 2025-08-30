@@ -108,8 +108,8 @@ export class LayoutManager {
 
   getFromConfigOrDefaultConfigForServer(configName, serverId) {
     let configValue = this.getFromConfigForServer(configName, serverId);
-    if (!this.isDefined(configValue) configValue = this.getFromDefaultConfigForServer(configName, serverId);
-    if (!this.isDefined(configValue) configValue = this.getFromConfigOrDefaultConfig(configName);
+    if (!this.isDefined(configValue)) configValue = this.getFromDefaultConfigForServer(configName, serverId);
+    if (!this.isDefined(configValue)) configValue = this.getFromConfigOrDefaultConfig(configName);
     return configValue;
   }
 
