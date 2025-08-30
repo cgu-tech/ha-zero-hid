@@ -267,7 +267,7 @@ export class EventManager {
 
   hassCallback(onServersInitSucess, onServersInitError) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback(onServersInitSucess, onServersInitError)", onServersInitSucess, onServersInitError));
-    this.getServers(onServersInitSucess, onServersInitError);
+    this.loadServers(onServersInitSucess, onServersInitError);
   }
 
   connectedCallback() {
@@ -569,6 +569,10 @@ export class EventManager {
     }
   }
 
+  getServers() {
+    return this._servers;
+  }
+
   // Retrieves authorized list of HID servers asynchronously. 
   // After a call to this function, use "areServersLoaded()" to ensure async call finished.
   // 
@@ -576,7 +580,7 @@ export class EventManager {
   //  A promyze :
   //   - on command success: ".then((response) => {...})"
   //   - on command error: ".catch((err) => {...})"
-  getServers(onServersInitSucess, onServersInitError) {
+  loadServers(onServersInitSucess, onServersInitError) {
 
     // Servers already successfully loaded
     if (this._areServersLoaded) {
