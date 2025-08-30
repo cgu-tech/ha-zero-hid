@@ -243,12 +243,12 @@ export class TestCard extends HTMLElement {
       deltaY *= this._sensitivity;
 
       // Update cursor
-      this._cursorX = clamp(this._cursorX + deltaX, 0, window.innerWidth);
-      this._cursorY = clamp(this._cursorY + deltaY, 0, window.innerHeight);
+      this._cursorX = this.clamp(this._cursorX + deltaX, 0, window.innerWidth);
+      this._cursorY = this.clamp(this._cursorY + deltaY, 0, window.innerHeight);
 
       // Smooth position
-      const smoothedX = smooth(parseFloat(this._elements.cursor.style.left || 0), this._cursorX);
-      const smoothedY = smooth(parseFloat(this._elements.cursor.style.top || 0), this._cursorY);
+      const smoothedX = this.smooth(parseFloat(this._elements.cursor.style.left || 0), this._cursorX);
+      const smoothedY = this.smooth(parseFloat(this._elements.cursor.style.top || 0), this._cursorY);
 
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onDeviceOrientation(evt): x=${smoothedX}px, y=${smoothedY}px`, evt));
       this._elements.cursor.style.left = `${smoothedX}px`;
