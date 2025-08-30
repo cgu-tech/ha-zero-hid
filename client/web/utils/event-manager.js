@@ -266,7 +266,7 @@ export class EventManager {
   }
 
   hassCallback() {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback(onServersInitSucess, onServersInitError)", onServersInitSucess, onServersInitError));
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback()"));
     this.loadServers();
   }
 
@@ -577,33 +577,30 @@ export class EventManager {
   //   - on command error: ".catch((err) => {...})"
   loadServers() {
 
-    // Servers already successfully loaded
-    if (this._areServersLoaded) {
-      if (onServersInitSucess) onServersInitSucess();
-      return this._servers;
-    }
-
     // Command to send to HA backend to get servers list
     const serversListCommand = 'list_servers';
+
+    // Ensure not already loaded
+    if (this._areServersLoaded) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Servers already loaded (wont try to call '${serversListCommand}' HA command)`));
+      return;
+    }
 
     // Ensure not managed
     if (this.isManaged()) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Event manager origin is managed (wont try to call '${serversListCommand}' HA command)`));
-      if (onServersInitError) onServersInitError();
       return;
     }
 
     // Ensure servers not loading
     if (this._areServersLoading) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Servers already loading (wont try to call '${serversListCommand}' HA command)`));
-      if (onServersInitError) onServersInitError();
       return;
     }
 
     // Ensure HASS object initialized
     if (!this.getHass()) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`HASS object not initialized (wont try to call '${serversListCommand}' HA command)`));
-      if (onServersInitError) onServersInitError();
       return;
     }
 
