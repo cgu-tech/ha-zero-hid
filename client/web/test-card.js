@@ -78,13 +78,15 @@ export class TestCard extends HTMLElement {
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
     this._eventManager.connectedCallback();
-    this._deviceOrientationListener = this._eventManager.addDeviceOrientationListenerToContainer('test-orientation', window, this.onDeviceOrientation.bind(this));
+    // this._deviceOrientationListener = this._eventManager.addDeviceOrientationListenerToContainer('test-orientation', window, this.onDeviceOrientation.bind(this));
+    this._deviceMotionListener = this._eventManager.addDeviceMotionListenerToContainer('test-motion', window, this.onDeviceMotion.bind(this));
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
     this._eventManager.disconnectedCallback();
-    this._eventManager.removeListener(this._deviceOrientationListener);
+    // this._eventManager.removeListener(this._deviceOrientationListener);
+    this._eventManager.removeListener(this._deviceMotionListener);
   }
 
   adoptedCallback() {
@@ -258,6 +260,29 @@ export class TestCard extends HTMLElement {
     this._lastGamma = gamma;
     this._lastBeta = beta;
   }
+
+  _cursorSpeed = 5.0; // from 2 to 10 (highest to slowest)
+  _cursorDeadZone = 0.5; // Dead zone micromovements filter trigger
+
+  onDeviceMotion(evt) {
+    // Gyroscope equivalent: rotationRate (deg/s)
+    const gx = evt.rotationRate.alpha || 0; // X-axis
+    const gy = evt.rotationRate.beta || 0;  // Y-axis
+    const gz = evt.rotationRate.gamma || 0; // Z-axis
+
+    // You could process gx, gy, gz similar to the Arduino code
+    const vx = -gz / this._cursorSpeed;
+    const vy = gy / this._cursorSpeed;
+
+    // Filter micromovements
+    if (Math.abs(vx) > this._cursorDeadZone || Math.abs(vy) > this._cursorDeadZone) {
+      // Simulate action (e.g., mouse move)
+      const dx = vx.toFixed(1);
+      const dy = vy.toFixed(1);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Move cursor by: dx=${dx}, dy=${dy}`));
+    }
+  }
+
 
   //let lastX = window.innerWidth / 2;
   //let lastY = window.innerHeight / 2;

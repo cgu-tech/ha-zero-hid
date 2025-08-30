@@ -151,6 +151,7 @@ export class EventManager {
     this._eventsMap.set("EVT_POINTER_UP",         ["pointerup", "touchend", "mouseup"]);
     this._eventsMap.set("EVT_VISIBILITY_CHANGE",  ["visibilitychange"]);
     this._eventsMap.set("EVT_DEVICE_ORIENTATION", ["deviceorientation"]);
+    this._eventsMap.set("EVT_DEVICE_MOTION",      ["devicemotion"]);
     
 
     // Reversed mapping for each "real" event names with its "managed" event name counterpart
@@ -811,6 +812,7 @@ export class EventManager {
   addPointerUpListener(target, callback, options = null) { return this.addPointerUpListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addVisibilityChangeListener(target, callback, options = null) { return this.addVisibilityChangeListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addDeviceOrientationListener(target, callback, options = null) { return this.addDeviceOrientationListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addDeviceMotionListener(target, callback, options = null) { return this.addDeviceMotionListenerToContainer(this._defaultContainerName, target, callback, options ); }
 
   addBlurListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_BLUR" ); }
   addErrorListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_ERROR" ); }
@@ -828,6 +830,7 @@ export class EventManager {
   addPointerUpListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_POINTER_UP" ); }
   addVisibilityChangeListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_VISIBILITY_CHANGE" ); }
   addDeviceOrientationListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_DEVICE_ORIENTATION" ); }
+  addDeviceMotionListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_DEVICE_MOTION" ); }
 
   // Add the available event listener using 
   // - supported event first (when available) 
