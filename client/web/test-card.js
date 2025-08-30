@@ -78,11 +78,13 @@ export class TestCard extends HTMLElement {
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
     this._eventManager.connectedCallback();
+    this._deviceOrientationListener = this._eventManager.addDeviceOrientationListenerToContainer('test-orientation', document, this.onDeviceOrientation.bind(this)));
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
     this._eventManager.disconnectedCallback();
+    this._eventManager.removeListener(this._deviceOrientationListener);
   }
 
   adoptedCallback() {
@@ -186,6 +188,10 @@ export class TestCard extends HTMLElement {
     //document.addEventListener('visibilitychange', this.onDocumentVisibilityChange.bind(this));
     //window.addEventListener('focus', this.onWindowFocus.bind(this));
     //window.addEventListener('blur', this.onWindowBlur.bind(this));
+  }
+  
+  onDeviceOrientation(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onDeviceOrientation(evt)", evt));
   }
   
   onTestButtonHover(btn, evt) {
