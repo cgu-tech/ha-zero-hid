@@ -56,12 +56,21 @@ export class LayoutManager {
     return this.isDefined(configValue) ? configValue : this.getFromDefaultConfig(configName);
   }
 
-  getConfigForServer(config, serverId) {
+  getForServer(config, serverId) {
     return config?.[serverId];
   }
 
+  getFromConfigForServer(serverId, configName) {
+    return this.getForServer(this.getConfig(), serverId)?.[configName];
+  }
+  
+  getFromDefaultConfigForServer(serverId, configName) {
+    return this.getForServer(this.getStubConfig(), serverId)?.[configName];
+  }
+
   getFromConfigOrDefaultConfigForServer(serverId, configName) {
-    return this.getConfigForServer(this.getFromConfigOrDefaultConfig(configName), serverId);
+    const configValue = this.getFromConfigForServer(serverId, configName);
+    return this.isDefined(configValue) ? configValue : this.getFromDefaultConfigForServer(serverId, configName);
   }
 
   getHaptic() {
