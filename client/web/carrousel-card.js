@@ -130,7 +130,7 @@ export class CarrouselCard extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfigForServer("cells", this._eventManager.getCurrentServerId());
   }
   getOrientation() {
-    const orientation = this._orientation || this._layoutManager.getFromConfigOrDefaultConfigForServer("orientation", this._eventManager.getCurrentServerId());
+    const orientation = this._orientation || this._layoutManager.getFromConfigOrDefaultConfig("orientation", this._eventManager.getCurrentServerId());
     const orientationLow = (typeof orientation === 'string' ? orientation?.toLowerCase() : null);
     return (orientationLow === this.constructor._ORIENTATION_VERTICAL ? this.constructor._ORIENTATION_VERTICAL : this.constructor._ORIENTATION_HORIZONTAL);
   }
@@ -175,7 +175,7 @@ export class CarrouselCard extends HTMLElement {
   getCellConfigOrDefault(cellConfig, configName) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getCellConfigOrDefault(cellConfig, configName):", cellConfig, configName));
     const cellConfigName = `cell_${configName}`;
-    return cellConfig?.[configName] || this._layoutManager.getFromConfigOrDefaultConfigForServer(cellConfigName, this._eventManager.getCurrentServerId());
+    return cellConfig?.[configName] || this._layoutManager.getFromConfigOrDefaultConfig(cellConfigName, this._eventManager.getCurrentServerId());
   }
 
   // Dynamic config

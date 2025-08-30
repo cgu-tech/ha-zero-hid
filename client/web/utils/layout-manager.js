@@ -107,10 +107,13 @@ export class LayoutManager {
   }
 
   getFromConfigOrDefaultConfigForServer(configName, serverId) {
-    let configValue = this.getFromConfigForServer(configName, serverId);
-    if (!this.isDefined(configValue)) configValue = this.getFromDefaultConfigForServer(configName, serverId);
-    if (!this.isDefined(configValue)) configValue = this.getFromConfigOrDefaultConfig(configName);
-    return configValue;
+    const configValue = this.getFromConfigForServer(configName, serverId);
+    return this.isDefined(configValue) ? configValue : this.getFromDefaultConfigForServer(configName, serverId);
+  }
+  
+  getFromConfigOrDefaultConfigForServerOrParent(configName, serverId) {
+    const configValue = this.getFromConfigOrDefaultConfigForServer(configName, serverId);
+    return this.isDefined(configValue) ? configValue : this.getFromConfigOrDefaultConfig(configName);
   }
 
   getButtonsOverridesForServer(serverId) {
