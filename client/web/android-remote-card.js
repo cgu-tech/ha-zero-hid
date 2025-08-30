@@ -77,8 +77,21 @@ class AndroidRemoteCard extends HTMLElement {
     return this._logger;
   }
 
-  getEventManager() {
-    return this._eventManager;
+  setManaged(managed) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setManaged(managed):", managed));
+    this._eventManager.setManaged(managed);
+  }
+
+  setServers(servers) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setServers(servers):", servers));
+    this._eventManager.setServers(servers);
+    this.doUpdateServers();
+  }
+
+  setCurrentServer(server) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentServer(server):", server));
+    this._eventManager.setCurrentServer(server);
+    this.doUpdateCurrentServer();
   }
 
   setConfig(config) {
@@ -97,7 +110,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._hass = hass;
     this.doUpdateHass();
     this.doUpdateFoldablesHass();
-    this._eventManager.hassCallback(this.onServersInitSucess.bind(this), this.onServersInitError.bind(this));
+    this._eventManager.hassCallback();
   }
 
   connectedCallback() {
@@ -241,9 +254,9 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.foldables.trackpad = document.createElement("trackpad-card");
     this._elements.foldables.activities = document.createElement("carrousel-card");
 
-    this.getKeyboard().getEventManager().setManaged(true);
-    this.getTrackpad().getEventManager().setManaged(true);
-    this.getActivities().getEventManager().setManaged(true);
+    this.getKeyboard().setManaged(true);
+    this.getTrackpad().setManaged(true);
+    this.getActivities().setManaged(true);
   }
 
   createAddonsContent() {
@@ -898,31 +911,23 @@ class AndroidRemoteCard extends HTMLElement {
     this.getTrackpad().hass = this._hass;
     this.getActivities().hass = this._hass;
   }
-  
-  doUpdateServer() {
+
+  doUpdateCurrentServer() {
     // Update managed servers (when not already set)
     const servers = this._eventManager.getServers();
-    this.getKeyboard().getEventManager().setServers(servers);
-    this.getTrackpad().getEventManager().setServers(servers);
-    this.getActivities().getEventManager().setServers(servers);
+    this.getKeyboard().setServers(servers);
+    this.getTrackpad().setServers(servers);
+    this.getActivities().setServers(servers);
 
     // Update managed current server
     const server = this._eventManager.getCurrentServer();
-    this.getKeyboard().getEventManager().setCurrentServer(server);
-    this.getTrackpad().getEventManager().setCurrentServer(server);
-    this.getActivities().getEventManager().setCurrentServer(server);
+    this.getKeyboard().setCurrentServer(server);
+    this.getTrackpad().setCurrentServer(server);
+    this.getActivities().setCurrentServer(server);
 
     // Update remote UI to display current server to end user
     const serverLabel = this._elements.serverLabel;
     if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
-  }
-
-  onServersInitSucess() {
-    this.doUpdateServer();
-  }
-
-  onServersInitError() {
-    this.doUpdateServer();
   }
 
   doUpdateLayout() {

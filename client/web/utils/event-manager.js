@@ -265,9 +265,9 @@ export class EventManager {
     }
   }
 
-  hassCallback(onServersInitSucess, onServersInitError) {
+  hassCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback(onServersInitSucess, onServersInitError)", onServersInitSucess, onServersInitError));
-    this.loadServers(onServersInitSucess, onServersInitError);
+    this.loadServers();
   }
 
   connectedCallback() {
@@ -548,7 +548,7 @@ export class EventManager {
 
         // Invalid servers
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Empty or invalid servers list:', servers));
-        return false;
+        return;
       }
 
       // Valid servers: store retrieved servers
@@ -558,15 +558,10 @@ export class EventManager {
 
       // Update loaded lock
       this._areServersLoaded = true;
-
-      // Setup first server as current server
-      const firstServer = this.activateNextServer();
-      if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info('Valid servers list set, will use first server:', servers, firstServer));
-      return true;
-    } else {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Servers list already set (won\'t set):', servers));
-      return false;
+      if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info('Valid servers list set:', servers));
     }
+    
+    // Servers already sets
   }
 
   getServers() {
@@ -580,7 +575,7 @@ export class EventManager {
   //  A promyze :
   //   - on command success: ".then((response) => {...})"
   //   - on command error: ".catch((err) => {...})"
-  loadServers(onServersInitSucess, onServersInitError) {
+  loadServers() {
 
     // Servers already successfully loaded
     if (this._areServersLoaded) {
@@ -595,21 +590,21 @@ export class EventManager {
     if (this.isManaged()) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Event manager origin is managed (wont try to call '${serversListCommand}' HA command)`));
       if (onServersInitError) onServersInitError();
-      return null;
+      return;
     }
 
     // Ensure servers not loading
     if (this._areServersLoading) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`Servers already loading (wont try to call '${serversListCommand}' HA command)`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Servers already loading (wont try to call '${serversListCommand}' HA command)`));
       if (onServersInitError) onServersInitError();
-      return null;
+      return;
     }
 
     // Ensure HASS object initialized
     if (!this.getHass()) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`HASS object not initialized (wont try to call '${serversListCommand}' HA command)`));
       if (onServersInitError) onServersInitError();
-      return null;
+      return;
     }
 
     // Update loading lock (start)
@@ -621,31 +616,38 @@ export class EventManager {
       // Retrieve responded servers
       const { servers } = response;
 
-      // Define servers and call backs
-      if (this.setServers(servers)) {
+      try {
+        // Notify origin.setServers
+        this._origin?.setServers(servers);
 
-        // Update loading lock (end) + execute callback (success)
+        // Retrieve first server (when existing)
+        const firstServer = servers ? (servers.length > 0 ? servers[0] : null) : null;
+
+        // Notify origin.setCurrentServer
+        this._origin?.setCurrentServer(firstServer);
+      } finally {
+        // Update loading lock (end)
         this._areServersLoading = false;
-        if (onServersInitSucess) onServersInitSucess();
-
-      } else {
-
-        // Update loading lock (end) + execute callback (fail logically)
-        this._areServersLoading = false;
-        if (onServersInitError) onServersInitError();
       }
-
     })
     .catch((err) => {
       // Error while trying to communicate with HA
       if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Error while calling '${serversListCommand}' HA command:`, err));
 
-      // Update loading lock (end) + execute callback (fail technically)
-      this._areServersLoading = false;
-      if (onServersInitError) onServersInitError();
+      // Notify servers set to origin
+      try {
+        // Notify origin.setServers
+        this._origin?.setServers(null);
+
+        // Notify origin.setCurrentServer
+        this._origin?.setCurrentServer(null);
+      } finally {
+        // Update loading lock (end)
+        this._areServersLoading = false;
+      }
     });
 
-    return null;
+    return;
   }
 
   // Injects current server id into args["si"] (inject null into the field when not available)

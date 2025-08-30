@@ -74,8 +74,19 @@ export class TrackpadCard extends HTMLElement {
     return this._logger;
   }
 
-  getEventManager() {
-    return this._eventManager;
+  setManaged(managed) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setManaged(managed):", managed));
+    this._eventManager.setManaged(managed);
+  }
+
+  setServers(servers) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setServers(servers):", servers));
+    this._eventManager.setServers(servers);
+  }
+
+  setCurrentServer(server) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentServer(server):", server));
+    this._eventManager.setCurrentServer(server);
   }
 
   setConfig(config) {
