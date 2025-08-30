@@ -1924,7 +1924,7 @@ class AndroidRemoteCard extends HTMLElement {
       const currentServer = this._eventManager.getCurrentServer();
       const nextServer = this._eventManager.activateNextServer();
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
-      this.doUpdateServer();
+      this.doUpdateCurrentServer();
     } else if (overrideTypedConfig ===  this._OVERRIDE_NONE) {
       // Typed config "none"
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${this._overrideMode} mode ${pressType} press, nothing to do`, btn));
