@@ -230,9 +230,9 @@ export class TestCard extends HTMLElement {
   onDeviceOrientation(evt) {
     const { gamma, beta } = evt;
 
-    if (lastGamma !== null && lastBeta !== null) {
-      let deltaX = gamma - lastGamma;
-      let deltaY = beta - lastBeta;
+    if (this._lastGamma !== null && this._lastBeta !== null) {
+      let deltaX = gamma - this._lastGamma;
+      let deltaY = beta - this._lastBeta;
 
       // Dead zone filtering
       if (Math.abs(deltaX) < deadZone) deltaX = 0;
@@ -243,20 +243,20 @@ export class TestCard extends HTMLElement {
       deltaY *= sensitivity;
 
       // Update cursor
-      cursorX = clamp(cursorX + deltaX, 0, window.innerWidth);
-      cursorY = clamp(cursorY + deltaY, 0, window.innerHeight);
+      this._cursorX = clamp(this._cursorX + deltaX, 0, window.innerWidth);
+      this._cursorY = clamp(this._cursorY + deltaY, 0, window.innerHeight);
 
       // Smooth position
-      const smoothedX = smooth(parseFloat(this._elements.cursor.style.left || 0), cursorX);
-      const smoothedY = smooth(parseFloat(this._elements.cursor.style.top || 0), cursorY);
+      const smoothedX = smooth(parseFloat(this._elements.cursor.style.left || 0), this._cursorX);
+      const smoothedY = smooth(parseFloat(this._elements.cursor.style.top || 0), this._cursorY);
 
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onDeviceOrientation(evt): x=${smoothedX}px, y=${smoothedY}px`, evt));
       this._elements.cursor.style.left = `${smoothedX}px`;
       this._elements.cursor.style.top = `${smoothedY}px`;
     }
 
-    lastGamma = gamma;
-    lastBeta = beta;
+    this._lastGamma = gamma;
+    this._lastBeta = beta;
   }
 
   //let lastX = window.innerWidth / 2;
