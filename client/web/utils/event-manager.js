@@ -581,7 +581,7 @@ export class EventManager {
     // Servers already successfully loaded
     if (this._areServersLoaded) {
       if (onServersInitSucess) onServersInitSucess();
-      return;
+      return this._servers;
     }
 
     // Command to send to HA backend to get servers list
@@ -637,6 +637,8 @@ export class EventManager {
       this._areServersLoading = false;
       if (onServersInitError) onServersInitError();
     });
+
+    return null;
   }
 
   // Injects current server id into args["si"] (inject null into the field when not available)
