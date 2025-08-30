@@ -98,21 +98,21 @@ export class LayoutManager {
   }
 
   // With server versions
-  getFromConfigForServer(serverId, configName) {
-    return this.getConfig()?.[serverId]?.[configName];
+  getFromConfigForServer(configName, serverId) {
+    return this.getConfig()?.[configName]?.[serverId];
   }
 
-  getFromDefaultConfigForServer(serverId, configName) {
-    return this.getStubConfig()?.[serverId]?.[configName];
+  getFromDefaultConfigForServer(configName, serverId) {
+    return this.getStubConfig()?.[configName]?.[serverId];
   }
 
-  getFromConfigOrDefaultConfigForServer(serverId, configName) {
-    const configValue = this.getFromConfigForServer(serverId, configName);
-    return this.isDefined(configValue) ? configValue : this.getFromDefaultConfigForServer(serverId, configName);
+  getFromConfigOrDefaultConfigForServer(configName, serverId) {
+    const configValue = this.getFromConfigForServer(configName, serverId);
+    return this.isDefined(configValue) ? configValue : this.getFromDefaultConfigForServer(configName, serverId);
   }
 
   getButtonsOverridesForServer(serverId) {
-    return this.getFromConfigOrDefaultConfigForServer(serverId, 'buttons_overrides');
+    return this.getFromConfigOrDefaultConfigForServer('buttons_overrides', serverId);
   }
 
   getButtonOverrideForServer(serverId, btn) {
