@@ -99,6 +99,7 @@ export class TestCard extends HTMLElement {
   doCard() {
     this._elements.card = document.createElement("ha-card");
     this._elements.card.innerHTML = `
+      <div id="cursor"></div>
       <div class="container">
         <div class="test-button">
           <div class="test-button-label">Test</div>
@@ -111,6 +112,12 @@ export class TestCard extends HTMLElement {
   doStyle() {
     this._elements.style = document.createElement("style");
     this._elements.style.textContent = `
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #111;
+      }
+
       .container {
         display: flex;
         justify-content: center;
@@ -119,7 +126,7 @@ export class TestCard extends HTMLElement {
         height: 200px;
         background: #3a3a3a;
       }
-    
+
       .test-button {
         display: flex;
         justify-content: center;
@@ -153,6 +160,18 @@ export class TestCard extends HTMLElement {
         border: 1px solid #ccc;
         z-index: 9999;
       }
+
+      #cursor {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        background: red;
+        border-radius: 50%;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+      }
     `;
   }
 
@@ -166,6 +185,7 @@ export class TestCard extends HTMLElement {
     this._elements.container = card.querySelector(".container");
     this._elements.testButton = card.querySelector(".test-button");
     this._elements.popin = card.querySelector(".popin");
+    this._elements.cursor = card.querySelector('#cursor');
   }
 
   doListen() {
@@ -189,11 +209,96 @@ export class TestCard extends HTMLElement {
     //window.addEventListener('focus', this.onWindowFocus.bind(this));
     //window.addEventListener('blur', this.onWindowBlur.bind(this));
   }
-  
-  onDeviceOrientation(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onDeviceOrientation(evt)", evt));
+
+  _sensitivity = 2;
+  _deadZone = 1.5; // degrees
+  _smoothingAlpha = 0.2;
+
+  _lastGamma = null;
+  _lastBeta = null;
+  _cursorX = window.innerWidth / 2;
+  _cursorY = window.innerHeight / 2;
+
+  clamp(val, min, max) {
+    return Math.min(Math.max(val, min), max);
   }
-  
+
+  smooth(prev, curr, alpha = 0.2) {
+    return alpha * curr + (1 - alpha) * prev;
+  }
+
+  onDeviceOrientation(evt) {
+    const { gamma, beta } = evt;
+
+    if (lastGamma !== null && lastBeta !== null) {
+      let deltaX = gamma - lastGamma;
+      let deltaY = beta - lastBeta;
+
+      // Dead zone filtering
+      if (Math.abs(deltaX) < deadZone) deltaX = 0;
+      if (Math.abs(deltaY) < deadZone) deltaY = 0;
+
+      // Apply sensitivity
+      deltaX *= sensitivity;
+      deltaY *= sensitivity;
+
+      // Update cursor
+      cursorX = clamp(cursorX + deltaX, 0, window.innerWidth);
+      cursorY = clamp(cursorY + deltaY, 0, window.innerHeight);
+
+      // Smooth position
+      const smoothedX = smooth(parseFloat(this._elements.cursor.style.left || 0), cursorX);
+      const smoothedY = smooth(parseFloat(this._elements.cursor.style.top || 0), cursorY);
+
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onDeviceOrientation(evt): x=${smoothedX}px, y=${smoothedY}px`, evt));
+      this._elements.cursor.style.left = `${smoothedX}px`;
+      this._elements.cursor.style.top = `${smoothedY}px`;
+    }
+
+    lastGamma = gamma;
+    lastBeta = beta;
+  }
+
+  //let lastX = window.innerWidth / 2;
+  //let lastY = window.innerHeight / 2;
+  //
+  //onDeviceOrientation(evt) {
+  //  if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onDeviceOrientation(evt)", evt));
+  //  
+  //  // Get the alpha, beta, and gamma values
+  //  const alpha = event.alpha; // Rotation around Z-axis (0 - 360 degrees)
+  //  const beta = event.beta;   // Rotation around X-axis (-180 to 180 degrees)
+  //  const gamma = event.gamma; // Rotation around Y-axis (-90 to 90 degrees)
+  //  
+  //  // Map the orientation values to screen coordinates
+  //  // Assuming the center of the screen is the origin (lastX, lastY)
+  //  
+  //  const sensitivity = 10; // Control the sensitivity of mouse movement
+  //  
+  //  // Adjust mouse position based on device rotation (alpha, beta, gamma)
+  //  let newX = lastX + (gamma * sensitivity);
+  //  let newY = lastY + (beta * sensitivity);
+  //  
+  //  // Clamp the new positions to screen dimensions
+  //  newX = Math.max(0, Math.min(window.innerWidth, newX));
+  //  newY = Math.max(0, Math.min(window.innerHeight, newY));
+  //  
+  //  // Update last position for next movement
+  //  lastX = newX;
+  //  lastY = newY;
+  //  
+  //  // Create a mousemove event
+  //  const mouseMoveEvent = new MouseEvent("mousemove", {
+  //    clientX: newX,
+  //    clientY: newY,
+  //    bubbles: true,
+  //    cancelable: true,
+  //  });
+  //  
+  //  // Dispatch the mousemove event
+  //  document.dispatchEvent(mouseMoveEvent);
+  //}
+
   onTestButtonHover(btn, evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTestButtonHover(btn, evt)", btn, evt));
   }
