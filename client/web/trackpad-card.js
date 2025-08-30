@@ -129,7 +129,7 @@ export class TrackpadCard extends HTMLElement {
 
     // Process gx, gy, gz
     const vx = -gz / this._cursorSpeed;
-    const vy = gy / this._cursorSpeed;
+    const vy = -gy / this._cursorSpeed;
 
     // Filter micromovements
     if (Math.abs(vx) > this._cursorDeadZone || Math.abs(vy) > this._cursorDeadZone) {
