@@ -2032,9 +2032,12 @@ class AndroidRemoteCard extends HTMLElement {
   }
   
   doUpdateAirmouseMode() {
-    const isAirmouseEnabled = this.getAirMouse().isMoveEnabled();
-    if (isAirmouseEnabled) remoteModeBtn.classList.add("locked");
-    if (!isAirmouseEnabled) remoteModeBtn.classList.remove("locked");
+    const airMouseBtn = this._elements.airmouseBtn;
+    if (airMouseBtn) {
+      const isAirmouseEnabled = this.getAirMouse().isMoveEnabled();
+      if (isAirmouseEnabled) airMouseBtn.classList.add("locked");
+      if (!isAirmouseEnabled) airMouseBtn.classList.remove("locked");
+    }
   }
 
   appendCode(code) {
