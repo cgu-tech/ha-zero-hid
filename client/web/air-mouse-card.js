@@ -118,7 +118,7 @@ export class AirMouseCard extends HTMLElement {
     this._elements.card.innerHTML = '';
 
     // Forcing inline styles into card to ensure this html element invisibility
-    Object.assign(card.style, {
+    Object.assign(this._elements.card.style, {
       borderRadius: "0px",
       pointerEvents: "none",
       visibility: "hidden",
