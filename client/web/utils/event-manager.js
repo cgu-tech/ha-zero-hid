@@ -190,15 +190,33 @@ export class EventManager {
   setCurrentServer(server) {
     if (!this._areServersLoaded) return false;
 
-    const serverId = this.getServerId(server);
-    const indexes = this._servers ? this._servers.length : 0;
-    for (let index = 0; index < indexes; index++) {
-      if (this.getServerId(this._servers[index]) === serverId) {
-        this._currentServer = index;
-        return true;
+    // Normal case: server has an index
+    if (server?.["index"]) {
+      this._currentServer = server["index"];
+      return server["index"];
+    } else {
+
+      // Unusual case: server does not have any index (might be forged by hand)
+      const serverId = this.getServerId(server);
+      const indexes = this._servers ? this._servers.length : 0;
+      
+      // Lookup for index of first matching serverId
+      for (let index = 0; index < indexes; index++) {
+        if (this.getServerId(this._servers[index]) === serverId) {
+          // Found index of first matching serverId
+
+          // Complete the server with its missing index:
+          server["index"] = index;
+
+          // Set current server to given index
+          this._currentServer = index;
+          return index;
+        }
       }
     }
-    return false;
+    
+    // Unknown server
+    return -1;
   }
 
   getCurrentServer() {
@@ -213,15 +231,15 @@ export class EventManager {
     return this.getServerName(this.getCurrentServer());
   }
 
-  activateNextServer() {
+  getNextServer() {
     if (!this._areServersLoaded) return null;
 
-    this._currentServer = 
+    const nextServer = 
       (this._currentServer < this._servers.length - 1)
         ? this._currentServer + 1
         : 0;
 
-    return this._servers[this._currentServer];
+    return this._servers[nextServer];
   }
 
   // Get elapsed time between a start event and an end event (in milliseconds)
@@ -554,7 +572,9 @@ export class EventManager {
       }
 
       // Valid servers: store retrieved servers
+      let serverIndex = -1;
       for (const server of (servers ?? [])) {
+        server.index = ++serverIndex;
         this._servers.push(server);
       }
 

@@ -292,7 +292,7 @@ export class LayoutManager {
 
   static getLayoutsByNames(layouts) {
     const layoutsByNames = new Map();
-    for (const layout of Object.values(layouts)) {
+    for (const layout of Object.values(layouts || {})) {
       layoutsByNames.set(layout.Name, layout);
     }
     return layoutsByNames;

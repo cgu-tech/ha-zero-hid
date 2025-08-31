@@ -86,12 +86,13 @@ class AndroidRemoteCard extends HTMLElement {
   setServers(servers) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setServers(servers):", servers));
     this._eventManager.setServers(servers);
-    this.doUpdateServers();
+    this.doUpdateManagedServers();
   }
 
   setCurrentServer(server) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentServer(server):", server));
     this._eventManager.setCurrentServer(server);
+    this.doUpdateManagedCurrentServer();
     this.doUpdateCurrentServer();
   }
 
@@ -103,14 +104,14 @@ class AndroidRemoteCard extends HTMLElement {
   doSetConfig() {
     this.doCheckConfig();
     this.doUpdateConfig();
-    this.doUpdateFoldablesConfig();
+    this.doUpdateManagedConfigs();
   }
 
   set hass(hass) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
     this.doUpdateHass();
-    this.doUpdateFoldablesHass();
+    this.doUpdateManagedHass();
     this._eventManager.hassCallback();
   }
 
@@ -139,7 +140,11 @@ class AndroidRemoteCard extends HTMLElement {
   getActivitiesConfig() {
     return this._layoutManager.getFromConfigOrDefaultConfig("activities");
   }
-  
+
+  getAirMouseConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("airmouse");
+  }
+
   getAddonsConfig() {
     return this._layoutManager.getFromConfigOrDefaultConfig("addons");
   }
@@ -163,7 +168,11 @@ class AndroidRemoteCard extends HTMLElement {
   getActivities() {
     return this._elements.foldables.activities;
   }
-    
+
+  getAirMouse() {
+    return this._elements.airMouse;
+  }
+
   getAddonsWrapper() {
     return this._elements.addons.wrapper;
   }
@@ -810,11 +819,14 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateAddons();
   }
 
-  doUpdateFoldablesConfig() {
+  doUpdateManagedConfigs() {
     // Update foldables cards configs
     this.getKeyboard().setConfig(this.getKeyboardConfig());
     this.getTrackpad().setConfig(this.getTrackpadConfig());
     this.getActivities().setConfig(this.getActivitiesConfig());
+
+    // Update air-mouse config
+    this.getAirMouse().setConfig(this.getAirMouseConfig());
   }
 
   doUpdateHass() {
@@ -907,31 +919,44 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
   
-  doUpdateFoldablesHass() {
-    // Update foldables cards configs
+  doUpdateManagedHass() {
+    // Update foldables cards HASS object
     this.getKeyboard().hass = this._hass;
     this.getTrackpad().hass = this._hass;
     this.getActivities().hass = this._hass;
+
+    // Update air mouse card HASS object
+    this.getAirMouse().hass = this._hass;
   }
 
-  doUpdateServers() {
-    // Update managed servers (when not already set)
+  doUpdateManagedServers() {
     const servers = this._eventManager.getServers();
+
+    // Update foldables cards servers (when not already set)
     this.getKeyboard().setServers(servers);
     this.getTrackpad().setServers(servers);
     this.getActivities().setServers(servers);
+
+    // Update air mouse card servers (when not already set)
+    this.getAirMouse().setServers(servers);
   }
 
   doUpdateCurrentServer() {
-    // Update managed current server
+    // Update remote UI to display current server to end user
+    const serverLabel = this._elements.serverLabel;
+    if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
+  }
+
+  doUpdateManagedCurrentServer() {
     const server = this._eventManager.getCurrentServer();
+
+    // Update foldables current server
     this.getKeyboard().setCurrentServer(server);
     this.getTrackpad().setCurrentServer(server);
     this.getActivities().setCurrentServer(server);
 
-    // Update remote UI to display current server to end user
-    const serverLabel = this._elements.serverLabel;
-    if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
+    // Update air mouse current server
+    this.getAirMouse().setCurrentServer(server);
   }
 
   doUpdateLayout() {
@@ -1922,9 +1947,9 @@ class AndroidRemoteCard extends HTMLElement {
       
       // switch to next available HID server
       const currentServer = this._eventManager.getCurrentServer();
-      const nextServer = this._eventManager.activateNextServer();
+      const nextServer = this._eventManager.getNextServer();
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
-      this.doUpdateCurrentServer();
+      this.setCurrentServer(nextServer);
     } else if (overrideTypedConfig ===  this._OVERRIDE_NONE) {
       // Typed config "none"
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${this._overrideMode} mode ${pressType} press, nothing to do`, btn));
