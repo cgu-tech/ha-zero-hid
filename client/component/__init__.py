@@ -10,7 +10,7 @@ from homeassistant.components.websocket_api import websocket_command, async_resp
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from typing import Set, TypedDict, List, Any
+from typing import Set, TypedDict, List, Any, Optional
 
 from .resources_manager import ResourcesVersions, synchronize_resources, synchronize_resources_heuristically
 from .websocket_handler import WebSocketClient
@@ -25,6 +25,7 @@ class WSServerInfo(TypedDict):
 
 class UserPrefs(TypedDict):
     user_id: str
+    servers: List[Any]
     server_id: str
     remote_mode: str
     airmouse_mode: str
@@ -84,9 +85,18 @@ LOG_SERVICE_SCHEMA = vol.Schema({
     vol.Required("logs"): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
+SET_PREFS_SCHEMA = vol.Schema({
+    vol.Required("user_id"): vol.All(lambda v: v or "", ensure_string_or_empty),
+    vol.Required("servers"): vol.All(lambda v: v or [], ensure_list_or_empty),
+    vol.Required("server_id"): vol.All(lambda v: v or "", ensure_string_or_empty),
+    vol.Required("remote_mode"): vol.All(lambda v: v or "", ensure_string_or_empty),
+    vol.Required("airmouse_mode"): vol.All(lambda v: v or "", ensure_string_or_empty),
+})
+
 def get_user_prefs(hass: HomeAssistant, user_id: str) -> UserPrefs:
     return hass.data[DOMAIN]["users_prefs"].setdefault(user_id, {
         "user_id": user_id,
+        "servers": get_user_authorized_servers(hass, user_id),
         "server_id": "",
         "remote_mode": "",
         "airmouse_mode": "",
@@ -122,31 +132,35 @@ def is_user_authorized(info: WSServerInfo, user_id: str) -> bool:
     _LOGGER.debug(f"Authenticated: user ID ({user_id}) is authorized")
     return True
 
-def is_user_authorized_from_service(info: WSServerInfo, call: ServiceCall) -> bool:
+def get_user_id_from_service(call: ServiceCall) -> Optional[str]:
     context = call.context
     if not context:
+        return None
+    return context.user_id
+
+def get_user_id_from_command(connection: ActiveConnection) -> Optional[str]:
+    user = connection.user
+    if not user:
+        return None
+    return user.id
+
+def is_user_authorized_from_service(info: WSServerInfo, call: ServiceCall) -> bool:
+    user_id = get_user_id_from_service(call)
+    if not user_id:
         _LOGGER.debug("Unauthenticated: no context found")
         return False
-
-    user_id = context.user_id
     return is_user_authorized(info, user_id)
 
 def is_user_authorized_from_command(info: WSServerInfo, connection: ActiveConnection) -> bool:
-    user = connection.user
-    if not user:
-        _LOGGER.debug("Unauthenticated: no user found")
+    user_id = get_user_id_from_command(connection)
+    if not user_id:
+        _LOGGER.debug("Unauthenticated: no context found")
         return False
-
-    user_id = user.id
     return is_user_authorized(info, user_id)
 
-def get_user_authorized_servers(hass: HomeAssistant, connection: ActiveConnection) -> List[Any]:
-    user = connection.user
-    if not user:
-        _LOGGER.debug("Unauthenticated: no user found")
-        return False
-
-    user_id = user.id
+def get_user_authorized_servers(hass: HomeAssistant, user_id: str) -> List[Any]:
+    if not user_id:
+        return []
 
     # Retrieve authorized servers for user (only those will be advertised)
     servers = []
@@ -161,11 +175,12 @@ def get_user_authorized_servers(hass: HomeAssistant, connection: ActiveConnectio
             _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
     return servers
 
-@websocket_command({vol.Required("type"): DOMAIN + "/list_servers"})
+@websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
 @async_response
-async def websocket_list_servers(hass: HomeAssistant, connection: ActiveConnection, msg):
-    servers = get_user_authorized_servers(hass, connection)
-    connection.send_result(msg["id"], {"servers": servers})
+async def websocket_get_prefs(hass: HomeAssistant, connection: ActiveConnection, msg):
+    user_id = get_user_id_from_command(connection)
+    user_prefs = get_user_prefs(hass, user_id)
+    connection.send_result(msg["id"], {"prefs": user_prefs})
 
 @websocket_command({vol.Required("type"): DOMAIN + "/sync_keyboard"})
 @async_response
@@ -217,6 +232,18 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         "ws_servers": ws_servers,
         "users_prefs": {},
     }
+
+    """Handle saving user prefs for the session."""
+    @callback
+    async def handle_set_prefs(call: ServiceCall) -> None:
+        user_id = get_user_id_from_service(call)
+        if user_id:
+            user_prefs = get_user_prefs(hass, user_id)
+            user_prefs["server_id"] = call.data.get("server_id")
+            user_prefs["remote_mode"] = call.data.get("remote_mode")
+            user_prefs["airmouse_mode"] = call.data.get("airmouse_mode")
+        else
+            _LOGGER.exception(f"Unauthenticated user tried to set preferences into session")
 
     """Handle scrolling mouse."""
     @callback
@@ -411,6 +438,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 _LOGGER.critical(fmt, level, origin, logger_id, highlight, *logs)
 
     # Register our services with Home Assistant.
+    hass.services.async_register(DOMAIN, "set_prefs", handle_set_prefs, schema=SET_PREFS_SCHEMA)
     hass.services.async_register(DOMAIN, "scroll", handle_scroll, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "move", handle_move, schema=MOVE_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "clickleft", handle_clickleft)
@@ -423,7 +451,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "log", handle_log, schema=LOG_SERVICE_SCHEMA)
 
     # Register WebSocket command
-    async_register_command(hass, websocket_list_servers)
+    async_register_command(hass, websocket_get_prefs)
     async_register_command(hass, websocket_sync_keyboard)
     async_register_command(hass, websocket_sync_resources)
 
