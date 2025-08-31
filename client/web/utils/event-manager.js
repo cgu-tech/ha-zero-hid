@@ -208,8 +208,9 @@ export class EventManager {
   getNextServer() {
     if (!this.areServersAvailable()) return null; // No available servers
 
+    const servers = this.getUserPreferenceServers();
     const currentServerId = this.getUserPreferenceServerId();
-    const currentIndex = this.getUserPreferenceServers().findIndex(server => this.getServerId(server) === currentServerId);
+    const currentIndex = servers.findIndex(server => this.getServerId(server) === currentServerId);
     if (currentIndex === -1) return null; // No serverId or serverId not in servers list
 
     // Compute next server index
