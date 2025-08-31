@@ -23,6 +23,12 @@ class WSServerInfo(TypedDict):
     authorized_users: Set[str]
     services: Set[str]
 
+class UserPrefs(TypedDict):
+    user_id: str
+    server_id: str
+    remote_mode: str
+    airmouse_mode: str
+
 # Use empty_config_schema because the component does not have any config options
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
@@ -77,6 +83,14 @@ LOG_SERVICE_SCHEMA = vol.Schema({
     vol.Required("highlight"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("logs"): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
+
+def get_user_prefs(hass: HomeAssistant, user_id: str) -> UserPrefs:
+    return hass.data[DOMAIN]["users_prefs"].setdefault(user_id, {
+        "user_id": user_id,
+        "server_id": "",
+        "remote_mode": "",
+        "airmouse_mode": "",
+    })
 
 def get_ws_server_infos(hass: HomeAssistant) -> List[Any]:
     return hass.data[DOMAIN]["ws_servers"]
@@ -191,15 +205,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websockets servers configs and clients."""
     ws_servers = {}
     for server in WEBSOCKET_SERVERS:
-        ws_client = WebSocketClient(f"{server['protocol']}://{server['host']}:{server['port']}", server["secret"])
+        server_connection = f"{server['protocol']}://{server['host']}:{server['port']}"
+        ws_client = WebSocketClient(server_connection, server["secret"])
         ws_servers[server["id"]] = {
             "name": server["name"],
             "ws_client": ws_client,
             "authorized_users": set(authorized_user.strip() for authorized_user in server["authorized_users"].split(","))
         }
-        _LOGGER.debug(f"Discovered server {server['protocol']}://{server['host']}:{server['port']}")
+        _LOGGER.debug(f"Discovered server {server_connection}")
     hass.data[DOMAIN] = {
         "ws_servers": ws_servers,
+        "users_prefs": {},
     }
 
     """Handle scrolling mouse."""
