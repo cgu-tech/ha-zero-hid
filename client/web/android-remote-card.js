@@ -100,6 +100,12 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateCurrentServer();
   }
 
+  setAirmouseEnabled(enable) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setAirmouseEnabled(enable):", enable));
+    this.getAirMouse().setMoveEnabled(enable);
+    this.doUpdateAirmouseMode();
+  }
+
   setConfig(config) {
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
@@ -1172,7 +1178,6 @@ class AndroidRemoteCard extends HTMLElement {
       const airmouseBtn = cellContent;
       this._elements.airmouseBtn = airmouseBtn;
     }
-    this._elements.modeButton
   }
 
   doListenCellContent(cellContent) {
@@ -1815,7 +1820,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to press
     const code = btnData.code;
-    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn)) {
+    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
 
       // Nothing to do: overriden action will be executed on key release
       if (this.hasTypedButtonOverrideShort(btn)) {
@@ -1823,7 +1828,7 @@ class AndroidRemoteCard extends HTMLElement {
       }
 
       // Triggering override long click timeout
-      if (this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn)) {
+      if (this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: server switch or overridden key for ${this.getRemoteMode()} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
         this._overrideLongPressTimeouts.set(evt.pointerId, { 
           "can-run": true,                   // until proven wrong, long press action can be run
@@ -1857,7 +1862,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to abort press
     const code = btnData.code;
-    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn)) {
+    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
       if (this.hasTypedButtonOverrideShort(btn)) {
@@ -1897,6 +1902,12 @@ class AndroidRemoteCard extends HTMLElement {
     if (overrideLongPressEntry && overrideLongPressEntry["was-ran"]) {
       // Overriden action already executed into its long-press Form
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected but action already executed into ${this.getRemoteMode()} ${this._OVERRIDE_TYPE_LONG_PRESS}, nothing else to do`));
+    } else if (this.isAirmouseButton(btn)) {
+      // Airmouse button can be short pressed but not overriden
+      const currentAirmouseMode = this.getAirMouse().isMoveEnabled();
+      const nextAirmouseMode = !currentAirmouseMode;
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: switching airmouse mode from ${currentAirmouseMode} to ${nextAirmouseMode}...`, btn));
+      this.setAirmouseEnabled(nextAirmouseMode);
     } else if (this.hasTypedButtonOverrideShort(btn)) {
       // Overriden action
       
@@ -1980,8 +1991,7 @@ class AndroidRemoteCard extends HTMLElement {
       const currentAirmouseMode = this.getAirMouse().isMoveEnabled();
       const nextAirmouseMode = !currentAirmouseMode;
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching airmouse mode from ${currentAirmouseMode} to ${nextAirmouseMode}...`, btn));
-      this.getAirMouse().setMoveEnabled(nextAirmouseMode);
-      this.doUpdateAirmouseMode();
+      this.setAirmouseEnabled(nextAirmouseMode);
     } else if (overrideTypedConfig ===  this._OVERRIDE_NONE) {
       // Typed config "none"
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${this.getRemoteMode()} mode ${pressType} press, nothing to do`, btn));
