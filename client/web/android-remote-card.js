@@ -170,7 +170,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   getAirMouse() {
-    return this._elements.airMouse;
+    return this._elements.airmouse;
   }
 
   getAddonsWrapper() {
@@ -258,16 +258,21 @@ class AndroidRemoteCard extends HTMLElement {
     return null;
   }
 
-  createFoldableContent() {
-    this._elements.foldables = {};
+  createManagedContent() {
 
+    // Create managed foldables
+    this._elements.foldables = {};
     this._elements.foldables.keyboard = document.createElement("android-keyboard-card");
     this._elements.foldables.trackpad = document.createElement("trackpad-card");
     this._elements.foldables.activities = document.createElement("carrousel-card");
-
     this.getKeyboard().setManaged(true);
     this.getTrackpad().setManaged(true);
     this.getActivities().setManaged(true);
+
+    // Create managed air-mouse
+    this._elements.airmouse = document.createElement("air-mouse-card");
+    this.getAirMouse().setManaged(true);
+    this._elements.card.appendChild(this.getAirMouse()); // Append air-mouse at the end of card
   }
 
   createAddonsContent() {
@@ -290,7 +295,7 @@ class AndroidRemoteCard extends HTMLElement {
       </div>
     `;
 
-    this.createFoldableContent();
+    this.createManagedContent();
     this.createAddonsContent();
   }
 
