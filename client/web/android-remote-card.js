@@ -13,6 +13,7 @@ import * as layoutsRemote from './layouts/remote/index.js';
 import { AndroidKeyboardCard } from './android-keyboard-card.js?v=<ha_resources_version>';
 import { TrackpadCard } from './trackpad-card.js?v=<ha_resources_version>';
 import { CarrouselCard } from './carrousel-card.js?v=<ha_resources_version>';
+import { AirMouseCard } from './air-mouse-card.js?v=<ha_resources_version>';
 
 console.info("Loading android-remote-card");
 
