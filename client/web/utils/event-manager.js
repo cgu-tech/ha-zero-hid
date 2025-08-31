@@ -126,8 +126,8 @@ export class EventManager {
   _popins = new Set(); // Managed popins
   _servers = []; // Available HID servers
   _currentServer = -1; // Current selected server
-  _areServersLoading = false; // Available servers loading in progress lock
-  _areServersLoaded = false; // Available servers loaded once lock
+  _arePreferencesLoading = false; // Session user preferences loading in progress lock
+  _arePreferencesLoaded = false; // Session user preferences loaded once lock
   _isManaged = false; // indicates whether or not this event manager origin card is managed by another card (and transitively whether or not some events managements should be delegated to the manager card of the origin card)
 
   constructor(origin) {
@@ -188,12 +188,12 @@ export class EventManager {
   }
 
   setCurrentServer(server) {
-    if (!this._areServersLoaded) return false;
+    if (!this._arePreferencesLoaded) return false;
 
     // Normal case: server has an index
     if (server?.["index"]) {
       this._currentServer = server["index"];
-      return server["index"];
+      return this._currentServer;
     } else {
 
       // Unusual case: server does not have any index (might be forged by hand)
@@ -210,17 +210,18 @@ export class EventManager {
 
           // Set current server to given index
           this._currentServer = index;
-          return index;
+          return this._currentServer;
         }
       }
     }
     
     // Unknown server
-    return -1;
+    this._currentServer = -1;
+    return this._currentServer;
   }
 
   getCurrentServer() {
-    return this._areServersLoaded ? this._servers[this._currentServer] : null;
+    return this._arePreferencesLoaded ? this._servers[this._currentServer] : null;
   }
 
   getCurrentServerId() {
@@ -232,7 +233,7 @@ export class EventManager {
   }
 
   getNextServer() {
-    if (!this._areServersLoaded) return null;
+    if (!this._arePreferencesLoaded) return null;
 
     const nextServer = 
       (this._currentServer < this._servers.length - 1)
@@ -287,7 +288,7 @@ export class EventManager {
 
   hassCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback()"));
-    this.loadServers();
+    this.loadPreferences();
   }
 
   connectedCallback() {
@@ -561,7 +562,7 @@ export class EventManager {
   setServers(servers) {
 
     // Ensure not loaded
-    if (!this._areServersLoaded) {
+    if (!this._arePreferencesLoaded) {
 
       // Check responded servers
       if (!servers || !Array.isArray(servers) || servers.length < 1) {
@@ -579,7 +580,7 @@ export class EventManager {
       }
 
       // Update loaded lock
-      this._areServersLoaded = true;
+      this._arePreferencesLoaded = true;
       if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info('Valid servers list set:', servers));
     }
     
@@ -590,68 +591,72 @@ export class EventManager {
     return this._servers;
   }
 
-  // Retrieves authorized list of HID servers asynchronously. 
-  // After a call to this function, use "areServersLoaded()" to ensure async call finished.
-  // 
-  // Returns: 
-  //  A promyze :
-  //   - on command success: ".then((response) => {...})"
-  //   - on command error: ".catch((err) => {...})"
-  loadServers() {
+  // Aynchronously retrieves user preferences, including authorized list of HID servers. 
+  loadPreferences() {
 
-    // Command to send to HA backend to get servers list
-    const serversListCommand = 'list_servers';
+    // Command to send to HA backend to get user preferences list
+    const userPrefsCommand = 'get_prefs';
 
     // Ensure not already loaded
-    if (this._areServersLoaded) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Servers already loaded (wont try to call '${serversListCommand}' HA command)`));
+    if (this._arePreferencesLoaded) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Preferences already loaded (wont try to call '${userPrefsCommand}' HA command)`));
       return;
     }
 
     // Ensure not managed
     if (this.isManaged()) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Event manager origin is managed (wont try to call '${serversListCommand}' HA command)`));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Event manager origin is managed (wont try to call '${userPrefsCommand}' HA command)`));
       return;
     }
 
-    // Ensure servers not loading
-    if (this._areServersLoading) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Servers already loading (wont try to call '${serversListCommand}' HA command)`));
+    // Ensure preferences not loading
+    if (this._arePreferencesLoading) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Preferences already loading (wont try to call '${userPrefsCommand}' HA command)`));
       return;
     }
 
     // Ensure HASS object initialized
     if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`HASS object not initialized (wont try to call '${serversListCommand}' HA command)`));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`HASS object not initialized (wont try to call '${userPrefsCommand}' HA command)`));
       return;
     }
 
     // Update loading lock (start)
-    this._areServersLoading = true;
+    this._arePreferencesLoading = true;
 
-    // Start loading servers list asynchronously
-    this.callComponentCommand(serversListCommand)?.then((response) => {
+    // Start loading preferences asynchronously
+    this.callComponentCommand(userPrefsCommand)?.then((response) => {
 
-      // Retrieve responded servers
-      const { servers } = response;
+      // Retrieve responded preferences
+      // prefs:
+      //   user_id       (string) --> user backend id. This cannot be changed from fronted for security reason (backend enforces this).
+      //   servers (List<server>) --> list of servers authorized by backend (server = {id, name}). This cannot be changed from fronted for security reason (backend enforces this).
+      //   server_id     (string) --> last saved server id (eg. "1", default "")
+      //   remote_mode   (string) --> last saved remote mode (eg. "normal" or "alt", default "")
+      //   airmouse_mode (string) --> last saved airmouse mode (eg. "on" or "off", default "")
+      const { prefs } = response;
 
-      try {
+      try {        
         // Notify origin.setServers
+        const servers = prefs["servers"];
         this._origin?.setServers(servers);
 
-        // Retrieve first server (when existing)
+        // Retrieve selected server (when existing)
+        const server_id = prefs["server_id"];
         const firstServer = servers ? (servers.length > 0 ? servers[0] : null) : null;
+        const server = server_id ? (servers.find(server => this.getServerId(server) === server_id) ?? firstServer) : firstServer;
 
         // Notify origin.setCurrentServer
-        this._origin?.setCurrentServer(firstServer);
+        this._origin?.setCurrentServer(server);
+
       } finally {
         // Update loading lock (end)
-        this._areServersLoading = false;
+        this._arePreferencesLoading = false;
       }
     })
     .catch((err) => {
       // Error while trying to communicate with HA
-      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Error while calling '${serversListCommand}' HA command:`, err));
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`Error while calling '${userPrefsCommand}' HA command:`, err));
 
       // Notify servers set to origin
       try {
@@ -662,11 +667,16 @@ export class EventManager {
         this._origin?.setCurrentServer(null);
       } finally {
         // Update loading lock (end)
-        this._areServersLoading = false;
+        this._arePreferencesLoading = false;
       }
     });
 
     return;
+  }
+
+  static isStringNumber(value) {
+    const num = Number(value);
+    return typeof num === 'number' && Number.isFinite(num);
   }
 
   // Injects current server id into args["si"] (inject null into the field when not available)
