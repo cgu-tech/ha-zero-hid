@@ -17,8 +17,6 @@ export class AirMouseCard extends HTMLElement {
   _layoutManager;
   _resourceManager;
 
-  _moveEnabled = false; // Defines whether or not air-mouse moves are enabled
-
   constructor() {
     super();
 
@@ -96,11 +94,11 @@ export class AirMouseCard extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("dead_zone");
   }
 
-  setMoveEnabled(enable) {
-    this._moveEnabled = !!enable;
-  }
   isMoveEnabled() {
-    return this._moveEnabled;
+    return this._eventManager.getUserPreferenceAirmouseMode() === "on";
+  }
+  setMoveEnabled(enable) {
+    this._eventManager.setUserPreferenceAirmouseMode(enable ? "on" : "off");
   }
 
   // jobs
