@@ -354,7 +354,7 @@ export const androidRemoteCardConfig = {
   },
   "remote-button-air-mouse": {
     html: 
-    `<svg id="air-mouse" viewBox="0 0 44.659782 39.227093" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf">
+    `<svg id="airmouse-icon" viewBox="0 0 44.659782 39.227093" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf">
       <path id="cursor" stroke-width="2" stroke-linejoin="round" d="M 2.9999878,2.2271195 22.999988,22.22712 l -8,2 4,12 -6,2 -3.9999999,-12 -8.00000033,4 z" />
       <path id="trail-01" stroke-width="2" stroke-dasharray="none" d="M 7.3661465,1.2052222 C 29.195143,-0.51968479 38.652392,9.1754839 38.652392,9.1754839" />
       <path id="trail-02" stroke-width="1.5" stroke-dasharray="none" d="m 17.067569,11.442729 c 18.850616,-1.7329121 27.017504,8.007246 27.017504,8.007246" />

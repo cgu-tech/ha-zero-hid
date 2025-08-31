@@ -800,6 +800,12 @@ class AndroidRemoteCard extends HTMLElement {
         display: block; /* removes any inline space */
         transform: scale(0.5, 0.5);
       }
+      #airmouse-icon {
+        height: 100%;
+        width: auto;  /* maintain aspect ratio */
+        display: block; /* removes any inline space */
+        transform: scale(0.5, 0.5);
+      }
     `;
   }
 
