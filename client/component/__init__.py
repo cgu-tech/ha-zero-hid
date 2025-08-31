@@ -251,7 +251,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 user_prefs_check = hass.data[DOMAIN]["users_prefs"][user_id]
-                _LOGGER.debug(f"Received preferences for user {user_id}: server_id={server_id},remote_mode={remote_mode},airmouse_mode={airmouse_mode}")
+                _LOGGER.debug(f"Received preferences for user {user_id}: server_id={call.data.get("server_id")},remote_mode={call.data.get("remote_mode")},airmouse_mode={call.data.get("airmouse_mode")}")
                 _LOGGER.debug(f"Set preferences for user {user_id}: server_id={user_prefs_check["server_id"]},remote_mode={user_prefs_check["remote_mode"]},airmouse_mode={user_prefs_check["airmouse_mode"]}")
         else:
             _LOGGER.exception(f"Unauthenticated user tried to set preferences into session")
