@@ -125,14 +125,9 @@ export class AndroidKeyboardCard extends HTMLElement {
     this._eventManager.setManaged(managed);
   }
 
-  setServers(servers) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setServers(servers):", servers));
-    this._eventManager.setServers(servers);
-  }
-
-  setCurrentServer(server) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentServer(server):", server));
-    this._eventManager.setCurrentServer(server);
+  setUserPreferences(preferences) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setUserPreferences(preferences):", preferences));
+    this._eventManager.setUserPreferences(preferences);
   }
 
   setConfig(config) {

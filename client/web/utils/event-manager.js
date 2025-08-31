@@ -124,10 +124,9 @@ export class EventManager {
   _globalListeners = new Map(); // Callback with global scopes (document, window) for buttons management
   _buttons = new Set(); // Managed buttons
   _popins = new Set(); // Managed popins
-  _servers = []; // Available HID servers
-  _currentServer = -1; // Current selected server
   _arePreferencesLoading = false; // Session user preferences loading in progress lock
   _arePreferencesLoaded = false; // Session user preferences loaded once lock
+  _userPreferences = {}; // User preferences
   _isManaged = false; // indicates whether or not this event manager origin card is managed by another card (and transitively whether or not some events managements should be delegated to the manager card of the origin card)
 
   constructor(origin) {
@@ -179,6 +178,10 @@ export class EventManager {
     return this._isManaged;
   }
 
+  areServersAvailable() {
+    return this.getUserPreferenceServers() && this.getUserPreferenceServers().length > 0;
+  }
+
   getServerId(server) {
     return server?.["id"];
   }
@@ -187,41 +190,11 @@ export class EventManager {
     return server?.["name"];
   }
 
-  setCurrentServer(server) {
-    if (!this._arePreferencesLoaded) return false;
-
-    // Normal case: server has an index
-    if (server?.["index"]) {
-      this._currentServer = server["index"];
-      return this._currentServer;
-    } else {
-
-      // Unusual case: server does not have any index (might be forged by hand)
-      const serverId = this.getServerId(server);
-      const indexes = this._servers ? this._servers.length : 0;
-      
-      // Lookup for index of first matching serverId
-      for (let index = 0; index < indexes; index++) {
-        if (this.getServerId(this._servers[index]) === serverId) {
-          // Found index of first matching serverId
-
-          // Complete the server with its missing index:
-          server["index"] = index;
-
-          // Set current server to given index
-          this._currentServer = index;
-          return this._currentServer;
-        }
-      }
-    }
-    
-    // Unknown server
-    this._currentServer = -1;
-    return this._currentServer;
-  }
-
   getCurrentServer() {
-    return this._arePreferencesLoaded ? this._servers[this._currentServer] : null;
+    if (!this.areServersAvailable()) return null; // No available servers
+
+    const currentServerId = this.getUserPreferenceServerId();
+    return this.getUserPreferenceServers().find(server => this.getServerId(server) === currentServerId);
   }
 
   getCurrentServerId() {
@@ -233,14 +206,65 @@ export class EventManager {
   }
 
   getNextServer() {
-    if (!this._arePreferencesLoaded) return null;
+    if (!this.areServersAvailable()) return null; // No available servers
 
-    const nextServer = 
-      (this._currentServer < this._servers.length - 1)
-        ? this._currentServer + 1
-        : 0;
+    const currentServerId = this.getUserPreferenceServerId();
+    const currentIndex = this.getUserPreferenceServers().findIndex(server => this.getServerId(server) === currentServerId);
+    if (currentIndex === -1) return null; // No serverId or serverId not in servers list
 
-    return this._servers[nextServer];
+    // Compute next server index
+    const nextIndex = (currentIndex + 1) % servers.length;
+
+    // Return server at next index
+    return servers[nextIndex];
+  }
+
+  getUserPreferences() {
+    return this._userPreferences;
+  }
+
+  getUserPreferenceServers() {
+    return this.getUserPreferences()?.["servers"];
+  }
+
+  getUserPreferenceServerId() {
+    return this.getUserPreferences()?.["server_id"];
+  }
+
+  getUserPreferenceRemoteMode() {
+    return this.getUserPreferences()?.["remote_mode"];
+  }
+
+  getUserPreferenceAirmouseMode() {
+    return this.getUserPreferences()?.["airmouse_mode"];
+  }
+
+  setUserPreferences(preferences) {
+    this._userPreferences = preferences;
+  }
+
+  setUserPreference(prefName, prefValue) {
+    const prefs = this.getUserPreferences();
+    if (prefs) {
+      prefs[prefName] = prefValue;
+      this.savePreferences();
+    }
+  }
+
+  setCurrentServer(server) {
+    this.setUserPreferenceServerId(this.getServerId(server));
+  }
+
+  setUserPreferenceServerId(value) {
+    this.setUserPreference("server_id", value);
+  }
+
+  setUserPreferenceRemoteMode(value) {
+    this.setUserPreference("remote_mode", value);
+  }
+
+  setUserPreferenceAirmouseMode(value) {
+    this.setUserPreference("airmouse_mode", value);
   }
 
   // Get elapsed time between a start event and an end event (in milliseconds)
@@ -559,37 +583,7 @@ export class EventManager {
     this.triggerHaosTapAction(btn, overrideAction);
   }
 
-  setServers(servers) {
 
-    // Ensure not loaded
-    if (!this._arePreferencesLoaded) {
-
-      // Check responded servers
-      if (!servers || !Array.isArray(servers) || servers.length < 1) {
-
-        // Invalid servers
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('Empty or invalid servers list:', servers));
-        return;
-      }
-
-      // Valid servers: store retrieved servers
-      let serverIndex = -1;
-      for (const server of (servers ?? [])) {
-        server.index = ++serverIndex;
-        this._servers.push(server);
-      }
-
-      // Update loaded lock
-      this._arePreferencesLoaded = true;
-      if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info('Valid servers list set:', servers));
-    }
-    
-    // Servers already sets
-  }
-
-  getServers() {
-    return this._servers;
-  }
 
   // Aynchronously retrieves user preferences, including authorized list of HID servers. 
   loadPreferences() {
@@ -632,26 +626,25 @@ export class EventManager {
       //   user_id       (string) --> user backend id. This cannot be changed from fronted for security reason (backend enforces this).
       //   servers (List<server>) --> list of servers authorized by backend (server = {id, name}). This cannot be changed from fronted for security reason (backend enforces this).
       //   server_id     (string) --> last saved server id (eg. "1", default "")
-      //   remote_mode   (string) --> last saved remote mode (eg. "normal" or "alt", default "")
+      //   remote_mode   (string) --> last saved remote mode (eg. "normal_mode" or "alt_mode", default "")
       //   airmouse_mode (string) --> last saved airmouse mode (eg. "on" or "off", default "")
       const { prefs } = response;
 
-      try {        
-        // Notify origin.setServers
+      try {
+        // Ensure to select an available server (when servers exist)
         const servers = prefs["servers"];
-        this._origin?.setServers(servers);
-
-        // Retrieve selected server (when existing)
         const server_id = prefs["server_id"];
         const firstServer = servers ? (servers.length > 0 ? servers[0] : null) : null;
         const server = server_id ? (servers.find(server => this.getServerId(server) === server_id) ?? firstServer) : firstServer;
+        if (server) prefs["server_id"] = this.getServerId(server);
 
-        // Notify origin.setCurrentServer
-        this._origin?.setCurrentServer(server);
+        // Notify origin.setUserPreferences
+        this._origin?.setUserPreferences(prefs);
 
       } finally {
         // Update loading lock (end)
         this._arePreferencesLoading = false;
+        this._arePreferencesLoaded = true;
       }
     })
     .catch((err) => {
@@ -660,23 +653,36 @@ export class EventManager {
 
       // Notify servers set to origin
       try {
-        // Notify origin.setServers
-        this._origin?.setServers(null);
-
-        // Notify origin.setCurrentServer
-        this._origin?.setCurrentServer(null);
+        // Notify origin.setUserPreferences
+        this._origin?.setUserPreferences(null);
       } finally {
         // Update loading lock (end)
         this._arePreferencesLoading = false;
       }
     });
-
-    return;
   }
 
-  static isStringNumber(value) {
-    const num = Number(value);
-    return typeof num === 'number' && Number.isFinite(num);
+  // Aynchronously saves user preferences, including authorized list of HID servers. 
+  savePreferences() {
+
+    // Command to send to HA backend to get user preferences list
+    const userPrefsService = 'set_prefs';
+    const userPreferences = this.getUserPreferences();
+
+    // Ensure existing preferences
+    if (!this.getUserPreferences()) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Undefined preferences (wont try to call '${userPrefsService}' HA service)`));
+      return;
+    }
+
+    // Ensure HASS object initialized
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`HASS object not initialized (wont try to call '${userPrefsService}' HA service)`));
+      return;
+    }
+
+    // Start loading preferences asynchronously
+    this.callComponentService(userPrefsService, userPreferences);
   }
 
   // Injects current server id into args["si"] (inject null into the field when not available)

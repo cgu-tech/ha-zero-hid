@@ -84,16 +84,16 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.setManaged(managed);
   }
 
-  setServers(servers) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setServers(servers):", servers));
-    this._eventManager.setServers(servers);
-    this.doUpdateManagedServers();
+  setUserPreferences(preferences) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setUserPreferences(preferences):", preferences));
+    this._eventManager.setUserPreferences(preferences);
+    this.doUpdateManagedPreferences();
+    this.doUpdateCurrentServer();
   }
 
   setCurrentServer(server) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentServer(server):", server));
     this._eventManager.setCurrentServer(server);
-    this.doUpdateManagedCurrentServer();
     this.doUpdateCurrentServer();
   }
 
@@ -941,34 +941,22 @@ class AndroidRemoteCard extends HTMLElement {
     this.getAirMouse().hass = this._hass;
   }
 
-  doUpdateManagedServers() {
-    const servers = this._eventManager.getServers();
-
-    // Update foldables cards servers (when not already set)
-    this.getKeyboard().setServers(servers);
-    this.getTrackpad().setServers(servers);
-    this.getActivities().setServers(servers);
-
-    // Update air mouse card servers (when not already set)
-    this.getAirMouse().setServers(servers);
-  }
-
   doUpdateCurrentServer() {
     // Update remote UI to display current server to end user
     const serverLabel = this._elements.serverLabel;
     if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
   }
 
-  doUpdateManagedCurrentServer() {
-    const server = this._eventManager.getCurrentServer();
+  doUpdateManagedPreferences() {
+    const preferences = this._eventManager.getUserPreferences();
 
     // Update foldables current server
-    this.getKeyboard().setCurrentServer(server);
-    this.getTrackpad().setCurrentServer(server);
-    this.getActivities().setCurrentServer(server);
+    this.getKeyboard().setUserPreferences(preferences);
+    this.getTrackpad().setUserPreferences(preferences);
+    this.getActivities().setUserPreferences(preferences);
 
     // Update air mouse current server
-    this.getAirMouse().setCurrentServer(server);
+    this.getAirMouse().setUserPreferences(preferences);
   }
 
   doUpdateLayout() {
