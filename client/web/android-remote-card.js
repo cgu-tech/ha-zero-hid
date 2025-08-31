@@ -91,6 +91,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateManagedPreferences();
     this.doUpdateCurrentServer();
     this.doUpdateRemoteMode();
+    this.doUpdateAirmouseMode();
   }
 
   setCurrentServer(server) {
@@ -953,7 +954,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   doUpdateCurrentServer() {
     // Update remote UI to display current server to end user
-    const serverLabel = this._elements.serverLabel;
+    const serverLabel = this._elements.serverBtnLabel;
     if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
   }
 
@@ -981,11 +982,14 @@ class AndroidRemoteCard extends HTMLElement {
     // Detach existing layout from DOM
     this._elements.wrapper.innerHTML = '';
 
-    // Reset HID server label element (if any)
-    this._elements.serverLabel = null;
+    // Reset airmouse button element (if any)
+    this._elements.airmouseBtn = null;
 
-    // Reset HID server element (if any)
-    this._elements.server = null;
+    // Reset HID server button label element (if any)
+    this._elements.serverBtnLabel = null;
+
+    // Reset HID server button element (if any)
+    this._elements.serverBtn = null;
 
     // Reset cells contents elements (if any)
     this._elements.cellContents = [];
@@ -1159,9 +1163,14 @@ class AndroidRemoteCard extends HTMLElement {
     }
     // Query HID server button
     if (cellContent?.id === "remote-button-hid-server") {
-      const server = cellContent;
-      this._elements.server = server;
-      this._elements.serverLabel = server.querySelector("#hid-server-status");
+      const serverBtn = cellContent;
+      this._elements.serverBtn = serverBtn;
+      this._elements.serverBtnLabel = serverBtn.querySelector("#hid-server-status");
+    }
+    // Query airmouse button
+    if (cellContent?.id === "remote-button-air-mouse") {
+      const airmouseBtn = cellContent;
+      this._elements.airmouseBtn = airmouseBtn;
     }
     this._elements.modeButton
   }
@@ -1913,7 +1922,10 @@ class AndroidRemoteCard extends HTMLElement {
     return this._layoutManager.hasTypedButtonOverrideForServer(this._eventManager.getCurrentServerId(), btn, this.getRemoteMode(), this._OVERRIDE_TYPE_LONG_PRESS);
   }
   isServerButton(btn) {
-    return (btn && this._elements.server === btn);
+    return (btn && this._elements.serverBtn === btn);
+  }
+  isAirmouseButton(btn) {
+    return (btn && this._elements.airmouseBtn === btn);
   }
 
   addOverrideLongPressTimeout(evt) {
@@ -1961,6 +1973,15 @@ class AndroidRemoteCard extends HTMLElement {
       const nextServer = this._eventManager.getNextServer();
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
       this.setCurrentServer(nextServer);
+    } else if (this.isAirmouseButton(btn)) {
+      // Airmouse button retrieved
+      
+      // switch airmouse mode
+      const currentAirmouseMode = this.getAirMouse().isMoveEnabled();
+      const nextAirmouseMode = !currentAirmouseMode;
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching airmouse mode from ${currentAirmouseMode} to ${nextAirmouseMode}...`, btn));
+      this.getAirMouse().setMoveEnabled(nextAirmouseMode);
+      this.doUpdateAirmouseMode();
     } else if (overrideTypedConfig ===  this._OVERRIDE_NONE) {
       // Typed config "none"
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${this.getRemoteMode()} mode ${pressType} press, nothing to do`, btn));
@@ -2005,9 +2026,15 @@ class AndroidRemoteCard extends HTMLElement {
              this._knownRemoteModes.has(this.getTypedOverride(btn.id, overrideConfig, this._OVERRIDE_TYPE_LONG_PRESS));
     });
     for (const remoteModeBtn of remoteModeBtns) {
-      if (this.getRemoteMode() === this._OVERRIDE_ALTERNATIVE_MODE) remoteModeBtn.classList.add("locked");
-      if (this.getRemoteMode() === this._OVERRIDE_NORMAL_MODE) remoteModeBtn.classList.remove("locked");
+      if (remoteMode === this._OVERRIDE_ALTERNATIVE_MODE) remoteModeBtn.classList.add("locked");
+      if (remoteMode === this._OVERRIDE_NORMAL_MODE) remoteModeBtn.classList.remove("locked");
     }
+  }
+  
+  doUpdateAirmouseMode() {
+    const isAirmouseEnabled = this.getAirMouse().isMoveEnabled();
+    if (isAirmouseEnabled) remoteModeBtn.classList.add("locked");
+    if (!isAirmouseEnabled) remoteModeBtn.classList.remove("locked");
   }
 
   appendCode(code) {
