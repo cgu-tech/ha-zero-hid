@@ -1998,7 +1998,12 @@ class AndroidRemoteCard extends HTMLElement {
 
   doUpdateRemoteMode() {
     const remoteMode = this.getRemoteMode();
-    const remoteModeBtns = (this._elements.cellContents ?? []).filter(btn => this._knownRemoteModes.has(this.getTypedOverride(btn.id, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS)) || this._knownRemoteModes.has(this.getTypedOverride(btn.id, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS)));
+    const serverId = this._eventManager.getCurrentServerId();
+    const remoteModeBtns = (this._elements.cellContents ?? []).filter(btn => {
+      const overrideConfig = this._layoutManager.getButtonOverrideForServer(serverId, btn);
+      return this._knownRemoteModes.has(this.getTypedOverride(btn.id, overrideConfig, this._OVERRIDE_TYPE_SHORT_PRESS)) || 
+             this._knownRemoteModes.has(this.getTypedOverride(btn.id, overrideConfig, this._OVERRIDE_TYPE_LONG_PRESS));
+    });
     for (const remoteModeBtn of remoteModeBtns) {
       if (this.getRemoteMode() === this._OVERRIDE_ALTERNATIVE_MODE) remoteModeBtn.classList.add("locked");
       if (this.getRemoteMode() === this._OVERRIDE_NORMAL_MODE) remoteModeBtn.classList.remove("locked");
