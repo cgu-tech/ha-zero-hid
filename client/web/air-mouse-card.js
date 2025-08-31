@@ -189,7 +189,7 @@ export class AirMouseCard extends HTMLElement {
 
   // Scales the cursor speed from human (1 slowest, 10 fastest) to cursor (10 slowest, 2 fastest)
   fromHumanToCursorSpeed(speed) {
-    return this.toCursorScale(10, 2, 1, 10, speed); // 10 + (2 - 10) * (humanSpeed - 1) / (10 - 1) === 10 + (humanSpeed - 1) * -8 / 9 
+    return this.toTargetScale(10, 2, 1, 10, speed); // 10 + (2 - 10) * (humanSpeed - 1) / (10 - 1) === 10 + (humanSpeed - 1) * -8 / 9 
   }
 
   toTargetScale(targetSlowest, targetFastest, humanSlowest, humanFastest, humanValue) {
