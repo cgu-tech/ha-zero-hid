@@ -242,7 +242,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             user_prefs["server_id"] = call.data.get("server_id")
             user_prefs["remote_mode"] = call.data.get("remote_mode")
             user_prefs["airmouse_mode"] = call.data.get("airmouse_mode")
-        else
+        else:
             _LOGGER.exception(f"Unauthenticated user tried to set preferences into session")
 
     """Handle scrolling mouse."""
