@@ -126,10 +126,12 @@ def is_user_authorized(info: WSServerInfo, user_id: str) -> bool:
 
     authorized_users = get_authorized_users(info)
     if user_id not in authorized_users:
-        _LOGGER.debug(f"Unauthenticated: user ID ({user_id}) is not authorized")
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"Unauthenticated: user ID ({user_id}) is not authorized")
         return False
 
-    _LOGGER.debug(f"Authenticated: user ID ({user_id}) is authorized")
+    if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+        _LOGGER.debug(f"Authenticated: user ID ({user_id}) is authorized")
     return True
 
 def get_user_id_from_service(call: ServiceCall) -> Optional[str]:
@@ -166,13 +168,15 @@ def get_user_authorized_servers(hass: HomeAssistant, user_id: str) -> List[Any]:
     servers = []
     for server_id, info in get_ws_server_infos(hass).items():
         if is_user_authorized(info, user_id):
-            _LOGGER.debug(f"Server {server_id} authorized for user ({user_id})")
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(f"Server {server_id} authorized for user ({user_id})")
             servers.append({
                 "id": server_id,
                 "name": info.get("name"),
             })
         else:
-            _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
     return servers
 
 @websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
@@ -193,7 +197,8 @@ async def websocket_sync_keyboard(hass: HomeAssistant, connection: ActiveConnect
     ws_client = get_ws_client(info)
     try:
         sync_state = await ws_client.sync_keyboard()
-        _LOGGER.debug(f"sync_keyboard(): {sync_state}")
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"sync_keyboard(): {sync_state}")
 
         connection.send_result(msg["id"], {
             "syncModifiers": sync_state.get("modifiers", []),
@@ -227,7 +232,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             "ws_client": ws_client,
             "authorized_users": set(authorized_user.strip() for authorized_user in server["authorized_users"].split(","))
         }
-        _LOGGER.debug(f"Discovered server {server_connection}")
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"Discovered server {server_connection}")
     hass.data[DOMAIN] = {
         "ws_servers": ws_servers,
         "users_prefs": {},
@@ -242,6 +248,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             user_prefs["server_id"] = call.data.get("server_id")
             user_prefs["remote_mode"] = call.data.get("remote_mode")
             user_prefs["airmouse_mode"] = call.data.get("airmouse_mode")
+            
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                user_prefs_check = hass.data[DOMAIN]["users_prefs"][user_id]
+                _LOGGER.debug(f"Received preferences for user {user_id}: server_id={server_id},remote_mode={remote_mode},airmouse_mode={airmouse_mode}")
+                _LOGGER.debug(f"Set preferences for user {user_id}: server_id={user_prefs_check["server_id"]},remote_mode={user_prefs_check["remote_mode"]},airmouse_mode={user_prefs_check["airmouse_mode"]}")
         else:
             _LOGGER.exception(f"Unauthenticated user tried to set preferences into session")
 
@@ -364,7 +375,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         ws_client = get_ws_client(info)
         try:
             await ws_client.send_chartap(chars)
-            _LOGGER.debug(f"ws_client.send_chartap(chars): {chars}")
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(f"ws_client.send_chartap(chars): {chars}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_chartap: {e}")
 
@@ -385,7 +397,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         ws_client = get_ws_client(info)
         try:
             await ws_client.send_keypress(modifiers, keys)
-            _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_keypress: {e}")
 
@@ -404,7 +417,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         ws_client = get_ws_client(info)
         try:
             await ws_client.send_conpress(cons)
-            _LOGGER.debug(f"ws_client.send_conpress(cons): {cons}")
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(f"ws_client.send_conpress(cons): {cons}")
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_conpress: {e}")
 
