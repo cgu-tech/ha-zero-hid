@@ -52,7 +52,7 @@ class AndroidRemoteCard extends HTMLElement {
   _pressedKeys = new Set();
   _pressedConsumers = new Set();
   _threeStatesToggleState;
-  _knownRemoteModes = new Set(this._OVERRIDE_NORMAL_MODE, this._OVERRIDE_ALTERNATIVE_MODE);
+  _knownRemoteModes = new Set([this._OVERRIDE_NORMAL_MODE, this._OVERRIDE_ALTERNATIVE_MODE]);
   _overrideMode = this._OVERRIDE_NORMAL_MODE;
   _overrideLongPressTimeouts = new Map();
   _moreInfoLongPressTimeouts = new Map();
