@@ -351,5 +351,25 @@ export const androidRemoteCardConfig = {
     `<div id="hid-server-status" style="color: inherit; font-size: 0.8rem;">
       Loading...
     </div>`
+  },
+  "remote-button-volume-up": {
+    code: "CON_VOLUME_INCREMENT",
+    html: 
+    `<svg id="volumeup-icon" viewBox="0 0 64 64"  xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Speaker body with fill -->
+      <path d="M16 24 L24 24 L32 16 V48 L24 40 L16 40 Z" fill="#bfbfbf" />
+
+      <!-- Volume arcs (wire view) -->
+      <path d="M38 26 A6 6 0 0 1 38 38" />
+      <path d="M42 22 A10 10 0 0 1 42 42" />
+      <path d="M46 18 A14 14 0 0 1 46 46" />
+    </svg>`
+    `<svg id="air-mouse" viewBox="0 0 44.659782 39.227093" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf">
+      <path id="cursor" d="M 2.9999878,2.2271195 22.999988,22.22712 l -8,2 4,12 -6,2 -3.9999999,-12 -8.00000033,4 z" stroke-width="2" stroke-linejoin="round" />
+      <path id="trail-01" stroke-width="2" stroke-dasharray="none" d="M 7.3661465,1.2052222 C 29.195143,-0.51968479 38.652392,9.1754839 38.652392,9.1754839" />
+      <path id="trail-02" stroke-width="1.5" stroke-dasharray="none" d="m 17.067569,11.442729 c 18.850616,-1.7329121 27.017504,8.007246 27.017504,8.007246" />
+      <path id="trail-03" stroke-width="1" stroke-dasharray="none" d="M 26.175265,21.9471 C 38.735711,20.479367 44.17743,28.729039 44.17743,28.729039" />
+    </svg>`
   }
+
 };
