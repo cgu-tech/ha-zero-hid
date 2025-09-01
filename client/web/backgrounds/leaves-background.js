@@ -110,7 +110,7 @@ export class FallingLeavesBackground extends HTMLElement {
     return g;
   }
   
-  animateLeaf(leaf) => {
+  animateLeaf(leaf) {
     const startX = this.rand(0, screenWidth);
     const driftX = this.rand(-80, 80);
     const duration = this.rand(10000, 20000);
@@ -144,7 +144,7 @@ export class FallingLeavesBackground extends HTMLElement {
 
     animation.onfinish = () => {
       animation.cancel();
-      animateLeaf(leaf); // loop
+      this.animateLeaf(leaf); // loop
     };
   }
   
