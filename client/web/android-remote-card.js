@@ -309,7 +309,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.card = document.createElement("ha-card");
     this._elements.card.innerHTML = `
       <div id="main-container" class="card-content">
-        <falling-leaves-background></falling-leaves-background>
+        <falling-leaves-background class="animated-background"></falling-leaves-background>
         <div class="wrapper">
         </div>
         <div class="addons-wrapper hide">
@@ -357,11 +357,15 @@ class AndroidRemoteCard extends HTMLElement {
         box-sizing: border-box;
         overflow-x: hidden;
       }
+      .animated-background {
+        z-index: 0; /* sits behind */
+      }
       .wrapper {
         width: 100%;
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
+         z-index: 1; /* sits above */
       }
       .wrapper.with-addons {
         width: 83.3333%; /* 5/6 */
