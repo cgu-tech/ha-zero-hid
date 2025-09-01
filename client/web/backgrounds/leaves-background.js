@@ -47,6 +47,18 @@ export class FallingLeavesBackground extends HTMLElement {
       this._onResize();
     });
     this._resizeObserver.observe(this);
+    
+    // Wait for layout before creating leaves
+    requestAnimationFrame(() => {
+      const width = this.offsetWidth;
+      const height = this.offsetHeight;
+      if (width && height) {
+        this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        this._screenWidth = width;
+        this._screenHeight = height;
+        this.createLeaves(); // Call it once here
+      }
+    });
   }
 
   disconnectedCallback() {
