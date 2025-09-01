@@ -2,6 +2,8 @@ export class FallingLeavesBackground extends HTMLElement {
 
   _NUM_LEAVES = 30;
   _colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
+  _screenWidth = 0;
+  _screenHeight = 0;
 
   constructor() {
     super();
@@ -46,11 +48,26 @@ export class FallingLeavesBackground extends HTMLElement {
 
     this.svg = svg;
 
-    // Observe size changes
-    this._resizeObserver = new ResizeObserver(() => {
-      this._onResize();
+    // Wait for layout to complete
+    requestAnimationFrame(() => {
+      const width = this.offsetWidth;
+      const height = this.offsetHeight;
+      
+      this._screenWidth = width === 'number' && isFinite(width) ? width : this._screenWidth;
+      this._screenHeight = height === 'number' && isFinite(height) ? height : this._screenHeight;
+    
+      if (width === 0 || height === 0) {
+        console.warn('falling-leaves-background: zero dimensions, skipping leaf generation.');
+        return;
+      }
+
+      this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      this.createLeaves(width, height);
+
+      // Observe size changes
+      this._resizeObserver = new ResizeObserver(this._onResize().bind(this));
+      this._resizeObserver.observe(this);
     });
-    this._resizeObserver.observe(this);
   }
 
   disconnectedCallback() {
@@ -63,25 +80,20 @@ export class FallingLeavesBackground extends HTMLElement {
     const width = this.offsetWidth;
     const height = this.offsetHeight;
 
+    this._screenWidth = width === 'number' && isFinite(width) ? width : this._screenWidth;
+    this._screenHeight = height === 'number' && isFinite(height) ? height : this._screenHeight;
+
     if (width === 0 || height === 0) return;
 
     // Update SVG viewBox
     this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-
-    // Remove existing leaves if any
-    for (const leaf of this._leaves) {
-      leaf.remove();
-    }
-    this._leaves = [];
-
-    // Recreate leaves
-    this.createLeaves(width, height);
   }
 
-  createLeaves(screenWidth, screenHeight) {
+  createLeaves() {
+    this._leaves = [];
     for (let i = 0; i < this._NUM_LEAVES; i++) {
       const leaf = this.createLeaf();
-      setTimeout(() => this.animateLeaf(leaf, screenWidth, screenHeight), this.rand(0, 7000));
+      setTimeout(() => this.animateLeaf(leaf), this.rand(0, 7000));
     }
   }
   
@@ -110,8 +122,8 @@ export class FallingLeavesBackground extends HTMLElement {
     return g;
   }
   
-  animateLeaf(leaf, screenWidth, screenHeight) {
-    const startX = this.rand(0, screenWidth);
+  animateLeaf(leaf) {
+    const startX = this.rand(0, this._screenWidth);
     const driftX = this.rand(-80, 80);
     const duration = this.rand(10000, 20000);
     const rotateStart = this.rand(0, 360);
@@ -128,7 +140,7 @@ export class FallingLeavesBackground extends HTMLElement {
       },
       {
         transform: `
-          translate(${startX + driftX}px, ${screenHeight + 60}px)
+          translate(${startX + driftX}px, ${this._screenHeight + 60}px)
           rotate(${rotateEnd}deg)
         `
       }
