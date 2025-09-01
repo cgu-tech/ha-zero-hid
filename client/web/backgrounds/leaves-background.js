@@ -49,25 +49,27 @@ export class FallingLeavesBackground extends HTMLElement {
     this.svg = svg;
 
     // Wait for layout to complete
-    requestAnimationFrame(() => {
-      const width = this.offsetWidth;
-      const height = this.offsetHeight;
-      
-      this._screenWidth = width === 'number' && isFinite(width) ? width : this._screenWidth;
-      this._screenHeight = height === 'number' && isFinite(height) ? height : this._screenHeight;
+    requestAnimationFrame(this.onInitLeaves.bind(this));
+  }
+
+  onInitLeaves() {
+    const width = this.offsetWidth;
+    const height = this.offsetHeight;
     
-      if (width === 0 || height === 0) {
-        console.warn('falling-leaves-background: zero dimensions, skipping leaf generation.');
-        return;
-      }
+    this._screenWidth = width === 'number' && isFinite(width) ? width : this._screenWidth;
+    this._screenHeight = height === 'number' && isFinite(height) ? height : this._screenHeight;
+  
+    if (width === 0 || height === 0) {
+      console.warn('falling-leaves-background: zero dimensions, skipping leaf generation.');
+      return;
+    }
 
-      this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-      this.createLeaves(width, height);
+    this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    this.createLeaves(width, height);
 
-      // Observe size changes
-      this._resizeObserver = new ResizeObserver(this._onResize().bind(this));
-      this._resizeObserver.observe(this);
-    });
+    // Observe size changes
+    this._resizeObserver = new ResizeObserver(this._onResize.bind(this));
+    this._resizeObserver.observe(this);
   }
 
   disconnectedCallback() {
