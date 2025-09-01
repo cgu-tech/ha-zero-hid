@@ -308,8 +308,8 @@ class AndroidRemoteCard extends HTMLElement {
   doCard() {
     this._elements.card = document.createElement("ha-card");
     this._elements.card.innerHTML = `
-      <falling-leaves-background></falling-leaves-background>
       <div id="main-container" class="card-content">
+        <falling-leaves-background></falling-leaves-background>
         <div class="wrapper">
         </div>
         <div class="addons-wrapper hide">
