@@ -365,6 +365,7 @@ class AndroidRemoteCard extends HTMLElement {
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
+        position: relative;
          z-index: 1; /* sits above */
       }
       .wrapper.with-addons {
