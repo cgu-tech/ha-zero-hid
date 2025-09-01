@@ -15,7 +15,7 @@
 //this._elements.root = card;
 
 
-class FallingLeavesBackground extends HTMLElement {
+export class FallingLeavesBackground extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
