@@ -82,7 +82,6 @@ export class FallingLeavesBackground extends HTMLElement {
     const createLeaf = () => {
       const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
       g.classList.add("leaf");
-      g.style.visibility = 'hidden'; // Hide until animation begins
 
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 
@@ -108,6 +107,7 @@ export class FallingLeavesBackground extends HTMLElement {
       const rotateEnd = rotateStart + rand(90, 360);
 
       leaf.setAttribute("transform", `translate(${startX}, -60)`);
+      leaf.style.visibility = 'hidden'; // Hide until animation begins
 
       const animation = leaf.animate([
         {
