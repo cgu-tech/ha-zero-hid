@@ -16,7 +16,7 @@ import { CarrouselCard } from './carrousel-card.js?v=<ha_resources_version>';
 import { AirMouseCard } from './air-mouse-card.js?v=<ha_resources_version>';
 
 // backgrounds
-import { FallingLeavesBackground } from './abckgrounds/leaves-background.js?v=<ha_resources_version>';
+import { FallingLeavesBackground } from './backgrounds/leaves-background.js?v=<ha_resources_version>';
 
 console.info("Loading android-remote-card");
 
