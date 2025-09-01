@@ -1,7 +1,7 @@
 export class FallingLeavesBackground extends HTMLElement {
 
-  const _NUM_LEAVES = 30;
-  const _colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
+  _NUM_LEAVES = 30;
+  _colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
 
   constructor() {
     super();
