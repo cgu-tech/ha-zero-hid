@@ -86,11 +86,11 @@ export class FallingLeavesBackground extends HTMLElement {
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 
       // Bigger stylized leaf
-      path.setAttribute("d", "M0,0 Q-15,30 0,60 Q15,30 0,0 Z");
+      path.setAttribute("d", "M0,0 Q-5,10 0,20 Q5,10 0,0 Z");
       path.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
       path.setAttribute("opacity", rand(0.6, 1));
 
-      const scale = rand(1.2, 3.0);
+      const scale = rand(1.2, 2.8);
       path.setAttribute("transform", `scale(${scale})`);
 
       g.appendChild(path);
