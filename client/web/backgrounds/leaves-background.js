@@ -1,29 +1,15 @@
-//import './leaves.js';
-//
-//const card = document.createElement("ha-card");
-//card.style.position = "relative";
-//
-//const background = document.createElement("falling-leaves-background");
-//card.appendChild(background);
-//
-//const content = document.createElement("div");
-//content.style.position = "relative";
-//content.style.zIndex = "1";
-//content.innerHTML = "My Card Here";
-//card.appendChild(content);
-//
-//this._elements.root = card;
-
-
 export class FallingLeavesBackground extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this._resizeObserver = null;
+    this._leaves = [];
   }
 
   connectedCallback() {
     const shadow = this.shadowRoot;
 
+    // Create styles
     const style = document.createElement('style');
     style.textContent = `
       :host {
@@ -47,25 +33,50 @@ export class FallingLeavesBackground extends HTMLElement {
       }
     `;
 
-    const width = this.offsetWidth;
-    const height = this.offsetHeight;
+    // Create SVG
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
     shadow.appendChild(style);
     shadow.appendChild(svg);
 
     this.svg = svg;
+
+    // Observe size changes
+    this._resizeObserver = new ResizeObserver(() => {
+      this._onResize();
+    });
+    this._resizeObserver.observe(this);
+  }
+
+  disconnectedCallback() {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+    }
+  }
+
+  _onResize() {
+    const width = this.offsetWidth;
+    const height = this.offsetHeight;
+
+    if (width === 0 || height === 0) return;
+
+    // Update SVG viewBox
+    this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    // Remove existing leaves if any
+    for (const leaf of this._leaves) {
+      leaf.remove();
+    }
+    this._leaves = [];
+
+    // Recreate leaves
     this.createLeaves(width, height);
   }
 
-  createLeaves(width, height) {
+  createLeaves(screenWidth, screenHeight) {
     const NUM_LEAVES = 30;
-    const screenWidth = width;
-    const screenHeight = height;
     const colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
-
     const rand = (min, max) => Math.random() * (max - min) + min;
 
     const createLeaf = () => {
@@ -74,13 +85,17 @@ export class FallingLeavesBackground extends HTMLElement {
 
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 
-      path.setAttribute("d", "M0,0 Q-5,10 0,20 Q5,10 0,0 Z"); // Simple stylized leaf
+      // Bigger stylized leaf
+      path.setAttribute("d", "M0,0 Q-15,30 0,60 Q15,30 0,0 Z");
       path.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
-      path.setAttribute("opacity", rand(0.7, 1));
-      path.setAttribute("transform", `scale(${rand(0.6, 1.4)})`);
+      path.setAttribute("opacity", rand(0.6, 1));
+
+      const scale = rand(1.2, 3.0);
+      path.setAttribute("transform", `scale(${scale})`);
 
       g.appendChild(path);
       this.svg.appendChild(g);
+      this._leaves.push(g);
       return g;
     };
 
@@ -91,18 +106,18 @@ export class FallingLeavesBackground extends HTMLElement {
       const rotateStart = rand(0, 360);
       const rotateEnd = rotateStart + rand(90, 360);
 
-      leaf.setAttribute("transform", `translate(${startX}, -20)`);
+      leaf.setAttribute("transform", `translate(${startX}, -60)`);
 
       const animation = leaf.animate([
         {
           transform: `
-            translate(${startX}px, -20px)
+            translate(${startX}px, -60px)
             rotate(${rotateStart}deg)
           `
         },
         {
           transform: `
-            translate(${startX + driftX}px, ${screenHeight + 40}px)
+            translate(${startX + driftX}px, ${screenHeight + 60}px)
             rotate(${rotateEnd}deg)
           `
         }
@@ -113,7 +128,7 @@ export class FallingLeavesBackground extends HTMLElement {
 
       animation.onfinish = () => {
         animation.cancel();
-        animateLeaf(leaf);
+        animateLeaf(leaf); // loop
       };
     };
 
