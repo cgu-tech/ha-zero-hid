@@ -64,17 +64,12 @@ export class FallingLeavesBackground extends HTMLElement {
     // Update SVG viewBox
     this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
-    // Remove existing leaves if any
-    for (const leaf of this._leaves) {
-      leaf.remove();
-    }
-    this._leaves = [];
-
-    // Recreate leaves
-    this.createLeaves(width, height);
+    // Optionally store new dimensions for future animations
+    this._screenWidth = width;
+    this._screenHeight = height;
   }
 
-  createLeaves(screenWidth, screenHeight) {
+  createLeaves() {
     const NUM_LEAVES = 30;
     const colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
     const rand = (min, max) => Math.random() * (max - min) + min;
@@ -85,14 +80,10 @@ export class FallingLeavesBackground extends HTMLElement {
       g.style.visibility = 'hidden'; // Hide until animation begins
 
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-
-      // Bigger stylized leaf
       path.setAttribute("d", "M0,0 Q-5,10 0,20 Q5,10 0,0 Z");
       path.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
       path.setAttribute("opacity", rand(0.6, 1));
-
-      const scale = rand(1.2, 2.8);
-      path.setAttribute("transform", `scale(${scale})`);
+      path.setAttribute("transform", `scale(${rand(1.2, 2.8)})`);
 
       g.appendChild(path);
       this.svg.appendChild(g);
@@ -101,6 +92,12 @@ export class FallingLeavesBackground extends HTMLElement {
     };
 
     const animateLeaf = (leaf) => {
+      const screenWidth = this._screenWidth || this.offsetWidth;
+      const screenHeight = this._screenHeight || this.offsetHeight;
+
+      // Skip if we still don't have valid size
+      if (!screenWidth || !screenHeight) return;
+
       const startX = rand(0, screenWidth);
       const driftX = rand(-80, 80);
       const duration = rand(10000, 20000);
