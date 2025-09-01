@@ -1,10 +1,4 @@
 export class FallingLeavesBackground extends HTMLElement {
-
-  _NUM_LEAVES = 30;
-  _colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
-  _screenWidth = 0;
-  _screenHeight = 0;
-
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -48,27 +42,10 @@ export class FallingLeavesBackground extends HTMLElement {
 
     this.svg = svg;
 
-    // Wait for layout to complete
-    requestAnimationFrame(this.onInitLeaves.bind(this));
-  }
-
-  onInitLeaves() {
-    const width = this.offsetWidth;
-    const height = this.offsetHeight;
-    
-    this._screenWidth = width === 'number' && isFinite(width) ? width : this._screenWidth;
-    this._screenHeight = height === 'number' && isFinite(height) ? height : this._screenHeight;
-  
-    if (width === 0 || height === 0) {
-      console.warn('falling-leaves-background: zero dimensions, skipping leaf generation.');
-      return;
-    }
-
-    this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    this.createLeaves(width, height);
-
     // Observe size changes
-    this._resizeObserver = new ResizeObserver(this._onResize.bind(this));
+    this._resizeObserver = new ResizeObserver(() => {
+      this._onResize();
+    });
     this._resizeObserver.observe(this);
   }
 
@@ -82,86 +59,90 @@ export class FallingLeavesBackground extends HTMLElement {
     const width = this.offsetWidth;
     const height = this.offsetHeight;
 
-    this._screenWidth = width === 'number' && isFinite(width) ? width : this._screenWidth;
-    this._screenHeight = height === 'number' && isFinite(height) ? height : this._screenHeight;
-
     if (width === 0 || height === 0) return;
 
     // Update SVG viewBox
     this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    // Remove existing leaves if any
+    for (const leaf of this._leaves) {
+      leaf.remove();
+    }
+    this._leaves = [];
+
+    // Recreate leaves
+    this.createLeaves(width, height);
   }
 
-  createLeaves() {
-    this._leaves = [];
-    for (let i = 0; i < this._NUM_LEAVES; i++) {
-      const leaf = this.createLeaf();
-      setTimeout(() => this.animateLeaf(leaf), this.rand(0, 7000));
+  createLeaves(screenWidth, screenHeight) {
+    const NUM_LEAVES = 30;
+    const colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    const createLeaf = () => {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.classList.add("leaf");
+      g.style.visibility = 'hidden'; // Hide until animation begins
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+
+      // Bigger stylized leaf
+      path.setAttribute("d", "M0,0 Q-5,10 0,20 Q5,10 0,0 Z");
+      path.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
+      path.setAttribute("opacity", rand(0.6, 1));
+
+      const scale = rand(1.2, 2.8);
+      path.setAttribute("transform", `scale(${scale})`);
+
+      g.appendChild(path);
+      this.svg.appendChild(g);
+      this._leaves.push(g);
+      return g;
+    };
+
+    const animateLeaf = (leaf) => {
+      const startX = rand(0, screenWidth);
+      const driftX = rand(-80, 80);
+      const duration = rand(10000, 20000);
+      const rotateStart = rand(0, 360);
+      const rotateEnd = rotateStart + rand(90, 360);
+
+      leaf.setAttribute("transform", `translate(${startX}, -60)`);
+
+      const animation = leaf.animate([
+        {
+          transform: `
+            translate(${startX}px, -60px)
+            rotate(${rotateStart}deg)
+          `
+        },
+        {
+          transform: `
+            translate(${startX + driftX}px, ${screenHeight + 60}px)
+            rotate(${rotateEnd}deg)
+          `
+        }
+      ], {
+        duration,
+        easing: "ease-in-out"
+      });
+
+      // Show the leaf once animation actually starts
+      animation.ready.then(() => {
+        leaf.style.visibility = 'visible';
+      });
+
+      animation.onfinish = () => {
+        animation.cancel();
+        animateLeaf(leaf); // loop
+      };
+    };
+
+    for (let i = 0; i < NUM_LEAVES; i++) {
+      const leaf = createLeaf();
+      setTimeout(() => animateLeaf(leaf), rand(0, 7000));
     }
   }
-  
-  rand(min, max) {
-    return Math.random() * (max - min) + min;
-  }
-  
-  createLeaf() {
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    g.classList.add("leaf");
-    g.style.visibility = 'hidden'; // Hide until animation begins
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-
-    // Bigger stylized leaf
-    path.setAttribute("d", "M0,0 Q-5,10 0,20 Q5,10 0,0 Z");
-    path.setAttribute("fill", this._colors[Math.floor(Math.random() * this._colors.length)]);
-    path.setAttribute("opacity", this.rand(0.6, 1));
-
-    const scale = this.rand(1.2, 2.8);
-    path.setAttribute("transform", `scale(${scale})`);
-
-    g.appendChild(path);
-    this.svg.appendChild(g);
-    this._leaves.push(g);
-    return g;
-  }
-  
-  animateLeaf(leaf) {
-    const startX = this.rand(0, this._screenWidth);
-    const driftX = this.rand(-80, 80);
-    const duration = this.rand(10000, 20000);
-    const rotateStart = this.rand(0, 360);
-    const rotateEnd = rotateStart + this.rand(90, 360);
-
-    leaf.setAttribute("transform", `translate(${startX}, -60)`);
-
-    const animation = leaf.animate([
-      {
-        transform: `
-          translate(${startX}px, -60px)
-          rotate(${rotateStart}deg)
-        `
-      },
-      {
-        transform: `
-          translate(${startX + driftX}px, ${this._screenHeight + 60}px)
-          rotate(${rotateEnd}deg)
-        `
-      }
-    ], {
-      duration,
-      easing: "ease-in-out"
-    });
-
-    // Show the leaf once animation actually starts
-    animation.ready.then(() => {
-      leaf.style.visibility = 'visible';
-    });
-
-    animation.onfinish = () => {
-      animation.cancel();
-      this.animateLeaf(leaf); // loop
-    };
-  }
-  
 }
 
 customElements.define('falling-leaves-background', FallingLeavesBackground);
