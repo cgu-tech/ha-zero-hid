@@ -47,21 +47,23 @@ export class FallingLeavesBackground extends HTMLElement {
       }
     `;
 
+    const width = this.offsetWidth;
+    const height = this.offsetHeight;
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
     shadow.appendChild(style);
     shadow.appendChild(svg);
 
     this.svg = svg;
-    this.createLeaves();
+    this.createLeaves(width, height);
   }
 
-  createLeaves() {
+  createLeaves(width, height) {
     const NUM_LEAVES = 30;
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
+    const screenWidth = width;
+    const screenHeight = height;
     const colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
 
     const rand = (min, max) => Math.random() * (max - min) + min;
