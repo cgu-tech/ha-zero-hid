@@ -15,6 +15,9 @@ import { TrackpadCard } from './trackpad-card.js?v=<ha_resources_version>';
 import { CarrouselCard } from './carrousel-card.js?v=<ha_resources_version>';
 import { AirMouseCard } from './air-mouse-card.js?v=<ha_resources_version>';
 
+// backgrounds
+import { FallingLeavesBackground } from './abckgrounds/leaves-background.js?v=<ha_resources_version>';
+
 console.info("Loading android-remote-card");
 
 class AndroidRemoteCard extends HTMLElement {
@@ -306,6 +309,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.card = document.createElement("ha-card");
     this._elements.card.innerHTML = `
       <div id="main-container" class="card-content">
+        <falling-leaves-background></falling-leaves-background>
         <div class="wrapper">
         </div>
         <div class="addons-wrapper hide">
