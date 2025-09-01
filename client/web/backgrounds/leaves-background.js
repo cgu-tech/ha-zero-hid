@@ -81,7 +81,7 @@ export class FallingLeavesBackground extends HTMLElement {
   createLeaves(screenWidth, screenHeight) {
     for (let i = 0; i < this._NUM_LEAVES; i++) {
       const leaf = this.createLeaf();
-      setTimeout(() => this.animateLeaf(leaf), this.rand(0, 7000));
+      setTimeout(() => this.animateLeaf(leaf, screenWidth, screenHeight), this.rand(0, 7000));
     }
   }
   
@@ -110,7 +110,7 @@ export class FallingLeavesBackground extends HTMLElement {
     return g;
   }
   
-  animateLeaf(leaf) {
+  animateLeaf(leaf, screenWidth, screenHeight) {
     const startX = this.rand(0, screenWidth);
     const driftX = this.rand(-80, 80);
     const duration = this.rand(10000, 20000);
