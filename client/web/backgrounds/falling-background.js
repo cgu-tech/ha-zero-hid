@@ -139,15 +139,10 @@ export class FallingBackground extends HTMLElement {
   }
 
   createFallingHalloween() {
-    const falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    falling.classList.add("falling");
-    falling.style.visibility = 'hidden'; // Hide until animation begins
-    
+    let falling;
     const typeRoll = Math.random(); // Random selector
-    let fallingContent;
     if (typeRoll < 0.25) {
       // 🎃 Pumpkin (simple circle with a stem)
-      fallingContent = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const pumpkin = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       pumpkin.setAttribute("r", "8");
       pumpkin.setAttribute("cx", "0");
@@ -155,34 +150,34 @@ export class FallingBackground extends HTMLElement {
       pumpkin.setAttribute("fill", "#FF7518");
       pumpkin.setAttribute("stroke", "#A0522D");
       pumpkin.setAttribute("stroke-width", "1");
-    
+
       const stem = document.createElementNS("http://www.w3.org/2000/svg", "rect");
       stem.setAttribute("x", "-1");
       stem.setAttribute("y", "-10");
       stem.setAttribute("width", "2");
       stem.setAttribute("height", "4");
       stem.setAttribute("fill", "#654321");
-    
-      fallingContent.appendChild(pumpkin);
-      fallingContent.appendChild(stem);
+
+      falling.appendChild(pumpkin);
+      falling.appendChild(stem);
     } else if (typeRoll < 0.5) {
       // 👻 Ghost (stylized path)
-      fallingContent = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      fallingContent.setAttribute("d", "M0,-10 Q5,-20 10,-10 Q15,-5 10,0 Q5,5 0,0 Q-5,-5 -10,0 Q-15,-5 -10,-10 Q-5,-20 0,-10 Z");
-      fallingContent.setAttribute("fill", "#eeeeee");
-      fallingContent.setAttribute("stroke", "#999");
-      fallingContent.setAttribute("stroke-width", "0.5");
-      fallingContent.setAttribute("opacity", this.getBoundRandom(0.7, 1));
+      const ghost = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      ghost.setAttribute("d", "M0,-10 Q5,-20 10,-10 Q15,-5 10,0 Q5,5 0,0 Q-5,-5 -10,0 Q-15,-5 -10,-10 Q-5,-20 0,-10 Z");
+      ghost.setAttribute("fill", "#eeeeee");
+      ghost.setAttribute("stroke", "#999");
+      ghost.setAttribute("stroke-width", "0.5");
+      ghost.setAttribute("opacity", this.getBoundRandom(0.7, 1));
+
+      falling.appendChild(ghost);
     } else if (typeRoll < 0.75) {
       // 🕷️ Spider (circle with 8 legs)
-      fallingContent = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    
       const body = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       body.setAttribute("r", "5");
       body.setAttribute("cx", "0");
       body.setAttribute("cy", "0");
       body.setAttribute("fill", "black");
-    
+
       const createLeg = (x1, y1, x2, y2) => {
         const leg = document.createElementNS("http://www.w3.org/2000/svg", "line");
         leg.setAttribute("x1", x1);
@@ -193,53 +188,58 @@ export class FallingBackground extends HTMLElement {
         leg.setAttribute("stroke-width", "1");
         return leg;
       };
-    
-      fallingContent.appendChild(body);
+
+      falling.appendChild(body);
+
       // Add 8 legs
-      fallingContent.appendChild(createLeg(-5, 0, -10, -5));
-      fallingContent.appendChild(createLeg(-5, 0, -10, 5));
-      fallingContent.appendChild(createLeg(5, 0, 10, -5));
-      fallingContent.appendChild(createLeg(5, 0, 10, 5));
-      fallingContent.appendChild(createLeg(-4, -3, -9, -8));
-      fallingContent.appendChild(createLeg(-4, 3, -9, 8));
-      fallingContent.appendChild(createLeg(4, -3, 9, -8));
-      fallingContent.appendChild(createLeg(4, 3, 9, 8));
+      falling.appendChild(createLeg(-5, 0, -10, -5));
+      falling.appendChild(createLeg(-5, 0, -10, 5));
+      falling.appendChild(createLeg(5, 0, 10, -5));
+      falling.appendChild(createLeg(5, 0, 10, 5));
+      falling.appendChild(createLeg(-4, -3, -9, -8));
+      falling.appendChild(createLeg(-4, 3, -9, 8));
+      falling.appendChild(createLeg(4, -3, 9, -8));
+      falling.appendChild(createLeg(4, 3, 9, 8));
     } else {
-      // 🕸️ Spider web (simple web shape)
-      fallingContent = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    
-      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      circle.setAttribute("r", "8");
-      circle.setAttribute("cx", "0");
-      circle.setAttribute("cy", "0");
-      circle.setAttribute("stroke", "#ccc");
-      circle.setAttribute("fill", "none");
-      circle.setAttribute("stroke-width", "0.5");
-    
-      const lines = [
-        [-8, 0, 8, 0],
-        [0, -8, 0, 8],
-        [-6, -6, 6, 6],
-        [-6, 6, 6, -6],
-      ];
-    
-      fallingContent.appendChild(circle);
-      for (const [x1, y1, x2, y2] of lines) {
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", x1);
-        line.setAttribute("y1", y1);
-        line.setAttribute("x2", x2);
-        line.setAttribute("y2", y2);
-        line.setAttribute("stroke", "#ccc");
-        line.setAttribute("stroke-width", "0.5");
-        fallingContent.appendChild(line);
-      }
+      // Spider web
+      falling = this.createFallingSpiderWeb();
     }
-    
-    // Random scale + opacity (applies to whole group)
-    const scale = this.getBoundRandom(1.2, 2.8);
-    fallingContent.setAttribute("transform", `scale(${scale})`);
-    falling.appendChild(fallingContent);
+
+    // Random scale (applies to whole group)
+    falling.classList.add("falling");
+    falling.style.visibility = 'hidden'; // Hide until animation begins
+    falling.setAttribute("transform", `scale(${this.getBoundRandom(1.2, 2.8)})`);
+    return falling;
+  }
+
+  createFallingSpiderWeb() {
+    // Create the <g> element
+    const falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    falling.setAttribute("fill", "none");
+    falling.setAttribute("stroke", "#6B6C6E");
+    falling.setAttribute("stroke-width", "1");
+    falling.setAttribute("stroke-linejoin", "round");
+
+    // Path definitions (axes + polygonal rings)
+    const paths = [
+      // Axes
+      "M0,13.5 L31.65,13.5",
+      "M7.4,0.05 L24.25,26.95",
+      "M7.5,27 L24.15,0",
+
+      // Polygonal web rings
+      "M9,24.95 L2.15,13.5 L9,2.05 L22.65,2.05 L29.5,13.5 L22.65,24.95 L9,24.95 Z",
+      "M10.8,22 L5.8,13.5 L10.8,5 L20.8,5 L25.8,13.5 L20.8,22 L10.8,22 Z",
+      "M12.8,18.5 L9.8,13.5 L12.8,8.5 L18.8,8.5 L21.8,13.5 L18.8,18.5 L12.8,18.5 Z"
+    ];
+
+    // Create <path> elements and append to group
+    paths.forEach(d => {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      falling.appendChild(path);
+    });
+
     return falling;
   }
 
