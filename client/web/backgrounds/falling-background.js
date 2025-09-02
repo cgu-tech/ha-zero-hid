@@ -206,7 +206,7 @@ export class FallingBackground extends HTMLElement {
       falling.appendChild(createLeg(4, 3, 9, 8));
     } else {
       // Spider web
-      falling = this.createFallingSpiderWeb();
+      falling.appendChild(this.createFallingSpiderWeb());
       falling.setAttribute("transform", `scale(${this.getBoundRandom(5, 10)})`);
     }
 
