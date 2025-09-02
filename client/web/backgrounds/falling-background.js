@@ -118,6 +118,10 @@ export class FallingBackground extends HTMLElement {
   }
 
   createFalling() {
+    return this.createFallingLeave();
+  }
+
+  createFallingLeave() {
     const colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
 
     const falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -133,7 +137,24 @@ export class FallingBackground extends HTMLElement {
     falling.appendChild(path);
     return falling;
   }
-  
+
+  createFallingHalloween() {
+    const colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
+
+    const falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    falling.classList.add("falling");
+    falling.style.visibility = 'hidden';
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M0,0 Q-5,10 0,20 Q5,10 0,0 Z");
+    path.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
+    path.setAttribute("opacity", this.getBoundRandom(0.6, 1));
+    path.setAttribute("transform", `scale(${this.getBoundRandom(1.2, 2.8)})`);
+
+    falling.appendChild(path);
+    return falling;
+  }
+
   addFalling(falling) {
     this._svg.appendChild(falling);
     this._fallings.push(falling);
