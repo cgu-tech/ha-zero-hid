@@ -40,10 +40,10 @@ export class FallingBackground extends HTMLElement {
     svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     shadow.appendChild(style);
     shadow.appendChild(svg);
-    this.svg = svg;
+    this._svg = svg;
 
     // Observe size changes
-    this._resizeObserver = new ResizeObserver(() => this._onResize());
+    this._resizeObserver = new ResizeObserver(() => this.onResize());
     this._resizeObserver.observe(this);
     
     // Wait for layout before creating fallings
@@ -51,7 +51,7 @@ export class FallingBackground extends HTMLElement {
       const width = this.offsetWidth;
       const height = this.offsetHeight;
       if (width && height) {
-        this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        this._svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         this._screenWidth = width;
         this._screenHeight = height;
         this.createFallings(); // Call it once here
@@ -88,14 +88,14 @@ export class FallingBackground extends HTMLElement {
     this.createFallings();
   }
 
-  _onResize() {
+  onResize() {
     const width = this.offsetWidth;
     const height = this.offsetHeight;
 
     if (width === 0 || height === 0) return;
 
     // Update SVG viewBox
-    this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    this._svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
     // Optionally store new dimensions for future animations
     this._screenWidth = width;
@@ -104,44 +104,48 @@ export class FallingBackground extends HTMLElement {
 
   createFallings() {
     for (let i = 0; i < 30; i++) {
-      const falling = this._createFalling();
-      setTimeout(() => this._animateFalling(falling), this._rand(0, 7000));
+      const falling = this.createFalling();
+      this.addFalling(falling);
+      setTimeout(() => this.animateFalling(falling), this.getBoundRandom(0, 7000));
     }
   }
 
-  _rand(min, max) {
+  getBoundRandom(min, max) {
     return Math.random() * (max - min) + min;
   }
 
-  _createFalling() {
+  createFalling() {
     const colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
 
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    g.classList.add("falling");
-    g.style.visibility = 'hidden';
+    const falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    falling.classList.add("falling");
+    falling.style.visibility = 'hidden';
 
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", "M0,0 Q-5,10 0,20 Q5,10 0,0 Z");
     path.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
-    path.setAttribute("opacity", this._rand(0.6, 1));
-    path.setAttribute("transform", `scale(${this._rand(1.2, 2.8)})`);
+    path.setAttribute("opacity", this.getBoundRandom(0.6, 1));
+    path.setAttribute("transform", `scale(${this.getBoundRandom(1.2, 2.8)})`);
 
-    g.appendChild(path);
-    this.svg.appendChild(g);
-    this._fallings.push(g);
-    return g;
+    falling.appendChild(path);
+    return falling;
+  }
+  
+  addFalling(falling) {
+    this._svg.appendChild(falling);
+    this._fallings.push(falling);
   }
 
-  _animateFalling(falling) {
+  animateFalling(falling) {
     const screenWidth = this._screenWidth || this.offsetWidth;
     const screenHeight = this._screenHeight || this.offsetHeight;
     if (!screenWidth || !screenHeight) return;
 
-    const startX = this._rand(0, screenWidth);
-    const driftX = this._rand(-80, 80);
-    const duration = this._rand(10000, 20000);
-    const rotateStart = this._rand(0, 360);
-    const rotateEnd = rotateStart + this._rand(90, 360);
+    const startX = this.getBoundRandom(0, screenWidth);
+    const driftX = this.getBoundRandom(-80, 80);
+    const duration = this.getBoundRandom(10000, 20000);
+    const rotateStart = this.getBoundRandom(0, 360);
+    const rotateEnd = rotateStart + this.getBoundRandom(90, 360);
 
     falling.setAttribute("transform", `translate(${startX}, -60)`);
 
@@ -171,7 +175,7 @@ export class FallingBackground extends HTMLElement {
     animation.cancel();
     this._animations = this._animations.filter(a => a !== animation);
     if (!this._configChangeRequested) {
-      this._animateFalling(falling); // loop only if config change not requested
+      this.animateFalling(falling); // loop only if config change not requested
     }
   }
 
