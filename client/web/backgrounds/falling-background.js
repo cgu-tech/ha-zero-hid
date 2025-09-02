@@ -139,7 +139,9 @@ export class FallingBackground extends HTMLElement {
   }
 
   createFallingHalloween() {
-    let falling;
+    let falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    falling.setAttribute("transform", `scale(${this.getBoundRandom(1.2, 2.8)})`);
+
     const typeRoll = Math.random(); // Random selector
     if (typeRoll < 0.25) {
       // 🎃 Pumpkin (simple circle with a stem)
@@ -158,7 +160,6 @@ export class FallingBackground extends HTMLElement {
       stem.setAttribute("height", "4");
       stem.setAttribute("fill", "#654321");
 
-      falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
       falling.appendChild(pumpkin);
       falling.appendChild(stem);
     } else if (typeRoll < 0.5) {
@@ -206,12 +207,12 @@ export class FallingBackground extends HTMLElement {
     } else {
       // Spider web
       falling = this.createFallingSpiderWeb();
+      falling.setAttribute("transform", `scale(${this.getBoundRandom(2.8, 4.6)})`);
     }
 
     // Random scale (applies to whole group)
     falling.classList.add("falling");
     falling.style.visibility = 'hidden'; // Hide until animation begins
-    falling.setAttribute("transform", `scale(${this.getBoundRandom(1.2, 2.8)})`);
     return falling;
   }
 
