@@ -4,6 +4,8 @@ export class FallingBackground extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._resizeObserver = null;
     this._fallings = [];
+    this._animations = [];
+    this._configChangeRequested = false;
   }
 
   connectedCallback() {
@@ -36,16 +38,12 @@ export class FallingBackground extends HTMLElement {
     // Create SVG
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-
     shadow.appendChild(style);
     shadow.appendChild(svg);
-
     this.svg = svg;
 
     // Observe size changes
-    this._resizeObserver = new ResizeObserver(() => {
-      this._onResize();
-    });
+    this._resizeObserver = new ResizeObserver(() => this._onResize());
     this._resizeObserver.observe(this);
     
     // Wait for layout before creating fallings
@@ -136,6 +134,9 @@ export class FallingBackground extends HTMLElement {
         easing: "ease-in-out"
       });
 
+      // Track this animation
+      this._animations.push(animation);
+
       // Show the falling once animation actually starts
       animation.ready.then(() => {
         falling.style.visibility = 'visible';
@@ -143,7 +144,10 @@ export class FallingBackground extends HTMLElement {
 
       animation.onfinish = () => {
         animation.cancel();
-        animateFalling(falling); // loop
+        this._animations = this._animations.filter(a => a !== animation);
+        if (!this._configChangeRequested) {
+          animateFalling(falling); // loop only if not changing config
+        }
       };
     };
 
@@ -151,6 +155,29 @@ export class FallingBackground extends HTMLElement {
       const falling = createFalling();
       setTimeout(() => animateFalling(falling), rand(0, 7000));
     }
+  }
+  
+  /**
+   * Call this to change config and restart fallings
+   */
+  async changeConfig() {
+    // Prevent new animations from looping
+    this._configChangeRequested = true;
+
+    // Wait for all animations to finish naturally
+    await Promise.allSettled(this._animations.map(anim => anim.finished));
+
+    // Remove old elements
+    for (const falling of this._fallings) {
+      falling.remove();
+    }
+
+    this._fallings = [];
+    this._animations = [];
+    this._configChangeRequested = false;
+
+    // Start again
+    this.createFallings();
   }
 }
 
