@@ -118,7 +118,7 @@ export class FallingBackground extends HTMLElement {
   }
 
   createFalling() {
-    return this.createFallingLeave();
+    return this.createFallingHalloween();
   }
 
   createFallingLeave() {
