@@ -158,6 +158,7 @@ export class FallingBackground extends HTMLElement {
       stem.setAttribute("height", "4");
       stem.setAttribute("fill", "#654321");
 
+      falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
       falling.appendChild(pumpkin);
       falling.appendChild(stem);
     } else if (typeRoll < 0.5) {
@@ -169,6 +170,7 @@ export class FallingBackground extends HTMLElement {
       ghost.setAttribute("stroke-width", "0.5");
       ghost.setAttribute("opacity", this.getBoundRandom(0.7, 1));
 
+      falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
       falling.appendChild(ghost);
     } else if (typeRoll < 0.75) {
       // 🕷️ Spider (circle with 8 legs)
@@ -189,6 +191,7 @@ export class FallingBackground extends HTMLElement {
         return leg;
       };
 
+      falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
       falling.appendChild(body);
 
       // Add 8 legs
