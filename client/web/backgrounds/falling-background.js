@@ -140,7 +140,7 @@ export class FallingBackground extends HTMLElement {
 
   createFallingHalloween() {
     let falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    falling.setAttribute("transform", `scale(${this.getBoundRandom(1.0, 1.0)})`);
+    //falling.setAttribute("transform", `scale(${this.getBoundRandom(1.0, 1.0)})`);
 
     const typeRoll = Math.random(); // Random selector
     if (typeRoll < 0.25) {
@@ -206,7 +206,9 @@ export class FallingBackground extends HTMLElement {
       falling.appendChild(createLeg(4, 3, 9, 8));
     } else {
       // Spider web
-      falling.appendChild(this.createFallingSpiderWeb());
+      falling = this.createFallingSpiderWeb();
+      falling.setAttribute("width", "32");
+      falling.setAttribute("height", "32");
       falling.setAttribute("transform", `scale(${this.getBoundRandom(5, 10)})`);
     }
 
