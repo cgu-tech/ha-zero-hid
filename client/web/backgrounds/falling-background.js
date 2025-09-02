@@ -1,4 +1,7 @@
 export class FallingBackground extends HTMLElement {
+
+  _maxFallings = 30;
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -103,7 +106,7 @@ export class FallingBackground extends HTMLElement {
   }
 
   createFallings() {
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < this._maxFallings; i++) {
       const falling = this.createFalling();
       this.addFalling(falling);
       setTimeout(() => this.animateFalling(falling), this.getBoundRandom(0, 7000));
