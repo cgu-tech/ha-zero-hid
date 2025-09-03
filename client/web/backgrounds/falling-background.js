@@ -118,7 +118,7 @@ export class FallingBackground extends HTMLElement {
   }
 
   createFalling() {
-    return this.createFallingHalloween();
+    return this.createFallingSpiderWeb();
   }
 
   createFallingLeave() {
@@ -246,6 +246,10 @@ export class FallingBackground extends HTMLElement {
       falling.appendChild(path);
     });
 
+    falling.classList.add("falling");
+    falling.style.visibility = 'hidden'; // Hide until animation begins
+    falling.setAttribute("transform", `scale(${this.getBoundRandom(5, 10)})`);
+    
     return falling;
   }
 
