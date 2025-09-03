@@ -151,8 +151,8 @@ export class FallingBackground extends HTMLElement {
     webGroup.setAttribute("stroke-width", "1");
     webGroup.setAttribute("stroke-linejoin", "round");
   
-    const scale = this.getBoundRandom(5.0, 10.0);
-    webGroup.setAttribute("transform", `scale(${scale})`);
+    webGroup.setAttribute("opacity", this.getBoundRandom(0.6, 1));
+    webGroup.setAttribute("transform", `scale(${this.getBoundRandom(1.2, 2.8)})`);
   
     const paths = [
       // Axes
