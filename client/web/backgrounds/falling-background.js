@@ -1,3 +1,9 @@
+import { Globals } from '../utils/globals.js';
+import { Logger } from '../utils/logger.js';
+import { EventManager } from '../utils/event-manager.js';
+import { ResourceManager } from '../utils/resource-manager.js';
+import { LayoutManager } from '../utils/layout-manager.js';
+
 export class FallingBackground extends HTMLElement {
 
   // private properties
@@ -18,7 +24,7 @@ export class FallingBackground extends HTMLElement {
   constructor() {
     super();
 
-    // this._logger = new Logger(this, "falling-background.js");
+    this._logger = new Logger(this, "falling-background.js");
     // this._eventManager = new EventManager(this);
     // this._layoutManager = new LayoutManager(this, {});
     // this._resourceManager = new ResourceManager(this, import.meta.url);
