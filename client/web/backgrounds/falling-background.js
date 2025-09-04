@@ -209,7 +209,7 @@ export class FallingBackground extends HTMLElement {
       c-0.7-0.4-1.3-1-1.7-1.7l-1.3-2.6c-0.1-0.3-0.4-0.5-0.7-0.5l-2.1-0.4l2.7-1.4l0.1,0.1C26,16.4,27.5,17,29,17c0.6,0,1-0.4,1-1
       S29.6,15,29,15z`);
 
-    this.setRandomFill(path, ['#000000']);
+    this.setRandomFill(path, ['#000000', '#1C1C1C', '#262626']);
     this.setRandomOpacity(path, 0.6, 1);
     this.setRandomScale(path, 0.8, 1.8);
 
