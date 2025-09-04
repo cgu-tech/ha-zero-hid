@@ -28,9 +28,6 @@ export class FallingBackground extends HTMLElement {
     this.doAttach();
     this.doQueryElements();
     this.doListen();
-
-    this.doUpdateLayout();
-    this.doUpdateAddons();
   }
 
   getLogger() {
