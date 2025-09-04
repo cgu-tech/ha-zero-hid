@@ -118,7 +118,7 @@ export class FallingBackground extends HTMLElement {
   }
 
   createFalling() {
-    return this.createFallingSpiderWeb();
+    return this.createFallingSpider();
   }
 
   createFallingLeave() {
@@ -173,6 +173,38 @@ export class FallingBackground extends HTMLElement {
     });
   
     falling.appendChild(webGroup);
+    return falling;
+  }
+
+  createFallingSpider() { 
+    // Create the <g> wrapper for the spider
+    const falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    falling.classList.add("falling"); // Optional: for animation or styling
+    falling.style.visibility = "hidden"; // Optional: show later via animation
+
+    // Create the spider path
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", `M29,15c-1,0-2-0.4-2.7-1.1l-0.6-0.6c-0.3-0.3-0.8-0.4-1.2-0.2l-2.6,1.3l1.9-2.9
+      c0.1-0.1,0.1-0.3,0.2-0.4L24.5,8c0.3-1.6,1-3.1,2.2-4.2c0.4-0.4,0.4-1,0-1.4s-1-0.4-1.4,0c-1.5,1.5-2.4,3.3-2.7,5.3l-0.5,3
+      l-0.2,0.3C21.1,7.4,18,5.5,16.3,5C16.1,5,15.9,5,15.7,5c-1.7,0.5-4.8,2.3-5.6,5.9L10,10.6l-0.5-3c-0.3-2-1.3-3.9-2.7-5.3
+      c-0.4-0.4-1-0.4-1.4,0s-0.4,1,0,1.4C6.5,4.9,7.2,6.3,7.5,8L8,11.2c0,0.1,0.1,0.3,0.2,0.4l1.9,2.9l-2.6-1.3c-0.4-0.2-0.8-0.1-1.2,0.2
+      l-0.6,0.6C5,14.6,4,15,3,15c-0.6,0-1,0.4-1,1s0.4,1,1,1c1.5,0,3-0.6,4.1-1.7l0.1-0.1l2.7,1.4L7.8,17c-0.3,0.1-0.6,0.3-0.7,0.5
+      l-1.3,2.6c-0.4,0.7-1,1.3-1.7,1.7l-0.6,0.3c-0.5,0.2-0.7,0.8-0.4,1.3C3.3,23.8,3.6,24,4,24c0.2,0,0.3,0,0.4-0.1L5,23.6
+      c1.1-0.6,2-1.5,2.6-2.6l1.1-2.1l1.3-0.3l-0.7,0.7c-0.1,0.1-0.2,0.3-0.3,0.4l-1.4,4.9c-0.3,1.1-1.1,2-2.1,2.5
+      c-0.5,0.2-0.7,0.8-0.4,1.3C5.3,28.8,5.6,29,6,29c0.2,0,0.3,0,0.4-0.1c1.5-0.8,2.7-2.1,3.1-3.8l1.3-4.6l1.3-1.3
+      c0,1.2,0.6,2.2,1.5,2.9C13.2,22.7,13,23.3,13,24c0,0.6,0.4,1,1,1s1-0.4,1-1c0-0.6,0.4-1,1-1s1,0.4,1,1c0,0.6,0.4,1,1,1s1-0.4,1-1
+      c0-0.7-0.2-1.3-0.6-1.8c0.9-0.7,1.4-1.7,1.5-2.9l1.3,1.3l1.3,4.6c0.5,1.6,1.6,3,3.1,3.8C25.7,29,25.8,29,26,29
+      c0.4,0,0.7-0.2,0.9-0.6c0.2-0.5,0-1.1-0.4-1.3c-1-0.5-1.8-1.4-2.1-2.5L23,19.7c0-0.2-0.1-0.3-0.3-0.4L22,18.6l1.3,0.3l1.1,2.1
+      c0.6,1.1,1.5,2,2.6,2.6l0.6,0.3C27.7,24,27.8,24,28,24c0.4,0,0.7-0.2,0.9-0.6c0.2-0.5,0-1.1-0.4-1.3l-0.6-0.3
+      c-0.7-0.4-1.3-1-1.7-1.7l-1.3-2.6c-0.1-0.3-0.4-0.5-0.7-0.5l-2.1-0.4l2.7-1.4l0.1,0.1C26,16.4,27.5,17,29,17c0.6,0,1-0.4,1-1
+      S29.6,15,29,15z`);
+
+    path.setAttribute("fill", "#000"); // Or any other color you want
+    path.setAttribute("transform", `scale(${this.getBoundRandom(1.0, 2.4)})`);
+    path.setAttribute("opacity", this.getBoundRandom(0.6, 1));
+
+    // Append the path to the <g>
+    falling.appendChild(path);
     return falling;
   }
 
@@ -246,9 +278,6 @@ export class FallingBackground extends HTMLElement {
     } else {
       // Spider web
       falling = this.createFallingSpiderWeb();
-      falling.setAttribute("width", "32");
-      falling.setAttribute("height", "32");
-      falling.setAttribute("transform", `scale(${this.getBoundRandom(5, 10)})`);
     }
 
     // Random scale (applies to whole group)
