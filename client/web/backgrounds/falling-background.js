@@ -121,18 +121,28 @@ export class FallingBackground extends HTMLElement {
     return this.createFallingSpider();
   }
 
-  createFallingLeave() {
-    const colors = ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'];
+  setRandomOpacity(elt, min, max) {
+    elt.setAttribute("opacity", this.getBoundRandom(min, max));
+  }
 
+  setRandomScale(elt, min, max) {
+    elt.setAttribute("transform", `scale(${this.getBoundRandom(min, max)})`);
+  }
+
+  setRandomFill(elt, colors) {
+    elt.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
+  }
+
+  createFallingLeave() {
     const falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
     falling.classList.add("falling");
     falling.style.visibility = 'hidden';
 
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", "M0,0 Q-5,10 0,20 Q5,10 0,0 Z");
-    path.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
-    path.setAttribute("opacity", this.getBoundRandom(0.6, 1));
-    path.setAttribute("transform", `scale(${this.getBoundRandom(1.2, 2.8)})`);
+    this.setRandomFill(path, ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513']);
+    this.setRandomOpacity(path, 0.6, 1);
+    this.setRandomScale(path, 1.2, 2.8);
 
     falling.appendChild(path);
     return falling;
@@ -150,10 +160,10 @@ export class FallingBackground extends HTMLElement {
     webGroup.setAttribute("stroke", "#6B6C6E");
     webGroup.setAttribute("stroke-width", "1");
     webGroup.setAttribute("stroke-linejoin", "round");
-  
-    webGroup.setAttribute("opacity", this.getBoundRandom(0.6, 1));
-    webGroup.setAttribute("transform", `scale(${this.getBoundRandom(1.2, 2.8)})`);
-  
+
+    this.setRandomOpacity(webGroup, 0.6, 1);
+    this.setRandomScale(webGroup, 1.2, 2.8);
+
     const paths = [
       // Axes
       "M0,13.5 L31.65,13.5",
@@ -199,9 +209,9 @@ export class FallingBackground extends HTMLElement {
       c-0.7-0.4-1.3-1-1.7-1.7l-1.3-2.6c-0.1-0.3-0.4-0.5-0.7-0.5l-2.1-0.4l2.7-1.4l0.1,0.1C26,16.4,27.5,17,29,17c0.6,0,1-0.4,1-1
       S29.6,15,29,15z`);
 
-    path.setAttribute("fill", "#000"); // Or any other color you want
-    path.setAttribute("transform", `scale(${this.getBoundRandom(0.8, 1.8)})`);
-    path.setAttribute("opacity", this.getBoundRandom(0.6, 1));
+    this.setRandomFill(path, ['#000000', '#5C513D', '#374036', '#6E4841']);
+    this.setRandomOpacity(path, 0.6, 1);
+    this.setRandomScale(path, 0.8, 1.8);
 
     // Append the path to the <g>
     falling.appendChild(path);
