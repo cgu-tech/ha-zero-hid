@@ -285,7 +285,7 @@ export class FallingBackground extends HTMLElement {
 
     this.setRandomFill(path, ['#FFFFFF', '#EBEBEB', '#DBDBDB']);
     this.setRandomOpacity(path, 0.6, 1);
-    this.setRandomScale(path, 1.2, 2.8);
+    this.setRandomScale(path, 1.8, 3.2);
 
     // Append the path to the <g>
     falling.appendChild(path);
