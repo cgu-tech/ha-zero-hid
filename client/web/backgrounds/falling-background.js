@@ -117,10 +117,6 @@ export class FallingBackground extends HTMLElement {
     return Math.random() * (max - min) + min;
   }
 
-  createFalling() {
-    return this.createFallingWitchHat();
-  }
-
   setRandomOpacity(elt, min, max) {
     elt.setAttribute("opacity", this.getBoundRandom(min, max));
   }
@@ -131,6 +127,27 @@ export class FallingBackground extends HTMLElement {
 
   setRandomFill(elt, colors) {
     elt.setAttribute("fill", colors[Math.floor(Math.random() * colors.length)]);
+  }
+
+  createFalling() {
+    return this.createFallingHalloween();
+  }
+
+  createFallingHalloween() {
+    const typeRoll = Math.random();
+    if (typeRoll < 0.1) {
+      return this.createFallingGhost();
+    } else if (typeRoll < 0.2) {
+      return this.createFallingSpider();
+    } else if (typeRoll < 0.3) {
+      return this.createFallingSpiderWeb();
+    } else if (typeRoll < 0.4) {
+      return this.createFallingWitchHat();
+    } else if (typeRoll < 0.5) {
+      return this.createFallingPumkin();
+    } else {
+      return this.createFallingLeave();
+    }
   }
 
   createFallingLeave() {
@@ -315,84 +332,6 @@ export class FallingBackground extends HTMLElement {
     falling.appendChild(path);
     return falling;
   }
-
-  createFallingHalloween() {
-    let falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    //falling.setAttribute("transform", `scale(${this.getBoundRandom(1.0, 1.0)})`);
-
-    const typeRoll = Math.random(); // Random selector
-    if (typeRoll < 0.25) {
-      // 🎃 Pumpkin (simple circle with a stem)
-      const pumpkin = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      pumpkin.setAttribute("r", "8");
-      pumpkin.setAttribute("cx", "0");
-      pumpkin.setAttribute("cy", "0");
-      pumpkin.setAttribute("fill", "#FF7518");
-      pumpkin.setAttribute("stroke", "#A0522D");
-      pumpkin.setAttribute("stroke-width", "1");
-
-      const stem = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      stem.setAttribute("x", "-1");
-      stem.setAttribute("y", "-10");
-      stem.setAttribute("width", "2");
-      stem.setAttribute("height", "4");
-      stem.setAttribute("fill", "#654321");
-
-      falling.appendChild(pumpkin);
-      falling.appendChild(stem);
-    } else if (typeRoll < 0.5) {
-      // 👻 Ghost (stylized path)
-      const ghost = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      ghost.setAttribute("d", "M0,-10 Q5,-20 10,-10 Q15,-5 10,0 Q5,5 0,0 Q-5,-5 -10,0 Q-15,-5 -10,-10 Q-5,-20 0,-10 Z");
-      ghost.setAttribute("fill", "#eeeeee");
-      ghost.setAttribute("stroke", "#999");
-      ghost.setAttribute("stroke-width", "0.5");
-      ghost.setAttribute("opacity", this.getBoundRandom(0.7, 1));
-
-      falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      falling.appendChild(ghost);
-    } else if (typeRoll < 0.75) {
-      // 🕷️ Spider (circle with 8 legs)
-      const body = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      body.setAttribute("r", "5");
-      body.setAttribute("cx", "0");
-      body.setAttribute("cy", "0");
-      body.setAttribute("fill", "black");
-
-      const createLeg = (x1, y1, x2, y2) => {
-        const leg = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        leg.setAttribute("x1", x1);
-        leg.setAttribute("y1", y1);
-        leg.setAttribute("x2", x2);
-        leg.setAttribute("y2", y2);
-        leg.setAttribute("stroke", "black");
-        leg.setAttribute("stroke-width", "1");
-        return leg;
-      };
-
-      falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      falling.appendChild(body);
-
-      // Add 8 legs
-      falling.appendChild(createLeg(-5, 0, -10, -5));
-      falling.appendChild(createLeg(-5, 0, -10, 5));
-      falling.appendChild(createLeg(5, 0, 10, -5));
-      falling.appendChild(createLeg(5, 0, 10, 5));
-      falling.appendChild(createLeg(-4, -3, -9, -8));
-      falling.appendChild(createLeg(-4, 3, -9, 8));
-      falling.appendChild(createLeg(4, -3, 9, -8));
-      falling.appendChild(createLeg(4, 3, 9, 8));
-    } else {
-      // Spider web
-      falling = this.createFallingSpiderWeb();
-    }
-
-    // Random scale (applies to whole group)
-    falling.classList.add("falling");
-    falling.style.visibility = 'hidden'; // Hide until animation begins
-    return falling;
-  }
-
 
   addFalling(falling) {
     this._svg.appendChild(falling);
