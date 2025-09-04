@@ -18,16 +18,16 @@ export class FallingBackground extends HTMLElement {
   constructor() {
     super();
 
-    this._logger = new Logger(this, "falling-background.js");
-    this._eventManager = new EventManager(this);
-    this._layoutManager = new LayoutManager(this, {});
-    this._resourceManager = new ResourceManager(this, import.meta.url);
+    // this._logger = new Logger(this, "falling-background.js");
+    // this._eventManager = new EventManager(this);
+    // this._layoutManager = new LayoutManager(this, {});
+    // this._resourceManager = new ResourceManager(this, import.meta.url);
 
-    this.doCard();
-    this.doStyle();
-    this.doAttach();
-    this.doQueryElements();
-    this.doListen();
+    //this.doCard();
+    //this.doStyle();
+    //this.doAttach();
+    //this.doQueryElements();
+    //this.doListen();
   }
 
   getLogger() {
