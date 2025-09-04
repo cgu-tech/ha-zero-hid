@@ -200,7 +200,7 @@ export class FallingBackground extends HTMLElement {
       S29.6,15,29,15z`);
 
     path.setAttribute("fill", "#000"); // Or any other color you want
-    path.setAttribute("transform", `scale(${this.getBoundRandom(1.0, 2.4)})`);
+    path.setAttribute("transform", `scale(${this.getBoundRandom(0.8, 1.8)})`);
     path.setAttribute("opacity", this.getBoundRandom(0.6, 1));
 
     // Append the path to the <g>
