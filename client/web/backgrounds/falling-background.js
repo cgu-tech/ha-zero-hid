@@ -118,7 +118,7 @@ export class FallingBackground extends HTMLElement {
   }
 
   createFalling() {
-    return this.createFallingPumkin();
+    return this.createFallingGhost();
   }
 
   setRandomOpacity(elt, min, max) {
@@ -246,9 +246,44 @@ export class FallingBackground extends HTMLElement {
       l2.2706-0.2586c0.2526-0.028,0.4266-0.2272,0.4239-0.4614l-0.0341-2.3615
       c2.2218-0.6826,4.9215-1.6982,6.3382-3.1359C39.1984,31.0301,36.4217,36.3702,32.1366,38.0412z`);
 
-
-
     this.setRandomFill(path, ['#BF6C00', '#BF5300', '#D68120']);
+    this.setRandomOpacity(path, 0.6, 1);
+    this.setRandomScale(path, 0.8, 1.8);
+
+    // Append the path to the <g>
+    falling.appendChild(path);
+    return falling;
+  }
+
+  createFallingGhost() { 
+    // Create the <g> wrapper for the spider
+    const falling = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    falling.classList.add("falling"); // Optional: for animation or styling
+    falling.style.visibility = "hidden"; // Optional: show later via animation
+
+    // Create the spider path
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", 
+     `M25.0777,10.972c-0.2919-0.2741-0.7139-0.3591-1.0894-0.2189l-2.2505,0.8397
+      c0.0035-0.0117,0.007-0.0236,0.0105-0.035c0.3529-0.769,0.5513-1.6235,0.5513-2.5249
+      c0-3.3457-2.7125-6.0582-6.0582-6.0582c-2.5498,0-4.6583,1.8848-5.4774,3.4983
+      c-0.1704,0.3358-1.0145,1.0626-1.9558,0.4678c-0.9415-0.5943-1.5618-1.6671-2.2299-2.7257
+      c-0.8922-1.4123-2.5529-0.9768-3.122,0.4461C2.118,8.006, -1.9086,10.1331,1.0775,10.3846
+      c1.7839,0.1506,3.0475-0.8176,3.5677-1.1891c0.5206-0.3716-0.1487,1.3382,0.8922,1.561
+      c1.0066,0.2155,1.1231-1.0471,2.0533,0.2927c-1.2264,2.0067-3.2704,3.2704-5.2961,4.6388
+      c-2.0945,1.4151-2.5285,2.8061,1.0218,2.195c1.5385-0.2651,1.6822,0.085,0.9787,0.474
+      c-0.665,0.368-2.2645,1.0191-3.2641,1.3444c-0.9543,0.311-0.7132,1.8425,1.6422,1.6251
+      c1.8316-0.1689,3.5359-0.2061,4.7611-0.6053c0.9993-0.3253,1.3459-0.0341,0.0078,0.5109
+      c-2.9842,1.2159,0.6693,2.676,6.8668-0.639c2.3371-1.2501,3.9354-2.6364,5.1454-4.2941
+      c0.2046,0.2395,0.5109,0.3688,0.9663,0.1317c1.1344-0.5905,1.6189,0.0249,0.8257,0.7182
+      c-0.9305,0.8145-0.846,2.7459,1.7552,1.0719c2.6015-1.6744,2.5429-5.6459,2.5429-5.6459
+      C25.7427,11.7022,25.3696,11.2451,25.0777,10.972z 
+      M14.2316,7.9994c0,0,0.7225,1.4453,1.5657,1.9271
+      C13.7498,11.1304,12.907,8.9629,14.2316,7.9994z 
+      M17.4021,10.5546c0.9512-0.1949,2.4531-0.6689,2.4531-0.6689
+      C20.3014,11.1122,18.6289,12.6731,17.4021,10.5546z`);
+
+    this.setRandomFill(path, ['#FFFFFF', '#EBEBEB', '#DBDBDB']);
     this.setRandomOpacity(path, 0.6, 1);
     this.setRandomScale(path, 0.8, 1.8);
 
