@@ -200,18 +200,62 @@ export class AnimatedBackground extends HTMLElement {
     }
   }
 
-  createFirstGroup() {
-    return new AnimatedGroup(30, 'falling', {});
+  createGhostsGroup() {
+    return new AnimatedGroup(5, 'sliding', 
+      {
+        names: ["ghost"],
+        colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
+        opacities: [0.6, 1],
+        scales: [1.8, 3.2]
+      }
+    );
+  }
+
+  createSpidersGroup() {
+    return new AnimatedGroup(7, 'falling', 
+      {
+        names: ["spider"],
+        colors: ['#000000'],
+        opacities: [0.6, 1],
+        scales: [0.8, 1.8]
+      }
+    );
+  }
+
+  createWebsGroup() {
+    return new AnimatedGroup(7, 'falling', 
+      {
+        names: ["web"],
+        colors: ['#000000'],
+        opacities: [0.6, 1],
+        scales: [1.2, 2.8]
+      }
+    );
   }
 
   createSecondGroup() {
     return new AnimatedGroup(10, 'sliding', {});
+    const typeRoll = Math.random();
+    if (typeRoll < 0.1) {
+      item = this.createItem(["ghost"], ['#FFFFFF', '#EBEBEB', '#DBDBDB'], [0.6, 1], [1.8, 3.2]);
+    } else if (typeRoll < 0.2) {
+      item = this.createItem(["spider"], ['#000000'], [0.6, 1], [0.8, 1.8]);
+    } else if (typeRoll < 0.3) {
+      item = this.createItem(["web"], ['#000000'], [0.6, 1], [1.2, 2.8]);
+    } else if (typeRoll < 0.4) {
+      item = this.createItem(["witch", "hat"], ['#617A2B', '#673470', '#0F0F0F'], [0.6, 1], [1.8, 3.2]);
+    } else if (typeRoll < 0.5) {
+      item = this.createItem(["pumkin"], ['#BF6C00', '#BF5300', '#D68120'], [0.6, 1], [0.8, 1.8]);
+    } else {
+      item = this.createItem(["leave"], ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'], [0.6, 1], [1.2, 2.8]);
+    }
+
   }
 
   createAnimateds() {
     //TODO: replace fake groups with real ones from config
-    this._elements.groups.push(this.createFirstGroup());
-    this._elements.groups.push(this.createSecondGroup());
+    this._elements.groups.push(this.createGhostsGroup());
+    this._elements.groups.push(this.createSpidersGroup());
     
     for (const group of this._elements.groups) {
       this.doAnimateGroup(group);
@@ -326,22 +370,12 @@ export class AnimatedBackground extends HTMLElement {
     return items[`create${names.map(name => this.capitalizeFirst(name)).join('')}`](this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
   }
 
-  createAnimated(groupConfig) {
-    let item;
-    const typeRoll = Math.random();
-    if (typeRoll < 0.1) {
-      item = this.createItem(["ghost"], ['#FFFFFF', '#EBEBEB', '#DBDBDB'], [0.6, 1], [1.8, 3.2]);
-    } else if (typeRoll < 0.2) {
-      item = this.createItem(["spider"], ['#000000'], [0.6, 1], [0.8, 1.8]);
-    } else if (typeRoll < 0.3) {
-      item = this.createItem(["web"], ['#000000'], [0.6, 1], [1.2, 2.8]);
-    } else if (typeRoll < 0.4) {
-      item = this.createItem(["witch", "hat"], ['#617A2B', '#673470', '#0F0F0F'], [0.6, 1], [1.8, 3.2]);
-    } else if (typeRoll < 0.5) {
-      item = this.createItem(["pumkin"], ['#BF6C00', '#BF5300', '#D68120'], [0.6, 1], [0.8, 1.8]);
-    } else {
-      item = this.createItem(["leave"], ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'], [0.6, 1], [1.2, 2.8]);
-    }
+  createAnimated(config) {
+    const item = this.createItem(
+      config.names,
+      config.colors,
+      config.opacities,
+      config.scales);
     item.classList.add("animated");
     item.style.visibility = "hidden";
     return item;
