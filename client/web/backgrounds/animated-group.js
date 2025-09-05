@@ -18,7 +18,7 @@ export class AnimatedGroup {
   }
 
   getAnimations() {
-    return this._items;
+    return this._animations;
   }
 
   getMaxItems() {
