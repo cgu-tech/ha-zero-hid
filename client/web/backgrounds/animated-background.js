@@ -286,7 +286,7 @@ export class AnimatedBackground extends HTMLElement {
       const item = this.createAnimated(group.getConfig());
       group.getItems().push(item);
       this._elements.svg.appendChild(item);
-      setTimeout(() => this.animateItem(item, group), this.getBoundRandom(0, 7000));
+      setTimeout(() => this.animateItem(group, item), this.getBoundRandom(0, 7000));
     }
   }
 
@@ -301,7 +301,7 @@ export class AnimatedBackground extends HTMLElement {
     return bounds && bounds.width && bounds.height;
   }
 
-  animateItem(item, group) {
+  animateItem(group, item) {
     const bounds = this.getBounds();
     if (!this.areValidBounds(bounds)) return; // Invalid bounds dimensions
 
@@ -373,7 +373,7 @@ export class AnimatedBackground extends HTMLElement {
     animation.cancel();
     this._elements.animations = group.getAnimations().filter(a => a !== animation);
     if (!this._configChangeRequested) {
-      this.animateFalling(item); // loop only if config change not requested
+      this.animateItem(group, item); // loop only if config change not requested
     }
   }
 
