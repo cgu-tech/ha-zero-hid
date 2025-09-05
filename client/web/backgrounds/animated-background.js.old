@@ -16,11 +16,11 @@ export class AnimatedBackground extends HTMLElement {
   _layoutManager;
   _resourceManager;
 
+  _maxFallings = 30;
   _resizeObserver;
   _configChangeRequested = false;
   _screenWidth;
   _screenHeight;
-  _groups = [];
 
   constructor() {
     super();
@@ -58,7 +58,7 @@ export class AnimatedBackground extends HTMLElement {
 
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
-    this.doUpdateConfig();
+    this.doUpdateLayout();
   }
 
   disconnectedCallback() {
@@ -80,7 +80,8 @@ export class AnimatedBackground extends HTMLElement {
     // Create SVG background
     this._elements.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     this._elements.svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    this._elements.groups = [];
+    this._elements.fallings = [];
+    this._elements.animations = [];
   }
 
   doStyle() {
@@ -124,7 +125,6 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doUpdateConfig() {
-    this.doResetLayout();
     this.doUpdateLayout();
   }
 
@@ -148,166 +148,116 @@ export class AnimatedBackground extends HTMLElement {
     return false;
   }
 
-  doResetLayout() {
+  doUpdateLayout() {
+    const fallings = this._elements.fallings;
+    const animations = this._elements.animations;
     
     // Lock to prevent new animations from looping
     this._configChangeRequested = true;
 
-    // Reset groups
-    this.doResetGroups();
-
-    // Unlock to allow new animations from looping
-    this._configChangeRequested = false;
-  }
-
-  doUpdateLayout() {
-    const groups = this._elements.groups;
-    
-    // Wait for layout to be ready beofre creating new fallings
-    requestAnimationFrame(this.doCreateAnimateds.bind(this));
-  }
-
-  doResetGroups() {
-    for (const group of this._elements.groups) {
-      this.doResetGroup(group);
-    }
-  }
-
-  doResetGroup(group) {
-    const animations = group.getAnimations();
-    const items = group.getItems();
-
     // Finish all animations now
     animations.forEach(animation => animation.finish());
 
-    // Remove old items from DOM
-    for (const item of items) {
-      item.remove();
+    // Remove old fallings from DOM
+    for (const falling of fallings) {
+      falling.remove();
     }
 
-    // Reset items and animations arrays
-    items.length = 0;
+    // Reset fallings and animations arrays
+    fallings.length = 0;
     animations.length = 0;
+
+    // Unlock to allow new animations from looping
+    this._configChangeRequested = false;
+
+    // Wait for layout to be ready beofre creating new fallings
+    requestAnimationFrame(this.doCreateFallings.bind(this));
   }
 
-  doCreateAnimateds() {
-
+  doCreateFallings() {
     // Resize viewbox to parent container dimensions (whenever possible)
     if (this.doResizeBackground()) {
-
       // Create new fallings using current configuration
-      this.createAnimateds();
+      this.createFallings();
     }
   }
 
-  createFirstGroup() {
-    return new AnimatedGroup(30, 'falling', {});
-  }
-
-  createSecondGroup() {
-    return new AnimatedGroup(10, 'sliding', {});
-  }
-
-  createAnimateds() {
-    //TODO: replace fake groups with real ones from config
-    this._elements.groups.push(this.createFirstGroup());
-    this._elements.groups.push(this.createSecondGroup());
-    
-    for (const group of this._elements.groups) {
-      this.doAnimateGroup(group);
+  createFallings() {
+    for (let i = 0; i < this._maxFallings; i++) {
+      const falling = this.createFalling();
+      this.addFalling(falling);
+      // setTimeout(() => this.animateFalling(falling), this.getBoundRandom(0, 7000));
+      setTimeout(() => this.animateFallingSlide(falling), this.getBoundRandom(0, 7000));
     }
   }
 
-  doAnimateGroup(group) {
-    for (let i = 0; i < group.getMaxItems(); i++) {
-      const item = this.createAnimated(group.getConfig());
-      group.getItems().push(item);
-      this._elements.svg.appendChild(item);
-      setTimeout(() => this.animateItem(item, group.getAnimation()), this.getBoundRandom(0, 7000));
-    }
+  addFalling(falling) {
+    this._elements.svg.appendChild(falling);
+    this._elements.fallings.push(falling);
   }
 
-  getBounds() {
-    return {
-      width: (this._screenWidth || this.offsetWidth),
-      height: (this._screenHeight || this.offsetHeight)
-    }
-  }
+  animateFalling(falling) {
+    const screenWidth = this._screenWidth || this.offsetWidth;
+    const screenHeight = this._screenHeight || this.offsetHeight;
+    if (!screenWidth || !screenHeight) return;
 
-  hasValidDimensions(dimensions) {
-    return dimensions && screenWidth && screenHeight;
-  }
-
-  animateItem(item, animationType) {
-    const bounds = this.getBounds();
-    if (!this.hasValidDimensions(bounds) return; // Invalid bounds dimensions
-
-    let animation;
-    if (animationType === 'falling') animation = this.getAnimationFalling(bounds);
-    if (animationType === 'sliding') animation = this.getAnimationSliding(bounds);
-    if (!animation) return; // Unknown animation
-
-    item.setAttribute("transform", `translate(${animation.startX}, ${animation.startY})`);
-
-    const animation = item.animate(animation.steps, 
-    {
-      duration: animation.duration,
-      easing: "ease-in-out"
-    });
-
-    this._elements.animations.push(animation);
-    animation.ready.then(this.onAnimationReady.bind(this, item));  
-    animation.addEventListener('finish', this.onAnimationFinish.bind(this, item));
-  }
-  
-  getAnimationFalling(bounds) {
-    const startX = this.getBoundRandom(0, bounds.width);
-    const startY = -60;
+    const startX = this.getBoundRandom(0, screenWidth);
     const driftX = this.getBoundRandom(-80, 80);
+    const duration = this.getBoundRandom(10000, 20000);
     const rotateStart = this.getBoundRandom(0, 360);
     const rotateEnd = rotateStart + this.getBoundRandom(90, 360);
-    const duration = this.getBoundRandom(10000, 20000);
-    const steps = [
-      { transform: `translate(${startX}px, ${startY}px) rotate(${rotateStart}deg)` },
-      { transform: `translate(${startX + driftX}px, ${bounds.height - startY}px) rotate(${rotateEnd}deg)` }
-    ];
-    return {
-      startX: startX,
-      startY: startY,
-      steps: steps,
-      duration: duration
-    }
+
+    falling.setAttribute("transform", `translate(${startX}, -60)`);
+
+    const animation = falling.animate([
+      { transform: `translate(${startX}px, -60px) rotate(${rotateStart}deg)` },
+      { transform: `translate(${startX + driftX}px, ${screenHeight + 60}px) rotate(${rotateEnd}deg)` }
+    ], {
+      duration,
+      easing: "ease-in-out"
+    });
+    this._elements.animations.push(animation);
+
+    animation.ready.then(this.onFallingAnimationReady.bind(this, falling));  
+    animation.addEventListener('finish', this.onFallingAnimationFinish.bind(this, falling));
   }
 
-  getAnimationSliding(bounds) {
-    const startX = -60;
-    const startY = this.getBoundRandom(0, bounds.height - 100);
-    const endX = bounds.width + 60;
-    const endY = endX;
-    const duration = this.getBoundRandom(10000, 20000);
-    const steps = [
-      { transform: `translate(${startX}px, ${startY}px)` },
-      { transform: `translate(${endX}px, ${endY}px)` }
-    ];
-    return {
-      startX: startX,
-      startY: startY,
-      steps: steps,
-      duration: duration
-    }
+  onFallingAnimationReady(falling) {
+    falling.style.visibility = 'visible';
   }
 
-  onAnimationReady(item) {
-    item.style.visibility = 'visible';
-  }
-
-  onAnimationFinish(item, evt) {
+  onFallingAnimationFinish(falling, evt) {
     const animation = evt.target;
     animation.cancel();
     this._elements.animations = this._elements.animations.filter(a => a !== animation);
     if (!this._configChangeRequested) {
-      this.animateFalling(item); // loop only if config change not requested
+      this.animateFalling(falling); // loop only if config change not requested
     }
+  }
+
+  animateFallingSlide(falling) {
+    const screenWidth = this._screenWidth || this.offsetWidth;
+    const screenHeight = this._screenHeight || this.offsetHeight;
+    if (!screenWidth || !screenHeight) return;
+  
+    const startY = this.getBoundRandom(0, screenHeight - 100);
+    const startX = -60;
+    const endX = screenWidth + 60;
+    const duration = this.getBoundRandom(10000, 20000);
+  
+    falling.setAttribute("transform", `translate(${startX}, ${startY})`);
+  
+    const animation = falling.animate([
+      { transform: `translate(${startX}px, ${startY}px)` },
+      { transform: `translate(${endX}px, ${startY}px)` }
+    ], {
+      duration,
+      easing: "ease-in-out"
+    });
+  
+    this._elements.animations.push(animation);
+    animation.ready.then(this.onFallingAnimationReady.bind(this, falling));
+    animation.addEventListener('finish', this.onFallingAnimationFinish.bind(this, falling));
   }
 
   getBoundRandom(min, max) {
