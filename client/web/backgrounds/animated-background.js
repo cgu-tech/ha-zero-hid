@@ -251,7 +251,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createItem(names, colors, opacities, scales) {
-    return items[`create${names.map(capitalizeFirst).join('')}`](this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
+    return items[`create${names.map(name => this.capitalizeFirst(name)).join('')}`](this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
   }
 
   createFalling() {
