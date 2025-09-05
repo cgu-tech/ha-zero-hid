@@ -302,7 +302,7 @@ export class AnimatedBackground extends HTMLElement {
 
   animateItem(item, animationType) {
     const bounds = this.getBounds();
-    if (!this.hasValidDimensions(bounds) return; // Invalid bounds dimensions
+    if (!this.hasValidDimensions(bounds)) return; // Invalid bounds dimensions
 
     let animation;
     if (animationType === 'falling') animation = this.getAnimationFalling(bounds);
