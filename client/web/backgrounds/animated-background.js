@@ -207,7 +207,7 @@ export class AnimatedBackground extends HTMLElement {
         names: ["ghost"],
         colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
         opacities: [0.6, 1],
-        scales: [1.8, 3.2]
+        scales: [2.6, 5.1]
       }
     );
   }
@@ -224,7 +224,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createWebsGroup() {
-    return new AnimatedGroup(3, 'falling', 
+    return new AnimatedGroup(2, 'falling', 
       {
         names: ["web"],
         colors: ['#636363'],
