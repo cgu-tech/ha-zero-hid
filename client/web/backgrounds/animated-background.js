@@ -202,7 +202,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createGhostsGroup() {
-    return new AnimatedGroup(3, 'sliding', 
+    return new AnimatedGroup(1, 'sliding', 
       {
         names: ["ghost"],
         colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
@@ -213,7 +213,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createSpidersGroup() {
-    return new AnimatedGroup(7, 'falling', 
+    return new AnimatedGroup(3, 'falling', 
       {
         names: ["spider"],
         colors: ['#000000'],
@@ -224,10 +224,10 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createWebsGroup() {
-    return new AnimatedGroup(5, 'falling', 
+    return new AnimatedGroup(3, 'falling', 
       {
         names: ["web"],
-        colors: ['#000000'],
+        colors: ['#636363'],
         opacities: [0.6, 1],
         scales: [1.2, 2.8]
       }
@@ -246,7 +246,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createPumkinsGroup() {
-    return new AnimatedGroup(3, 'falling', 
+    return new AnimatedGroup(1, 'falling', 
       {
         names: ["pumkin"],
         colors: ['#BF6C00', '#BF5300', '#D68120'],
@@ -272,7 +272,7 @@ export class AnimatedBackground extends HTMLElement {
     this._elements.groups.push(this.createGhostsGroup());
     this._elements.groups.push(this.createSpidersGroup());
     this._elements.groups.push(this.createWebsGroup());
-    this._elements.groups.push(this.createWitchHatsGroup());
+    //this._elements.groups.push(this.createWitchHatsGroup());
     this._elements.groups.push(this.createPumkinsGroup());
     this._elements.groups.push(this.createLeaveGroup());
 
