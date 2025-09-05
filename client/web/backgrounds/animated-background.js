@@ -201,7 +201,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createGhostsGroup() {
-    return new AnimatedGroup(5, 'sliding', 
+    return new AnimatedGroup(3, 'sliding', 
       {
         names: ["ghost"],
         colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
@@ -223,7 +223,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createWebsGroup() {
-    return new AnimatedGroup(7, 'falling', 
+    return new AnimatedGroup(5, 'falling', 
       {
         names: ["web"],
         colors: ['#000000'],
@@ -233,30 +233,48 @@ export class AnimatedBackground extends HTMLElement {
     );
   }
 
-  createSecondGroup() {
-    return new AnimatedGroup(10, 'sliding', {});
-    const typeRoll = Math.random();
-    if (typeRoll < 0.1) {
-      item = this.createItem(["ghost"], ['#FFFFFF', '#EBEBEB', '#DBDBDB'], [0.6, 1], [1.8, 3.2]);
-    } else if (typeRoll < 0.2) {
-      item = this.createItem(["spider"], ['#000000'], [0.6, 1], [0.8, 1.8]);
-    } else if (typeRoll < 0.3) {
-      item = this.createItem(["web"], ['#000000'], [0.6, 1], [1.2, 2.8]);
-    } else if (typeRoll < 0.4) {
-      item = this.createItem(["witch", "hat"], ['#617A2B', '#673470', '#0F0F0F'], [0.6, 1], [1.8, 3.2]);
-    } else if (typeRoll < 0.5) {
-      item = this.createItem(["pumkin"], ['#BF6C00', '#BF5300', '#D68120'], [0.6, 1], [0.8, 1.8]);
-    } else {
-      item = this.createItem(["leave"], ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'], [0.6, 1], [1.2, 2.8]);
-    }
+  createWitchHatsGroup() {
+    return new AnimatedGroup(2, 'falling', 
+      {
+        names: ["witch", "hat"],
+        colors: ['#617A2B', '#673470', '#0F0F0F'],
+        opacities: [0.6, 1],
+        scales: [1.8, 3.2]
+      }
+    );
+  }
 
+  createPumkinsGroup() {
+    return new AnimatedGroup(3, 'falling', 
+      {
+        names: ["pumkin"],
+        colors: ['#BF6C00', '#BF5300', '#D68120'],
+        opacities: [0.6, 1],
+        scales: [0.8, 1.8]
+      }
+    );
+  }
+
+  createLeaveGroup() {
+    return new AnimatedGroup(20, 'falling', 
+      {
+        names: ["leave"],
+        colors: ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'],
+        opacities: [0.6, 1],
+        scales: [1.2, 2.8]
+      }
+    );
   }
 
   createAnimateds() {
     //TODO: replace fake groups with real ones from config
     this._elements.groups.push(this.createGhostsGroup());
     this._elements.groups.push(this.createSpidersGroup());
-    
+    this._elements.groups.push(this.createWebsGroup());
+    this._elements.groups.push(this.createWitchHatsGroup());
+    this._elements.groups.push(this.createPumkinsGroup());
+    this._elements.groups.push(this.createLeaveGroup());
+
     for (const group of this._elements.groups) {
       this.doAnimateGroup(group);
     }
