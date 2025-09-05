@@ -297,13 +297,13 @@ export class AnimatedBackground extends HTMLElement {
     }
   }
 
-  hasValidDimensions(dimensions) {
-    return dimensions && screenWidth && screenHeight;
+  areValidBounds(bounds) {
+    return bounds && bounds.width && bounds.height;
   }
 
   animateItem(item, group) {
     const bounds = this.getBounds();
-    if (!this.hasValidDimensions(bounds)) return; // Invalid bounds dimensions
+    if (!this.areValidBounds(bounds)) return; // Invalid bounds dimensions
 
     let animationConfig;
     const animationType = group.getAnimation();
