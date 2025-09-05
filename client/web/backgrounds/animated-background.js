@@ -285,7 +285,7 @@ export class AnimatedBackground extends HTMLElement {
       const item = this.createAnimated(group.getConfig());
       group.getItems().push(item);
       this._elements.svg.appendChild(item);
-      setTimeout(() => this.animateItem(item, group.getAnimation()), this.getBoundRandom(0, 7000));
+      setTimeout(() => this.animateItem(item, group), this.getBoundRandom(0, 7000));
     }
   }
 
@@ -300,24 +300,28 @@ export class AnimatedBackground extends HTMLElement {
     return dimensions && screenWidth && screenHeight;
   }
 
-  animateItem(item, animationType) {
+  animateItem(item, group) {
     const bounds = this.getBounds();
     if (!this.hasValidDimensions(bounds)) return; // Invalid bounds dimensions
 
-    let animation;
-    if (animationType === 'falling') animation = this.getAnimationFalling(bounds);
-    if (animationType === 'sliding') animation = this.getAnimationSliding(bounds);
-    if (!animation) return; // Unknown animation
+    let animationConfig;
+    const animationType = group.getAnimation();
+    if (animationType === 'falling') animationConfig = this.getAnimationFalling(bounds);
+    if (animationType === 'sliding') animationConfig = this.getAnimationSliding(bounds);
+    if (!animationConfig) return; // Unknown animation type
 
-    item.setAttribute("transform", `translate(${animation.startX}, ${animation.startY})`);
+    // Init item start position
+    item.setAttribute("transform", `translate(${animationConfig.startX}, ${animationConfig.startY})`);
 
-    const animation = item.animate(animation.steps, 
+    // Init item animation
+    const animation = item.animate(animationConfig.steps, 
     {
-      duration: animation.duration,
+      duration: animationConfig.duration,
       easing: "ease-in-out"
     });
 
-    this._elements.animations.push(animation);
+    // Reference
+    group.getAnimations().push(animation);
     animation.ready.then(this.onAnimationReady.bind(this, item));  
     animation.addEventListener('finish', this.onAnimationFinish.bind(this, item));
   }
