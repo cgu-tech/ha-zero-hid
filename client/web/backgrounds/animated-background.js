@@ -324,7 +324,7 @@ export class AnimatedBackground extends HTMLElement {
     // Reference
     group.getAnimations().push(animation);
     animation.ready.then(this.onAnimationReady.bind(this, item));  
-    animation.addEventListener('finish', this.onAnimationFinish.bind(this, item));
+    animation.addEventListener('finish', this.onAnimationFinish.bind(this, group, item));
   }
   
   getAnimationFalling(bounds) {
@@ -368,10 +368,10 @@ export class AnimatedBackground extends HTMLElement {
     item.style.visibility = 'visible';
   }
 
-  onAnimationFinish(item, evt) {
+  onAnimationFinish(group, item, evt) {
     const animation = evt.target;
     animation.cancel();
-    this._elements.animations = this._elements.animations.filter(a => a !== animation);
+    this._elements.animations = group.getAnimations().filter(a => a !== animation);
     if (!this._configChangeRequested) {
       this.animateFalling(item); // loop only if config change not requested
     }
