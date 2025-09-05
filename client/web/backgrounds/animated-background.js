@@ -3,8 +3,9 @@ import { Logger } from '../utils/logger.js';
 import { EventManager } from '../utils/event-manager.js';
 import { ResourceManager } from '../utils/resource-manager.js';
 import { LayoutManager } from '../utils/layout-manager.js';
+import * as items from './items/index.js';
 
-export class FallingBackground extends HTMLElement {
+export class AnimatedBackground extends HTMLElement {
 
   // private properties
   _config;
@@ -24,7 +25,7 @@ export class FallingBackground extends HTMLElement {
   constructor() {
     super();
 
-    this._logger = new Logger(this, "falling-background.js");
+    this._logger = new Logger(this, "animated-background.js");
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, {});
     this._resourceManager = new ResourceManager(this, import.meta.url);
@@ -459,4 +460,4 @@ export class FallingBackground extends HTMLElement {
 
 }
 
-customElements.define('falling-background', FallingBackground);
+customElements.define('animated-background', AnimatedBackground);

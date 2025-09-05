@@ -1,0 +1,12 @@
+export { createChristmasTree } from './christmas-tree.js';
+export { createCircle        } from './circle.js';
+export { createGhost         } from './ghost.js';
+export { createGift          } from './gift.js';
+export { createLeave         } from './leave.js';
+export { createPumkin        } from './pumkin.js';
+export { createSnowFlake     } from './snow-flake.js';
+export { createSpider        } from './spider.js';
+export { createStarFive      } from './star-five.js';
+export { createStarFour      } from './star-four.js';
+export { createWeb           } from './web.js';
+export { createWitchHat      } from './witch-hat.js';
