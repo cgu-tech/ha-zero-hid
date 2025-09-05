@@ -3,6 +3,7 @@ import { Logger } from '../utils/logger.js';
 import { EventManager } from '../utils/event-manager.js';
 import { ResourceManager } from '../utils/resource-manager.js';
 import { LayoutManager } from '../utils/layout-manager.js';
+import { AnimatedGroup } from './animated-group.js';
 import * as items from './items/index.js';
 
 export class AnimatedBackground extends HTMLElement {
