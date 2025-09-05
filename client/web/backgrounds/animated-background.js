@@ -186,7 +186,8 @@ export class AnimatedBackground extends HTMLElement {
     for (let i = 0; i < this._maxFallings; i++) {
       const falling = this.createFalling();
       this.addFalling(falling);
-      setTimeout(() => this.animateFalling(falling), this.getBoundRandom(0, 7000));
+      // setTimeout(() => this.animateFalling(falling), this.getBoundRandom(0, 7000));
+      setTimeout(() => this.animateFallingSlide(falling), this.getBoundRandom(0, 7000));
     }
   }
 
@@ -209,12 +210,8 @@ export class AnimatedBackground extends HTMLElement {
     falling.setAttribute("transform", `translate(${startX}, -60)`);
 
     const animation = falling.animate([
-      {
-        transform: `translate(${startX}px, -60px) rotate(${rotateStart}deg)`
-      },
-      {
-        transform: `translate(${startX + driftX}px, ${screenHeight + 60}px) rotate(${rotateEnd}deg)`
-      }
+      { transform: `translate(${startX}px, -60px) rotate(${rotateStart}deg)` },
+      { transform: `translate(${startX + driftX}px, ${screenHeight + 60}px) rotate(${rotateEnd}deg)` }
     ], {
       duration,
       easing: "ease-in-out"
@@ -236,6 +233,31 @@ export class AnimatedBackground extends HTMLElement {
     if (!this._configChangeRequested) {
       this.animateFalling(falling); // loop only if config change not requested
     }
+  }
+
+  animateFallingSlide(falling) {
+    const screenWidth = this._screenWidth || this.offsetWidth;
+    const screenHeight = this._screenHeight || this.offsetHeight;
+    if (!screenWidth || !screenHeight) return;
+  
+    const startY = this.getBoundRandom(0, screenHeight - 100);
+    const startX = -60;
+    const endX = screenWidth + 60;
+    const duration = this.getBoundRandom(10000, 20000);
+  
+    falling.setAttribute("transform", `translate(${startX}, ${startY})`);
+  
+    const animation = falling.animate([
+      { transform: `translate(${startX}px, ${startY}px)` },
+      { transform: `translate(${endX}px, ${startY}px)` }
+    ], {
+      duration,
+      easing: "ease-in-out"
+    });
+  
+    this._elements.animations.push(animation);
+    animation.ready.then(this.onFallingAnimationReady.bind(this, falling));
+    animation.addEventListener('finish', this.onFallingAnimationFinish.bind(this, falling));
   }
 
   getBoundRandom(min, max) {
