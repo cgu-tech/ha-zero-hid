@@ -309,7 +309,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.card = document.createElement("ha-card");
     this._elements.card.innerHTML = `
       <div id="main-container" class="card-content">
-        <falling-background class="animated-background"></falling-background>
+        <animated-background class="animated-background"></animated-background>
         <div class="wrapper">
         </div>
         <div class="addons-wrapper hide">
