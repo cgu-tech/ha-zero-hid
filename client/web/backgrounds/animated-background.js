@@ -246,21 +246,29 @@ export class AnimatedBackground extends HTMLElement {
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
+  capitalizeFirst(str) {
+    return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : null;
+  }
+
+  createItem(names, colors, opacities, scales) {
+    return items[`create${names.map(capitalizeFirst).join('')}`](this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
+  }
+
   createFalling() {
     let falling;
     const typeRoll = Math.random();
     if (typeRoll < 0.1) {
-      falling = items["createGhost"](this.getRandomColor(['#FFFFFF', '#EBEBEB', '#DBDBDB']), this.getBoundRandom(0.6, 1), this.getBoundRandom(1.8, 3.2));
+      falling = this.createItem(["ghost"], ['#FFFFFF', '#EBEBEB', '#DBDBDB'], [0.6, 1], [1.8, 3.2]);
     } else if (typeRoll < 0.2) {
-      falling = items["createSpider"](this.getRandomColor(['#000000']), this.getBoundRandom(0.6, 1), this.getBoundRandom(0.8, 1.8));
+      falling = this.createItem(["spider"], ['#000000'], [0.6, 1], [0.8, 1.8]);
     } else if (typeRoll < 0.3) {
-      falling = items["createWeb"](this.getRandomColor(['#6B6C6E']), this.getBoundRandom(0.6, 1), this.getBoundRandom(1.2, 2.8));
+      falling = this.createItem(["web"], ['#000000'], [0.6, 1], [1.2, 2.8]);
     } else if (typeRoll < 0.4) {
-      falling = items["createWitchHat"](this.getRandomColor(['#617A2B', '#673470', '#0F0F0F']), this.getBoundRandom(0.6, 1), this.getBoundRandom(1.8, 3.2));
+      falling = this.createItem(["witch", "hat"], ['#617A2B', '#673470', '#0F0F0F'], [0.6, 1], [1.8, 3.2]);
     } else if (typeRoll < 0.5) {
-      falling = items["createPumkin"](this.getRandomColor(['#BF6C00', '#BF5300', '#D68120']), this.getBoundRandom(0.6, 1), this.getBoundRandom(0.8, 1.8));
+      falling = this.createItem(["pumkin"], ['#BF6C00', '#BF5300', '#D68120'], [0.6, 1], [0.8, 1.8]);
     } else {
-      falling = items["createLeave"](this.getRandomColor(['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513']), this.getBoundRandom(0.6, 1), this.getBoundRandom(1.2, 2.8));
+      falling = this.createItem(["leave"], ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'], [0.6, 1], [1.2, 2.8]);
     }
     falling.classList.add("falling");
     falling.style.visibility = "hidden";
