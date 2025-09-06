@@ -10,7 +10,7 @@ export class AnimatedGroup {
 
   constructor(config) {
     this._config = config;
-    this._animation = new AnimationConfig(this._config?.["animation"]);
+    this._animation = new AnimationConfig(this.getConfigOrStub("animation"));
   }
 
   getItems() {
@@ -61,8 +61,8 @@ export class AnimatedGroup {
       opacities: [0.4, 0.9],
       scales: [1.2, 3.2],
       quantity: 5,
-      zIndex: 0,
-      animation: AnimationConfig.getStubConfig()
+      z_index: 0,
+      animation: {}
     }
   }
 

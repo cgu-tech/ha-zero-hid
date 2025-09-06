@@ -229,15 +229,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 5, 
         zIndex: 4,
         animation: {
-          name: 'fall',
-          xStart: [0, 'width'],
-          yStart: [-10, -10],
-          xDrift: [-80, 80],
-          yDrift: [10, 10],
-          rotateStart: [0, 360],
-          rotateDrift: [90, 360],
-          delay: [0, 5000],
-          duration: [10000, 20000]
+          name: 'fall'
         }
       }
     );
@@ -253,15 +245,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 5, 
         zIndex: 4,
         animation: {
-          name: 'fall',
-          xStart: [0, 'width'],
-          yStart: [-60, -60],
-          xDrift: [-80, 80],
-          yDrift: [60, 60],
-          rotateStart: [0, 360],
-          rotateDrift: [90, 360],
-          delay: [0, 7000],
-          duration: [10000, 20000]
+          name: 'fall'
         }
       }
     );
@@ -277,13 +261,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 1, 
         zIndex: 4,
         animation: {
-          name: 'slide',
-          xStart: [-60, -60],
-          yStart: [0, 'height'],
-          xDrift: [60, 60],
-          yDrift: [-80, 80],
-          delay: [0, 7000],
-          duration: [10000, 20000]
+          name: 'slide'
         }
       }
     );
@@ -299,15 +277,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 3,
         zIndex: 3,
         animation: {
-          name: 'fall',
-          xStart: [0, 'width'],
-          yStart: [-60, -60],
-          xDrift: [-80, 80],
-          yDrift: [60, 60],
-          rotateStart: [0, 360],
-          rotateDrift: [90, 360],
-          delay: [0, 7000],
-          duration: [10000, 20000]
+          name: 'fall'
         }
       }
     );
@@ -321,17 +291,9 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [1, 1],
         scales: [1.2, 2.8],
         quantity: 2,
-        zIndex: 1,
+        z_index: 1,
         animation: {
-          name: 'fall',
-          xStart: [0, 'width'],
-          yStart: [-60, -60],
-          xDrift: [-80, 80],
-          yDrift: [60, 60],
-          rotateStart: [0, 360],
-          rotateDrift: [90, 360],
-          delay: [0, 7000],
-          duration: [10000, 20000]
+          name: 'fall'
         }
       }
     );
@@ -345,17 +307,9 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [1, 1],
         scales: [1.8, 3.2],
         quantity: 2,
-        zIndex: 0,
+        z_index: 0,
         animation: {
-          name: 'fall',
-          xStart: [0, 'width'],
-          yStart: [-60, -60],
-          xDrift: [-80, 80],
-          yDrift: [60, 60],
-          rotateStart: [0, 360],
-          rotateDrift: [90, 360],
-          delay: [0, 7000],
-          duration: [10000, 20000]
+          name: 'fall'
         }
       }
     );
@@ -369,17 +323,9 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [1, 1],
         scales: [0.8, 1.8],
         quantity: 1,
-        zIndex: 2,
+        z_index: 2,
         animation: {
-          name: 'fall',
-          xStart: [0, 'width'],
-          yStart: [-60, -60],
-          xDrift: [-80, 80],
-          yDrift: [60, 60],
-          rotateStart: [0, 360],
-          rotateDrift: [90, 360],
-          delay: [0, 7000],
-          duration: [10000, 20000]
+          name: 'fall'
         }
       }
     );
@@ -393,17 +339,9 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [1, 1],
         scales: [1.2, 2.8],
         quantity: 20,
-        zIndex: 0,
+        z_index: 0,
         animation: {
-          name: 'fall',
-          xStart: [0, 'width'],
-          yStart: [-60, -60],
-          xDrift: [-80, 80],
-          yDrift: [60, 60],
-          rotateStart: [0, 360],
-          rotateDrift: [90, 360],
-          delay: [0, 7000],
-          duration: [10000, 20000]
+          name: 'fall'
         }
       }
     );
