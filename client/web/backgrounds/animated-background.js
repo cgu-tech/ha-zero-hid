@@ -179,7 +179,7 @@ export class AnimatedBackground extends HTMLElement {
     const items = group.getItems();
 
     // Finish all animations now
-    animations.forEach(animation => animation.finish());
+    animations.forEach(itemAnimation => itemAnimation.finish());
 
     // Remove old items from DOM
     for (const item of items) {
@@ -363,27 +363,26 @@ export class AnimatedBackground extends HTMLElement {
     const bounds = this.getBounds();
     if (!this.areValidBounds(bounds)) return; // Invalid bounds dimensions
 
-    const config = group.getConfig();
-    let animationConfig;
-    const animationType = config.animationType;
-    if (animationType === 'falling') animationConfig = this.getAnimationFalling(bounds, config);
-    if (animationType === 'sliding') animationConfig = this.getAnimationSliding(bounds, config);
-    if (!animationConfig) return; // Unknown animation type
+    const config = group.getConfig().animation;
+    let animation;
+    if (config.name === 'falling') animation = this.getAnimationFalling(bounds, config);
+    if (config.name === 'sliding') animation = this.getAnimationSliding(bounds, config);
+    if (!animation) return; // Unknown animation type
 
     // Init item start position
-    item.setAttribute("transform", `translate(${animationConfig.startX}, ${animationConfig.startY})`);
+    item.setAttribute("transform", `translate(${animation.startX}, ${animation.startY})`);
 
-    // Init item animation
-    const animation = item.animate(animationConfig.steps, 
+    // Init animated item
+    const itemAnimation = item.animate(animation.steps, 
     {
-      duration: animationConfig.duration,
+      duration: animation.duration,
       easing: "ease-in-out"
     });
 
     // Reference
-    group.getAnimations().push(animation);
-    animation.ready.then(this.onAnimationReady.bind(this, item));  
-    animation.addEventListener('finish', this.onAnimationFinish.bind(this, group, item));
+    group.getAnimations().push(itemAnimation);
+    itemAnimation.ready.then(this.onAnimationReady.bind(this, item));  
+    itemAnimation.addEventListener('finish', this.onAnimationFinish.bind(this, group, item));
   }
 
   getAnimVal(bounds, rawVal) {
@@ -450,9 +449,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   onAnimationFinish(group, item, evt) {
-    const animation = evt.target;
-    animation.cancel();
-    this._elements.animations = group.getAnimations().filter(a => a !== animation);
+    const itemAnimation = evt.target;
+    itemAnimation.cancel();
+    group.getAnimations() = group.getAnimations().filter(a => a !== itemAnimation);
     if (!this._configChangeRequested) {
       this.animateItem(group, item); // loop only if config change not requested
     }
