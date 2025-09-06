@@ -370,7 +370,7 @@ export class AnimatedBackground extends HTMLElement {
     if (!animation) return; // Unknown animation type
 
     // Init item start position
-    item.setAttribute("transform", `translate(${animation.startX}, ${animation.startY})`);
+    item.setAttribute("transform", `translate(${animation.xStart}, ${animation.yStart})`);
 
     // Init animated item
     const itemAnimation = item.animate(animation.steps, 
