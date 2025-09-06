@@ -221,45 +221,85 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createSpidersGroup() {
-    return new AnimatedGroup(3, 'falling', 
+    return new AnimatedGroup(3, 
       {
         names: ["spider"],
         colors: ['#000000'],
         opacities: [0.6, 1],
-        scales: [0.8, 1.8]
+        scales: [0.8, 1.8],
+        animation: {
+          name: 'falling',
+          xStart: [0, width],
+          yStart: [-60, -60],
+          xDrift: [-80, 80],
+          yDrift: [60, 60],
+          rotateStart: [0, 360],
+          rotateDrift: [90, 360],
+          duration: [10000, 20000]
+        }
       }
     );
   }
 
   createWebsGroup() {
-    return new AnimatedGroup(2, 'falling', 
+    return new AnimatedGroup(2, 
       {
         names: ["web"],
         colors: ['#636363'],
         opacities: [0.6, 1],
-        scales: [1.2, 2.8]
+        scales: [1.2, 2.8],
+        animation: {
+          name: 'falling',
+          xStart: [0, width],
+          yStart: [-60, -60],
+          xDrift: [-80, 80],
+          yDrift: [60, 60],
+          rotateStart: [0, 360],
+          rotateDrift: [90, 360],
+          duration: [10000, 20000]
+        }
       }
     );
   }
 
   createWitchHatsGroup() {
-    return new AnimatedGroup(2, 'falling', 
+    return new AnimatedGroup(2, 
       {
         names: ["witch", "hat"],
         colors: ['#617A2B', '#673470', '#0F0F0F'],
         opacities: [0.6, 1],
-        scales: [1.8, 3.2]
+        scales: [1.8, 3.2],
+        animation: {
+          name: 'falling',
+          xStart: [0, width],
+          yStart: [-60, -60],
+          xDrift: [-80, 80],
+          yDrift: [60, 60],
+          rotateStart: [0, 360],
+          rotateDrift: [90, 360],
+          duration: [10000, 20000]
+        }
       }
     );
   }
 
   createPumkinsGroup() {
-    return new AnimatedGroup(1, 'falling', 
+    return new AnimatedGroup(1, 
       {
         names: ["pumkin"],
         colors: ['#BF6C00', '#BF5300', '#D68120'],
         opacities: [0.6, 1],
-        scales: [0.8, 1.8]
+        scales: [0.8, 1.8],
+        animation: {
+          name: 'falling',
+          xStart: [0, width],
+          yStart: [-60, -60],
+          xDrift: [-80, 80],
+          yDrift: [60, 60],
+          rotateStart: [0, 360],
+          rotateDrift: [90, 360],
+          duration: [10000, 20000]
+        }
       }
     );
   }
