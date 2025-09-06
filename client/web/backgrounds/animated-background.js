@@ -339,6 +339,7 @@ export class AnimatedBackground extends HTMLElement {
 
   createAnimateds() {
     //TODO: replace fake groups with real ones from config
+    this._elements.groups.length = 0;
     this._elements.groups.push(this.createGhostsGroup());
     this._elements.groups.push(this.createSpidersGroup());
     this._elements.groups.push(this.createWebsGroup());
