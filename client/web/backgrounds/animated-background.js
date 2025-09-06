@@ -466,13 +466,13 @@ export class AnimatedBackground extends HTMLElement {
     const xEnd = xStart + xDrift;
     const yEnd = bounds.height + yDrift;
     const rotateEnd = rotateStart + rotateDrift;
-    return this.getAnimationTranslateAndRotate(bounds, xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
+    return this.getAnimationTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
   }
 
   getAnimationSlide(bounds, xStart, yStart, xDrift, yDrift) {
     const xEnd = bounds.width + xDrift;
     const yEnd = yStart + yDrift;
-    return this.getAnimationTranslate(bounds, xStart, yStart, xEnd, yEnd);
+    return this.getAnimationTranslate(xStart, yStart, xEnd, yEnd);
   }
 
   getAnimationTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd) {
