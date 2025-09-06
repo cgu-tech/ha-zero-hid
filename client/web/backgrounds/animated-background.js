@@ -3,6 +3,7 @@ import { Logger } from '../utils/logger.js';
 import { EventManager } from '../utils/event-manager.js';
 import { ResourceManager } from '../utils/resource-manager.js';
 import { LayoutManager } from '../utils/layout-manager.js';
+import { SortedLinkedMap } from '../utils/sorted-linked-map.js';
 import { AnimatedGroup } from './animated-group.js';
 import * as items from './items/index.js';
 
@@ -21,7 +22,6 @@ export class AnimatedBackground extends HTMLElement {
   _configChangeRequested = false;
   _screenWidth;
   _screenHeight;
-  _groups = [];
 
   constructor() {
     super();
@@ -82,6 +82,7 @@ export class AnimatedBackground extends HTMLElement {
     this._elements.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     this._elements.svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     this._elements.groups = [];
+    this._elements.zIndexedItems = new SortedLinkedMap();
   }
 
   doStyle() {
@@ -157,6 +158,9 @@ export class AnimatedBackground extends HTMLElement {
     // Reset groups
     this.doResetGroups();
 
+    // Reset items
+    this.doResetZIndexedItems();
+
     // Unlock to allow new animations from looping
     this._configChangeRequested = false;
   }
@@ -191,6 +195,12 @@ export class AnimatedBackground extends HTMLElement {
     animations.length = 0;
   }
 
+  doResetZIndexedItems() {
+    for (const [zIndex, zIndexItems] of this._elements.zIndexedItems) {
+      zIndexItems.clear();
+    }
+  }
+
   doCreateAnimateds() {
 
     // Resize viewbox to parent container dimensions (whenever possible)
@@ -209,6 +219,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [0.6, 1],
         scales: [2.6, 5.1],
         quantity: 1, 
+        zIndex: 0,
         animation: {
           name: 'sliding',
           xStart: [-60, -60],
@@ -230,6 +241,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [0.6, 1],
         scales: [0.8, 1.8],
         quantity: 3,
+        zIndex: 0,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -253,6 +265,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [0.6, 1],
         scales: [1.2, 2.8],
         quantity: 2,
+        zIndex: 0,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -276,6 +289,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [0.6, 1],
         scales: [1.8, 3.2],
         quantity: 2,
+        zIndex: 0,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -299,6 +313,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [0.6, 1],
         scales: [0.8, 1.8],
         quantity: 1,
+        zIndex: 0,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -322,6 +337,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [0.6, 1],
         scales: [1.2, 2.8],
         quantity: 20,
+        zIndex: 0,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -356,7 +372,29 @@ export class AnimatedBackground extends HTMLElement {
     for (let i = 0; i < group.getConfig().quantity; i++) {
       const item = this.createAnimated(group.getConfig());
       group.getItems().push(item);
-      this._elements.svg.appendChild(item);
+
+      // Retrieve or create zIndexItems set
+      const zIndex = group.getConfig().zIndex;
+      let zIndexItems = this._elements.zIndexedItems.get(zIndex);
+      if (!zIndexItems) {
+        zIndexItems = new Set();
+        this._elements.zIndexedItems.set(zIndex, zIndexItems);
+      }
+
+      // Push new item into its correlated zIndexItems Set()
+      zIndexItems.add(item);
+
+      // Look for first item with next zIndex
+      const nextZIndex = this._elements.zIndexedItems.nextKey(zIndex);
+      const nextZIndexItems = nextZIndex ? this._elements.zIndexedItems.get(nextZIndex) : null;
+      const nextZIndexItem = nextZIndexItems 
+        ? (nextZIndexItems.size > 0 
+           ? nextZIndexItems.values().next().value
+           : null)
+        : null;
+
+      // Insert before first item with next zIndex (so new item will appear behind first item with next zIndex)
+      this._elements.svg.insertBefore(item, nextZIndexItem);
       const delay = group.getConfig().animation.delay;
       setTimeout(() => this.animateItem(group, item), this.getBoundRandom(delay[0], delay[1]));
     }
