@@ -236,7 +236,7 @@ export class AnimatedBackground extends HTMLElement {
           yDrift: [10, 10],
           rotateStart: [0, 360],
           rotateDrift: [90, 360],
-          delay: [0, 500],
+          delay: [0, 5000],
           duration: [10000, 20000]
         }
       }
