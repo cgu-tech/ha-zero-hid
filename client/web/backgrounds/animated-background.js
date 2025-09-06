@@ -426,10 +426,10 @@ export class AnimatedBackground extends HTMLElement {
 
     // Prepare item animation steps
     let steps;
-    if (animationConfig.name === 'fall') steps = this.getStepsFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift);
-    if (animationConfig.name === 'slide') steps = this.getStepsSlide(bounds, xStart, yStart, xDrift, yDrift);
-    if (animationConfig.name === 'translate-rotate') steps = this.getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
-    if (animationConfig.name === 'translate') steps = this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
+    if (animationConfig.getName() === 'fall') steps = this.getStepsFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift);
+    if (animationConfig.getName() === 'slide') steps = this.getStepsSlide(bounds, xStart, yStart, xDrift, yDrift);
+    if (animationConfig.getName() === 'translate-rotate') steps = this.getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
+    if (animationConfig.getName() === 'translate') steps = this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
     if (!steps) return; // Unknown animation type
 
     // Set item start position
