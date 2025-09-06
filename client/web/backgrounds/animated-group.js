@@ -2,7 +2,7 @@ export class AnimatedGroup {
 
   // private properties
   _items = [];
-  _animations = [];
+  _animations = new Set();
   _config;
 
   constructor(config) {
@@ -15,10 +15,6 @@ export class AnimatedGroup {
 
   getAnimations() {
     return this._animations;
-  }
-
-  setAnimations(animations) {
-    this._animations = animations;
   }
 
   getAnimation() {

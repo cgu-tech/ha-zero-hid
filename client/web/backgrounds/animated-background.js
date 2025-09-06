@@ -192,7 +192,7 @@ export class AnimatedBackground extends HTMLElement {
 
     // Reset items and animations arrays
     items.length = 0;
-    animations.length = 0;
+    animations.clear();
   }
 
   doResetZIndexedItems() {
@@ -370,23 +370,22 @@ export class AnimatedBackground extends HTMLElement {
 
   doAnimateGroup(group) {
     for (let i = 0; i < group.getConfig().quantity; i++) {
-      const item = this.createAnimated(group.getConfig());
-      group.getItems().push(item);
-
       // Retrieve or create zIndexItems set
+      const zIndexedItems = this._elements.zIndexedItems;
       const zIndex = group.getConfig().zIndex;
-      let zIndexItems = this._elements.zIndexedItems.get(zIndex);
+      let zIndexItems = zIndexedItems.get(zIndex);
       if (!zIndexItems) {
         zIndexItems = new Set();
-        this._elements.zIndexedItems.set(zIndex, zIndexItems);
+        zIndexedItems.set(zIndex, zIndexItems);
       }
 
-      // Push new item into its correlated zIndexItems Set()
-      zIndexItems.add(item);
+      const item = this.createAnimated(group.getConfig());
+      group.getItems().push(item); // Push new item into its group items
+      zIndexItems.add(item); // Push new item into its correlated zIndexItems Set()
 
       // Look for first item with next zIndex
-      const nextZIndex = this._elements.zIndexedItems.nextKey(zIndex);
-      const nextZIndexItems = nextZIndex ? this._elements.zIndexedItems.get(nextZIndex) : null;
+      const nextZIndex = zIndexedItems.nextKey(zIndex);
+      const nextZIndexItems = nextZIndex ? zIndexedItems.get(nextZIndex) : null;
       const nextZIndexItem = nextZIndexItems 
         ? (nextZIndexItems.size > 0 
            ? nextZIndexItems.values().next().value
@@ -432,7 +431,7 @@ export class AnimatedBackground extends HTMLElement {
     });
 
     // Reference
-    group.getAnimations().push(itemAnimation);
+    group.getAnimations().add(itemAnimation);
     itemAnimation.ready.then(this.onAnimationReady.bind(this, item));  
     itemAnimation.addEventListener('finish', this.onAnimationFinish.bind(this, group, item));
   }
@@ -507,7 +506,7 @@ export class AnimatedBackground extends HTMLElement {
   onAnimationFinish(group, item, evt) {
     const itemAnimation = evt.target;
     itemAnimation.cancel();
-    group.setAnimations(group.getAnimations().filter(a => a !== itemAnimation));
+    group.getAnimations().delete(itemAnimation);
     if (!this._configChangeRequested) {
       this.animateItem(group, item); // loop only if config change not requested
     }
