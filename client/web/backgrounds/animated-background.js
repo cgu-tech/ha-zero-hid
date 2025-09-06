@@ -365,6 +365,8 @@ export class AnimatedBackground extends HTMLElement {
       }
 
       const item = this.createAnimated(group);
+      if (!item) continue; // Skip item when invalid
+
       group.getItems().push(item); // Push new item into its group items
       zIndexItems.add(item); // Push new item into its correlated zIndexItems Set()
 
@@ -504,7 +506,7 @@ export class AnimatedBackground extends HTMLElement {
   createItem(name, colors, opacities, scales) {
     const nameParts = name ? name.split('-') : [];
     const functionName = `create${nameParts.map(namePart => this.capitalizeFirst(namePart)).join('')}`;
-    return items[functionName](this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
+    return items[functionName]?.(this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
   }
 
   createAnimated(group) {
@@ -513,6 +515,7 @@ export class AnimatedBackground extends HTMLElement {
       group.getColors(),
       group.getOpacities(),
       group.getScales());
+    if (!item) return null;
     item.classList.add("animated");
     item.style.visibility = "hidden";
     return item;

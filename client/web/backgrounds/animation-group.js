@@ -56,11 +56,11 @@ export class AnimationGroup {
   // configuration defaults
   static getStubConfig() {
     return {
-      name: "circle",
+      name: "",
       colors: ['#FFFFFF'],
-      opacities: [0.4, 0.9],
-      scales: [1.2, 3.2],
-      quantity: 5,
+      opacities: [1.0, 1.0],
+      scales: [1.0, 1.0],
+      quantity: 1,
       z_index: 0,
       animation: {}
     }

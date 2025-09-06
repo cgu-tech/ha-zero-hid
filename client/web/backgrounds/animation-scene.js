@@ -1,54 +1,26 @@
 export class AnimationScene {
 
   // private properties
-  _groupNames = [];
-  _animations = new Set();
   _config;
-  _animation;
 
   constructor(config) {
     this._config = config;
-    this._animation = new AnimationConfig(this.getConfigOrStub("animation"));
-  }
-
-  getItems() {
-    return this._items;
-  }
-
-  getAnimations() {
-    return this._animations;
-  }
-
-  getAnimation() {
-    return this._animation;
   }
 
   getConfigOrStub(configName) {
     return this._config?.[configName] || this.constructor.getStubConfig()[configName];
   }
 
-  getNames() {
-    return this.getConfigOrStub("names");
+  getGroups() {
+    return this.getConfigOrStub("groups");
   }
 
-  getColors() {
-    return this.getConfigOrStub("colors");
+  getDateStart() {
+    return this.getConfigOrStub("date_start");
   }
 
-  getOpacities() {
-    return this.getConfigOrStub("opacities");
-  }
-
-  getScales() {
-    return this.getConfigOrStub("scales");
-  }
-
-  getQuantity() {
-    return this.getConfigOrStub("quantity");
-  }
-
-  getZIndex() {
-    return this.getConfigOrStub("z_index");
+  getDateEnd() {
+    return this.getConfigOrStub("date_end");
   }
 
   // configuration defaults
