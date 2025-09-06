@@ -221,7 +221,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 1, 
         zIndex: 4,
         animation: {
-          name: 'sliding',
+          name: 'slide',
           xStart: [-60, -60],
           yStart: [0, 'height'],
           xDrift: [60, 60],
@@ -243,7 +243,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 3,
         zIndex: 3,
         animation: {
-          name: 'falling',
+          name: 'fall',
           xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
@@ -267,7 +267,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 2,
         zIndex: 1,
         animation: {
-          name: 'falling',
+          name: 'fall',
           xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
@@ -291,7 +291,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 2,
         zIndex: 0,
         animation: {
-          name: 'falling',
+          name: 'fall',
           xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
@@ -315,7 +315,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 1,
         zIndex: 2,
         animation: {
-          name: 'falling',
+          name: 'fall',
           xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
@@ -339,7 +339,7 @@ export class AnimatedBackground extends HTMLElement {
         quantity: 20,
         zIndex: 0,
         animation: {
-          name: 'falling',
+          name: 'fall',
           xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
@@ -410,14 +410,40 @@ export class AnimatedBackground extends HTMLElement {
     return bounds && bounds.width && bounds.height;
   }
 
+  getAnimVal(bounds, rawVal) {
+    if (rawVal === "width") return bounds.width;
+    if (rawVal === "height") return bounds.height;
+    return rawVal;
+  }
+
+  generateAnimationValue(bounds, values) {
+    if (!values) return null; // Not all values are required for every animation
+    return this.getBoundRandom(this.getAnimVal(bounds, values[0]), this.getAnimVal(bounds, values[1]));
+  }
+
   animateItem(group, item) {
     const bounds = this.getBounds();
     if (!this.areValidBounds(bounds)) return; // Invalid bounds dimensions
 
     const config = group.getConfig().animation;
+
+    // Generate random values for each config values ranges
+    const xStart = this.generateAnimationValue(bounds, config.xStart);
+    const yStart = this.generateAnimationValue(bounds, config.yStart);
+    const xEnd = this.generateAnimationValue(bounds, config.xEnd);
+    const yEnd = this.generateAnimationValue(bounds, config.yEnd);
+    const xDrift = this.generateAnimationValue(bounds, config.xDrift);
+    const yDrift = this.generateAnimationValue(bounds, config.yDrift);
+    const rotateStart = this.generateAnimationValue(bounds, config.rotateStart);
+    const rotateEnd = this.generateAnimationValue(bounds, config.rotateEnd);
+    const rotateDrift = this.generateAnimationValue(bounds, config.rotateDrift);
+    const duration = this.generateAnimationValue(bounds, config.duration);
+
     let animation;
-    if (config.name === 'falling') animation = this.getAnimationFalling(bounds, config);
-    if (config.name === 'sliding') animation = this.getAnimationSliding(bounds, config);
+    if (config.name === 'fall') animation = this.getAnimationFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift);
+    if (config.name === 'slide') animation = this.getAnimationSlide(bounds, xStart, yStart, xDrift, yDrift);
+    if (config.name === 'translate-rotate') animation = this.getAnimationTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
+    if (config.name === 'translate') animation = this.getAnimationTranslate(xStart, yStart, xEnd, yEnd);
     if (!animation) return; // Unknown animation type
 
     // Init item start position
@@ -436,67 +462,31 @@ export class AnimatedBackground extends HTMLElement {
     itemAnimation.addEventListener('finish', this.onAnimationFinish.bind(this, group, item));
   }
 
-  getAnimVal(bounds, rawVal) {
-    if (rawVal === "width") return bounds.width;
-    if (rawVal === "height") return bounds.height;
-    return rawVal;
-  }
-
-  generateAnimationValue(bounds, values) {
-    return this.getBoundRandom(this.getAnimVal(bounds, values[0]), this.getAnimVal(bounds, values[1]));
-  }
-
-  getAnimationFalling(bounds, config) {
-
-    // Generate random values from config ranges
-    const xStart = this.generateAnimationValue(bounds, config.xStart);
-    const yStart = this.generateAnimationValue(bounds, config.yStart);
-    const xDrift = this.generateAnimationValue(bounds, config.xDrift);
-    const yDrift = this.generateAnimationValue(bounds, config.yDrift);
-    const rotateStart = this.generateAnimationValue(bounds, config.rotateStart);
-    const rotateDrift = this.generateAnimationValue(bounds, config.rotateDrift);
-    const duration = this.generateAnimationValue(bounds, config.duration);
-
-    // Generate computed values depending from other values
+  getAnimationFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift) {
     const xEnd = xStart + xDrift;
     const yEnd = bounds.height + yDrift;
     const rotateEnd = rotateStart + rotateDrift;
-    
-    const steps = [
+    return this.getAnimationTranslateAndRotate(bounds, xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
+  }
+
+  getAnimationSlide(bounds, xStart, yStart, xDrift, yDrift) {
+    const xEnd = bounds.width + xDrift;
+    const yEnd = yStart + yDrift;
+    return this.getAnimationTranslate(bounds, xStart, yStart, xEnd, yEnd);
+  }
+
+  getAnimationTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd) {
+    return [
       { transform: `translate(${xStart}px, ${yStart}px) rotate(${rotateStart}deg)` },
       { transform: `translate(${xEnd}px, ${yEnd}px) rotate(${rotateEnd}deg)` }
     ];
-    return {
-      xStart: xStart,
-      yStart: yStart,
-      steps: steps,
-      duration: duration
-    }
   }
 
-  getAnimationSliding(bounds, config) {
-
-    // Generate random values from config ranges
-    const xStart = this.generateAnimationValue(bounds, config.xStart);
-    const yStart = this.generateAnimationValue(bounds, config.yStart);
-    const xDrift = this.generateAnimationValue(bounds, config.xDrift);
-    const yDrift = this.generateAnimationValue(bounds, config.yDrift);
-    const duration = this.generateAnimationValue(bounds, config.duration);
-
-    // Generate computed values depending from other values
-    const xEnd = bounds.width + xDrift;
-    const yEnd = yStart + yDrift;
-
-    const steps = [
+  getAnimationTranslate(xStart, yStart, xEnd, yEnd) {
+    return [
       { transform: `translate(${xStart}px, ${yStart}px)` },
       { transform: `translate(${xEnd}px, ${yEnd}px)` }
     ];
-    return {
-      xStart: xStart,
-      yStart: yStart,
-      steps: steps,
-      duration: duration
-    }
   }
 
   onAnimationReady(item) {
@@ -513,10 +503,13 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   getBoundRandom(min, max) {
+    if (min === max) return min; // optimization when both have same value
     return Math.random() * (max - min) + min;
   }
 
   getRandomColor(colors) {
+    if (!colors || colors.length < 1) return null; // optimization when no value
+    if (colors.length === 1) return colors[0]; // optimization when only one value
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
