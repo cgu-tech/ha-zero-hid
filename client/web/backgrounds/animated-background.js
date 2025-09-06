@@ -211,7 +211,7 @@ export class AnimatedBackground extends HTMLElement {
         animation: {
           name: 'sliding',
           xStart: [-60, -60],
-          yStart: [0, height],
+          yStart: [0, 'height'],
           xDrift: [60, 60],
           yDrift: [-80, 80],
           duration: [10000, 20000]
@@ -229,7 +229,7 @@ export class AnimatedBackground extends HTMLElement {
         scales: [0.8, 1.8],
         animation: {
           name: 'falling',
-          xStart: [0, width],
+          xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
           yDrift: [60, 60],
@@ -250,7 +250,7 @@ export class AnimatedBackground extends HTMLElement {
         scales: [1.2, 2.8],
         animation: {
           name: 'falling',
-          xStart: [0, width],
+          xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
           yDrift: [60, 60],
@@ -271,7 +271,7 @@ export class AnimatedBackground extends HTMLElement {
         scales: [1.8, 3.2],
         animation: {
           name: 'falling',
-          xStart: [0, width],
+          xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
           yDrift: [60, 60],
@@ -292,7 +292,7 @@ export class AnimatedBackground extends HTMLElement {
         scales: [0.8, 1.8],
         animation: {
           name: 'falling',
-          xStart: [0, width],
+          xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
           yDrift: [60, 60],
@@ -313,7 +313,7 @@ export class AnimatedBackground extends HTMLElement {
         scales: [1.2, 2.8],
         animation: {
           name: 'falling',
-          xStart: [0, width],
+          xStart: [0, 'width'],
           yStart: [-60, -60],
           xDrift: [-80, 80],
           yDrift: [60, 60],
