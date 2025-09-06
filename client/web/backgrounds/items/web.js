@@ -1,7 +1,6 @@
 export function createWeb(color, opacity, scale) {
   const web = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
-  // Inner <g> that contains the web and gets scaled
   const webGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
   webGroup.setAttribute("fill", "transparent");
   webGroup.setAttribute("stroke-width", "1");

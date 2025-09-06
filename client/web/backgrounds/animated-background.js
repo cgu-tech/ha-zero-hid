@@ -219,6 +219,54 @@ export class AnimatedBackground extends HTMLElement {
     }
   }
 
+  createStylizedSnowflakesGroup() {
+    return new AnimatedGroup(
+      {
+        names: ["circle"],
+        colors: ["#FFFFFF"],
+        opacities: [0.4, 0.9],
+        scales: [1.2, 3.2],
+        quantity: 5, 
+        zIndex: 4,
+        animation: {
+          name: 'fall',
+          xStart: [0, 'width'],
+          yStart: [-10, -10],
+          xDrift: [-80, 80],
+          yDrift: [10, 10],
+          rotateStart: [0, 360],
+          rotateDrift: [90, 360],
+          delay: [0, 500],
+          duration: [10000, 20000]
+        }
+      }
+    );
+  }
+
+  createFlowersGroup() {
+    return new AnimatedGroup(
+      {
+        names: ["flower"],
+        colors: ["#FF69B4", "#FF6347", "#FFA500", "#FF1493", "#ADFF2F", "#00FFFF"],
+        opacities: [1, 1],
+        scales: [0.6, 1.4],
+        quantity: 5, 
+        zIndex: 4,
+        animation: {
+          name: 'fall',
+          xStart: [0, 'width'],
+          yStart: [-60, -60],
+          xDrift: [-80, 80],
+          yDrift: [60, 60],
+          rotateStart: [0, 360],
+          rotateDrift: [90, 360],
+          delay: [0, 7000],
+          duration: [10000, 20000]
+        }
+      }
+    );
+  }
+
   createGhostsGroup() {
     return new AnimatedGroup(
       {
