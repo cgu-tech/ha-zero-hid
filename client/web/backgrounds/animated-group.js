@@ -4,12 +4,10 @@ export class AnimatedGroup {
   _items = [];
   _animations = [];
   _maxItems;
-  _animation;
   _config;
 
-  constructor(maxItems, animation, config) {
+  constructor(maxItems, config) {
     this._maxItems = maxItems;
-    this._animation = animation;
     this._config = config;
   }
 

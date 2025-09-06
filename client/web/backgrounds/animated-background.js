@@ -202,12 +202,20 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createGhostsGroup() {
-    return new AnimatedGroup(1, 'sliding', 
+    return new AnimatedGroup(1, 
       {
         names: ["ghost"],
         colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
         opacities: [0.6, 1],
-        scales: [2.6, 5.1]
+        scales: [2.6, 5.1],
+        animation: {
+          name: 'sliding',
+          xStart: [-60, -60],
+          yStart: [0, height],
+          xDrift: [60, 60],
+          yDrift: [-80, 80],
+          duration: [10000, 20000]
+        }
       }
     );
   }
@@ -257,12 +265,22 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createLeaveGroup() {
-    return new AnimatedGroup(20, 'falling', 
+    return new AnimatedGroup(20,
       {
         names: ["leave"],
         colors: ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'],
         opacities: [0.6, 1],
-        scales: [1.2, 2.8]
+        scales: [1.2, 2.8],
+        animation: {
+          name: 'falling',
+          xStart: [0, width],
+          yStart: [-60, -60],
+          xDrift: [-80, 80],
+          yDrift: [60, 60],
+          rotateStart: [0, 360],
+          rotateDrift: [90, 360],
+          duration: [10000, 20000]
+        }
       }
     );
   }
@@ -305,10 +323,11 @@ export class AnimatedBackground extends HTMLElement {
     const bounds = this.getBounds();
     if (!this.areValidBounds(bounds)) return; // Invalid bounds dimensions
 
+    const config = group.getConfig();
     let animationConfig;
-    const animationType = group.getAnimation();
-    if (animationType === 'falling') animationConfig = this.getAnimationFalling(bounds);
-    if (animationType === 'sliding') animationConfig = this.getAnimationSliding(bounds);
+    const animationType = config.animationType;
+    if (animationType === 'falling') animationConfig = this.getAnimationFalling(bounds, config);
+    if (animationType === 'sliding') animationConfig = this.getAnimationSliding(bounds, config);
     if (!animationConfig) return; // Unknown animation type
 
     // Init item start position
@@ -326,39 +345,61 @@ export class AnimatedBackground extends HTMLElement {
     animation.ready.then(this.onAnimationReady.bind(this, item));  
     animation.addEventListener('finish', this.onAnimationFinish.bind(this, group, item));
   }
-  
-  getAnimationFalling(bounds) {
-    const startX = this.getBoundRandom(0, bounds.width);
-    const startY = -60;
-    const driftX = this.getBoundRandom(-80, 80);
-    const rotateStart = this.getBoundRandom(0, 360);
-    const rotateEnd = rotateStart + this.getBoundRandom(90, 360);
-    const duration = this.getBoundRandom(10000, 20000);
+
+  getAnimVal(bounds, rawVal) {
+    if (rawVal === "width") return bounds.width;
+    if (rawVal === "height") return bounds.height;
+    return rawVal;
+  }
+
+  getAnimationFalling(bounds, config) {
+
+    // Generate random values from config ranges
+    const xStart = this.getBoundRandom(this.getAnimVal(bounds, config.xStart[0]), this.getAnimVal(bounds, config.xStart[1]));
+    const yStart = this.getBoundRandom(this.getAnimVal(bounds, config.yStart[0]), this.getAnimVal(bounds, config.yStart[1]));
+    const xDrift = this.getBoundRandom(this.getAnimVal(bounds, config.xDrift[0]), this.getAnimVal(bounds, config.xDrift[1]));
+    const yDrift = this.getBoundRandom(this.getAnimVal(bounds, config.yDrift[0]), this.getAnimVal(bounds, config.yDrift[1]));
+    const rotateStart = this.getBoundRandom(this.getAnimVal(bounds, config.rotateStart[0]), this.getAnimVal(bounds, config.rotateStart[1]));
+    const rotateDrift = this.getBoundRandom(this.getAnimVal(bounds, config.rotateDrift[0]), this.getAnimVal(bounds, config.rotateDrift[1]));
+    const duration = this.getBoundRandom(this.getAnimVal(bounds, config.duration[0]), this.getAnimVal(bounds, config.duration[1]));
+
+    // Generate computed values depending from other values
+    const xEnd = xStart + xDrift;
+    const yEnd = bounds.height + yDrift;
+    const rotateEnd = rotateStart + rotateDrift;
+    
     const steps = [
-      { transform: `translate(${startX}px, ${startY}px) rotate(${rotateStart}deg)` },
-      { transform: `translate(${startX + driftX}px, ${bounds.height - startY}px) rotate(${rotateEnd}deg)` }
+      { transform: `translate(${xStart}px, ${yStart}px) rotate(${rotateStart}deg)` },
+      { transform: `translate(${xEnd}px, ${yEnd}px) rotate(${rotateEnd}deg)` }
     ];
     return {
-      startX: startX,
-      startY: startY,
+      xStart: xStart,
+      yStart: yStart,
       steps: steps,
       duration: duration
     }
   }
 
-  getAnimationSliding(bounds) {
-    const startX = -60;
-    const startY = this.getBoundRandom(0, bounds.height - 100);
-    const endX = bounds.width + 60;
-    const endY = endX;
-    const duration = this.getBoundRandom(10000, 20000);
+  getAnimationSliding(bounds, config) {
+
+    // Generate random values from config ranges
+    const xStart = this.getBoundRandom(this.getAnimVal(bounds, config.xStart[0]), this.getAnimVal(bounds, config.xStart[1]));
+    const yStart = this.getBoundRandom(this.getAnimVal(bounds, config.yStart[0]), this.getAnimVal(bounds, config.yStart[1]));
+    const xDrift = this.getBoundRandom(this.getAnimVal(bounds, config.xDrift[0]), this.getAnimVal(bounds, config.xDrift[1]));
+    const yDrift = this.getBoundRandom(this.getAnimVal(bounds, config.yDrift[0]), this.getAnimVal(bounds, config.yDrift[1]));
+    const duration = this.getBoundRandom(this.getAnimVal(bounds, config.duration[0]), this.getAnimVal(bounds, config.duration[1]));
+
+    // Generate computed values depending from other values
+    const xEnd = bounds.width + xDrift;
+    const yEnd = yStart + yDrift;
+
     const steps = [
-      { transform: `translate(${startX}px, ${startY}px)` },
-      { transform: `translate(${endX}px, ${endY}px)` }
+      { transform: `translate(${xStart}px, ${yStart}px)` },
+      { transform: `translate(${xEnd}px, ${yEnd}px)` }
     ];
     return {
-      startX: startX,
-      startY: startY,
+      xStart: xStart,
+      yStart: yStart,
       steps: steps,
       duration: duration
     }
