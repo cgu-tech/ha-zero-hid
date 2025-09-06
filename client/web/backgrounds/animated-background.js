@@ -4,7 +4,7 @@ import { EventManager } from '../utils/event-manager.js';
 import { ResourceManager } from '../utils/resource-manager.js';
 import { LayoutManager } from '../utils/layout-manager.js';
 import { SortedLinkedMap } from '../utils/sorted-linked-map.js';
-import { AnimatedGroup } from './animated-group.js';
+import { AnimationGroup } from './animation-group.js';
 import * as items from './items/index.js';
 
 export class AnimatedBackground extends HTMLElement {
@@ -220,9 +220,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createStylizedSnowflakesGroup() {
-    return new AnimatedGroup(
+    return new AnimationGroup(
       {
-        names: ["circle"],
+        name: "circle",
         colors: ["#FFFFFF"],
         opacities: [0.4, 0.9],
         scales: [1.2, 3.2],
@@ -236,9 +236,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createFlowersGroup() {
-    return new AnimatedGroup(
+    return new AnimationGroup(
       {
-        names: ["flower"],
+        name: "flower",
         colors: ["#FF69B4", "#FF6347", "#FFA500", "#FF1493", "#ADFF2F", "#00FFFF"],
         opacities: [1, 1],
         scales: [0.6, 1.4],
@@ -252,9 +252,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createGhostsGroup() {
-    return new AnimatedGroup(
+    return new AnimationGroup(
       {
-        names: ["ghost"],
+        name: "ghost",
         colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
         opacities: [1, 1],
         scales: [2.6, 5.1],
@@ -268,9 +268,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createSpidersGroup() {
-    return new AnimatedGroup(
+    return new AnimationGroup(
       {
-        names: ["spider"],
+        name: "spider",
         colors: ['#000000'],
         opacities: [1, 1],
         scales: [0.8, 1.8],
@@ -284,9 +284,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createWebsGroup() {
-    return new AnimatedGroup(
+    return new AnimationGroup(
       {
-        names: ["web"],
+        name: "web",
         colors: ['#636363'],
         opacities: [1, 1],
         scales: [1.2, 2.8],
@@ -300,9 +300,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createWitchHatsGroup() {
-    return new AnimatedGroup(
+    return new AnimationGroup(
       {
-        names: ["witch", "hat"],
+        name: "witch-hat",
         colors: ['#617A2B', '#673470', '#0F0F0F'],
         opacities: [1, 1],
         scales: [1.8, 3.2],
@@ -316,9 +316,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createPumkinsGroup() {
-    return new AnimatedGroup(
+    return new AnimationGroup(
       {
-        names: ["pumkin"],
+        name: "pumkin",
         colors: ['#BF6C00', '#BF5300', '#D68120'],
         opacities: [1, 1],
         scales: [0.8, 1.8],
@@ -332,9 +332,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createLeaveGroup() {
-    return new AnimatedGroup(
+    return new AnimationGroup(
       {
-        names: ["leave"],
+        name: "leave",
         colors: ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'],
         opacities: [1, 1],
         scales: [1.2, 2.8],
@@ -501,13 +501,15 @@ export class AnimatedBackground extends HTMLElement {
     return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : null;
   }
 
-  createItem(names, colors, opacities, scales) {
-    return items[`create${names.map(name => this.capitalizeFirst(name)).join('')}`](this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
+  createItem(name, colors, opacities, scales) {
+    const nameParts = name ? name.split('-') : [];
+    const functionName = `create${nameParts.map(namePart => this.capitalizeFirst(namePart)).join('')}`;
+    return items[functionName](this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
   }
 
   createAnimated(group) {
     const item = this.createItem(
-      group.getNames(),
+      group.getName(),
       group.getColors(),
       group.getOpacities(),
       group.getScales());

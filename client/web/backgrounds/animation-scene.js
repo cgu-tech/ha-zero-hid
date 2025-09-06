@@ -1,9 +1,7 @@
-import { AnimationConfig } from './animation-config.js';
-
-export class AnimatedGroup {
+export class AnimationScene {
 
   // private properties
-  _items = [];
+  _groupNames = [];
   _animations = new Set();
   _config;
   _animation;
