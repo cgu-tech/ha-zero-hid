@@ -183,7 +183,7 @@ export class AnimatedBackground extends HTMLElement {
     const items = group.getItems();
 
     // Finish all animations now
-    animations.forEach(itemAnimation => itemAnimation.finish());
+    animations.forEach(animation => animation.finish());
 
     // Remove old items from DOM
     for (const item of items) {
@@ -439,50 +439,49 @@ export class AnimatedBackground extends HTMLElement {
     const rotateDrift = this.generateAnimationValue(bounds, config.rotateDrift);
     const duration = this.generateAnimationValue(bounds, config.duration);
 
-    let animation;
-    if (config.name === 'fall') animation = this.getAnimationFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift);
-    if (config.name === 'slide') animation = this.getAnimationSlide(bounds, xStart, yStart, xDrift, yDrift);
-    if (config.name === 'translate-rotate') animation = this.getAnimationTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
-    if (config.name === 'translate') animation = this.getAnimationTranslate(xStart, yStart, xEnd, yEnd);
-    if (!animation) return; // Unknown animation type
+    // Prepare item animation steps
+    let steps;
+    if (config.name === 'fall') steps = this.getStepsFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift);
+    if (config.name === 'slide') steps = this.getStepsSlide(bounds, xStart, yStart, xDrift, yDrift);
+    if (config.name === 'translate-rotate') steps = this.getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
+    if (config.name === 'translate') steps = this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
+    if (!steps) return; // Unknown animation type
 
-    // Init item start position
-    item.setAttribute("transform", `translate(${animation.xStart}, ${animation.yStart})`);
+    // Set item start position
+    item.setAttribute("transform", `translate(${xStart}, ${yStart})`);
 
-    // Init animated item
-    const itemAnimation = item.animate(animation.steps, 
-    {
-      duration: animation.duration,
-      easing: "ease-in-out"
-    });
+    // Animate item using prepared animation steps + duration + in/out effect
+    const animation = item.animate(steps, { duration: duration, easing: "ease-in-out" });
 
-    // Reference
-    group.getAnimations().add(itemAnimation);
-    itemAnimation.ready.then(this.onAnimationReady.bind(this, item));  
-    itemAnimation.addEventListener('finish', this.onAnimationFinish.bind(this, group, item));
+    // Reference animation
+    group.getAnimations().add(animation);
+
+    // Add animation ready/stop listeners
+    animation.ready.then(this.onAnimationReady.bind(this, item));  
+    animation.addEventListener('finish', this.onAnimationFinish.bind(this, group, item));
   }
 
-  getAnimationFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift) {
+  getStepsFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift) {
     const xEnd = xStart + xDrift;
     const yEnd = bounds.height + yDrift;
     const rotateEnd = rotateStart + rotateDrift;
-    return this.getAnimationTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
+    return this.getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
   }
 
-  getAnimationSlide(bounds, xStart, yStart, xDrift, yDrift) {
+  getStepsSlide(bounds, xStart, yStart, xDrift, yDrift) {
     const xEnd = bounds.width + xDrift;
     const yEnd = yStart + yDrift;
-    return this.getAnimationTranslate(xStart, yStart, xEnd, yEnd);
+    return this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
   }
 
-  getAnimationTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd) {
+  getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd) {
     return [
       { transform: `translate(${xStart}px, ${yStart}px) rotate(${rotateStart}deg)` },
       { transform: `translate(${xEnd}px, ${yEnd}px) rotate(${rotateEnd}deg)` }
     ];
   }
 
-  getAnimationTranslate(xStart, yStart, xEnd, yEnd) {
+  getStepsTranslate(xStart, yStart, xEnd, yEnd) {
     return [
       { transform: `translate(${xStart}px, ${yStart}px)` },
       { transform: `translate(${xEnd}px, ${yEnd}px)` }
@@ -494,9 +493,9 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   onAnimationFinish(group, item, evt) {
-    const itemAnimation = evt.target;
-    itemAnimation.cancel();
-    group.getAnimations().delete(itemAnimation);
+    const animation = evt.target;
+    animation.cancel();
+    group.getAnimations().delete(animation);
     if (!this._configChangeRequested) {
       this.animateItem(group, item); // loop only if config change not requested
     }
