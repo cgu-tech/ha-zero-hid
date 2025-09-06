@@ -441,7 +441,7 @@ export class AnimatedBackground extends HTMLElement {
 
       // Insert before first item with next zIndex (so new item will appear behind first item with next zIndex)
       this._elements.svg.insertBefore(item, nextZIndexItem);
-      const delay = group.getAnimation().delay;
+      const delay = group.getAnimation().getDelay();
       setTimeout(() => this.animateItem(group, item), this.getBoundRandom(delay[0], delay[1]));
     }
   }
@@ -472,26 +472,26 @@ export class AnimatedBackground extends HTMLElement {
     const bounds = this.getBounds();
     if (!this.areValidBounds(bounds)) return; // Invalid bounds dimensions
 
-    const config = group.getConfig().animation;
+    const animationConfig = group.getAnimation();
 
     // Generate random values for each config values ranges
-    const xStart = this.generateAnimationValue(bounds, config.xStart);
-    const yStart = this.generateAnimationValue(bounds, config.yStart);
-    const xEnd = this.generateAnimationValue(bounds, config.xEnd);
-    const yEnd = this.generateAnimationValue(bounds, config.yEnd);
-    const xDrift = this.generateAnimationValue(bounds, config.xDrift);
-    const yDrift = this.generateAnimationValue(bounds, config.yDrift);
-    const rotateStart = this.generateAnimationValue(bounds, config.rotateStart);
-    const rotateEnd = this.generateAnimationValue(bounds, config.rotateEnd);
-    const rotateDrift = this.generateAnimationValue(bounds, config.rotateDrift);
-    const duration = this.generateAnimationValue(bounds, config.duration);
+    const xStart = this.generateAnimationValue(bounds, animationConfig.getXStart());
+    const yStart = this.generateAnimationValue(bounds, animationConfig.getYStart());
+    const xEnd = this.generateAnimationValue(bounds, animationConfig.getXEnd());
+    const yEnd = this.generateAnimationValue(bounds, animationConfig.getYEnd());
+    const xDrift = this.generateAnimationValue(bounds, animationConfig.getXDrift());
+    const yDrift = this.generateAnimationValue(bounds, animationConfig.getYDrift());
+    const rotateStart = this.generateAnimationValue(bounds, animationConfig.getRotateStart());
+    const rotateEnd = this.generateAnimationValue(bounds, animationConfig.getRotateEnd());
+    const rotateDrift = this.generateAnimationValue(bounds, animationConfig.getRotateDrift());
+    const duration = this.generateAnimationValue(bounds, animationConfig.getDuration());
 
     // Prepare item animation steps
     let steps;
-    if (config.name === 'fall') steps = this.getStepsFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift);
-    if (config.name === 'slide') steps = this.getStepsSlide(bounds, xStart, yStart, xDrift, yDrift);
-    if (config.name === 'translate-rotate') steps = this.getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
-    if (config.name === 'translate') steps = this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
+    if (animationConfig.name === 'fall') steps = this.getStepsFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift);
+    if (animationConfig.name === 'slide') steps = this.getStepsSlide(bounds, xStart, yStart, xDrift, yDrift);
+    if (animationConfig.name === 'translate-rotate') steps = this.getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
+    if (animationConfig.name === 'translate') steps = this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
     if (!steps) return; // Unknown animation type
 
     // Set item start position
