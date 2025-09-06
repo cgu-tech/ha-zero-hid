@@ -356,7 +356,8 @@ export class AnimatedBackground extends HTMLElement {
       const item = this.createAnimated(group.getConfig());
       group.getItems().push(item);
       this._elements.svg.appendChild(item);
-      setTimeout(() => this.animateItem(group, item), this.getBoundRandom(group.getConfig().delay[0], group.getConfig().delay[1]));
+      const delay = group.getConfig().animation.delay;
+      setTimeout(() => this.animateItem(group, item), this.getBoundRandom(delay[0], delay[1]));
     }
   }
 
