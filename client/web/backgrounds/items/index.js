@@ -1,5 +1,6 @@
 export { createChristmasTree } from './christmas-tree.js';
 export { createCircle        } from './circle.js';
+export { createFlower        } from './flower.js';
 export { createGhost         } from './ghost.js';
 export { createGift          } from './gift.js';
 export { createLeave         } from './leave.js';
