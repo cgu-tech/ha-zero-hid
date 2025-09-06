@@ -391,16 +391,20 @@ export class AnimatedBackground extends HTMLElement {
     return rawVal;
   }
 
+  generateAnimationValue(bounds, values) {
+    return this.getBoundRandom(this.getAnimVal(bounds, values[0]), this.getAnimVal(bounds, values[1]));
+  }
+
   getAnimationFalling(bounds, config) {
 
     // Generate random values from config ranges
-    const xStart = this.getBoundRandom(this.getAnimVal(bounds, config.xStart[0]), this.getAnimVal(bounds, config.xStart[1]));
-    const yStart = this.getBoundRandom(this.getAnimVal(bounds, config.yStart[0]), this.getAnimVal(bounds, config.yStart[1]));
-    const xDrift = this.getBoundRandom(this.getAnimVal(bounds, config.xDrift[0]), this.getAnimVal(bounds, config.xDrift[1]));
-    const yDrift = this.getBoundRandom(this.getAnimVal(bounds, config.yDrift[0]), this.getAnimVal(bounds, config.yDrift[1]));
-    const rotateStart = this.getBoundRandom(this.getAnimVal(bounds, config.rotateStart[0]), this.getAnimVal(bounds, config.rotateStart[1]));
-    const rotateDrift = this.getBoundRandom(this.getAnimVal(bounds, config.rotateDrift[0]), this.getAnimVal(bounds, config.rotateDrift[1]));
-    const duration = this.getBoundRandom(this.getAnimVal(bounds, config.duration[0]), this.getAnimVal(bounds, config.duration[1]));
+    const xStart = this.generateAnimationValue(bounds, config.xStart);
+    const yStart = this.generateAnimationValue(bounds, config.yStart);
+    const xDrift = this.generateAnimationValue(bounds, config.xDrift);
+    const yDrift = this.generateAnimationValue(bounds, config.yDrift);
+    const rotateStart = this.generateAnimationValue(bounds, config.rotateStart);
+    const rotateDrift = this.generateAnimationValue(bounds, config.rotateDrift);
+    const duration = this.generateAnimationValue(bounds, config.duration);
 
     // Generate computed values depending from other values
     const xEnd = xStart + xDrift;
@@ -422,11 +426,11 @@ export class AnimatedBackground extends HTMLElement {
   getAnimationSliding(bounds, config) {
 
     // Generate random values from config ranges
-    const xStart = this.getBoundRandom(this.getAnimVal(bounds, config.xStart[0]), this.getAnimVal(bounds, config.xStart[1]));
-    const yStart = this.getBoundRandom(this.getAnimVal(bounds, config.yStart[0]), this.getAnimVal(bounds, config.yStart[1]));
-    const xDrift = this.getBoundRandom(this.getAnimVal(bounds, config.xDrift[0]), this.getAnimVal(bounds, config.xDrift[1]));
-    const yDrift = this.getBoundRandom(this.getAnimVal(bounds, config.yDrift[0]), this.getAnimVal(bounds, config.yDrift[1]));
-    const duration = this.getBoundRandom(this.getAnimVal(bounds, config.duration[0]), this.getAnimVal(bounds, config.duration[1]));
+    const xStart = this.generateAnimationValue(bounds, config.xStart);
+    const yStart = this.generateAnimationValue(bounds, config.yStart);
+    const xDrift = this.generateAnimationValue(bounds, config.xDrift);
+    const yDrift = this.generateAnimationValue(bounds, config.yDrift);
+    const duration = this.generateAnimationValue(bounds, config.duration);
 
     // Generate computed values depending from other values
     const xEnd = bounds.width + xDrift;
@@ -451,7 +455,7 @@ export class AnimatedBackground extends HTMLElement {
   onAnimationFinish(group, item, evt) {
     const itemAnimation = evt.target;
     itemAnimation.cancel();
-    group.getAnimations() = group.getAnimations().filter(a => a !== itemAnimation);
+    group.setAnimations(group.getAnimations().filter(a => a !== itemAnimation));
     if (!this._configChangeRequested) {
       this.animateItem(group, item); // loop only if config change not requested
     }
