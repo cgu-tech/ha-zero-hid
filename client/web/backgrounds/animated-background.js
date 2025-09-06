@@ -166,16 +166,24 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doUpdateLayout() {
-    const groups = this._elements.groups;
-    
+    //TODO: replace fake groups with real ones from config
+    this._elements.groups.push(this.createGhostsGroup());
+    this._elements.groups.push(this.createSpidersGroup());
+    this._elements.groups.push(this.createWebsGroup());
+    //this._elements.groups.push(this.createWitchHatsGroup());
+    this._elements.groups.push(this.createPumkinsGroup());
+    this._elements.groups.push(this.createLeaveGroup());
+
     // Wait for layout to be ready beofre creating new fallings
     requestAnimationFrame(this.doCreateAnimateds.bind(this));
   }
 
   doResetGroups() {
-    for (const group of this._elements.groups) {
+    const groups = this._elements.groups;
+    for (const group of groups) {
       this.doResetGroup(group);
     }
+    groups.length = 0;
   }
 
   doResetGroup(group) {
@@ -354,15 +362,6 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createAnimateds() {
-    //TODO: replace fake groups with real ones from config
-    this._elements.groups.length = 0;
-    this._elements.groups.push(this.createGhostsGroup());
-    this._elements.groups.push(this.createSpidersGroup());
-    this._elements.groups.push(this.createWebsGroup());
-    //this._elements.groups.push(this.createWitchHatsGroup());
-    this._elements.groups.push(this.createPumkinsGroup());
-    this._elements.groups.push(this.createLeaveGroup());
-
     for (const group of this._elements.groups) {
       this.doAnimateGroup(group);
     }
