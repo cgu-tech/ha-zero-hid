@@ -202,18 +202,20 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createGhostsGroup() {
-    return new AnimatedGroup(1, 
+    return new AnimatedGroup(
       {
         names: ["ghost"],
         colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
         opacities: [0.6, 1],
         scales: [2.6, 5.1],
+        quantity: 1, 
         animation: {
           name: 'sliding',
           xStart: [-60, -60],
           yStart: [0, 'height'],
           xDrift: [60, 60],
           yDrift: [-80, 80],
+          delay: [0, 7000],
           duration: [10000, 20000]
         }
       }
@@ -221,12 +223,13 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createSpidersGroup() {
-    return new AnimatedGroup(3, 
+    return new AnimatedGroup(
       {
         names: ["spider"],
         colors: ['#000000'],
         opacities: [0.6, 1],
         scales: [0.8, 1.8],
+        quantity: 3,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -235,6 +238,7 @@ export class AnimatedBackground extends HTMLElement {
           yDrift: [60, 60],
           rotateStart: [0, 360],
           rotateDrift: [90, 360],
+          delay: [0, 7000],
           duration: [10000, 20000]
         }
       }
@@ -242,12 +246,13 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createWebsGroup() {
-    return new AnimatedGroup(2, 
+    return new AnimatedGroup(
       {
         names: ["web"],
         colors: ['#636363'],
         opacities: [0.6, 1],
         scales: [1.2, 2.8],
+        quantity: 2,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -256,6 +261,7 @@ export class AnimatedBackground extends HTMLElement {
           yDrift: [60, 60],
           rotateStart: [0, 360],
           rotateDrift: [90, 360],
+          delay: [0, 7000],
           duration: [10000, 20000]
         }
       }
@@ -263,12 +269,13 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createWitchHatsGroup() {
-    return new AnimatedGroup(2, 
+    return new AnimatedGroup(
       {
         names: ["witch", "hat"],
         colors: ['#617A2B', '#673470', '#0F0F0F'],
         opacities: [0.6, 1],
         scales: [1.8, 3.2],
+        quantity: 2,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -277,6 +284,7 @@ export class AnimatedBackground extends HTMLElement {
           yDrift: [60, 60],
           rotateStart: [0, 360],
           rotateDrift: [90, 360],
+          delay: [0, 7000],
           duration: [10000, 20000]
         }
       }
@@ -284,12 +292,13 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createPumkinsGroup() {
-    return new AnimatedGroup(1, 
+    return new AnimatedGroup(
       {
         names: ["pumkin"],
         colors: ['#BF6C00', '#BF5300', '#D68120'],
         opacities: [0.6, 1],
         scales: [0.8, 1.8],
+        quantity: 1,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -298,6 +307,7 @@ export class AnimatedBackground extends HTMLElement {
           yDrift: [60, 60],
           rotateStart: [0, 360],
           rotateDrift: [90, 360],
+          delay: [0, 7000],
           duration: [10000, 20000]
         }
       }
@@ -305,12 +315,13 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createLeaveGroup() {
-    return new AnimatedGroup(20,
+    return new AnimatedGroup(
       {
         names: ["leave"],
         colors: ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'],
         opacities: [0.6, 1],
         scales: [1.2, 2.8],
+        quantity: 20,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -319,6 +330,7 @@ export class AnimatedBackground extends HTMLElement {
           yDrift: [60, 60],
           rotateStart: [0, 360],
           rotateDrift: [90, 360],
+          delay: [0, 7000],
           duration: [10000, 20000]
         }
       }
@@ -340,11 +352,11 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doAnimateGroup(group) {
-    for (let i = 0; i < group.getMaxItems(); i++) {
+    for (let i = 0; i < group.getConfig().quantity; i++) {
       const item = this.createAnimated(group.getConfig());
       group.getItems().push(item);
       this._elements.svg.appendChild(item);
-      setTimeout(() => this.animateItem(group, item), this.getBoundRandom(0, 7000));
+      setTimeout(() => this.animateItem(group, item), this.getBoundRandom(group.getConfig().delay[0], group.getConfig().delay[1]));
     }
   }
 

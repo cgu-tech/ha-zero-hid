@@ -3,11 +3,9 @@ export class AnimatedGroup {
   // private properties
   _items = [];
   _animations = [];
-  _maxItems;
   _config;
 
-  constructor(maxItems, config) {
-    this._maxItems = maxItems;
+  constructor(config) {
     this._config = config;
   }
 
