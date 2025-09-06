@@ -416,17 +416,17 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doAnimateGroup(group) {
-    for (let i = 0; i < group.getConfig().quantity; i++) {
+    for (let i = 0; i < group.getQuantity(); i++) {
       // Retrieve or create zIndexItems set
       const zIndexedItems = this._elements.zIndexedItems;
-      const zIndex = group.getConfig().zIndex;
+      const zIndex = group.getZIndex();
       let zIndexItems = zIndexedItems.get(zIndex);
       if (!zIndexItems) {
         zIndexItems = new Set();
         zIndexedItems.set(zIndex, zIndexItems);
       }
 
-      const item = this.createAnimated(group.getConfig());
+      const item = this.createAnimated(group);
       group.getItems().push(item); // Push new item into its group items
       zIndexItems.add(item); // Push new item into its correlated zIndexItems Set()
 
@@ -441,7 +441,7 @@ export class AnimatedBackground extends HTMLElement {
 
       // Insert before first item with next zIndex (so new item will appear behind first item with next zIndex)
       this._elements.svg.insertBefore(item, nextZIndexItem);
-      const delay = group.getConfig().animation.delay;
+      const delay = group.getAnimation().delay;
       setTimeout(() => this.animateItem(group, item), this.getBoundRandom(delay[0], delay[1]));
     }
   }
@@ -567,12 +567,12 @@ export class AnimatedBackground extends HTMLElement {
     return items[`create${names.map(name => this.capitalizeFirst(name)).join('')}`](this.getRandomColor(colors), this.getBoundRandom(opacities[0], opacities[1]), this.getBoundRandom(scales[0], scales[1]));
   }
 
-  createAnimated(config) {
+  createAnimated(group) {
     const item = this.createItem(
-      config.names,
-      config.colors,
-      config.opacities,
-      config.scales);
+      group.getNames(),
+      group.getColors(),
+      group.getOpacities(),
+      group.getScales());
     item.classList.add("animated");
     item.style.visibility = "hidden";
     return item;
