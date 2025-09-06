@@ -216,10 +216,10 @@ export class AnimatedBackground extends HTMLElement {
       {
         names: ["ghost"],
         colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
-        opacities: [0.6, 1],
+        opacities: [1, 1],
         scales: [2.6, 5.1],
         quantity: 1, 
-        zIndex: 0,
+        zIndex: 4,
         animation: {
           name: 'sliding',
           xStart: [-60, -60],
@@ -238,10 +238,10 @@ export class AnimatedBackground extends HTMLElement {
       {
         names: ["spider"],
         colors: ['#000000'],
-        opacities: [0.6, 1],
+        opacities: [1, 1],
         scales: [0.8, 1.8],
         quantity: 3,
-        zIndex: 0,
+        zIndex: 3,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -262,10 +262,10 @@ export class AnimatedBackground extends HTMLElement {
       {
         names: ["web"],
         colors: ['#636363'],
-        opacities: [0.6, 1],
+        opacities: [1, 1],
         scales: [1.2, 2.8],
         quantity: 2,
-        zIndex: 0,
+        zIndex: 1,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -286,7 +286,7 @@ export class AnimatedBackground extends HTMLElement {
       {
         names: ["witch", "hat"],
         colors: ['#617A2B', '#673470', '#0F0F0F'],
-        opacities: [0.6, 1],
+        opacities: [1, 1],
         scales: [1.8, 3.2],
         quantity: 2,
         zIndex: 0,
@@ -310,10 +310,10 @@ export class AnimatedBackground extends HTMLElement {
       {
         names: ["pumkin"],
         colors: ['#BF6C00', '#BF5300', '#D68120'],
-        opacities: [0.6, 1],
+        opacities: [1, 1],
         scales: [0.8, 1.8],
         quantity: 1,
-        zIndex: 0,
+        zIndex: 2,
         animation: {
           name: 'falling',
           xStart: [0, 'width'],
@@ -334,7 +334,7 @@ export class AnimatedBackground extends HTMLElement {
       {
         names: ["leave"],
         colors: ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'],
-        opacities: [0.6, 1],
+        opacities: [1, 1],
         scales: [1.2, 2.8],
         quantity: 20,
         zIndex: 0,
