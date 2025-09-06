@@ -1,12 +1,16 @@
+import { AnimationConfig } from './animation-config.js';
+
 export class AnimatedGroup {
 
   // private properties
   _items = [];
   _animations = new Set();
   _config;
+  _animation;
 
   constructor(config) {
     this._config = config;
+    this._animation = new AnimationConfig(this._config?.["animation"]);
   }
 
   getItems() {
@@ -21,8 +25,32 @@ export class AnimatedGroup {
     return this._animation;
   }
 
-  getConfig() {
-    return this._config;
+  getConfigOrStub(configName) {
+    return this._config?.[configName] || this.constructor.getStubConfig()[configName];
+  }
+
+  getNames() {
+    return this.getConfigOrStub("names");
+  }
+
+  getColors() {
+    return this.getConfigOrStub("colors");
+  }
+
+  getOpacities() {
+    return this.getConfigOrStub("opacities");
+  }
+
+  getScales() {
+    return this.getConfigOrStub("scales");
+  }
+
+  getQuantity() {
+    return this.getConfigOrStub("quantity");
+  }
+
+  getZIndex() {
+    return this.getConfigOrStub("z_index");
   }
 
   // configuration defaults
@@ -34,17 +62,7 @@ export class AnimatedGroup {
       scales: [1.2, 3.2],
       quantity: 5,
       zIndex: 0,
-      animation: {
-        name: 'fall',
-        xStart: [0, 'width'],
-        yStart: [-10, -10],
-        xDrift: [-80, 80],
-        yDrift: [10, 10],
-        rotateStart: [0, 360],
-        rotateDrift: [90, 360],
-        delay: [0, 500],
-        duration: [10000, 20000]
-      }
+      animation: AnimationConfig.getStubConfig()
     }
   }
 

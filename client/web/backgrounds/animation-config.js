@@ -8,7 +8,7 @@ export class AnimationConfig {
   }
 
   getConfigOrStub(configName) {
-    return this._config?.[configName] || this.constructor.getStubConfig(this._config?.["name"])[configName];
+    return this._config?.[configName] || this.constructor.getStubConfig()[configName];
   }
 
   getName() {
@@ -62,12 +62,12 @@ export class AnimationConfig {
   static getStubConfigTranslateAndRotate() {
     return {
       name: 'translate-rotate',
-      xStart: [-60, -60],
-      yStart: [0, 'height'],
-      xEnd: ['width', 'width'],
-      yEnd: [0, 'height'],
-      rotateStart: [0, 360],
-      rotateEnd: [90, 720],
+      x_start: [-60, -60],
+      y_start: [0, 'height'],
+      x_end: ['width', 'width'],
+      y_end: [0, 'height'],
+      rotate_start: [0, 360],
+      rotate_end: [90, 720],
       delay: [0, 7000],
       duration: [10000, 20000]
     }
@@ -76,10 +76,10 @@ export class AnimationConfig {
   static getStubConfigTranslate() {
     return {
       name: 'translate',
-      xStart: [0, 'width'],
-      yStart: [-60, -60],
-      xEnd: [0, 'width'],
-      yEnd: ['height', 'height'],
+      x_start: [0, 'width'],
+      y_start: [-60, -60],
+      x_end: [0, 'width'],
+      y_end: ['height', 'height'],
       delay: [0, 7000],
       duration: [10000, 20000]
     }
@@ -88,10 +88,10 @@ export class AnimationConfig {
   static getStubConfigSlide() {
     return {
       name: 'slide',
-      xStart: [-60, -60],
-      yStart: [0, 'height'],
-      xDrift: [60, 60],
-      yDrift: [-80, 80],
+      x_start: [-60, -60],
+      y_start: [0, 'height'],
+      x_drift: [60, 60],
+      y_drift: [-80, 80],
       delay: [0, 7000],
       duration: [10000, 20000]
     }
@@ -100,19 +100,20 @@ export class AnimationConfig {
   static getStubConfigFall() {
     return {
       name: 'fall',
-      xStart: [0, 'width'],
-      yStart: [-10, -10],
-      xDrift: [-80, 80],
-      yDrift: [10, 10],
-      rotateStart: [0, 360],
-      rotateDrift: [90, 360],
+      x_start: [0, 'width'],
+      y_start: [-10, -10],
+      x_drift: [-80, 80],
+      y_drift: [10, 10],
+      rotate_start: [0, 360],
+      rotate_drift: [90, 360],
       delay: [0, 5000],
       duration: [10000, 20000]
     }
   }
 
   // configuration defaults
-  static getStubConfig(name) {
+  static getStubConfig() {
+    const name = this._config?.["name"];
     if (name === 'translate-rotate') return this.getStubConfigTranslateAndRotate();
     if (name === 'translate') steps = this.getStubConfigTranslate();
     if (name === 'slide') return this.getStubConfigSlide();
