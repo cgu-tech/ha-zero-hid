@@ -64,14 +64,20 @@
       );
     }
 
+    function getNow() {
+      return truncateToSecond(new Date());
+    }
+
     function testAnimationDateNullConfig() {
       log("testAnimationDateNullConfig");
+
       // Given
       const animationDate = new AnimationDate();
 
       // When
 
       // Then
+      const now = getNow();
       const date = AnimationDate.toDate(animationDate);
 
       // Assert
@@ -95,6 +101,7 @@
       // When
 
       // Then
+      const now = getNow();
       const date = AnimationDate.toDate(animationDate);
 
       // Assert
@@ -107,6 +114,12 @@
       assertNull(animationDate.getSecond());
 
       assertNotNull(date);
+      assertEqual(date.getFullYear(), now.getFullYear());
+      assertEqual(date.getMonth(), now.getMonth());
+      assertEqual(date.getDate(), now.getDate());
+      assertEqual(date.getHours(), now.getHours());
+      assertEqual(date.getMinutes(), now.getMinutes());
+      assertEqual(date.getSeconds(), now.getSeconds());
     }
     testAnimationDateEmptyConfig();
 
@@ -118,6 +131,7 @@
       // When
 
       // Then
+      const now = getNow();
       const date = AnimationDate.toDate(animationDate);
 
       // Assert
@@ -130,9 +144,12 @@
       assertEqual(animationDate.getSecond(), 2);
 
       assertNotNull(date);
-      assertEqual(date.getMonth() + 1, 11);
-      assertEqual(date.getMinutes(), 53);
-      assertEqual(date.getSeconds(), 2);
+      assertEqual(date.getFullYear(), now.getFullYear());
+      assertEqual(date.getMonth(), now.getMonth());
+      assertEqual(date.getDate(), now.getDate());
+      assertEqual(date.getHours(), now.getHours());
+      assertEqual(date.getMinutes(), now.getMinutes());
+      assertEqual(date.getSeconds(), now.getSeconds());
     }
     testAnimationDatePartialConfig();
 
@@ -199,7 +216,7 @@
     function testAnimationSceneIdentity() {
       log("testAnimationSceneIdentity");
       // Given
-      const now = truncateToSecond(new Date());
+      const now = getNow();
       const config = null;
 
       // When
@@ -222,7 +239,7 @@
     function testAnimationSceneBothEmpty() {
       log("testAnimationSceneBothEmpty");
       // Given
-      const now = truncateToSecond(new Date());
+      const now = getNow();
       const config = {
         date_start: {},
         date_end: {}
