@@ -284,26 +284,43 @@
     }
     testAnimationSceneBothFullEqual();
 
-    function test1() {
+    function testAnimationSceneBothSecondEqual() {
+      log("testAnimationSceneBothSecondEqual");
+      const now = getNow();
+      const dateNow = AnimationDate.toDate(getNow());
+
       // Given
       const config = {
-        date_start: { year: 2025, month: 9, day: 7 }, // Today
-        date_end: { year: 2025, month: 9, day: 8, hour: 23, minute: 59, second: 59 } // Tomorrow
+        date_start: { second: 59 },
+        date_end: { second: 59 }
       };
-      
+
       // When
-      const scene = new AnimationScene(config);
+      let scene = new AnimationScene(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
       const dateEnd = AnimationDate.toDate(scene.getDateEnd());
 
       // Assert
-      assertNotNull(scene);
-      assertNotNull(dateStart);
-      assertNotNull(dateEnd);
+      assertNotNull(animationDate);
+      assertEqual(animationDate.getYear(), dateNow.getYear());
+      assertEqual(animationDate.getMonth(), dateNow.getMonth());
+      assertEqual(animationDate.getDay(), dateNow.getDay());
+      assertEqual(animationDate.getHour(), dateNow.getHour());
+      assertEqual(animationDate.getMinute(), dateNow.getMinute());
+      assertEqual(animationDate.getSecond(), 59);
+
+      assertNotNull(date);
+      assertEqual(date.getFullYear(), now.getFullYear());
+      assertEqual(date.getMonth(), now.getMonth());
+      assertEqual(date.getDate(), now.getDate());
+      assertEqual(date.getHours(), now.getHours());
+      assertEqual(date.getMinutes(), now.getMinutes());
+      assertEqual(date.getSeconds(), 59);
     }
-    
+    testAnimationSceneBothSecondEqual();
+
   </script>
 </body>
 </html>
