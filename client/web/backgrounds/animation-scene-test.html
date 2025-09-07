@@ -113,7 +113,7 @@
     function testAnimationDatePartialConfig() {
       log("testAnimationDatePartialConfig");
       // Given
-      const animationDate = new AnimationDate({month: 11, minute: 53, seconds: 2});
+      const animationDate = new AnimationDate({month: 11, minute: 53, second: 2});
 
       // When
 
@@ -136,7 +136,7 @@
     function testAnimationDateFullConfig() {
       log("testAnimationDateFullConfig");
       // Given
-      const animationDate = new AnimationDate({year: 2025, month: 11, day: 7, hour: 14, minute: 53, seconds: 2});
+      const animationDate = new AnimationDate({year: 2025, month: 11, day: 7, hour: 14, minute: 53, second: 2});
 
       // When
 
@@ -165,7 +165,7 @@
     function testAnimationDateFullConfigPartialOverride() {
       log("testAnimationDateFullConfigPartialOverride");
       // Given
-      const animationDate = new AnimationDate({year: 2025, month: 11, day: 7, hour: 14, minute: 53, seconds: 2});
+      const animationDate = new AnimationDate({year: 2025, month: 11, day: 7, hour: 14, minute: 53, second: 2});
 
       // When
       animationDate.setYear(2026);
