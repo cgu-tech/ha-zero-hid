@@ -332,9 +332,9 @@ export class AnimationScene {
       } else if (part === 'hour') {
         missingParts = this.getPreviousHour(endDateYear, endDateMonth, endDateDay, endDateHour);
       } else if (part === 'minute') {
-        missingParts = this.getPreviousHour(endDateYear, endDateMonth, endDateDay, endDateHour, endDateMinute);
+        missingParts = this.getPreviousMinute(endDateYear, endDateMonth, endDateDay, endDateHour, endDateMinute);
       } else {
-        missingParts = this.getPreviousHour(endDateYear, endDateMonth, endDateDay, endDateHour, endDateMinute, endDateSecond);
+        missingParts = this.getPreviousSecond(endDateYear, endDateMonth, endDateDay, endDateHour, endDateMinute, endDateSecond);
       }
       
       // Fill start date with retrieved values
