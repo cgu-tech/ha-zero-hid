@@ -36,8 +36,34 @@
     function assertLessThanDate(obj1, obj2) {
       assert(obj1.getTime() < obj2.getTime(), "assertLessThanDate(obj1, obj2)", obj1, obj2);
     }
+    function assertLessOrEqualThanDate(obj1, obj2) {
+      assert(obj1.getTime() < obj2.getTime() || obj1.getTime() === obj2.getTime(), "assertLessOrEqualThanDate(obj1, obj2)", obj1, obj2);
+    }
     function assertGreaterThanDate(obj1, obj2) {
-      assert(obj1.getTime() > obj2.getTime(), "assertLessThanDate(obj1, obj2)", obj1, obj2);
+      assert(obj1.getTime() > obj2.getTime(), "assertGreaterThanDate(obj1, obj2)", obj1, obj2);
+    }
+    function assertGreaterOrEqualThanDate(obj1, obj2) {
+      assert(obj1.getTime() > obj2.getTime() || obj1.getTime() === obj2.getTime(), "assertGreaterOrEqualThanDate(obj1, obj2)", obj1, obj2);
+    }
+
+    function testIdentity() {
+      // Given
+      const now = new Date();
+      const config = null;
+      
+      // When
+      const scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = scene.toDate(scene.getDateStart());
+      const dateEnd = scene.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertGreaterOrEqualThanDate(dateStart, now);
+      assertGreaterOrEqualThanDate(dateEnd, now);
     }
 
     function test1() {
@@ -58,6 +84,7 @@
       assertNotNull(scene);
       assertNotNull(dateStart);
       assertNotNull(dateEnd);
+      assertEqualDate(dateStart, 
     }
 
     function test2() {
@@ -68,7 +95,7 @@
       log(`Is in activation range? ${inRange ? 'Yes' : 'No'}`);
     }
     
-    test1();
+    testIdentity();
   </script>
 </body>
 </html>
