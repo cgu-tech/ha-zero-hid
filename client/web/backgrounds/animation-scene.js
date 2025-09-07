@@ -275,15 +275,15 @@ export class AnimationScene {
       if (part === 'month') {
         // Will set month and year in one shot to ensure global cohesion
         const endDateDayValue = this.getDatePartValue(endDate, 'day');
-        const { yearValue, monthValue } = this.findNextValidMonthForDay(endDateDayValue, nowMonthValue, nowYearValue);
-        this.setDatePartAtDegree(endDate, degree, monthValue);
-        this.setDatePartAtDegree(endDate, ++degree, yearValue);
+        const { year, month } = this.findNextValidMonthForDay(endDateDayValue, nowMonthValue, nowYearValue);
+        this.setDatePartAtDegree(endDate, degree, month);
+        this.setDatePartAtDegree(endDate, ++degree, year);
       } else if (part === 'year') {
         // Will set year in one shot to ensure global cohesion
         const endDateDayValue = this.getDatePartValue(endDate, 'day');
         const endDateMonthValue = this.getDatePartValue(endDate, 'month');
-        const { yearValue, monthValue } = this.findNextValidMonthForDay(endDateDayValue, endDateMonthValue, nowYearValue);
-        this.setDatePartAtDegree(endDate, degree, yearValue);
+        const { year, month } = this.findNextValidMonthForDay(endDateDayValue, endDateMonthValue, nowYearValue);
+        this.setDatePartAtDegree(endDate, degree, year);
       } else {
         // Will set anything except year and month to the "now" value
         this.setDatePartAtDegree(endDate, degree, datePartValue);
