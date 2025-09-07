@@ -309,7 +309,7 @@ export class AnimationScene {
     } else {
 
       // Fill all missing values AFTER completion degree with end date values (and adjust when needed)
-      const part = this.getDatePartForDegree(degree);
+      const part = this.getDatePartForDegree(lastFilledDegree + 1);
       const startDateMonth = this.getDatePartValue(startDate, 'month');
       const startDateDay = this.getDatePartValue(startDate, 'day');
       
