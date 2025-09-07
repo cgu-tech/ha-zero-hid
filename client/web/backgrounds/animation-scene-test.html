@@ -46,11 +46,22 @@
       assert(obj1.getTime() > obj2.getTime() || obj1.getTime() === obj2.getTime(), `assertGreaterOrEqualThanDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
     }
 
+    function truncateToSecond(date) {
+      return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds()
+      );
+    }
+
     function testIdentity() {
       // Given
-      const now = new Date();
+      const now = truncateToSecond(new Date());
       const config = null;
-      
+
       // When
       const scene = new AnimationScene(config);
 
