@@ -53,9 +53,24 @@
     function assertNotEqual(obj1, obj2) {
       assert(obj1 !== obj2, "assertNotEqual(obj1, obj2)", obj1, obj2);
     }
+    function assertLessThan(obj1, obj2) {
+      assert(obj1 < obj2, "assertLessThan(obj1, obj2)", obj1, obj2);
+    }
+    function assertLessOrEqualThan(obj1, obj2) {
+      assert(obj1 < obj2 || obj1 === obj2, "assertLessOrEqualThan(obj1, obj2)", obj1, obj2);
+    }
+    function assertGreaterThan(obj1, obj2) {
+      assert(obj1 > obj2, "assertGreaterThan(obj1, obj2)", obj1, obj2);
+    }
+    function assertGreaterOrEqualThan(obj1, obj2) {
+      assert(obj1 > obj2 || obj1 === obj2, "assertGreaterOrEqualThan(obj1, obj2)", obj1, obj2);
+    }
 
     function assertEqualDate(obj1, obj2) {
       assert(obj1.getTime() === obj2.getTime(), `assertEqualDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
+    }
+    function assertNotEqualDate(obj1, obj2) {
+      assert(obj1.getTime() !== obj2.getTime(), `assertNotEqualDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
     }
     function assertLessThanDate(obj1, obj2) {
       assert(obj1.getTime() < obj2.getTime(), `assertLessThanDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
@@ -359,6 +374,83 @@
       assertEqual(dateEnd - dateStart, 3600000); // 1 hour = 3600000 ms
     }
     testAnimationSceneBothMinuteEqual();
+
+    function testAnimationSceneBothHourEqual() {
+      log("testAnimationSceneBothHourEqual");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: { hour: 23 },
+        date_end: { hour: 23 }
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+      assertLessOrEqualThanDate(dateStart, dateNow);
+      assertGreaterOrEqualThanDate(dateEnd, dateNow);
+
+      assertNotNull(dateEnd);
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, now.getMonth());
+      assertEqual(dateEnd.getDate(), now.getDay());
+      assertEqual(dateEnd.getHours(), 23);
+      assertEqual(dateEnd.getMinutes(), 0);
+      assertEqual(dateEnd.getSeconds(), 0);
+
+      assertEqual(dateEnd - dateStart, 86400000); // 1 day = 86400000 ms
+    }
+    testAnimationSceneBothHourEqual();
+
+    function testAnimationSceneBothDayEqual() {
+      log("testAnimationSceneBothDayEqual");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: { hour: 23 },
+        date_end: { hour: 23 }
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+      assertLessOrEqualThanDate(dateStart, dateNow);
+      assertGreaterOrEqualThanDate(dateEnd, dateNow);
+
+      assertNotNull(dateEnd);
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, now.getMonth());
+      assertEqual(dateEnd.getDate(), now.getDay());
+      assertEqual(dateEnd.getHours(), 23);
+      assertEqual(dateEnd.getMinutes(), 0);
+      assertEqual(dateEnd.getSeconds(), 0);
+
+      assertGreaterOrEqualThan(dateEnd - dateStart, 2419200000); // 1 month of 28 days = 2419200000 ms
+      assertLessOrEqualThan(dateEnd - dateStart, 2678400000); // 1 month of 31 days = 2678400000 ms
+    }
+    testAnimationSceneBothDayEqual();
 
   </script>
 </body>
