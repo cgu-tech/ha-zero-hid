@@ -30,6 +30,12 @@
     function assertNotNull(obj) {
       assert(obj, "assertNotNull(obj)", obj);
     }
+    function assertEqual(obj1, obj2) {
+      assert(obj1 === obj2, "assertEqual(obj1, obj2)", obj1, obj2);
+    }
+    function assertNotEqual(obj1, obj2) {
+      assert(obj1 !== obj2, "assertNotEqual(obj1, obj2)", obj1, obj2);
+    }
 
     function assertEqualDate(obj1, obj2) {
       assert(obj1.getTime() === obj2.getTime(), `assertEqualDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
@@ -58,34 +64,137 @@
       );
     }
 
-    function testEmptyAnimationDate() {
+    function testAnimationDateNullConfig() {
+      log("testAnimationDateNullConfig");
       // Given
       const animationDate = new AnimationDate();
 
       // When
-      const scene = new AnimationScene(config);
 
       // Then
-      const dateStart = AnimationDate.toDate(scene.getDateStart());
-      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+      const date = AnimationDate.toDate(animationDate);
 
       // Assert
-      assertNotNull(scene);
-      assertNotNull(dateStart);
-      assertNotNull(dateEnd);
-      assertLessThanDate(dateStart, dateEnd);
-      assertLessOrEqualThanDate(dateStart, now);
-      assertGreaterOrEqualThanDate(dateEnd, now);
-    }
-    testEmptyAnimationDate();
+      assertNotNull(animationDate);
+      assertNull(animationDate.getYear()); 
+      assertNull(animationDate.getMonth()); 
+      assertNull(animationDate.getDay()); 
+      assertNull(animationDate.getHour()); 
+      assertNull(animationDate.getMinute()); 
+      assertNull(animationDate.getSecond());
 
-    function testAnimationDate() {
+      assertNotNull(date);
+    }
+    testAnimationDateNullConfig();
+
+    function testAnimationDateEmptyConfig() {
+      log("testAnimationDateEmptyConfig");
       // Given
-      const date = new AnimationDate();
-    }
-    testAnimationDate();
+      const animationDate = new AnimationDate({});
 
-    function testIdentity() {
+      // When
+
+      // Then
+      const date = AnimationDate.toDate(animationDate);
+
+      // Assert
+      assertNotNull(animationDate);
+      assertNull(animationDate.getYear());
+      assertNull(animationDate.getMonth());
+      assertNull(animationDate.getDay());
+      assertNull(animationDate.getHour());
+      assertNull(animationDate.getMinute());
+      assertNull(animationDate.getSecond());
+
+      assertNotNull(date);
+    }
+    testAnimationDateEmptyConfig();
+
+    function testAnimationDatePartialConfig() {
+      log("testAnimationDatePartialConfig");
+      // Given
+      const animationDate = new AnimationDate({month: 11, minute: 53, seconds: 2});
+
+      // When
+
+      // Then
+      const date = AnimationDate.toDate(animationDate);
+
+      // Assert
+      assertNotNull(animationDate);
+      assertNull(animationDate.getYear());
+      assertEqual(animationDate.getMonth(), 11);
+      assertNull(animationDate.getDay());
+      assertNull(animationDate.getHour());
+      assertEqual(animationDate.getMinute(), 53);
+      assertEqual(animationDate.getSecond(), 2);
+
+      assertNotNull(date);
+    }
+    testAnimationDatePartialConfig();
+
+    function testAnimationDateFullConfig() {
+      log("testAnimationDateFullConfig");
+      // Given
+      const animationDate = new AnimationDate({year: 2025, month: 11, day: 7, hour: 14, minute: 53, seconds: 2});
+
+      // When
+
+      // Then
+      const date = AnimationDate.toDate(animationDate);
+
+      // Assert
+      assertNotNull(animationDate);
+      assertEqual(animationDate.getYear(), 2025);
+      assertEqual(animationDate.getMonth(), 11);
+      assertEqual(animationDate.getDay(), 7);
+      assertEqual(animationDate.getHour(), 14);
+      assertEqual(animationDate.getMinute(), 53);
+      assertEqual(animationDate.getSecond(), 2);
+
+      assertNotNull(date);
+      assertEqual(date.getFullYear(), 2025);
+      assertEqual(date.getMonth(), 11);
+      assertEqual(date.getDate(), 7);
+      assertEqual(date.getHours(), 14);
+      assertEqual(date.getMinutes(), 53);
+      assertEqual(date.getSeconds(), 2);
+    }
+    testAnimationDateFullConfig();
+
+    function testAnimationDateFullConfigPartialOverride() {
+      log("testAnimationDateFullConfigPartialOverride");
+      // Given
+      const animationDate = new AnimationDate({year: 2025, month: 11, day: 7, hour: 14, minute: 53, seconds: 2});
+
+      // When
+      animationDate.setYear(2026);
+      animationDate.setHour(1);
+
+      // Then
+      const date = AnimationDate.toDate(animationDate);
+
+      // Assert
+      assertNotNull(animationDate);
+      assertEqual(animationDate.getYear(), 2026);
+      assertEqual(animationDate.getMonth(), 11);
+      assertEqual(animationDate.getDay(), 7);
+      assertEqual(animationDate.getHour(), 1);
+      assertEqual(animationDate.getMinute(), 53);
+      assertEqual(animationDate.getSecond(), 2);
+
+      assertNotNull(date);
+      assertEqual(date.getFullYear(), 2026);
+      assertEqual(date.getMonth(), 11);
+      assertEqual(date.getDate(), 7);
+      assertEqual(date.getHours(), 1);
+      assertEqual(date.getMinutes(), 53);
+      assertEqual(date.getSeconds(), 2);
+    }
+    testAnimationDateFullConfigPartialOverride();
+
+    function testAnimationSceneIdentity() {
+      log("testAnimationSceneIdentity");
       // Given
       const now = truncateToSecond(new Date());
       const config = null;
@@ -105,9 +214,10 @@
       assertLessOrEqualThanDate(dateStart, now);
       assertGreaterOrEqualThanDate(dateEnd, now);
     }
-    testIdentity();
+    testAnimationSceneIdentity();
     
-    function testBothEmpty() {
+    function testAnimationSceneBothEmpty() {
+      log("testAnimationSceneBothEmpty");
       // Given
       const now = truncateToSecond(new Date());
       const config = {
@@ -130,9 +240,11 @@
       assertLessOrEqualThanDate(dateStart, now);
       assertGreaterOrEqualThanDate(dateEnd, now);
     }
-    testBothEmpty();
+    testAnimationSceneBothEmpty();
 
-    function testBothFullEqual() {
+    function testAnimationSceneBothFullEqual() {
+      log("testAnimationSceneBothFullEqual");
+      
       // Given
       const config = {
         date_start: { year: 2025, month: 9, day: 8, hour: 23, minute: 59, second: 59 },
@@ -152,7 +264,7 @@
       assertNotNull(dateEnd);
       assertEqualDate(dateStart, dateEnd);
     }
-    testBothFullEqual();
+    testAnimationSceneBothFullEqual();
 
     function test1() {
       // Given
@@ -172,14 +284,6 @@
       assertNotNull(scene);
       assertNotNull(dateStart);
       assertNotNull(dateEnd);
-    }
-
-    function test2() {
-      const now = new Date();
-      const inRange = scene.isInActivationRange(now);
-      
-      log(`Current time: ${now.toString()}`);
-      log(`Is in activation range? ${inRange ? 'Yes' : 'No'}`);
     }
     
   </script>
