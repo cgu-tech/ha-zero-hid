@@ -298,18 +298,19 @@ export class AnimationScene {
 
     // Retrieve completion degree
     const lastFilledDegree = this.getDateCompletionDegree(startDate);
+    const firstDegreeToFill = lastFilledDegree + 1;
     if (this.isFirstDateLessThanSecondDate(startDate, endDate)) {
 
       // Fill all missing values AFTER completion degree with end date values (and adjust when needed)
-      for (let degree = lastFilledDegree + 1; degree <= this._DATE_DEGREE_MAX; degree++) {
+      for (let degree = firstDegreeToFill; degree <= this._DATE_DEGREE_MAX; degree++) {
         const endDatePartValue = this.getDatePartValueForDegree(endDate, degree);
         this.setDatePartAtDegree(startDate, degree, endDatePartValue);
       }
 
-    } else {
+    } else if (firstDegreeToFill <= this._DATE_DEGREE_MAX) {
 
       // Fill all missing values AFTER completion degree with end date values (and adjust when needed)
-      const part = this.getDatePartForDegree(lastFilledDegree + 1);
+      const part = this.getDatePartForDegree(firstDegreeToFill);
       const startDateMonth = this.getDatePartValue(startDate, 'month');
       const startDateDay = this.getDatePartValue(startDate, 'day');
       
@@ -340,6 +341,8 @@ export class AnimationScene {
       for (const [part, partValue] of Object.entries(missingParts)) {
         this.setDatePartValue(startDate, part, partValue);
       }
+    } else {
+      throw new RangeError(`startDate is fully filled with a greater value than endDate (expected lesser or remaining part to determine lesser value):`, startDate, endDate);
     }
   }
 
