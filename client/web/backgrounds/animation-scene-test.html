@@ -314,9 +314,9 @@
       assertEqual(dateEnd.getFullYear(), now.getYear());
       assertEqual(dateEnd.getMonth() + 1, now.getMonth());
       assertEqual(dateEnd.getDate(), now.getDay());
-      assertEqual(dateEnd.getHour(), now.getHour());
-      assertEqual(dateEnd.getMinute(), now.getMinute());
-      assertEqual(dateEnd.getSecond(), 59);
+      assertEqual(dateEnd.getHours(), now.getHour());
+      assertEqual(dateEnd.getMinutes(), now.getMinute());
+      assertEqual(dateEnd.getSeconds(), 59);
 
       assertEqual(dateEnd - dateStart, 60000); // 1 minute = 60000 ms
     }
