@@ -16,22 +16,51 @@
       document.getElementById('output').innerHTML += `<pre>${msg}</pre>`;
     }
 
-    // Sample config with partial start and full end
-    const config = {
-      date_start: { year: 2025, month: 9, day: 7 }, // Today
-      date_end: { year: 2025, month: 9, day: 8, hour: 23, minute: 59, second: 59 } // Tomorrow
-    };
+    function assert(condition, message, ...args) {
+      if (!condition) {
+        console.error(message || "Assertion failed", ...args);
+        return false;
+      }
+      return true;
+    }
 
-    const scene = new AnimationScene(config);
+    function assertNull(obj) {
+      assert(!obj, "assertNull(obj)", obj);
+    }
     
-    log(`Start date: ${scene.getDateStart().toDate()}`);
-    log(`End date:   ${scene.getDateEnd().toDate()}`);
+    function assertNotNull(obj) {
+      assert(obj, "assertNotNull(obj)", obj);
+    }
+
+    function test1() {
+      // Given
+      const config = {
+        date_start: { year: 2025, month: 9, day: 7 }, // Today
+        date_end: { year: 2025, month: 9, day: 8, hour: 23, minute: 59, second: 59 } // Tomorrow
+      };
+      
+      // When
+      const scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = scene.toDate(scene.getDateStart());
+      const dateEnd = scene.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+    }
+
+    function test2() {
+      const now = new Date();
+      const inRange = scene.isInActivationRange(now);
+      
+      log(`Current time: ${now.toString()}`);
+      log(`Is in activation range? ${inRange ? 'Yes' : 'No'}`);
+    }
     
-    const now = new Date();
-    const inRange = scene.isInActivationRange(now);
-    
-    log(`Current time: ${now.toString()}`);
-    log(`Is in activation range? ${inRange ? 'Yes' : 'No'}`);
+    test1();
   </script>
 </body>
 </html>
