@@ -77,7 +77,6 @@
       // When
 
       // Then
-      const now = getNow();
       const date = AnimationDate.toDate(animationDate);
 
       // Assert
@@ -89,7 +88,7 @@
       assertNull(animationDate.getMinute()); 
       assertNull(animationDate.getSecond());
 
-      assertNotNull(date);
+      assertNotNull(date); // Random date
     }
     testAnimationDateNullConfig();
 
@@ -101,7 +100,6 @@
       // When
 
       // Then
-      const now = getNow();
       const date = AnimationDate.toDate(animationDate);
 
       // Assert
@@ -113,13 +111,7 @@
       assertNull(animationDate.getMinute());
       assertNull(animationDate.getSecond());
 
-      assertNotNull(date);
-      assertEqual(date.getFullYear(), now.getFullYear());
-      assertEqual(date.getMonth(), now.getMonth());
-      assertEqual(date.getDate(), now.getDate());
-      assertEqual(date.getHours(), now.getHours());
-      assertEqual(date.getMinutes(), now.getMinutes());
-      assertEqual(date.getSeconds(), now.getSeconds());
+      assertNotNull(date); // Random date
     }
     testAnimationDateEmptyConfig();
 
@@ -131,7 +123,6 @@
       // When
 
       // Then
-      const now = getNow();
       const date = AnimationDate.toDate(animationDate);
 
       // Assert
@@ -143,13 +134,7 @@
       assertEqual(animationDate.getMinute(), 53);
       assertEqual(animationDate.getSecond(), 2);
 
-      assertNotNull(date);
-      assertEqual(date.getFullYear(), now.getFullYear());
-      assertEqual(date.getMonth(), now.getMonth());
-      assertEqual(date.getDate(), now.getDate());
-      assertEqual(date.getHours(), now.getHours());
-      assertEqual(date.getMinutes(), now.getMinutes());
-      assertEqual(date.getSeconds(), now.getSeconds());
+      assertNotNull(date); // Random date
     }
     testAnimationDatePartialConfig();
 
