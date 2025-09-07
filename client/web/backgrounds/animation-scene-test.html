@@ -218,7 +218,7 @@
     function testAnimationSceneIdentity() {
       log("testAnimationSceneIdentity");
       // Given
-      const now = getNow();
+      const dateNow = getNow();
       const config = null;
 
       // When
@@ -233,15 +233,15 @@
       assertNotNull(dateStart);
       assertNotNull(dateEnd);
       assertLessThanDate(dateStart, dateEnd);
-      assertLessOrEqualThanDate(dateStart, now);
-      assertGreaterOrEqualThanDate(dateEnd, now);
+      assertLessOrEqualThanDate(dateStart, dateNow);
+      assertGreaterOrEqualThanDate(dateEnd, dateNow);
     }
     testAnimationSceneIdentity();
     
     function testAnimationSceneBothEmpty() {
       log("testAnimationSceneBothEmpty");
       // Given
-      const now = getNow();
+      const dateNow = getNow();
       const config = {
         date_start: {},
         date_end: {}
@@ -259,8 +259,8 @@
       assertNotNull(dateStart);
       assertNotNull(dateEnd);
       assertLessThanDate(dateStart, dateEnd);
-      assertLessOrEqualThanDate(dateStart, now);
-      assertGreaterOrEqualThanDate(dateEnd, now);
+      assertLessOrEqualThanDate(dateStart, dateNow);
+      assertGreaterOrEqualThanDate(dateEnd, dateNow);
     }
     testAnimationSceneBothEmpty();
 
@@ -286,7 +286,8 @@
 
     function testAnimationSceneBothSecondEqual() {
       log("testAnimationSceneBothSecondEqual");
-      const now = getNow();
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
 
       // Given
       const config = {
@@ -306,15 +307,15 @@
       assertNotNull(dateStart);
       assertNotNull(dateEnd);
       assertLessThanDate(dateStart, dateEnd);
-      assertLessOrEqualThanDate(dateStart, now);
-      assertGreaterOrEqualThanDate(dateEnd, now);
+      assertLessOrEqualThanDate(dateStart, dateNow);
+      assertGreaterOrEqualThanDate(dateEnd, dateNow);
 
       assertNotNull(dateEnd);
-      assertEqual(dateEnd.getFullYear(), dateNow.getYear());
-      assertEqual(dateEnd.getMonth() + 1, dateNow.getMonth());
-      assertEqual(dateEnd.getDate(), dateNow.getDay());
-      assertEqual(dateEnd.getHour(), dateNow.getHour());
-      assertEqual(dateEnd.getMinute(), dateNow.getMinute());
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, now.getMonth());
+      assertEqual(dateEnd.getDate(), now.getDay());
+      assertEqual(dateEnd.getHour(), now.getHour());
+      assertEqual(dateEnd.getMinute(), now.getMinute());
       assertEqual(dateEnd.getSecond(), 59);
 
       assertEqual(dateEnd - dateStart, 60000); // 1 minute = 60000 ms
