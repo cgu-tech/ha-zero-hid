@@ -413,15 +413,15 @@
     }
     testAnimationSceneBothHourEqual();
 
-    function testAnimationSceneBothDayEqual() {
-      log("testAnimationSceneBothDayEqual");
+    function testAnimationSceneBothDayEqual28() {
+      log("testAnimationSceneBothDayEqual28");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
       // Given
       const config = {
-        date_start: { hour: 23 },
-        date_end: { hour: 23 }
+        date_start: { day: 28 },
+        date_end: { day: 28 }
       };
 
       // When
@@ -442,15 +442,54 @@
       assertNotNull(dateEnd);
       assertEqual(dateEnd.getFullYear(), now.getYear());
       assertEqual(dateEnd.getMonth() + 1, now.getMonth());
-      assertEqual(dateEnd.getDate(), now.getDay());
-      assertEqual(dateEnd.getHours(), 23);
+      assertEqual(dateEnd.getDate(), 28);
+      assertEqual(dateEnd.getHours(), 0);
       assertEqual(dateEnd.getMinutes(), 0);
       assertEqual(dateEnd.getSeconds(), 0);
 
-      assertGreaterOrEqualThan(dateEnd - dateStart, 2419200000); // 1 month of 28 days = 2419200000 ms
+      assertEqual(dateEnd - dateStart, 2419200000); // 1 month of 28 days = 2419200000 ms
       assertLessOrEqualThan(dateEnd - dateStart, 2678400000); // 1 month of 31 days = 2678400000 ms
     }
-    testAnimationSceneBothDayEqual();
+    testAnimationSceneBothDayEqual28();
+
+    function testAnimationSceneBothDayEqual31() {
+      log("testAnimationSceneBothDayEqual31");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: { day: 31 },
+        date_end: { day: 31 }
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+      assertLessOrEqualThanDate(dateStart, dateNow);
+      assertGreaterOrEqualThanDate(dateEnd, dateNow);
+
+      assertNotNull(dateEnd);
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, now.getMonth());
+      assertEqual(dateEnd.getDate(), 31);
+      assertEqual(dateEnd.getHours(), 0);
+      assertEqual(dateEnd.getMinutes(), 0);
+      assertEqual(dateEnd.getSeconds(), 0);
+
+      assertGreaterOrEqualThan(dateEnd - dateStart, 2678400000); // 1 month of 31 days = 2678400000 ms
+      assertLessOrEqualThan(dateEnd - dateStart, 5356800000); // 2 months of 31 days = 5356800000 ms
+    }
+    testAnimationSceneBothDayEqual31();
 
   </script>
 </body>
