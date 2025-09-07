@@ -10,6 +10,7 @@
 
   <script type="module">
     import { AnimationScene } from './animation-scene.js';
+    import { AnimationDate } from './animation-date.js';
 
     // Helper to log to page
     function log(msg) {
@@ -57,6 +58,33 @@
       );
     }
 
+    function testEmptyAnimationDate() {
+      // Given
+      const animationDate = new AnimationDate();
+
+      // When
+      const scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+      assertLessOrEqualThanDate(dateStart, now);
+      assertGreaterOrEqualThanDate(dateEnd, now);
+    }
+    testEmptyAnimationDate();
+
+    function testAnimationDate() {
+      // Given
+      const date = new AnimationDate();
+    }
+    testAnimationDate();
+
     function testIdentity() {
       // Given
       const now = truncateToSecond(new Date());
@@ -66,8 +94,8 @@
       const scene = new AnimationScene(config);
 
       // Then
-      const dateStart = scene.toDate(scene.getDateStart());
-      const dateEnd = scene.toDate(scene.getDateEnd());
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
 
       // Assert
       assertNotNull(scene);
@@ -91,8 +119,8 @@
       const scene = new AnimationScene(config);
 
       // Then
-      const dateStart = scene.toDate(scene.getDateStart());
-      const dateEnd = scene.toDate(scene.getDateEnd());
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
 
       // Assert
       assertNotNull(scene);
@@ -103,6 +131,28 @@
       assertGreaterOrEqualThanDate(dateEnd, now);
     }
     testBothEmpty();
+
+    function testBothFullEqual() {
+      // Given
+      const config = {
+        date_start: { year: 2025, month: 9, day: 8, hour: 23, minute: 59, second: 59 },
+        date_end: { year: 2025, month: 9, day: 8, hour: 23, minute: 59, second: 59 }
+      };
+
+      // When
+      const scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertEqualDate(dateStart, dateEnd);
+    }
+    testBothFullEqual();
 
     function test1() {
       // Given
@@ -115,8 +165,8 @@
       const scene = new AnimationScene(config);
 
       // Then
-      const dateStart = scene.toDate(scene.getDateStart());
-      const dateEnd = scene.toDate(scene.getDateEnd());
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
 
       // Assert
       assertNotNull(scene);

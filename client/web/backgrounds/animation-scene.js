@@ -220,27 +220,6 @@ export class AnimationScene {
     return degree;
   }
 
-  fromDate(date) {
-    const animationDate = new AnimationDate({});
-    animationDate.setYear(date.getFullYear());
-    animationDate.setMonth(date.getMonth() + 1); // JS months are 0-based; AnimationDate expects 1-based
-    animationDate.setDay(date.getDate());
-    animationDate.setHour(date.getHours());
-    animationDate.setMinute(date.getMinutes());
-    animationDate.setSecond(date.getSeconds());
-    return animationDate;
-  }
-
-  toDate(animationDate) {
-    return new Date(
-      animationDate.getYear(), 
-      animationDate.getMonth() - 1, 
-      animationDate.getDay(), 
-      animationDate.getHour(), 
-      animationDate.getMinute(), 
-      animationDate.getSecond());
-  }
-
   fillDateBeforeCompletionDegree(animationDate) {
     // Retrieve completion degree
     const lastFilledDegree = this.getDateCompletionDegree(animationDate);
@@ -261,7 +240,7 @@ export class AnimationScene {
     this.fillDateBeforeCompletionDegree(endDate); 
 
     // Retrieve now date to use it as reference for post-completion-degree filling
-    const now = this.fromDate(new Date());
+    const now = AnimationDate.fromDate(new Date());
     const nowYearValue = this.getDatePartValue(now, 'year');
     const nowMonthValue = this.getDatePartValue(now, 'month');
 

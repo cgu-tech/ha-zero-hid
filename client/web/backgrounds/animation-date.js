@@ -77,4 +77,25 @@ export class AnimationDate {
     }
   }
 
+  static fromDate(date) {
+    const animationDate = new AnimationDate({});
+    animationDate.setYear(date.getFullYear());
+    animationDate.setMonth(date.getMonth() + 1); // JS months are 0-based; AnimationDate expects 1-based
+    animationDate.setDay(date.getDate());
+    animationDate.setHour(date.getHours());
+    animationDate.setMinute(date.getMinutes());
+    animationDate.setSecond(date.getSeconds());
+    return animationDate;
+  }
+
+  static toDate(animationDate) {
+    return new Date(
+      animationDate.getYear(), 
+      animationDate.getMonth() - 1, 
+      animationDate.getDay(), 
+      animationDate.getHour(), 
+      animationDate.getMinute(), 
+      animationDate.getSecond());
+  }
+
 }
