@@ -287,7 +287,6 @@
     function testAnimationSceneBothSecondEqual() {
       log("testAnimationSceneBothSecondEqual");
       const now = getNow();
-      const dateNow = AnimationDate.fromDate(getNow());
 
       // Given
       const config = {
@@ -311,9 +310,9 @@
       assertGreaterOrEqualThanDate(dateEnd, now);
 
       assertNotNull(dateEnd);
-      assertEqual(dateEnd.getYear(), dateNow.getYear());
-      assertEqual(dateEnd.getMonth(), dateNow.getMonth());
-      assertEqual(dateEnd.getDay(), dateNow.getDay());
+      assertEqual(dateEnd.getFullYear(), dateNow.getYear());
+      assertEqual(dateEnd.getMonth() + 1, dateNow.getMonth());
+      assertEqual(dateEnd.getDate(), dateNow.getDay());
       assertEqual(dateEnd.getHour(), dateNow.getHour());
       assertEqual(dateEnd.getMinute(), dateNow.getMinute());
       assertEqual(dateEnd.getSecond(), 59);
