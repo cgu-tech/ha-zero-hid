@@ -31,19 +31,19 @@
     }
 
     function assertEqualDate(obj1, obj2) {
-      assert(obj1.getTime() === obj2.getTime(), "assertEqualDate(obj1, obj2)", obj1, obj2);
+      assert(obj1.getTime() === obj2.getTime(), `assertEqualDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
     }
     function assertLessThanDate(obj1, obj2) {
-      assert(obj1.getTime() < obj2.getTime(), "assertLessThanDate(obj1, obj2)", obj1, obj2);
+      assert(obj1.getTime() < obj2.getTime(), `assertLessThanDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
     }
     function assertLessOrEqualThanDate(obj1, obj2) {
-      assert(obj1.getTime() < obj2.getTime() || obj1.getTime() === obj2.getTime(), "assertLessOrEqualThanDate(obj1, obj2)", obj1, obj2);
+      assert(obj1.getTime() < obj2.getTime() || obj1.getTime() === obj2.getTime(), `assertLessOrEqualThanDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
     }
     function assertGreaterThanDate(obj1, obj2) {
-      assert(obj1.getTime() > obj2.getTime(), "assertGreaterThanDate(obj1, obj2)", obj1, obj2);
+      assert(obj1.getTime() > obj2.getTime(), `assertGreaterThanDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
     }
     function assertGreaterOrEqualThanDate(obj1, obj2) {
-      assert(obj1.getTime() > obj2.getTime() || obj1.getTime() === obj2.getTime(), "assertGreaterOrEqualThanDate(obj1, obj2)", obj1, obj2);
+      assert(obj1.getTime() > obj2.getTime() || obj1.getTime() === obj2.getTime(), `assertGreaterOrEqualThanDate(obj1, obj2): obj1.time:${obj1.getTime()}, obj2.time:${obj2.getTime()}`, obj1, obj2);
     }
 
     function testIdentity() {
