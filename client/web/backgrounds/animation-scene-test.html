@@ -23,13 +23,21 @@
       }
       return true;
     }
-
     function assertNull(obj) {
       assert(!obj, "assertNull(obj)", obj);
     }
-    
     function assertNotNull(obj) {
       assert(obj, "assertNotNull(obj)", obj);
+    }
+
+    function assertEqualDate(obj1, obj2) {
+      assert(obj1.getTime() === obj2.getTime(), "assertEqualDate(obj1, obj2)", obj1, obj2);
+    }
+    function assertLessThanDate(obj1, obj2) {
+      assert(obj1.getTime() < obj2.getTime(), "assertLessThanDate(obj1, obj2)", obj1, obj2);
+    }
+    function assertGreaterThanDate(obj1, obj2) {
+      assert(obj1.getTime() > obj2.getTime(), "assertLessThanDate(obj1, obj2)", obj1, obj2);
     }
 
     function test1() {
