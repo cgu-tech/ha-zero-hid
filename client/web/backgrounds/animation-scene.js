@@ -137,19 +137,23 @@ export class AnimationScene {
     return this.getDatePartValue(animationDate, part);
   }
 
-  setDatePartAtDegree(animationDate, degree, value) {
-    const part = this.getDatePartForDegree(degree);
+  setDatePartValue(animationDate, part, value) {
     if (!part) return null;
     animationDate[`set${this.capitalizeFirst(part)}`](value);
+  }
+
+  setDatePartAtDegree(animationDate, degree, value) {
+    const part = this.getDatePartForDegree(degree);
+    this.setDatePartValue(animationDate, part, value);
   }
 
   isLeapYear(year) {
     return (year % 4 === 0) && (year % 100 !== 0 || year % 400 === 0);
   }
 
-  getDaysInMonth(month, isLeapYear) {
+  getDaysInMonth(year, month) {
     // Array of days in each month, index 0 = January (month 1)
-    const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const daysInMonth = [31, this.isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
     // month is 1-based (1 = January), so subtract 1 for array index
     return daysInMonth[month - 1];
@@ -160,8 +164,7 @@ export class AnimationScene {
     let year = currentYear;
   
     for (let i = 0; i < 12; i++) { // max of 12 iterations
-      const leap = this.isLeapYear(year);
-      const maxDays = this.getDaysInMonth(month, leap);
+      const maxDays = this.getDaysInMonth(year, month);
   
       if (dayOfMonth <= maxDays) {
         return { year, month };
@@ -224,9 +227,9 @@ export class AnimationScene {
     }
   }
 
-  fillDate(animationDate) {
+  fillEndDate(endDate) {
     // Fill all missing values BEFORE completion degree
-    this.fillDateBeforeCompletionDegree(animationDate); 
+    this.fillDateBeforeCompletionDegree(endDate); 
 
     // Retrieve now date to use it as reference for post-completion-degree filling
     const now = this.fromDate(new Date());
@@ -234,7 +237,7 @@ export class AnimationScene {
     const nowMonthValue = this.getDatePartValue(now, 'month');
 
     // Retrieve completion degree
-    const lastFilledDegree = this.getDateCompletionDegree(animationDate);
+    const lastFilledDegree = this.getDateCompletionDegree(endDate);
 
     // Fill all missing values AFTER completion degree with current values (and adjust when needed)
     for (let degree = lastFilledDegree + 1; degree <= this._DATE_DEGREE_MAX; degree++) {
@@ -242,148 +245,53 @@ export class AnimationScene {
       const part = this.getDatePartForDegree(degree);
       if (part === 'month') {
         // Will set month and year in one shot to ensure global cohesion
-        const animationDateDayValue = this.getDatePartValue(animationDate, 'day');
-        const { yearValue, monthValue } = this.findNextValidMonthForDay(animationDateDayValue, nowMonthValue, nowYearValue);
-        this.setDatePartAtDegree(animationDate, degree, monthValue);
-        this.setDatePartAtDegree(animationDate, ++degree, yearValue);
+        const endDateDayValue = this.getDatePartValue(endDate, 'day');
+        const { yearValue, monthValue } = this.findNextValidMonthForDay(endDateDayValue, nowMonthValue, nowYearValue);
+        this.setDatePartAtDegree(endDate, degree, monthValue);
+        this.setDatePartAtDegree(endDate, ++degree, yearValue);
       } else if (part === 'year') {
         // Will set year in one shot to ensure global cohesion
-        const animationDateDayValue = this.getDatePartValue(animationDate, 'day');
-        const animationDateMonthValue = this.getDatePartValue(animationDate, 'month');
-        const { yearValue, monthValue } = this.findNextValidMonthForDay(animationDateDayValue, animationDateMonthValue, nowYearValue);
-        this.setDatePartAtDegree(animationDate, degree, yearValue);
+        const endDateDayValue = this.getDatePartValue(endDate, 'day');
+        const endDateMonthValue = this.getDatePartValue(endDate, 'month');
+        const { yearValue, monthValue } = this.findNextValidMonthForDay(endDateDayValue, endDateMonthValue, nowYearValue);
+        this.setDatePartAtDegree(endDate, degree, yearValue);
       } else {
         // Will set anything except year and month to the "now" value
-        this.setDatePartAtDegree(animationDate, degree, datePartValue);
+        this.setDatePartAtDegree(endDate, degree, datePartValue);
       }
     }
   }
 
-  cloneAndFillPartial(firstDate, partialDate) {
-    const filledDate = {};
+  fillStartDate(startDate, endDate) {
 
-    for (const part of this._DATE_FIELDS) {
-      if (this.getDatePartValue(partialDate, part)) {
-        filledDate[part] = this.getDatePartValue(partialDate, part);
-      } else if (part === 'day') {
-        const y = filledDate.year ?? firstDate.year;
-        const m = filledDate.month ?? firstDate.month;
-        filledDate.day = getDaysInMonth(y, m);
+    // Fill all missing values BEFORE completion degree
+    this.fillDateBeforeCompletionDegree(startDate); 
+
+    // Retrieve completion degree
+    const lastFilledDegree = this.getDateCompletionDegree(startDate);
+
+    // Fill all missing values AFTER completion degree with current values (and adjust when needed)
+    for (let degree = lastFilledDegree + 1; degree <= this._DATE_DEGREE_MAX; degree++) {
+      let datePartValue = this.getDatePartValueForDegree(now, degree);
+      const part = this.getDatePartForDegree(degree);
+      if (part === 'month') {
+        // Will set month and year in one shot to ensure global cohesion
+        const endDateDayValue = this.getDatePartValue(endDate, 'day');
+        const { yearValue, monthValue } = this.findNextValidMonthForDay(endDateDayValue, nowMonthValue, nowYearValue);
+        this.setDatePartAtDegree(endDate, degree, monthValue);
+        this.setDatePartAtDegree(endDate, ++degree, yearValue);
+      } else if (part === 'year') {
+        // Will set year in one shot to ensure global cohesion
+        const endDateDayValue = this.getDatePartValue(endDate, 'day');
+        const endDateMonthValue = this.getDatePartValue(endDate, 'month');
+        const { yearValue, monthValue } = this.findNextValidMonthForDay(endDateDayValue, endDateMonthValue, nowYearValue);
+        this.setDatePartAtDegree(endDate, degree, yearValue);
       } else {
-        filledDate[part] = firstDate[part];
-      }
-    }
-  
-    return filledDate;
-  }
-
-decrementDateObject(obj, field) {
-  const copy = { ...obj };
-
-  switch (field) {
-    case 'year':
-      copy.year -= 1;
-      break;
-
-    case 'month':
-      if (copy.month === 1) {
-        copy.month = 12;
-        copy.year -= 1;
-      } else {
-        copy.month -= 1;
-      }
-      break;
-
-    case 'day':
-      if (copy.day > 1) {
-        copy.day -= 1;
-      } else {
-        if (copy.month === 1) {
-          copy.month = 12;
-          copy.year -= 1;
-        } else {
-          copy.month -= 1;
-        }
-        copy.day = getDaysInMonth(copy.year, copy.month);
-      }
-      break;
-
-    case 'hour':
-      if (copy.hour > 0) {
-        copy.hour -= 1;
-      } else {
-        copy.hour = 23;
-        decrementDateObject(copy, 'day');
-      }
-      break;
-
-    case 'minute':
-      if (copy.minute > 0) {
-        copy.minute -= 1;
-      } else {
-        copy.minute = 59;
-        decrementDateObject(copy, 'hour');
-      }
-      break;
-
-    case 'second':
-      if (copy.second > 0) {
-        copy.second -= 1;
-      } else {
-        copy.second = 59;
-        decrementDateObject(copy, 'minute');
-      }
-      break;
-  }
-
-  return copy;
-}
-
-fillRemainingWithMax(obj, partialDate) {
-  const maxValues = {
-    hour: 23,
-    minute: 59,
-    second: 59
-  };
-
-  const fields = ['year', 'month', 'day', 'hour', 'minute', 'second'];
-
-  for (const field of fields) {
-    if (partialDate[field] == null) {
-      if (field === 'day') {
-        obj.day = getDaysInMonth(obj.year, obj.month);
-      } else if (maxValues[field] != null) {
-        obj[field] = maxValues[field];
+        // Will set anything except year and month to the "now" value
+        this.setDatePartAtDegree(endDate, degree, datePartValue);
       }
     }
   }
-
-  return obj;
-}
-
-fillMissingFieldsStrictlyLess(firstDate, partialDate) {
-  const fields = ['year', 'month', 'day', 'hour', 'minute', 'second'];
-
-  const filledDate = cloneAndFillPartial(firstDate, partialDate);
-
-  if (toDate(filledDate) < toDate(firstDate)) {
-    return filledDate;
-  }
-
-  const missingFields = fields.filter(f => partialDate[f] == null);
-
-  for (const field of missingFields) {
-    let candidate = decrementDateObject(filledDate, field);
-    candidate = fillRemainingWithMax(candidate, partialDate);
-
-    if (toDate(candidate) < toDate(firstDate)) {
-      return candidate;
-    }
-  }
-
-  throw new Error("Unable to compute a strictly lesser date.");
-}
-
 
   //fillNextDegree(sourceDate, targetDate, isSourceBeforeTarget) {
   //  const targetLastFilledDegree = this.getDateCompletionDegree(targetDate);
