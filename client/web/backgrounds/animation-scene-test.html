@@ -77,6 +77,32 @@
       assertLessOrEqualThanDate(dateStart, now);
       assertGreaterOrEqualThanDate(dateEnd, now);
     }
+    testIdentity();
+    
+    function testBothEmpty() {
+      // Given
+      const now = truncateToSecond(new Date());
+      const config = {
+        date_start: {},
+        date_end: {}
+      };
+
+      // When
+      const scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = scene.toDate(scene.getDateStart());
+      const dateEnd = scene.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+      assertLessOrEqualThanDate(dateStart, now);
+      assertGreaterOrEqualThanDate(dateEnd, now);
+    }
+    testBothEmpty();
 
     function test1() {
       // Given
@@ -106,7 +132,6 @@
       log(`Is in activation range? ${inRange ? 'Yes' : 'No'}`);
     }
     
-    testIdentity();
   </script>
 </body>
 </html>
