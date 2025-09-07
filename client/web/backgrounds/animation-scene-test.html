@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AnimationScene Test</title>
+</head>
+<body>
+  <h1>AnimationScene Test</h1>
+  <div id="output"></div>
+
+  <script type="module">
+    import { AnimationScene } from './animation-scene.js';
+
+    // Helper to log to page
+    function log(msg) {
+      document.getElementById('output').innerHTML += `<pre>${msg}</pre>`;
+    }
+
+    // Sample config with partial start and full end
+    const config = {
+      date_start: { year: 2025, month: 9, day: 7 }, // Today
+      date_end: { year: 2025, month: 9, day: 8, hour: 23, minute: 59, second: 59 } // Tomorrow
+    };
+
+    const scene = new AnimationScene(config);
+    
+    log(`Start date: ${scene.getDateStart().toDate()}`);
+    log(`End date:   ${scene.getDateEnd().toDate()}`);
+    
+    const now = new Date();
+    const inRange = scene.isInActivationRange(now);
+    
+    log(`Current time: ${now.toString()}`);
+    log(`Is in activation range? ${inRange ? 'Yes' : 'No'}`);
+  </script>
+</body>
+</html>

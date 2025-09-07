@@ -26,9 +26,9 @@ export class AnimationScene {
   constructor(config) {
     let partDegree = this._DATE_DEGREE_MAX;
     for (const part of this._DATE_FIELDS) {
-      _DATE_PARTS.add(part);
-      _DATE_DEGREES_PARTS.set(partDegree, part);
-      _DATE_PARTS_DEGREES.set(part, partDegree);
+      this._DATE_PARTS.add(part);
+      this._DATE_DEGREES_PARTS.set(partDegree, part);
+      this._DATE_PARTS_DEGREES.set(part, partDegree);
       partDegree--;
     }
     this._config = config;
