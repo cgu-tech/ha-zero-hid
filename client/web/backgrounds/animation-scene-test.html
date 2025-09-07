@@ -30,6 +30,23 @@
     function assertNotNull(obj) {
       assert(obj, "assertNotNull(obj)", obj);
     }
+    function assertThrowTyped(errorType, operation, ...args) {
+      let thrownErr = null;
+      try {
+        operation(...args);
+      } catch (error) {
+        thrownErr = error;
+      } finally {
+        if (errorType) {
+          assert(thrownErr instanceof errorType, "assertThrow(errorType, operation, ...args): expected error of type", errorType.name, "but got:", thrownErr, errorType, operation, ...args);
+        } else {
+          assertNotNull(thrownErr, "assertThrow(errorType, operation, ...args): expected some error but none was thrown", errorType, operation, ...args);
+        }
+      }
+    }
+    function assertThrow(operation, ...args) {
+      assertThrowTyped(null, operation, ...args);
+    }
     function assertEqual(obj1, obj2) {
       assert(obj1 === obj2, "assertEqual(obj1, obj2)", obj1, obj2);
     }
@@ -249,7 +266,7 @@
 
     function testAnimationSceneBothFullEqual() {
       log("testAnimationSceneBothFullEqual");
-      
+
       // Given
       const config = {
         date_start: { year: 2025, month: 9, day: 8, hour: 23, minute: 59, second: 59 },
@@ -257,17 +274,13 @@
       };
 
       // When
-      const scene = new AnimationScene(config);
+      let scene;
+      assertThrowTyped(RangeError, () => scene = new AnimationScene(config));
 
       // Then
-      const dateStart = AnimationDate.toDate(scene.getDateStart());
-      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
 
       // Assert
-      assertNotNull(scene);
-      assertNotNull(dateStart);
-      assertNotNull(dateEnd);
-      assertEqualDate(dateStart, dateEnd);
+      assertNull(scene);
     }
     testAnimationSceneBothFullEqual();
 
