@@ -20,9 +20,10 @@ export class AnimationScene {
 
   // private properties
   _config;
+  _dateStart;
+  _dateEnd;
 
   constructor(config) {
-    this._config = config;
     let partDegree = this._DATE_DEGREE_MAX;
     for (const part of this._DATE_FIELDS) {
       _DATE_PARTS.add(part);
@@ -30,6 +31,11 @@ export class AnimationScene {
       _DATE_PARTS_DEGREES.set(part, partDegree);
       partDegree--;
     }
+    this._config = config;
+    this._dateStart = new AnimationDate(this.getConfigOrStub("date_start"));
+    this._dateEnd = new AnimationDate(this.getConfigOrStub("date_end"));
+    this.fillEndDate(this._dateEnd);
+    this.fillStartDate(this._dateStart, this._dateEnd);
   }
 
   getConfigOrStub(configName) {
@@ -41,11 +47,11 @@ export class AnimationScene {
   }
 
   getDateStart() {
-    return this.getConfigOrStub("date_start");
+    return this._dateStart;
   }
 
   getDateEnd() {
-    return this.getConfigOrStub("date_end");
+    return this._dateEnd;
   }
 
   isInActivationRange(date=new Date()) {
@@ -182,6 +188,29 @@ export class AnimationScene {
     return null;
   }
 
+  findPreviousValidMonthForDay(dayOfMonth, currentMonth, currentYear) {
+    let month = currentMonth;
+    let year = currentYear;
+  
+    for (let i = 0; i < 12; i++) {
+      const maxDays = this.getDaysInMonth(year, month);
+  
+      if (dayOfMonth <= maxDays) {
+        return { year, month };
+      }
+  
+      // Move to previous month
+      month--;
+      if (month < 1) {
+        month = 12;
+        year--;
+      }
+    }
+  
+    // Should never happen if dayOfMonth <= 31
+    return null;
+  }
+
   getDateCompletionDegree(animationDate) {
     let degree = this._DATE_DEGREE_MAX;
     let partValue;
@@ -269,58 +298,142 @@ export class AnimationScene {
 
     // Retrieve completion degree
     const lastFilledDegree = this.getDateCompletionDegree(startDate);
+    if (this.isFirstDateLessThanSecondDate(startDate, endDate)) {
 
-    // Fill all missing values AFTER completion degree with current values (and adjust when needed)
-    for (let degree = lastFilledDegree + 1; degree <= this._DATE_DEGREE_MAX; degree++) {
-      let datePartValue = this.getDatePartValueForDegree(now, degree);
+      // Fill all missing values AFTER completion degree with end date values (and adjust when needed)
+      for (let degree = lastFilledDegree + 1; degree <= this._DATE_DEGREE_MAX; degree++) {
+        const endDatePartValue = this.getDatePartValueForDegree(endDate, degree);
+        this.setDatePartAtDegree(startDate, degree, endDatePartValue);
+      }
+
+    } else {
+
+      // Fill all missing values AFTER completion degree with end date values (and adjust when needed)
       const part = this.getDatePartForDegree(degree);
-      if (part === 'month') {
-        // Will set month and year in one shot to ensure global cohesion
-        const endDateDayValue = this.getDatePartValue(endDate, 'day');
-        const { yearValue, monthValue } = this.findNextValidMonthForDay(endDateDayValue, nowMonthValue, nowYearValue);
-        this.setDatePartAtDegree(endDate, degree, monthValue);
-        this.setDatePartAtDegree(endDate, ++degree, yearValue);
-      } else if (part === 'year') {
-        // Will set year in one shot to ensure global cohesion
-        const endDateDayValue = this.getDatePartValue(endDate, 'day');
-        const endDateMonthValue = this.getDatePartValue(endDate, 'month');
-        const { yearValue, monthValue } = this.findNextValidMonthForDay(endDateDayValue, endDateMonthValue, nowYearValue);
-        this.setDatePartAtDegree(endDate, degree, yearValue);
+      const startDateMonth = this.getDatePartValue(startDate, 'month');
+      const startDateDay = this.getDatePartValue(startDate, 'day');
+      
+      const endDateYear = this.getDatePartValue(endDate, 'year');
+      const endDateMonth = this.getDatePartValue(endDate, 'month');
+      const endDateDay = this.getDatePartValue(endDate, 'day');
+      const endDateHour = this.getDatePartValue(endDate, 'hour');
+      const endDateMinute = this.getDatePartValue(endDate, 'minute');
+      const endDateSecond = this.getDatePartValue(endDate, 'second');
+
+      // Retrieve missing parts values
+      let missingParts;
+      if (part === 'year') {
+        missingParts = this.getPreviousDay(endDateYear, startDateMonth, startDateDay);
+      } else if (part === 'month') {
+        missingParts = this.getPreviousDay(endDateYear, endDateMonth, startDateDay);
+      } else if (part === 'day') {
+        missingParts = this.getPreviousDay(endDateYear, endDateMonth, endDateDay);
+      } else if (part === 'hour') {
+        missingParts = this.getPreviousHour(endDateYear, endDateMonth, endDateDay, endDateHour);
+      } else if (part === 'minute') {
+        missingParts = this.getPreviousHour(endDateYear, endDateMonth, endDateDay, endDateHour, endDateMinute);
       } else {
-        // Will set anything except year and month to the "now" value
-        this.setDatePartAtDegree(endDate, degree, datePartValue);
+        missingParts = this.getPreviousHour(endDateYear, endDateMonth, endDateDay, endDateHour, endDateMinute, endDateSecond);
+      }
+      
+      // Fill start date with retrieved values
+      for (const [part, partValue] of Object.entries(missingParts)) {
+        this.setDatePartValue(startDate, part, partValue);
       }
     }
   }
 
-  //fillNextDegree(sourceDate, targetDate, isSourceBeforeTarget) {
-  //  const targetLastFilledDegree = this.getDateCompletionDegree(targetDate);
-  //  const targetNextDegreeToFill = targetLastFilledDegree + 1;
-  //
-  //  const targetLastFilledDegreeValue = this.getDatePartValueForDegree(targetDate, targetLastFilledDegree);
-  //  const sourceLastFilledDegreeValue = this.getDatePartValueForDegree(sourceDate, targetLastFilledDegree);
-  //
-  //  if (isSourceBeforeTarget) {
-  //    // Source < Target
-  //    if (sourceLastFilledDegreeValue < targetLastFilledDegreeValue) {
-  //      const sourceNextDegreeValue = this.getDatePartValueForDegree(sourceDate, targetNextDegreeToFill);
-  //      this.setDatePartAtDegree(targetDate, targetNextDegreeToFill, sourceNextDegreeValue);
-  //    } else {
-  //      // TODO
-  //    }
-  //  } else {
-  //    // Source > Target
-  //    if (sourceLastFilledDegreeValue >= targetLastFilledDegreeValue) {
-  //      const sourceNextDegreeValue = this.getDatePartValueForDegree(sourceDate, targetNextDegreeToFill);
-  //      this.setDatePartAtDegree(targetDate, targetNextDegreeToFill, sourceNextDegreeValue);
-  //    } else {
-  //      // TODO
-  //    }
-  //  }
-  //}
+  getPreviousYear(currentYear) {
+    let previousYear = currentYear - 1;
 
+    if (previousYear < this.getDatePartMin('year')) {
+      // Should never happend in normal cases
+      throw new RangeError(`previousYear value ${previousYear} out of range (expected greater than ${this.getDatePartMin('year')})`);
+    }
 
+    return { year: previousYear };
+  }
 
+  getPreviousMonth(currentYear, currentMonth) {
+    let year = currentYear;
+    let previousMonth = currentMonth - 1;
+
+    if (previousMonth < this.getDatePartMin('month')) {
+      ({ year } = this.getPreviousYear(currentYear));
+      previousMonth = this.getDatePartMax('month');
+    }
+
+    return { year, month: previousMonth };
+  }
+
+  getPreviousDay(currentYear, currentMonth, currentDay) {
+    let year = currentYear;
+    let month = currentMonth;
+    let previousDay = currentDay - 1;
+
+    if (previousDay < this.getDatePartMin('day')) {
+      ({ year, month } = this.getPreviousMonth(currentYear, currentMonth));
+      previousDay = this.getDaysInMonth(year, month);
+    }
+
+    return { year, month, day: previousDay };
+  }
+
+  getPreviousHour(currentYear, currentMonth, currentDay, currentHour) {
+    let year = currentYear;
+    let month = currentMonth;
+    let day = currentDay;
+    let previousHour = currentHour - 1;
+
+    if (previousHour < this.getDatePartMin('hour')) {
+      ({ year, month, day } = this.getPreviousDay(currentYear, currentMonth, currentDay));
+      previousHour = this.getDatePartMax('hour');
+    }
+
+    return { year, month, day, hour: previousHour };
+  }
+
+  getPreviousMinute(currentYear, currentMonth, currentDay, currentHour, currentMinute) {
+    let year = currentYear;
+    let month = currentMonth;
+    let day = currentDay;
+    let hour = currentHour;
+    let previousMinute = currentMinute - 1;
+
+    if (previousMinute < this.getDatePartMin('minute')) {
+      ({ year, month, day, hour } = this.getPreviousHour(currentYear, currentMonth, currentDay, currentHour));
+      previousMinute = this.getDatePartMax('minute');
+    }
+
+    return { year, month, day, hour, minute: previousMinute };
+  }
+
+  getPreviousSecond(currentYear, currentMonth, currentDay, currentHour, currentMinute, currentSecond) {
+    let year = currentYear;
+    let month = currentMonth;
+    let day = currentDay;
+    let hour = currentHour;
+    let minute = currentMinute;
+    let previousSecond = currentSecond - 1;
+
+    if (previousSecond < this.getDatePartMin('second')) {
+      ({ year, month, day, hour, minute } = this.getPreviousMinute(currentYear, currentMonth, currentDay, currentHour, currentMinute));
+      previousSecond = this.getDatePartMax('second');
+    }
+
+    return { year, month, day, hour, minute, second: previousSecond };
+  }
+
+  isFirstDateLessThanSecondDate(firstDate, secondDate) {
+    for (let degree = this._DATE_DEGREE_MAX; degree > 0; degree--) {
+      const firstDatePartValue = this.getDatePartValueForDegree(firstDate, degree);
+      const secondDatePartValue = this.getDatePartValueForDegree(secondDate, degree);
+      if (firstDatePartValue && 
+         secondDatePartValue && 
+         firstDatePartValue < secondDatePartValue) return true;
+    }
+    return false;
+  }
 
   // configuration defaults
   static getStubConfig() {
