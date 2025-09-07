@@ -15,7 +15,7 @@ export class AnimationScene {
       minute: { min:       0, max:     59 },
       second: { min:       0, max:     59 }
     };
-  _DATE_DEGREE_MIN = 0;
+  _DATE_DEGREE_MIN = 1;
   _DATE_DEGREE_MAX = 6;
 
   // private properties
@@ -425,7 +425,7 @@ export class AnimationScene {
   }
 
   isFirstDateLessThanSecondDate(firstDate, secondDate) {
-    for (let degree = this._DATE_DEGREE_MAX; degree > 0; degree--) {
+    for (let degree = this._DATE_DEGREE_MAX; degree >= this._DATE_DEGREE_MIN; degree--) {
       const firstDatePartValue = this.getDatePartValueForDegree(firstDate, degree);
       const secondDatePartValue = this.getDatePartValueForDegree(secondDate, degree);
       if (firstDatePartValue && 
