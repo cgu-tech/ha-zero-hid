@@ -130,6 +130,9 @@
       assertEqual(animationDate.getSecond(), 2);
 
       assertNotNull(date);
+      assertEqual(date.getMonth() + 1, 11);
+      assertEqual(date.getMinutes(), 53);
+      assertEqual(date.getSeconds(), 2);
     }
     testAnimationDatePartialConfig();
 
@@ -154,7 +157,7 @@
 
       assertNotNull(date);
       assertEqual(date.getFullYear(), 2025);
-      assertEqual(date.getMonth(), 11);
+      assertEqual(date.getMonth() + 1, 11);
       assertEqual(date.getDate(), 7);
       assertEqual(date.getHours(), 14);
       assertEqual(date.getMinutes(), 53);
@@ -185,7 +188,7 @@
 
       assertNotNull(date);
       assertEqual(date.getFullYear(), 2026);
-      assertEqual(date.getMonth(), 11);
+      assertEqual(date.getMonth() + 1, 11);
       assertEqual(date.getDate(), 7);
       assertEqual(date.getHours(), 1);
       assertEqual(date.getMinutes(), 53);
