@@ -62,7 +62,8 @@
       assertNotNull(scene);
       assertNotNull(dateStart);
       assertNotNull(dateEnd);
-      assertGreaterOrEqualThanDate(dateStart, now);
+      assertLessThanDate(dateStart, dateEnd);
+      assertLessOrEqualThanDate(dateStart, now);
       assertGreaterOrEqualThanDate(dateEnd, now);
     }
 
