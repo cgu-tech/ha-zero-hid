@@ -445,7 +445,7 @@
       assertEqual(dateEnd.getMinutes(), 0);
       assertEqual(dateEnd.getSeconds(), 0);
 
-      assertEqual(dateEnd - dateStart, 2419200000); // 1 month of 28 days = 2419200000 ms
+      assertGreaterOrEqualThan(dateEnd - dateStart, 2419200000); // 1 month of 28 days = 2419200000 ms
       assertLessOrEqualThan(dateEnd - dateStart, 2678400000); // 1 month of 31 days = 2678400000 ms
     }
     testAnimationSceneBothDayEqual28();
