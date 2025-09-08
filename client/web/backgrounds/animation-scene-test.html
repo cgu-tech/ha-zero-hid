@@ -474,9 +474,17 @@
       assertNotNull(dateEnd);
       assertLessThanDate(dateStart, dateEnd);
 
-      assertNotNull(dateEnd);
-      assertEqual(dateEnd.getFullYear(), now.getYear());
-      assertEqual(dateEnd.getMonth() + 1, now.getMonth());
+      const is31daysMonth = scene.getDaysInMonth(now.getYear(), now.getMonth()) === 31;
+
+      assertEqual(dateStart.getFullYear(), is31daysMonth ? now.getYear() : (now.getMonth() > 1 ? now.getMonth() - 1 : 12));
+      assertEqual(dateStart.getMonth() + 1, is31daysMonth ? now.getMonth() : now.getMonth() - 1);
+      assertEqual(dateStart.getDate(), 31);
+      assertEqual(dateStart.getHours(), 0);
+      assertEqual(dateStart.getMinutes(), 0);
+      assertEqual(dateStart.getSeconds(), 0);
+
+      assertEqual(dateEnd.getFullYear(), is31daysMonth ? now.getYear() : (now.getMonth() < 12 ? now.getMonth() + 1 : 1));
+      assertEqual(dateEnd.getMonth() + 1, is31daysMonth ? now.getMonth() : now.getMonth() + 1);
       assertEqual(dateEnd.getDate(), 31);
       assertEqual(dateEnd.getHours(), 0);
       assertEqual(dateEnd.getMinutes(), 0);
