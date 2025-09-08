@@ -495,6 +495,92 @@
     }
     testAnimationSceneBothDayEqual31();
 
+    function testAnimationSceneBothMonth2DayEqual28() {
+      log("testAnimationSceneBothMonth2DayEqual28");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: { month: 2, day: 28 },
+        date_end: { month: 2, day: 28 }
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+
+      assertEqual(dateStart.getFullYear(), now.getYear() - 1);
+      assertEqual(dateStart.getMonth() + 1, 2);
+      assertEqual(dateStart.getDate(), 28);
+      assertEqual(dateStart.getHours(), 0);
+      assertEqual(dateStart.getMinutes(), 0);
+      assertEqual(dateStart.getSeconds(), 0);
+
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, 2);
+      assertEqual(dateEnd.getDate(), 28);
+      assertEqual(dateEnd.getHours(), 0);
+      assertEqual(dateEnd.getMinutes(), 0);
+      assertEqual(dateEnd.getSeconds(), 0);
+
+      assertGreaterOrEqualThan(dateEnd - dateStart, 31536000000); // 1 year of 365 days = 31536000000 ms
+      assertLessOrEqualThan(dateEnd - dateStart, 31622400000); // 1 year of 366 days = 31622400000 ms
+    }
+    testAnimationSceneBothMonth2DayEqual28();
+
+    function testAnimationSceneBothMonth2DayEqual29() {
+      log("testAnimationSceneBothMonth2DayEqual29");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: { month: 2, day: 29 },
+        date_end: { month: 2, day: 29 }
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+
+      assertLessThan(dateStart.getFullYear(), now.getYear());
+      assertEqual(dateStart.getMonth() + 1, 2);
+      assertEqual(dateStart.getDate(), 28);
+      assertEqual(dateStart.getHours(), 0);
+      assertEqual(dateStart.getMinutes(), 0);
+      assertEqual(dateStart.getSeconds(), 0);
+
+      assertGreaterOrEqualThan(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, 2);
+      assertEqual(dateEnd.getDate(), 28);
+      assertEqual(dateEnd.getHours(), 0);
+      assertEqual(dateEnd.getMinutes(), 0);
+      assertEqual(dateEnd.getSeconds(), 0);
+
+      assertGreaterOrEqualThan(dateEnd - dateStart, 31536000000); // 1 year of 365 days = 31536000000 ms
+      assertLessOrEqualThan(dateEnd - dateStart, 252979200000); // 8 years of 366 days = 252979200000 ms
+    }
+    testAnimationSceneBothMonth2DayEqual29();
+
   </script>
 </body>
 </html>
