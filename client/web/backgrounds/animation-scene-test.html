@@ -431,7 +431,13 @@
       assertNotNull(dateEnd);
       assertLessThanDate(dateStart, dateEnd);
 
-      assertNotNull(dateEnd);
+      assertEqual(dateStart.getFullYear(), now.getMonth() > 1 ? now.getYear() : now.getYear() - 1);
+      assertEqual(dateStart.getMonth() + 1, now.getMonth() - 1);
+      assertEqual(dateStart.getDate(), 28);
+      assertEqual(dateStart.getHours(), 0);
+      assertEqual(dateStart.getMinutes(), 0);
+      assertEqual(dateStart.getSeconds(), 0);
+
       assertEqual(dateEnd.getFullYear(), now.getYear());
       assertEqual(dateEnd.getMonth() + 1, now.getMonth());
       assertEqual(dateEnd.getDate(), 28);
