@@ -209,7 +209,7 @@ export class AnimationScene {
 
   findPreviousValidMonthForDay(currentYear, currentMonth, dayOfMonth) {
     let year = currentYear;
-    let month = currentMonth;
+    let month = currentMonth - 1;
   
     for (let i = 0; i < 12; i++) {
       const maxDays = this.getDaysInMonth(year, month);
