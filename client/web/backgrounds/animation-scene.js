@@ -188,9 +188,28 @@ export class AnimationScene {
     return null;
   }
 
-  findPreviousValidMonthForDay(dayOfMonth, currentMonth, currentYear) {
+  findPreviousValidYearForDay(currentYear, currentMonth, dayOfMonth) {
+    let year = currentYear - 1;
     let month = currentMonth;
+  
+    for (let i = 0; i < 12; i++) {
+      const maxDays = this.getDaysInMonth(year, month);
+  
+      if (dayOfMonth <= maxDays) {
+        return { year };
+      }
+  
+      // Move to previous year
+      year--;
+    }
+  
+    // Should never happen if dayOfMonth <= 31
+    return null;
+  }
+
+  findPreviousValidMonthForDay(currentYear, currentMonth, dayOfMonth) {
     let year = currentYear;
+    let month = currentMonth;
   
     for (let i = 0; i < 12; i++) {
       const maxDays = this.getDaysInMonth(year, month);
@@ -303,9 +322,9 @@ export class AnimationScene {
       // Retrieve missing parts values
       let missingParts;
       if (part === 'year') {
-        missingParts = this.getPreviousDay(endDateYear, startDateMonth, startDateDay);
+        missingParts = this.findPreviousValidYearForDay(endDateYear, startDateMonth, startDateDay);
       } else if (part === 'month') {
-        missingParts = this.getPreviousDay(endDateYear, endDateMonth, startDateDay);
+        missingParts = this.findPreviousValidMonthForDay(endDateYear, endDateMonth, startDateDay);
       } else if (part === 'day') {
         missingParts = this.getPreviousDay(endDateYear, endDateMonth, endDateDay);
       } else if (part === 'hour') {
