@@ -303,7 +303,7 @@ export class AnimationScene {
         // Will set year in one shot to ensure global cohesion
         const endDateDayValue = this.getDatePartValue(endDate, 'day');
         const endDateMonthValue = this.getDatePartValue(endDate, 'month');
-        const { year } = this.findNextValidYearForDay(nowYearValue, nowMonthValue, endDateDayValue);
+        const { year } = this.findNextValidYearForDay(nowYearValue, endDateMonthValue, endDateDayValue);
         this.setDatePartAtDegree(endDate, degree, year);
       } else {
         // Will set anything except year and month to the "now" value
