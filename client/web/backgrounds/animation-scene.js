@@ -166,7 +166,7 @@ export class AnimationScene {
   }
 
   findNextValidMonthForDay(currentYear, currentMonth, dayOfMonth) {
-    let month = currentMonth + 1;
+    let month = currentMonth;
     let year = currentYear;
   
     for (let i = 0; i < 12; i++) { // max of 12 iterations
@@ -189,7 +189,7 @@ export class AnimationScene {
   }
 
   findNextValidYearForDay(currentYear, currentMonth, dayOfMonth) {
-    let year = currentYear + 1;
+    let year = currentYear;
     let month = currentMonth;
   
     for (let i = 0; i < 8; i++) {
