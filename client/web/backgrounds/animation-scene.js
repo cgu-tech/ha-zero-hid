@@ -165,8 +165,8 @@ export class AnimationScene {
     return daysInMonth[month - 1];
   }
 
-  findNextValidMonthForDay(dayOfMonth, currentMonth, currentYear) {
-    let month = currentMonth;
+  findNextValidMonthForDay(currentYear, currentMonth, dayOfMonth) {
+    let month = currentMonth + 1;
     let year = currentYear;
   
     for (let i = 0; i < 12; i++) { // max of 12 iterations
@@ -185,6 +185,25 @@ export class AnimationScene {
     }
   
     // Should never happen with dayOfMonth <= 31
+    return null;
+  }
+
+  findNextValidYearForDay(currentYear, currentMonth, dayOfMonth) {
+    let year = currentYear + 1;
+    let month = currentMonth;
+  
+    for (let i = 0; i < 8; i++) {
+      const maxDays = this.getDaysInMonth(year, month);
+  
+      if (dayOfMonth <= maxDays) {
+        return { year };
+      }
+  
+      // Move to previous year
+      year++;
+    }
+  
+    // Should never happen if dayOfMonth <= 31
     return null;
   }
 
@@ -277,14 +296,14 @@ export class AnimationScene {
       if (part === 'month') {
         // Will set month and year in one shot to ensure global cohesion
         const endDateDayValue = this.getDatePartValue(endDate, 'day');
-        const { year, month } = this.findNextValidMonthForDay(endDateDayValue, nowMonthValue, nowYearValue);
+        const { year, month } = this.findNextValidMonthForDay(nowYearValue, nowMonthValue, endDateDayValue);
         this.setDatePartAtDegree(endDate, degree, month);
         this.setDatePartAtDegree(endDate, ++degree, year);
       } else if (part === 'year') {
         // Will set year in one shot to ensure global cohesion
         const endDateDayValue = this.getDatePartValue(endDate, 'day');
         const endDateMonthValue = this.getDatePartValue(endDate, 'month');
-        const { year, month } = this.findNextValidMonthForDay(endDateDayValue, endDateMonthValue, nowYearValue);
+        const { year } = this.findNextValidYearForDay(nowYearValue, nowMonthValue, endDateDayValue);
         this.setDatePartAtDegree(endDate, degree, year);
       } else {
         // Will set anything except year and month to the "now" value
