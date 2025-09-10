@@ -581,6 +581,48 @@
     }
     testAnimationSceneBothMonth2DayEqual29();
 
+    function testAnimationSceneEndMonth1Day1() {
+      log("testAnimationSceneEndMonth1Day1");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: {},
+        date_end: { month: 1, day: 1 }
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+
+      assertEqual(dateStart.getFullYear(), now.getYear() - 1);
+      assertEqual(dateStart.getMonth() + 1, 12);
+      assertEqual(dateStart.getDate(), 31);
+      assertEqual(dateStart.getHours(), 23);
+      assertEqual(dateStart.getMinutes(), 59);
+      assertEqual(dateStart.getSeconds(), 59);
+
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, 1);
+      assertEqual(dateEnd.getDate(), 1);
+      assertEqual(dateEnd.getHours(), 0);
+      assertEqual(dateEnd.getMinutes(), 0);
+      assertEqual(dateEnd.getSeconds(), 0);
+
+      assertEqual(dateEnd - dateStart, 1000); // 1 second = 1000 ms
+    }
+    testAnimationSceneEndMonth1Day1();
+
   </script>
 </body>
 </html>
