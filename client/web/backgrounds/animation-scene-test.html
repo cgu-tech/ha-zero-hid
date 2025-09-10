@@ -623,6 +623,126 @@
     }
     testAnimationSceneEndMonth1Day1();
 
+    function testAnimationSceneEndMonth1Day1OtherDay1() {
+      log("testAnimationSceneEndMonth1Day1OtherDay1");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: { day: 1 },
+        date_end: { month: 1, day: 1 }
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+
+      assertEqual(dateStart.getFullYear(), now.getYear() - 1);
+      assertEqual(dateStart.getMonth() + 1, 12);
+      assertEqual(dateStart.getDate(), 1);
+      assertEqual(dateStart.getHours(), 0);
+      assertEqual(dateStart.getMinutes(), 0);
+      assertEqual(dateStart.getSeconds(), 0);
+
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, 1);
+      assertEqual(dateEnd.getDate(), 1);
+      assertEqual(dateEnd.getHours(), 0);
+      assertEqual(dateEnd.getMinutes(), 0);
+      assertEqual(dateEnd.getSeconds(), 0);
+    }
+    testAnimationSceneEndMonth1Day1OtherDay1();
+
+    function testAnimationSceneEndMonth1Day1OtherDay31() {
+      log("testAnimationSceneEndMonth1Day1OtherDay31");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: { day: 31 },
+        date_end: { month: 1, day: 1 }
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+
+      assertEqual(dateStart.getFullYear(), now.getYear() - 1);
+      assertEqual(dateStart.getMonth() + 1, 12);
+      assertEqual(dateStart.getDate(), 31);
+      assertEqual(dateStart.getHours(), 0);
+      assertEqual(dateStart.getMinutes(), 0);
+      assertEqual(dateStart.getSeconds(), 0);
+
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, 1);
+      assertEqual(dateEnd.getDate(), 1);
+      assertEqual(dateEnd.getHours(), 0);
+      assertEqual(dateEnd.getMinutes(), 0);
+      assertEqual(dateEnd.getSeconds(), 0);
+    }
+    testAnimationSceneEndMonth1Day1OtherDay31();
+
+    function testAnimationSceneEndNullStartMonth1Day1() {
+      log("testAnimationSceneEndNullStartMonth1Day1");
+      const dateNow = getNow();
+      const now = AnimationDate.fromDate(dateNow);
+
+      // Given
+      const config = {
+        date_start: { month: 1, day: 1 },
+        date_end: null
+      };
+
+      // When
+      let scene = new AnimationScene(config);
+
+      // Then
+      const dateStart = AnimationDate.toDate(scene.getDateStart());
+      const dateEnd = AnimationDate.toDate(scene.getDateEnd());
+
+      // Assert
+      assertNotNull(scene);
+      assertNotNull(dateStart);
+      assertNotNull(dateEnd);
+      assertLessThanDate(dateStart, dateEnd);
+
+      assertEqual(dateStart.getFullYear(), now.getYear());
+      assertEqual(dateStart.getMonth() + 1, 1);
+      assertEqual(dateStart.getDate(), 1);
+      assertEqual(dateStart.getHours(), 0);
+      assertEqual(dateStart.getMinutes(), 0);
+      assertEqual(dateStart.getSeconds(), 0);
+
+      assertEqual(dateEnd.getFullYear(), now.getYear());
+      assertEqual(dateEnd.getMonth() + 1, now.getMonth());
+      assertEqual(dateEnd.getDate(), now.getDay());
+      assertEqual(dateEnd.getHours(), now.getHour());
+      assertEqual(dateEnd.getMinutes(), now.getMinute());
+      assertEqual(dateEnd.getSeconds(), now.getSecond());
+    }
+    testAnimationSceneEndNullStartMonth1Day1();
+
   </script>
 </body>
 </html>
