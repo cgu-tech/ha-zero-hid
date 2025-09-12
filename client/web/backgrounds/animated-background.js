@@ -169,25 +169,6 @@ export class AnimatedBackground extends HTMLElement {
     this._configChangeRequested = false;
   }
 
-  doUpdateLayout() {
-    //TODO: replace fake groups with real ones from config
-    //this._elements.groups.push(this.createGhostsGroup());
-    //this._elements.groups.push(this.createSpidersGroup());
-    //this._elements.groups.push(this.createWebsGroup());
-    //this._elements.groups.push(this.createWitchHatsGroup());
-    //this._elements.groups.push(this.createPumkinsGroup());
-    //this._elements.groups.push(this.createLeaveGroup());
-
-    // Create groups from config
-    for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
-      const group = this.createGroup(animationName, animationConfig);
-      this._elements.groups.push(group);
-    }
-
-    // Wait for layout to be ready beofre creating new fallings
-    requestAnimationFrame(this.doCreateAnimateds.bind(this));
-  }
-
   doResetGroups() {
     const groups = this._elements.groups;
     for (const group of groups) {
@@ -219,6 +200,34 @@ export class AnimatedBackground extends HTMLElement {
     }
   }
 
+  doUpdateLayout() {
+    //TODO: replace fake groups with real ones from config
+    //this._elements.groups.push(this.createGhostsGroup());
+    //this._elements.groups.push(this.createSpidersGroup());
+    //this._elements.groups.push(this.createWebsGroup());
+    //this._elements.groups.push(this.createWitchHatsGroup());
+    //this._elements.groups.push(this.createPumkinsGroup());
+    //this._elements.groups.push(this.createLeaveGroup());
+
+    // Create groups from config
+    for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
+      const group = this.doCreateGroup(animationName, animationConfig);
+      this._elements.groups.push(group);
+    }
+
+    // Wait for layout to be ready beofre creating new fallings
+    requestAnimationFrame(this.doCreateAnimateds.bind(this));
+  }
+
+  doCreateGroup(animationName, animationConfig) {
+    return new AnimationGroup(
+      {
+        name: animationName,
+        ...animationConfig
+      }
+    );
+  }
+
   doCreateAnimateds() {
 
     // Resize viewbox to parent container dimensions (whenever possible)
@@ -238,7 +247,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [0.4, 0.9],
         scales: [1.2, 3.2],
         quantity: 5, 
-        zIndex: 4,
+        z_index: 4,
         animation: {
           name: 'fall'
         }
@@ -255,7 +264,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [1, 1],
         scales: [0.6, 1.4],
         quantity: 5, 
-        zIndex: 4,
+        z_index: 4,
         animation: {
           name: 'fall'
         }
@@ -272,7 +281,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [1, 1],
         scales: [2.6, 5.1],
         quantity: 1, 
-        zIndex: 4,
+        z_index: 4,
         animation: {
           name: 'slide'
         }
@@ -289,7 +298,7 @@ export class AnimatedBackground extends HTMLElement {
         opacities: [1, 1],
         scales: [0.8, 1.8],
         quantity: 3,
-        zIndex: 3,
+        z_index: 3,
         animation: {
           name: 'fall'
         }
