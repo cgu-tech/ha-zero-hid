@@ -158,6 +158,10 @@ class AndroidRemoteCard extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("airmouse");
   }
 
+  getAnimatedBackgroundConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("animated_background");
+  }
+
   getAddonsConfig() {
     return this._layoutManager.getFromConfigOrDefaultConfig("addons");
   }
@@ -184,6 +188,10 @@ class AndroidRemoteCard extends HTMLElement {
 
   getAirMouse() {
     return this._elements.airmouse;
+  }
+
+  getAnimatedBackground() {
+    return this._elements.animatedBackground;
   }
 
   getAddonsWrapper() {
@@ -844,6 +852,7 @@ class AndroidRemoteCard extends HTMLElement {
     const card = this._elements.card;
     this._elements.wrapper = card.querySelector(".wrapper");
     this._elements.addons.wrapper = card.querySelector(".addons-wrapper");
+    this._elements.animatedBackground = card.querySelector(".animated-background");
   }
 
   doListen() {
@@ -865,6 +874,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Update air-mouse config
     this.getAirMouse().setConfig(this.getAirMouseConfig());
+    
+    // Update animated background config
+    this.getAnimatedBackground().setConfig(this.getAnimatedBackgroundConfig());
   }
 
   doUpdateHass() {
@@ -1772,12 +1784,14 @@ class AndroidRemoteCard extends HTMLElement {
       keyboard: {},
       trackpad: {},
       activities: {},
+      airmouse: {},
       addons: {
         cell_label_font_scale: '0.8em',
         cell_image_gap: '0.8em 0.8em 0em 0.8em',
         cell_icon_gap: '0.2em 0.2em 0em 0em',
         cells: {}
-      }
+      },
+      animated_background: {}
     }
   }
 

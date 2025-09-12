@@ -167,12 +167,12 @@ export class AnimatedBackground extends HTMLElement {
 
   doUpdateLayout() {
     //TODO: replace fake groups with real ones from config
-    this._elements.groups.push(this.createGhostsGroup());
-    this._elements.groups.push(this.createSpidersGroup());
-    this._elements.groups.push(this.createWebsGroup());
+    //this._elements.groups.push(this.createGhostsGroup());
+    //this._elements.groups.push(this.createSpidersGroup());
+    //this._elements.groups.push(this.createWebsGroup());
     //this._elements.groups.push(this.createWitchHatsGroup());
-    this._elements.groups.push(this.createPumkinsGroup());
-    this._elements.groups.push(this.createLeaveGroup());
+    //this._elements.groups.push(this.createPumkinsGroup());
+    //this._elements.groups.push(this.createLeaveGroup());
 
     // Wait for layout to be ready beofre creating new fallings
     requestAnimationFrame(this.doCreateAnimateds.bind(this));
