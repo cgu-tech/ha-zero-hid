@@ -179,7 +179,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doResetGroup(group) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length})`, group));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().size})`, group));
     const animations = group.getAnimations();
     const items = group.getItems();
 
@@ -192,7 +192,7 @@ export class AnimatedBackground extends HTMLElement {
     }
 
     // Reset items and animations arrays
-    items.length = 0;
+    items.clear();
     animations.clear();
   }
 
@@ -210,9 +210,9 @@ export class AnimatedBackground extends HTMLElement {
     for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
       const group = this.doCreateGroup(animationName, animationConfig);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length}) created:`, group));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().size}) created:`, group));
       this.getGroups().add(group);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length}) into groups:`, this.getGroups()));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().size}) into groups:`, this.getGroups()));
     }
 
     // Wait for layout to be ready beofre creating new fallings
@@ -260,7 +260,7 @@ export class AnimatedBackground extends HTMLElement {
       const item = this.createAnimated(group);
       if (!item) continue; // Skip item when invalid
 
-      group.getItems().push(item); // Push new item into its group items
+      group.getItems().add(item); // Push new item into its group items
       zIndexItems.add(item); // Push new item into its correlated zIndexItems Set()
 
       // Look for first item with next zIndex
@@ -376,9 +376,11 @@ export class AnimatedBackground extends HTMLElement {
     const animation = evt.target;
     animation.cancel();
     group.getAnimations().delete(animation);
-    if (this.getGroups().has(group)) {
+    if (this.getGroups().has(group) && group.getItems().has(item)) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onAnimationFinish(group, item, evt): restarting animateItem(group, item) for group ${group.getGuid()}...`, group, item, evt));
       this.animateItem(group, item); // loop only if config did not changed
+    } else {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onAnimationFinish(group, item, evt): aborting animateItem(group, item) for group ${group.getGuid()}...`, group, item, evt));
     }
   }
 

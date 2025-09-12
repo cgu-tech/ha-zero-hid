@@ -8,7 +8,7 @@ export class AnimationGroup {
   _config;
   _logger;
 
-  _items = [];
+  _items = new Set();
   _animations = new Set();
   _animation;
 
