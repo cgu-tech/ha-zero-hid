@@ -21,6 +21,7 @@ export class AnimatedBackground extends HTMLElement {
   _resizeObserver;
   _screenWidth;
   _screenHeight;
+  _startAnimateTimeout;
 
   constructor() {
     super();
@@ -75,6 +76,10 @@ export class AnimatedBackground extends HTMLElement {
 
   getAnimations() {
     return this._layoutManager.getFromConfigOrDefaultConfig("animations");
+  }
+
+  getDebounceTrigger() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("debounce_trigger");
   }
 
   getGroups() {
@@ -219,7 +224,14 @@ export class AnimatedBackground extends HTMLElement {
     }
 
     // Wait for layout to be ready before creating new fallings
-    requestAnimationFrame(this.doCreateAnimateds.bind(this));
+    clearTimeout(this._startAnimateTimeout);
+    this._startAnimateTimeout = this.addStartAnimateTimeout();
+  }
+
+  addStartAnimateTimeout() {
+    return setTimeout(() => {
+      requestAnimationFrame(this.doCreateAnimateds.bind(this));
+    }, this.getDebounceTrigger()); // long-press duration
   }
 
   doCreateGroup(animationName, animationConfig) {
@@ -419,6 +431,15 @@ export class AnimatedBackground extends HTMLElement {
     item.classList.add("animated");
     item.style.visibility = "hidden";
     return item;
+  }
+
+  // configuration defaults
+  static getStubConfig() {
+    return {
+      debounce_trigger: 300,
+      events: {},
+      animations: {}
+    }
   }
 
 }
