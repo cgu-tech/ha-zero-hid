@@ -76,6 +76,10 @@ export class AnimatedBackground extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("animations");
   }
 
+  getGroups() {
+    return this._elements.groups;
+  }
+
   // jobs
   doCheckConfig() {
   }
@@ -167,11 +171,11 @@ export class AnimatedBackground extends HTMLElement {
 
   doResetGroups() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doResetGroups()'));
-    const groups = this._elements.groups;
+    const groups = this.getGroups();
     for (const group of groups) {
       this.doResetGroup(group);
     }
-    groups.length = 0;
+    groups.clear();
   }
 
   doResetGroup(group) {
@@ -207,8 +211,8 @@ export class AnimatedBackground extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
       const group = this.doCreateGroup(animationName, animationConfig);
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length}) created:`, group));
-      this._elements.groups.push(group);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length}) into groups:`, this._elements.groups));
+      this.getGroups().add(group);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length}) into groups:`, this.getGroups()));
     }
 
     // Wait for layout to be ready beofre creating new fallings
@@ -236,7 +240,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createAnimateds() {
-    for (const group of this._elements.groups) {
+    for (const group of this.getGroups()) {
       this.doResetGroup(group);
       this.doCreateAnimatedGroup(group);
     }
@@ -372,9 +376,9 @@ export class AnimatedBackground extends HTMLElement {
     const animation = evt.target;
     animation.cancel();
     group.getAnimations().delete(animation);
-    if (!this._configChangeRequested) {
+    if (this.getGroups().has(group)) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onAnimationFinish(group, item, evt): restarting animateItem(group, item) for group ${group.getGuid()}...`, group, item, evt));
-      this.animateItem(group, item); // loop only if config change not requested
+      this.animateItem(group, item); // loop only if config did not changed
     }
   }
 
