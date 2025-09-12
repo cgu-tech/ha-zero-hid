@@ -66,6 +66,7 @@ export class AnimatedBackground extends HTMLElement {
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
     }
+    this.doResetLayout();
   }
 
   adoptedCallback() {
@@ -184,7 +185,9 @@ export class AnimatedBackground extends HTMLElement {
     const items = group.getItems();
 
     // Finish all animations now
-    animations.forEach(animation => animation.finish());
+    for (const animation of animations) {
+      animation.finish();
+    }
 
     // Remove old items from DOM
     for (const item of items) {
