@@ -245,9 +245,11 @@ export class AnimatedBackground extends HTMLElement {
       }
     }
 
-    // Wait for layout to be ready before creating new fallings
+    // Wait for debounce time to expire before creating new fallings
     clearTimeout(this._startAnimateTimeout);
-    this._startAnimateTimeout = this.addStartAnimateTimeout();
+    if (this.getGroups().size > 0) {
+      this._startAnimateTimeout = this.addStartAnimateTimeout();
+    }
   }
   
   createNamedGroups(groupNames) {
@@ -262,6 +264,7 @@ export class AnimatedBackground extends HTMLElement {
 
   addStartAnimateTimeout() {
     return setTimeout(() => {
+      // Wait for layout to be ready before creating new fallings
       requestAnimationFrame(this.doCreateAnimateds.bind(this));
     }, this.getDebounceTrigger()); // long-press duration
   }
