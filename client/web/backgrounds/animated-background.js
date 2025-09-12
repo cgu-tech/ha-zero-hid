@@ -130,6 +130,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doUpdateConfig() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doUpdateConfig()'));
     this.doResetLayout();
     this.doUpdateLayout();
   }
@@ -139,6 +140,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doResizeBackground() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doResizeBackground()'));
     const width = this.offsetWidth;
     const height = this.offsetHeight;
     if (width && height) {
@@ -155,6 +157,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doResetLayout() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doResetLayout()'));
     
     // Lock to prevent new animations from looping
     this._configChangeRequested = true;
@@ -170,6 +173,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doResetGroups() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doResetGroups()'));
     const groups = this._elements.groups;
     for (const group of groups) {
       this.doResetGroup(group);
@@ -178,6 +182,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doResetGroup(group) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): ${group.getGuid()}`, group));
     const animations = group.getAnimations();
     const items = group.getItems();
 
@@ -195,12 +200,14 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doResetZIndexedItems() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doResetZIndexedItems()'));
     for (const [zIndex, zIndexItems] of this._elements.zIndexedItems) {
       zIndexItems.clear();
     }
   }
 
   doUpdateLayout() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doUpdateLayout()'));
     //TODO: replace fake groups with real ones from config
     //this._elements.groups.push(this.createGhostsGroup());
     //this._elements.groups.push(this.createSpidersGroup());
@@ -211,8 +218,11 @@ export class AnimatedBackground extends HTMLElement {
 
     // Create groups from config
     for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
       const group = this.doCreateGroup(animationName, animationConfig);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): group ${animationName} created:`, group));
       this._elements.groups.push(group);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${animationName} into groups:`, this._elements.groups));
     }
 
     // Wait for layout to be ready beofre creating new fallings
