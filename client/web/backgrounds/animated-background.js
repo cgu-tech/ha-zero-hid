@@ -227,7 +227,7 @@ export class AnimatedBackground extends HTMLElement {
       for (const animationEventTriggerConfig of (animationEventConfig["triggers"] || {})) {
         const animationEvent = new AnimationEvent(animationEventTriggerConfig);
         if (animationEvent.isActiveForDate(now)) {
-          for (const animationGroupName of Object.entries(animationEvent.getAnimationsGroups() || {})) {
+          for (const animationGroupName of Object.entries(animationEventConfig["animations"] || {})) {
             activeAnimationGroups.add(animationGroupName);
           }
           break;

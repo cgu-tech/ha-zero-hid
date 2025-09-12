@@ -42,10 +42,6 @@ export class AnimationEvent {
     return this._config?.[configName] || this.constructor.getStubConfig()[configName];
   }
 
-  getAnimationsGroups() {
-    return this.getConfigOrStub("animations");
-  }
-
   getDateStart() {
     return this._dateStart;
   }
