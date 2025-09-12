@@ -182,7 +182,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doResetGroup(group) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): ${group.getGuid()}`, group));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): start ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length})`, group));
     const animations = group.getAnimations();
     const items = group.getItems();
 
@@ -197,6 +197,7 @@ export class AnimatedBackground extends HTMLElement {
     // Reset items and animations arrays
     items.length = 0;
     animations.clear();
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): end ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length})`, group));
   }
 
   doResetZIndexedItems() {
@@ -220,9 +221,9 @@ export class AnimatedBackground extends HTMLElement {
     for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
       const group = this.doCreateGroup(animationName, animationConfig);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): group ${animationName} created:`, group));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length}) created:`, group));
       this._elements.groups.push(group);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${animationName} into groups:`, this._elements.groups));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length}) into groups:`, this._elements.groups));
     }
 
     // Wait for layout to be ready beofre creating new fallings
