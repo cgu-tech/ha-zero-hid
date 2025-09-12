@@ -19,7 +19,6 @@ export class AnimatedBackground extends HTMLElement {
   _resourceManager;
 
   _resizeObserver;
-  _configChangeRequested = false;
   _screenWidth;
   _screenHeight;
 
@@ -158,18 +157,12 @@ export class AnimatedBackground extends HTMLElement {
 
   doResetLayout() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doResetLayout()'));
-    
-    // Lock to prevent new animations from looping
-    this._configChangeRequested = true;
 
     // Reset groups
     this.doResetGroups();
 
     // Reset items
     this.doResetZIndexedItems();
-
-    // Unlock to allow new animations from looping
-    this._configChangeRequested = false;
   }
 
   doResetGroups() {
@@ -182,7 +175,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doResetGroup(group) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): start ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length})`, group));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length})`, group));
     const animations = group.getAnimations();
     const items = group.getItems();
 
@@ -197,7 +190,6 @@ export class AnimatedBackground extends HTMLElement {
     // Reset items and animations arrays
     items.length = 0;
     animations.clear();
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doResetGroup(group): end ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().length})`, group));
   }
 
   doResetZIndexedItems() {
@@ -243,149 +235,14 @@ export class AnimatedBackground extends HTMLElement {
     }
   }
 
-  createStylizedSnowflakesGroup() {
-    return new AnimationGroup(
-      {
-        name: "stylized-snowflakes",
-        shape: "circle",
-        colors: ["#FFFFFF"],
-        opacities: [0.4, 0.9],
-        scales: [1.2, 3.2],
-        quantity: 5, 
-        z_index: 4,
-        animation: {
-          name: 'fall'
-        }
-      }
-    );
-  }
-
-  createFlowersGroup() {
-    return new AnimationGroup(
-      {
-        name: "flowers",
-        shape: "flower",
-        colors: ["#FF69B4", "#FF6347", "#FFA500", "#FF1493", "#ADFF2F", "#00FFFF"],
-        opacities: [1, 1],
-        scales: [0.6, 1.4],
-        quantity: 5, 
-        z_index: 4,
-        animation: {
-          name: 'fall'
-        }
-      }
-    );
-  }
-
-  createGhostsGroup() {
-    return new AnimationGroup(
-      {
-        name: "ghosts",
-        shape: "ghost",
-        colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
-        opacities: [1, 1],
-        scales: [2.6, 5.1],
-        quantity: 1, 
-        z_index: 4,
-        animation: {
-          name: 'slide'
-        }
-      }
-    );
-  }
-
-  createSpidersGroup() {
-    return new AnimationGroup(
-      {
-        name: "spiders",
-        shape: "spider",
-        colors: ['#000000'],
-        opacities: [1, 1],
-        scales: [0.8, 1.8],
-        quantity: 3,
-        z_index: 3,
-        animation: {
-          name: 'fall'
-        }
-      }
-    );
-  }
-
-  createWebsGroup() {
-    return new AnimationGroup(
-      {
-        name: "spider-webs",
-        shape: "web",
-        colors: ['#636363'],
-        opacities: [1, 1],
-        scales: [1.2, 2.8],
-        quantity: 2,
-        z_index: 1,
-        animation: {
-          name: 'fall'
-        }
-      }
-    );
-  }
-
-  createWitchHatsGroup() {
-    return new AnimationGroup(
-      {
-        name: "witch-hats",
-        shape: "witch-hat",
-        colors: ['#617A2B', '#673470', '#0F0F0F'],
-        opacities: [1, 1],
-        scales: [1.8, 3.2],
-        quantity: 2,
-        z_index: 0,
-        animation: {
-          name: 'fall'
-        }
-      }
-    );
-  }
-
-  createPumkinsGroup() {
-    return new AnimationGroup(
-      {
-        name: "pumkins",
-        shape: "pumkin",
-        colors: ['#BF6C00', '#BF5300', '#D68120'],
-        opacities: [1, 1],
-        scales: [0.8, 1.8],
-        quantity: 1,
-        z_index: 2,
-        animation: {
-          name: 'fall'
-        }
-      }
-    );
-  }
-
-  createLeaveGroup() {
-    return new AnimationGroup(
-      {
-        name: "fall-leaves",
-        shape: "leave",
-        colors: ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'],
-        opacities: [1, 1],
-        scales: [1.2, 2.8],
-        quantity: 20,
-        z_index: 0,
-        animation: {
-          name: 'fall'
-        }
-      }
-    );
-  }
-
   createAnimateds() {
     for (const group of this._elements.groups) {
-      this.doAnimateGroup(group);
+      this.doResetGroup(group);
+      this.doCreateAnimatedGroup(group);
     }
   }
 
-  doAnimateGroup(group) {
+  doCreateAnimatedGroup(group) {
     for (let i = 0; i < group.getQuantity(); i++) {
       // Retrieve or create zIndexItems set
       const zIndexedItems = this._elements.zIndexedItems;
