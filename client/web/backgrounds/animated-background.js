@@ -538,7 +538,7 @@ export class AnimatedBackground extends HTMLElement {
 
   createAnimated(group) {
     const item = this.createItem(
-      group.getName(),
+      group.getShape(),
       group.getColors(),
       group.getOpacities(),
       group.getScales());
