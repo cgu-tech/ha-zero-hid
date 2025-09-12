@@ -73,6 +73,10 @@ export class AnimatedBackground extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
+  getAnimations() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("animations");
+  }
+
   // jobs
   doCheckConfig() {
   }
@@ -174,6 +178,12 @@ export class AnimatedBackground extends HTMLElement {
     //this._elements.groups.push(this.createPumkinsGroup());
     //this._elements.groups.push(this.createLeaveGroup());
 
+    // Create groups from config
+    for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
+      const group = this.createGroup(animationName, animationConfig);
+      this._elements.groups.push(group);
+    }
+
     // Wait for layout to be ready beofre creating new fallings
     requestAnimationFrame(this.doCreateAnimateds.bind(this));
   }
@@ -222,7 +232,8 @@ export class AnimatedBackground extends HTMLElement {
   createStylizedSnowflakesGroup() {
     return new AnimationGroup(
       {
-        name: "circle",
+        name: "stylized-snowflakes",
+        shape: "circle",
         colors: ["#FFFFFF"],
         opacities: [0.4, 0.9],
         scales: [1.2, 3.2],
@@ -238,7 +249,8 @@ export class AnimatedBackground extends HTMLElement {
   createFlowersGroup() {
     return new AnimationGroup(
       {
-        name: "flower",
+        name: "flowers",
+        shape: "flower",
         colors: ["#FF69B4", "#FF6347", "#FFA500", "#FF1493", "#ADFF2F", "#00FFFF"],
         opacities: [1, 1],
         scales: [0.6, 1.4],
@@ -254,7 +266,8 @@ export class AnimatedBackground extends HTMLElement {
   createGhostsGroup() {
     return new AnimationGroup(
       {
-        name: "ghost",
+        name: "ghosts",
+        shape: "ghost",
         colors: ['#FFFFFF', '#EBEBEB', '#DBDBDB'],
         opacities: [1, 1],
         scales: [2.6, 5.1],
@@ -270,7 +283,8 @@ export class AnimatedBackground extends HTMLElement {
   createSpidersGroup() {
     return new AnimationGroup(
       {
-        name: "spider",
+        name: "spiders",
+        shape: "spider",
         colors: ['#000000'],
         opacities: [1, 1],
         scales: [0.8, 1.8],
@@ -286,7 +300,8 @@ export class AnimatedBackground extends HTMLElement {
   createWebsGroup() {
     return new AnimationGroup(
       {
-        name: "web",
+        name: "spider-webs",
+        shape: "web",
         colors: ['#636363'],
         opacities: [1, 1],
         scales: [1.2, 2.8],
@@ -302,7 +317,8 @@ export class AnimatedBackground extends HTMLElement {
   createWitchHatsGroup() {
     return new AnimationGroup(
       {
-        name: "witch-hat",
+        name: "witch-hats",
+        shape: "witch-hat",
         colors: ['#617A2B', '#673470', '#0F0F0F'],
         opacities: [1, 1],
         scales: [1.8, 3.2],
@@ -318,7 +334,8 @@ export class AnimatedBackground extends HTMLElement {
   createPumkinsGroup() {
     return new AnimationGroup(
       {
-        name: "pumkin",
+        name: "pumkins",
+        shape: "pumkin",
         colors: ['#BF6C00', '#BF5300', '#D68120'],
         opacities: [1, 1],
         scales: [0.8, 1.8],
@@ -334,7 +351,8 @@ export class AnimatedBackground extends HTMLElement {
   createLeaveGroup() {
     return new AnimationGroup(
       {
-        name: "leave",
+        name: "fall-leaves",
+        shape: "leave",
         colors: ['#D2691E', '#A0522D', '#FF8C00', '#CD853F', '#8B4513'],
         opacities: [1, 1],
         scales: [1.2, 2.8],
