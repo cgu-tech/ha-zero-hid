@@ -224,10 +224,13 @@ export class AnimatedBackground extends HTMLElement {
     const activeAnimationGroups = new Set();
     for (const [animationEventName, animationEventConfig] of Object.entries(this.getAnimationEvents() || {})) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating event ${animationEventName}...`));
-      const animationEvent = new AnimationEvent(animationEventConfig);
-      if (animationEvent.isActiveForDate(now)) {
-        for (const animationGroupName of Object.entries(animationEvent.getAnimationsGroups() || {})) {
-          activeAnimationGroups.add(animationGroupName);
+      for (const animationEventTriggerConfig of (animationEventConfig["triggers"] || {})) {
+        const animationEvent = new AnimationEvent(animationEventTriggerConfig);
+        if (animationEvent.isActiveForDate(now)) {
+          for (const animationGroupName of Object.entries(animationEvent.getAnimationsGroups() || {})) {
+            activeAnimationGroups.add(animationGroupName);
+          }
+          break;
         }
       }
     }
