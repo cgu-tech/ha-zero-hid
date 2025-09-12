@@ -32,6 +32,10 @@ export class Logger {
     return this._origin?._hass;
   }
 
+  getGuid() {
+    return this._guid;
+  }
+
   getLevel() {
     const level = this._origin?._config?.['log_level'] || 'warn';
     return this._levels[level] ?? -1;

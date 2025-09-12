@@ -511,6 +511,7 @@ export class AnimatedBackground extends HTMLElement {
     animation.cancel();
     group.getAnimations().delete(animation);
     if (!this._configChangeRequested) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onAnimationFinish(group, item, evt): restarting animateItem(group, item) for group ${group.getGuid()}...`, group, item, evt));
       this.animateItem(group, item); // loop only if config change not requested
     }
   }

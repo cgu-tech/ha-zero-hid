@@ -1,20 +1,30 @@
+import { Globals } from '../utils/globals.js';
+import { Logger } from '../utils/logger.js';
 import { AnimationConfig } from './animation-config.js';
 
 export class AnimationGroup {
 
   // private properties
+  _config;
+  _logger;
+
   _items = [];
   _animations = new Set();
-  _config;
   _animation;
 
   constructor(config) {
+    this._logger = new Logger(this, "animation-group.js");
+
     this._config = config;
     this._animation = new AnimationConfig(this.getConfigOrStub("animation"));
   }
 
   getItems() {
     return this._items;
+  }
+
+  getGuid() {
+    return this._logger.getGuid();
   }
 
   getAnimations() {
