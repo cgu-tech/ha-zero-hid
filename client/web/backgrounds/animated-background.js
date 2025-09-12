@@ -88,7 +88,7 @@ export class AnimatedBackground extends HTMLElement {
     // Create SVG background
     this._elements.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     this._elements.svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    this._elements.groups = [];
+    this._elements.groups = new Set();
     this._elements.zIndexedItems = new SortedLinkedMap();
   }
 
