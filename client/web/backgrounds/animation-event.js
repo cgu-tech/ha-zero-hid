@@ -1,6 +1,6 @@
 import { AnimationDate } from './animation-date.js';
 
-export class AnimationScene {
+export class AnimationEvent {
 
   // private constants
   _DATE_FIELDS = ['year', 'month', 'day', 'hour', 'minute', 'second'];
@@ -42,8 +42,8 @@ export class AnimationScene {
     return this._config?.[configName] || this.constructor.getStubConfig()[configName];
   }
 
-  getGroups() {
-    return this.getConfigOrStub("groups");
+  getAnimationsGroups() {
+    return this.getConfigOrStub("animations");
   }
 
   getDateStart() {
@@ -54,47 +54,14 @@ export class AnimationScene {
     return this._dateEnd;
   }
 
-  isInActivationRange(date=new Date()) {
-    const start = this.getDateStart();
-    const end = this.getDateEnd();
+  isActiveForDate(date) {
+    const start = AnimationDate.toDate(this.getDateStart());
+    const end = AnimationDate.toDate(this.getDateEnd());
 
     if (start && end) return start <= date && date <= end; // Check specified date is in between
     if (!start && !end) return true; // No start and no end date: we are always in
     if (!start) return date <= end; // No start date: check end date is after
     return start <= date; // No end date: check start date is before
-  }
-
-  isValidDateString(str) {
-    if (!/^\d{14}$/.test(str)) return false; // Must be exactly 14 digits
-  
-    const year = parseInt(str.slice(0, 4), 10);
-    const month = parseInt(str.slice(4, 6), 10);
-    const day = parseInt(str.slice(6, 8), 10);
-    const hour = parseInt(str.slice(8, 10), 10);
-    const minute = parseInt(str.slice(10, 12), 10);
-    const second = parseInt(str.slice(12, 14), 10);
-  
-    // Quick range checks (eliminates obvious invalid values)
-    if (
-      month < 1 || month > 12 ||
-      day < 1 || day > 31 ||
-      hour < 0 || hour > 23 ||
-      minute < 0 || minute > 59 ||
-      second < 0 || second > 59
-    ) return false;
-  
-    // JS Date months are 0-based
-    const date = new Date(year, month - 1, day, hour, minute, second);
-  
-    // Validate that Date didn't autocorrect an invalid date
-    return (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day &&
-      date.getHours() === hour &&
-      date.getMinutes() === minute &&
-      date.getSeconds() === second
-    );
   }
 
   tryCastAsNumber(value) {

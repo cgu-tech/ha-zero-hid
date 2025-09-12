@@ -5,6 +5,7 @@ import { ResourceManager } from '../utils/resource-manager.js';
 import { LayoutManager } from '../utils/layout-manager.js';
 import { SortedLinkedMap } from '../utils/sorted-linked-map.js';
 import { AnimationGroup } from './animation-group.js';
+import { AnimationEvent } from './animation-event.js';
 import * as items from './items/index.js';
 
 export class AnimatedBackground extends HTMLElement {
@@ -72,6 +73,10 @@ export class AnimatedBackground extends HTMLElement {
 
   adoptedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
+  }
+
+  getAnimationEvents() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("events");
   }
 
   getAnimations() {
@@ -214,18 +219,42 @@ export class AnimatedBackground extends HTMLElement {
   doUpdateLayout() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doUpdateLayout()'));
 
-    // Create groups from config
+    // Retrieve active events from config
+    const now = new Date();
+    const activeAnimationGroups = new Set();
+    for (const [animationEventName, animationEventConfig] of Object.entries(this.getAnimationEvents() || {})) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating event ${animationEventName}...`));
+      const animationEvent = new AnimationEvent(animationEventConfig);
+      if (animationEvent.isActiveForDate(now)) {
+        for (const animationGroupName of Object.entries(animationEvent.getAnimationsGroups() || {})) {
+          activeAnimationGroups.add(animationGroupName);
+        }
+      }
+    }
+
+    // Create animations groups associated to active events (or all animations groups when no events defined)
+    const hasDeclaredEvents = (this.getAnimationEvents() && Object.keys(this.getAnimationEvents()) > 0);
     for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
-      const group = this.doCreateGroup(animationName, animationConfig);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().size}) created:`, group));
-      this.getGroups().add(group);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().size}) into groups:`, this.getGroups()));
+      if (!hasDeclaredEvents || activeAnimationGroups.has(animationName)) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
+        const group = this.doCreateGroup(animationName, animationConfig);
+        this.getGroups().add(group);
+      }
     }
 
     // Wait for layout to be ready before creating new fallings
     clearTimeout(this._startAnimateTimeout);
     this._startAnimateTimeout = this.addStartAnimateTimeout();
+  }
+  
+  createNamedGroups(groupNames) {
+    // Create groups from config
+    for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
+
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
+      const group = this.doCreateGroup(animationName, animationConfig);
+      this.getGroups().add(group);
+    }
   }
 
   addStartAnimateTimeout() {

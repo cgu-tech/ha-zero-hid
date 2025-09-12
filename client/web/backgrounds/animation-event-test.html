@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AnimationScene Test</title>
+  <title>AnimationEvent Test</title>
 </head>
 <body>
-  <h1>AnimationScene Test</h1>
+  <h1>AnimationEvent Test</h1>
   <div id="output"></div>
 
   <script type="module">
-    import { AnimationScene } from './animation-scene.js';
+    import { AnimationEvent } from './animation-event.js';
     import { AnimationDate } from './animation-date.js';
 
     // Helper to log to page
@@ -230,14 +230,14 @@
     }
     testAnimationDateFullConfigPartialOverride();
 
-    function testAnimationSceneIdentity() {
-      log("testAnimationSceneIdentity");
+    function testAnimationEventIdentity() {
+      log("testAnimationEventIdentity");
       // Given
       const dateNow = getNow();
       const config = null;
 
       // When
-      const scene = new AnimationScene(config);
+      const scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -251,10 +251,10 @@
       assertLessOrEqualThanDate(dateStart, dateNow);
       assertGreaterOrEqualThanDate(dateEnd, dateNow);
     }
-    testAnimationSceneIdentity();
+    testAnimationEventIdentity();
     
-    function testAnimationSceneBothEmpty() {
-      log("testAnimationSceneBothEmpty");
+    function testAnimationEventBothEmpty() {
+      log("testAnimationEventBothEmpty");
       // Given
       const dateNow = getNow();
       const config = {
@@ -263,7 +263,7 @@
       };
 
       // When
-      const scene = new AnimationScene(config);
+      const scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -277,10 +277,10 @@
       assertLessOrEqualThanDate(dateStart, dateNow);
       assertGreaterOrEqualThanDate(dateEnd, dateNow);
     }
-    testAnimationSceneBothEmpty();
+    testAnimationEventBothEmpty();
 
-    function testAnimationSceneBothFullEqual() {
-      log("testAnimationSceneBothFullEqual");
+    function testAnimationEventBothFullEqual() {
+      log("testAnimationEventBothFullEqual");
 
       // Given
       const config = {
@@ -290,17 +290,17 @@
 
       // When
       let scene;
-      assertThrowTyped(RangeError, () => scene = new AnimationScene(config));
+      assertThrowTyped(RangeError, () => scene = new AnimationEvent(config));
 
       // Then
 
       // Assert
       assertNull(scene);
     }
-    testAnimationSceneBothFullEqual();
+    testAnimationEventBothFullEqual();
 
-    function testAnimationSceneBothSecondEqual() {
-      log("testAnimationSceneBothSecondEqual");
+    function testAnimationEventBothSecondEqual() {
+      log("testAnimationEventBothSecondEqual");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -311,7 +311,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -333,10 +333,10 @@
 
       assertEqual(dateEnd - dateStart, 60000); // 1 minute = 60000 ms
     }
-    testAnimationSceneBothSecondEqual();
+    testAnimationEventBothSecondEqual();
 
-    function testAnimationSceneBothMinuteEqual() {
-      log("testAnimationSceneBothMinuteEqual");
+    function testAnimationEventBothMinuteEqual() {
+      log("testAnimationEventBothMinuteEqual");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -347,7 +347,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -369,10 +369,10 @@
 
       assertEqual(dateEnd - dateStart, 3600000); // 1 hour = 3600000 ms
     }
-    testAnimationSceneBothMinuteEqual();
+    testAnimationEventBothMinuteEqual();
 
-    function testAnimationSceneBothHourEqual() {
-      log("testAnimationSceneBothHourEqual");
+    function testAnimationEventBothHourEqual() {
+      log("testAnimationEventBothHourEqual");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -383,7 +383,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -405,10 +405,10 @@
 
       assertEqual(dateEnd - dateStart, 86400000); // 1 day = 86400000 ms
     }
-    testAnimationSceneBothHourEqual();
+    testAnimationEventBothHourEqual();
 
-    function testAnimationSceneBothDayEqual28() {
-      log("testAnimationSceneBothDayEqual28");
+    function testAnimationEventBothDayEqual28() {
+      log("testAnimationEventBothDayEqual28");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -419,7 +419,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -448,10 +448,10 @@
       assertGreaterOrEqualThan(dateEnd - dateStart, 2419200000); // 1 month of 28 days = 2419200000 ms
       assertLessOrEqualThan(dateEnd - dateStart, 2678400000); // 1 month of 31 days = 2678400000 ms
     }
-    testAnimationSceneBothDayEqual28();
+    testAnimationEventBothDayEqual28();
 
-    function testAnimationSceneBothDayEqual31() {
-      log("testAnimationSceneBothDayEqual31");
+    function testAnimationEventBothDayEqual31() {
+      log("testAnimationEventBothDayEqual31");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -462,7 +462,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -493,10 +493,10 @@
       assertGreaterOrEqualThan(dateEnd - dateStart, 2678400000); // 1 month of 31 days = 2678400000 ms
       assertLessOrEqualThan(dateEnd - dateStart, 5356800000); // 2 months of 31 days = 5356800000 ms
     }
-    testAnimationSceneBothDayEqual31();
+    testAnimationEventBothDayEqual31();
 
-    function testAnimationSceneBothMonth2DayEqual28() {
-      log("testAnimationSceneBothMonth2DayEqual28");
+    function testAnimationEventBothMonth2DayEqual28() {
+      log("testAnimationEventBothMonth2DayEqual28");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -507,7 +507,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -536,10 +536,10 @@
       assertGreaterOrEqualThan(dateEnd - dateStart, 31536000000); // 1 year of 365 days = 31536000000 ms
       assertLessOrEqualThan(dateEnd - dateStart, 31622400000); // 1 year of 366 days = 31622400000 ms
     }
-    testAnimationSceneBothMonth2DayEqual28();
+    testAnimationEventBothMonth2DayEqual28();
 
-    function testAnimationSceneBothMonth2DayEqual29() {
-      log("testAnimationSceneBothMonth2DayEqual29");
+    function testAnimationEventBothMonth2DayEqual29() {
+      log("testAnimationEventBothMonth2DayEqual29");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -550,7 +550,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -579,10 +579,10 @@
       assertGreaterOrEqualThan(dateEnd - dateStart, 31536000000); // 1 year of 365 days = 31536000000 ms
       assertLessOrEqualThan(dateEnd - dateStart, 252979200000); // 8 years of 366 days = 252979200000 ms
     }
-    testAnimationSceneBothMonth2DayEqual29();
+    testAnimationEventBothMonth2DayEqual29();
 
-    function testAnimationSceneEndMonth1Day1() {
-      log("testAnimationSceneEndMonth1Day1");
+    function testAnimationEventEndMonth1Day1() {
+      log("testAnimationEventEndMonth1Day1");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -593,7 +593,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -621,10 +621,10 @@
 
       assertEqual(dateEnd - dateStart, 1000); // 1 second = 1000 ms
     }
-    testAnimationSceneEndMonth1Day1();
+    testAnimationEventEndMonth1Day1();
 
-    function testAnimationSceneEndMonth1Day1OtherDay1() {
-      log("testAnimationSceneEndMonth1Day1OtherDay1");
+    function testAnimationEventEndMonth1Day1OtherDay1() {
+      log("testAnimationEventEndMonth1Day1OtherDay1");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -635,7 +635,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -661,10 +661,10 @@
       assertEqual(dateEnd.getMinutes(), 0);
       assertEqual(dateEnd.getSeconds(), 0);
     }
-    testAnimationSceneEndMonth1Day1OtherDay1();
+    testAnimationEventEndMonth1Day1OtherDay1();
 
-    function testAnimationSceneEndMonth1Day1OtherDay31() {
-      log("testAnimationSceneEndMonth1Day1OtherDay31");
+    function testAnimationEventEndMonth1Day1OtherDay31() {
+      log("testAnimationEventEndMonth1Day1OtherDay31");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -675,7 +675,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -701,10 +701,10 @@
       assertEqual(dateEnd.getMinutes(), 0);
       assertEqual(dateEnd.getSeconds(), 0);
     }
-    testAnimationSceneEndMonth1Day1OtherDay31();
+    testAnimationEventEndMonth1Day1OtherDay31();
 
-    function testAnimationSceneEndNullStartMonth1Day1() {
-      log("testAnimationSceneEndNullStartMonth1Day1");
+    function testAnimationEventEndNullStartMonth1Day1() {
+      log("testAnimationEventEndNullStartMonth1Day1");
       const dateNow = getNow();
       const now = AnimationDate.fromDate(dateNow);
 
@@ -715,7 +715,7 @@
       };
 
       // When
-      let scene = new AnimationScene(config);
+      let scene = new AnimationEvent(config);
 
       // Then
       const dateStart = AnimationDate.toDate(scene.getDateStart());
@@ -741,7 +741,7 @@
       assertEqual(dateEnd.getMinutes(), now.getMinute());
       assertEqual(dateEnd.getSeconds(), now.getSecond());
     }
-    testAnimationSceneEndNullStartMonth1Day1();
+    testAnimationEventEndNullStartMonth1Day1();
 
   </script>
 </body>
