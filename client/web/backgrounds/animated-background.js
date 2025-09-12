@@ -215,7 +215,7 @@ export class AnimatedBackground extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): pushing group ${group.getName()} (guid: ${group.getGuid()}, items: ${group.getItems().size}) into groups:`, this.getGroups()));
     }
 
-    // Wait for layout to be ready beofre creating new fallings
+    // Wait for layout to be ready before creating new fallings
     requestAnimationFrame(this.doCreateAnimateds.bind(this));
   }
 
@@ -240,6 +240,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   createAnimateds() {
+    this.doResetZIndexedItems();
     for (const group of this.getGroups()) {
       this.doResetGroup(group);
       this.doCreateAnimatedGroup(group);
