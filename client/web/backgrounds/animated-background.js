@@ -233,7 +233,7 @@ export class AnimatedBackground extends HTMLElement {
     }
 
     // Create animations groups associated to active events (or all animations groups when no events defined)
-    const hasDeclaredEvents = (this.getAnimationEvents() && Object.keys(this.getAnimationEvents()) > 0);
+    const hasDeclaredEvents = (this.getAnimationEvents() && Object.keys(this.getAnimationEvents()).length > 0);
     for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
       if (!hasDeclaredEvents || activeAnimationGroups.has(animationName)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
