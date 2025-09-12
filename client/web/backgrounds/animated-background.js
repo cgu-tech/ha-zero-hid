@@ -209,13 +209,6 @@ export class AnimatedBackground extends HTMLElement {
 
   doUpdateLayout() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doUpdateLayout()'));
-    //TODO: replace fake groups with real ones from config
-    //this._elements.groups.push(this.createGhostsGroup());
-    //this._elements.groups.push(this.createSpidersGroup());
-    //this._elements.groups.push(this.createWebsGroup());
-    //this._elements.groups.push(this.createWitchHatsGroup());
-    //this._elements.groups.push(this.createPumkinsGroup());
-    //this._elements.groups.push(this.createLeaveGroup());
 
     // Create groups from config
     for (const [animationName, animationConfig] of Object.entries(this.getAnimations() || {})) {
@@ -240,6 +233,7 @@ export class AnimatedBackground extends HTMLElement {
   }
 
   doCreateAnimateds() {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doCreateAnimateds()'));
 
     // Resize viewbox to parent container dimensions (whenever possible)
     if (this.doResizeBackground()) {
