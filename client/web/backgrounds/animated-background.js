@@ -456,7 +456,7 @@ export class AnimatedBackground extends HTMLElement {
     const L2 = length * length;
   
     if (L2 < dx2) {
-      throw new Error("No real solution: desired length too short for the given x values.");
+      throw new Error(`No real solution: desired length too short for the given x values (should be L2 < dx2, given L2=${L2}, dx2=${dx2}`);
     }
   
     const dy = Math.sqrt(L2 - dx2);
@@ -474,7 +474,7 @@ export class AnimatedBackground extends HTMLElement {
     const L2 = length * length;
   
     if (L2 < dy2) {
-      throw new Error("No real solution: desired length too short for the given y values.");
+      throw new Error(`No real solution: desired length too short for the given y values (should be L2 < dy2, given L2=${L2}, dy2=${dy2}`);
     }
   
     const dx = Math.sqrt(L2 - dy2);
