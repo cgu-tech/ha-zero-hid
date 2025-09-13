@@ -522,7 +522,7 @@ export class AnimatedBackground extends HTMLElement {
           const ySwayRange = this.getValidSecondCoordinateRange(lastY, hypothenuse);
           const ySwayMin = swings * yDriftMin;
           const ySwayMax = Math.max(ySwayRange[0], ySwayRange[1]);
-          ySway = this.getBoundRandom(ySwayMin - ySwayMax);
+          ySway = this.getBoundRandom(ySwayMin, ySwayMax);
           const aux = this.findX2(lastX, lastY, ySway, hypothenuse);
           xSway = auxAxis > 0 ? aux[0] : aux[1];
           if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('getStepsSway(...): constrained xSway (auxAxis, aux, xSway, ySway)', auxAxis, aux, xSway, ySway));
