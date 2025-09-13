@@ -433,6 +433,59 @@ export class AnimatedBackground extends HTMLElement {
     return this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
   }
 
+  findHypotenuse(a, b) {
+    return Math.sqrt(a * a + b * b);
+  }
+
+  findMissingLeg(hypotenuse, knownLeg) {
+    if (hypotenuse <= knownLeg) {
+      throw new Error("Hypotenuse must be greater than the known leg.");
+    }
+    return Math.sqrt(hypotenuse ** 2 - knownLeg ** 2);
+  }
+
+  vectorSize(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  findY2(x1, y1, x2, length) {
+    const dx = x2 - x1;
+    const dx2 = dx * dx;
+    const L2 = length * length;
+  
+    if (L2 < dx2) {
+      throw new Error("No real solution: desired length too short for the given x values.");
+    }
+  
+    const dy = Math.sqrt(L2 - dx2);
+  
+    // Two possible solutions:
+    return [
+      y1 + dy,
+      y1 - dy
+    ];
+  }
+
+  findX2(x1, y1, y2, length) {
+    const dy = y2 - y1;
+    const dy2 = dy * dy;
+    const L2 = length * length;
+  
+    if (L2 < dy2) {
+      throw new Error("No real solution: desired length too short for the given y values.");
+    }
+  
+    const dx = Math.sqrt(L2 - dy2);
+  
+    // Two possible solutions:
+    return [
+      x1 + dx,
+      x1 - dx
+    ];
+  }
+
   getStepsSway(bounds, xStart, yStart, xDriftMin, xDriftMax, yDriftMin, yDriftMax, rotateDriftMin, rotateDriftMax) {
 
     // Create sway keyframes with randomness
@@ -440,15 +493,40 @@ export class AnimatedBackground extends HTMLElement {
     const yEnd = bounds.height + yDriftMin;
     let swings = 0;
     let yCumulated = 0;
-    let dir = Math.random() < 0.5 ? -1 : 1; // Sway direction
+    let hypothenuse = 0; // The initial distance to keep between each step to make the animation at constant speed
+    let lastX;
+    let lastY;
     do {
-      const xSway = swings === 0 ? xStart : this.getBoundRandom(xDriftMin, xDriftMax);
-      const ySway = swings === 0 ? yStart : swings * yDriftMin + this.getBoundRandom(0, yDriftMax - yDriftMin);
+      let xSway;
+      let ySway;
+      if (swings === 0) {
+        // Initial step used to determine the first distance
+        xSway = xStart;
+        ySway = yStart;
+      } else if (swings === 1) {
+        // First non-initial step used to determine the first distance
+        xSway = this.getBoundRandom(xDriftMin, xDriftMax);
+        ySway = swings * yDriftMin + this.getBoundRandom(0, yDriftMax - yDriftMin);
+        hypothenuse = this.vectorSize(xStart, yStart, xSway, ySway);
+      } else {
+        let mainAxis = Math.random() < 0.5 ? -1 : 1; // Sway main axis direction
+        let auxAxis = Math.random() < 0.5 ? -1 : 1; // Sway auxiliar axis direction
+        if (mainAxis > 0) {
+          ySway = swings * yDriftMin + this.getBoundRandom(0, yDriftMax - yDriftMin);
+          const aux = this.findX2(lastX, lastY, ySway, hypotenuse);
+          xSway = auxAxis > 0 ? aux[0] : aux[1];
+        } else {
+          xSway = this.getBoundRandom(xDriftMin, xDriftMax);
+          const aux = this.findY2(lastX, lastY, xSway, hypotenuse);
+          ySway = auxAxis > 0 ? aux[0] : aux[1];
+        }
+      }
       const rotateSway = this.getBoundRandom(rotateDriftMin, rotateDriftMax);
       keyframes.push({ transform: `translate(${xSway}px, ${ySway}px) rotate(${rotateSway}deg)` });
       swings++;
-      dir = dir * -1; // Flip direction for next swing
       yCumulated = ySway;
+      lastX = xSway;
+      lastY = ySway;
     } while (yCumulated < yEnd);
 
     // Set offsets according to number of swings and swing index
