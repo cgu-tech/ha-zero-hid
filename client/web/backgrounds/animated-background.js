@@ -352,6 +352,16 @@ export class AnimatedBackground extends HTMLElement {
     return this.getBoundRandom(this.getAnimVal(bounds, values[0]), this.getAnimVal(bounds, values[1]));
   }
 
+  getMinAnimationValue(bounds, values) {
+    if (!values) return null; // Not all values are required for every animation
+    return this.getAnimVal(bounds, values[0]);
+  }
+
+  getMaxAnimationValue(bounds, values) {
+    if (!values) return null; // Not all values are required for every animation
+    return this.getAnimVal(bounds, values[1]);
+  }
+
   animateItem(group, item) {
     const bounds = this.getBounds();
     if (!this.areValidBounds(bounds)) return; // Invalid bounds dimensions
@@ -365,12 +375,12 @@ export class AnimatedBackground extends HTMLElement {
     const yEnd = this.generateAnimationValue(bounds, animationConfig.getYEnd());
     const xDrift = this.generateAnimationValue(bounds, animationConfig.getXDrift());
     const yDrift = this.generateAnimationValue(bounds, animationConfig.getYDrift());
-    const xDriftMin = this.getAnimVal(bounds, animationConfig.getXDrifts()[0]);
-    const xDriftMax = this.getAnimVal(bounds, animationConfig.getXDrifts()[1]);
-    const yDriftMin = this.getAnimVal(bounds, animationConfig.getYDrifts()[0]);
-    const yDriftMax = this.getAnimVal(bounds, animationConfig.getYDrifts()[1]);
-    const rotateDriftMin = this.getAnimVal(bounds, animationConfig.getRotateDrifts()[0]);
-    const rotateDriftMax = this.getAnimVal(bounds, animationConfig.getRotateDrifts()[1]);
+    const xDriftMin = this.getMinAnimationValue(bounds, animationConfig.getXDrifts());
+    const xDriftMax = this.getMaxAnimationValue(bounds, animationConfig.getXDrifts());
+    const yDriftMin = this.getMinAnimationValue(bounds, animationConfig.getYDrifts());
+    const yDriftMax = this.getMaxAnimationValue(bounds, animationConfig.getYDrifts());
+    const rotateDriftMin = this.getMinAnimationValue(bounds, animationConfig.getRotateDrifts());
+    const rotateDriftMax = this.getMaxAnimationValue(bounds, animationConfig.getRotateDrifts());
     const rotateStart = this.generateAnimationValue(bounds, animationConfig.getRotateStart());
     const rotateEnd = this.generateAnimationValue(bounds, animationConfig.getRotateEnd());
     const rotateDrift = this.generateAnimationValue(bounds, animationConfig.getRotateDrift());
