@@ -513,11 +513,11 @@ export class AnimatedBackground extends HTMLElement {
         let auxAxis = Math.random() < 0.5 ? -1 : 1; // Sway auxiliar axis direction
         if (mainAxis > 0) {
           ySway = swings * yDriftMin + this.getBoundRandom(0, yDriftMax - yDriftMin);
-          const aux = this.findX2(lastX, lastY, ySway, hypotenuse);
+          const aux = this.findX2(lastX, lastY, ySway, hypothenuse);
           xSway = auxAxis > 0 ? aux[0] : aux[1];
         } else {
           xSway = this.getBoundRandom(xDriftMin, xDriftMax);
-          const aux = this.findY2(lastX, lastY, xSway, hypotenuse);
+          const aux = this.findY2(lastX, lastY, xSway, hypothenuse);
           ySway = auxAxis > 0 ? aux[0] : aux[1];
         }
       }
