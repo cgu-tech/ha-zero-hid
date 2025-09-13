@@ -442,7 +442,7 @@ export class AnimatedBackground extends HTMLElement {
     let yCumulated = 0;
     let dir = Math.random() < 0.5 ? -1 : 1; // Sway direction
     do {
-      const xSway = Math.abs(this.getBoundRandom(xDriftMin, xDriftMax)) * dir;
+      const xSway = swings === 0 ? xStart : Math.abs(this.getBoundRandom(xDriftMin, xDriftMax)) * dir;
       const ySway = swings === 0 ? yStart : swings * yDriftMin + this.getBoundRandom(0, yDriftMax - yDriftMin);
       const rotateSway = this.getBoundRandom(rotateDriftMin, rotateDriftMax);
       keyframes.push({ transform: `translate(${xSway}px, ${ySway}px) rotate(${rotateSway}deg)` });
