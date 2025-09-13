@@ -450,8 +450,8 @@ export class AnimatedBackground extends HTMLElement {
     } while (yCumulated < yEnd);
 
     // Set offsets according to number of swings and swing index
-    for (let index = 0; index <= swings; index++) {
-      const offset = index / swings;
+    for (let index = 0; index < swings; index++) {
+      const offset = index / (swings - 1);
       keyframes[index]['offset'] = offset;
     }
     
