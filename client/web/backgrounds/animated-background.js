@@ -439,13 +439,15 @@ export class AnimatedBackground extends HTMLElement {
     const keyframes = [];
     const yEnd = bounds.height + yDriftMin;
     let swings = 0;
+    let yCumulated = 0;
     do {
       const xSway = this.getBoundRandom(xDriftMin, xDriftMax);
       const ySway = swings === 0 ? yStart : swings * yDriftMin + this.getBoundRandom(0, yDriftMax - yDriftMin);
       const rotateSway = this.getBoundRandom(rotateDriftMin, rotateDriftMax);
       keyframes.push({ transform: `translate(${xSway}px, ${ySway}px) rotate(${rotateSway}deg)` });
       swings++;
-    } while (ySway < yEnd);
+      yCumulated = ySway;
+    } while (yCumulated < yEnd);
 
     // Set offsets according to number of swings and swing index
     for (let index = 0; index <= swings; index++) {
