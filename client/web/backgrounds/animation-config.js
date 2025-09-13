@@ -39,6 +39,14 @@ export class AnimationConfig {
     return this.getConfigOrStub("y_drift");
   }
 
+  getXDrifts() {
+    return this.getConfigOrStub("x_drifts");
+  }
+
+  getYDrifts() {
+    return this.getConfigOrStub("y_drifts");
+  }
+
   getRotateStart() {
     return this.getConfigOrStub("rotate_start");
   }
@@ -49,6 +57,10 @@ export class AnimationConfig {
 
   getRotateDrift() {
     return this.getConfigOrStub("rotate_drift");
+  }
+
+  getRotateDrifts() {
+    return this.getConfigOrStub("rotate_drifts");
   }
 
   getDelay() {
@@ -111,12 +123,26 @@ export class AnimationConfig {
     }
   }
 
+  static getStubConfigSway() {
+    return {
+      name: 'sway',
+      x_start: [0, 'width'],
+      y_start: [-60, -60],
+      x_drifts: [-50, 50],
+      y_drifts: [100, 130],
+      rotate_drifts: [-20, 20],
+      delay: [0, 7000],
+      duration: [10000, 20000]
+    }
+  }
+
   // configuration defaults
   static getStubConfig() {
     const name = this._config?.["name"];
     if (name === 'translate-rotate') return this.getStubConfigTranslateAndRotate();
     if (name === 'translate') steps = this.getStubConfigTranslate();
     if (name === 'slide') return this.getStubConfigSlide();
+    if (name === 'sway') return this.getStubConfigSway();
     return this.getStubConfigFall();
   }
 

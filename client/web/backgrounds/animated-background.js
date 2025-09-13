@@ -365,6 +365,12 @@ export class AnimatedBackground extends HTMLElement {
     const yEnd = this.generateAnimationValue(bounds, animationConfig.getYEnd());
     const xDrift = this.generateAnimationValue(bounds, animationConfig.getXDrift());
     const yDrift = this.generateAnimationValue(bounds, animationConfig.getYDrift());
+    const xDriftMin = this.getAnimVal(bounds, animationConfig.getXDrifts()[0]);
+    const xDriftMax = this.getAnimVal(bounds, animationConfig.getXDrifts()[1]);
+    const yDriftMin = this.getAnimVal(bounds, animationConfig.getYDrifts()[0]);
+    const yDriftMax = this.getAnimVal(bounds, animationConfig.getYDrifts()[1]);
+    const rotateDriftMin = this.getAnimVal(bounds, animationConfig.getRotateDrifts()[0]);
+    const rotateDriftMax = this.getAnimVal(bounds, animationConfig.getRotateDrifts()[1]);
     const rotateStart = this.generateAnimationValue(bounds, animationConfig.getRotateStart());
     const rotateEnd = this.generateAnimationValue(bounds, animationConfig.getRotateEnd());
     const rotateDrift = this.generateAnimationValue(bounds, animationConfig.getRotateDrift());
@@ -374,6 +380,7 @@ export class AnimatedBackground extends HTMLElement {
     let steps;
     if (animationConfig.getName() === 'fall') steps = this.getStepsFall(bounds, xStart, yStart, xDrift, yDrift, rotateStart, rotateDrift);
     if (animationConfig.getName() === 'slide') steps = this.getStepsSlide(bounds, xStart, yStart, xDrift, yDrift);
+    if (animationConfig.getName() === 'sway') steps = this.getStepsSway(bounds, xStart, yStart, xDriftMin, xDriftMax, yDriftMin, yDriftMax, rotateDriftMin, rotateDriftMax);
     if (animationConfig.getName() === 'translate-rotate') steps = this.getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd);
     if (animationConfig.getName() === 'translate') steps = this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
     if (!steps) return; // Unknown animation type
@@ -403,6 +410,30 @@ export class AnimatedBackground extends HTMLElement {
     const xEnd = bounds.width + xDrift;
     const yEnd = yStart + yDrift;
     return this.getStepsTranslate(xStart, yStart, xEnd, yEnd);
+  }
+
+  getStepsSway(bounds, xStart, yStart, xDriftMin, xDriftMax, yDriftMin, yDriftMax, rotateDriftMin, rotateDriftMax) {
+
+    // Create sway keyframes with randomness
+    const keyframes = [];
+    const yEnd = bounds.height + yDriftMin;
+    let swings = 0;
+    do {
+      const xSway = this.getBoundRandom(xDriftMin, xDriftMax);
+      const ySway = swings === 0 ? yStart : swings * yDriftMin + this.getBoundRandom(0, yDriftMax - yDriftMin);
+      const rotateSway = this.getBoundRandom(rotateDriftMin, rotateDriftMax);
+      keyframes.push({ transform: `translate(${xSway}px, ${ySway}px) rotate(${rotateSway}deg)` });
+      swings++;
+    } while (ySway < yEnd);
+
+    // Set offsets according to number of swings and swing index
+    for (let index = 0; index <= swings; index++) {
+      const offset = index / swings;
+      keyframes[index]['offset'] = offset;
+    }
+    
+    // Return parameterized sway steps
+    return keyframes;
   }
 
   getStepsTranslateAndRotate(xStart, yStart, xEnd, yEnd, rotateStart, rotateEnd) {
