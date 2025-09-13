@@ -457,7 +457,7 @@ export class AnimatedBackground extends HTMLElement {
   
     if (L2 < dx2) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`No real solution: desired length too short for the given x values (should be L2 < dx2, given L2=${L2}, dx2=${dx2}`));
-      dx2 = L2 - this.getBoundRandom(L2 / 10, L2);
+      dx2 = L2 - (L2 / 100);
     }
   
     const dy = Math.sqrt(L2 - dx2);
@@ -476,7 +476,7 @@ export class AnimatedBackground extends HTMLElement {
   
     if (L2 < dy2) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`No real solution: desired length too short for the given y values (should be L2 < dy2, given L2=${L2}, dy2=${dy2}`));
-      dy2 = L2 - this.getBoundRandom(L2 / 10, L2);
+      dy2 = L2 - (L2 / 100);
     }
   
     const dx = Math.sqrt(L2 - dy2);
