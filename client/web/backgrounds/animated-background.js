@@ -523,12 +523,20 @@ export class AnimatedBackground extends HTMLElement {
           const ySwayMin = swings * yDriftMin;
           const ySwayMax = Math.max(ySwayRange.min, ySwayRange.max);
           ySway = this.getBoundRandom(ySwayMin, ySwayMax);
+          if (Math.abs(ySway) > hypothenuse) {
+            const adjustment = this.getBoundRandom(0.01, hypothenuse - 0.01);
+            ySway = ySway > 0 ? hypothenuse - adjustment : -hypothenuse + adjustment;
+          }
           const aux = this.findX2(lastX, lastY, ySway, hypothenuse);
           xSway = auxAxis > 0 ? aux[0] : aux[1];
           if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('getStepsSway(...): constrained xSway (auxAxis, aux, xSway, ySway)', auxAxis, aux, xSway, ySway));
         } else {
           const xSwayRange = this.getValidSecondCoordinateRange(lastX, hypothenuse);
           xSway = this.getBoundRandom(xSwayRange.min, xSwayRange.max);
+          if (Math.abs(xSway) > hypothenuse) {
+            const adjustment = this.getBoundRandom(0.01, hypothenuse - 0.01);
+            xSway = xSway > 0 ? hypothenuse - adjustment : -hypothenuse + adjustment;
+          }
           const aux = this.findY2(lastX, lastY, xSway, hypothenuse);
           ySway = Math.max(aux[0], aux[1]);
           if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('getStepsSway(...): constrained ySway (auxAxis, aux, xSway, ySway)', auxAxis, aux, xSway, ySway));
