@@ -486,6 +486,13 @@ export class AnimatedBackground extends HTMLElement {
     ];
   }
 
+  getValidSecondCoordinateRange(firstCoordinate, hypotenuse) {
+    return {
+      min: firstCoordinate - hypotenuse,
+      max: firstCoordinate + hypotenuse
+    };
+  }
+
   getStepsSway(bounds, xStart, yStart, xDriftMin, xDriftMax, yDriftMin, yDriftMax, rotateDriftMin, rotateDriftMax) {
 
     // Create sway keyframes with randomness
@@ -512,11 +519,15 @@ export class AnimatedBackground extends HTMLElement {
         let mainAxis = Math.random() < 0.5 ? -1 : 1; // Sway main axis direction
         let auxAxis = Math.random() < 0.5 ? -1 : 1; // Sway auxiliar axis direction
         if (mainAxis > 0) {
-          ySway = swings * yDriftMin + this.getBoundRandom(0, yDriftMax - yDriftMin);
+          ySwayRange = this.getValidSecondCoordinateRange(lastY, hypothenuse);
+          ySwayMin = swings * yDriftMin;
+          ySwayMax = Math.max(ySwayRange[0], ySwayRange[1]);
+          ySway = this.getBoundRandom(ySwayMin - ySwayMax) - 0.01;
           const aux = this.findX2(lastX, lastY, ySway, hypothenuse);
           xSway = auxAxis > 0 ? aux[0] : aux[1];
         } else {
-          xSway = this.getBoundRandom(xDriftMin, xDriftMax);
+          xSwayRange = this.getValidSecondCoordinateRange(lastX, hypothenuse);
+          xSway = this.getBoundRandom(xSwayRange[0], xSwayRange[1]);
           const aux = this.findY2(lastX, lastY, xSway, hypothenuse);
           ySway = auxAxis > 0 ? aux[0] : aux[1];
         }
