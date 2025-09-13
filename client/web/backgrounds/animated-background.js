@@ -87,6 +87,10 @@ export class AnimatedBackground extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("debounce_trigger");
   }
 
+  getEnable() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("enable");
+  }
+
   getGroups() {
     return this._elements.groups;
   }
@@ -219,6 +223,9 @@ export class AnimatedBackground extends HTMLElement {
   doUpdateLayout() {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace('doUpdateLayout()'));
 
+    // Do not attempt to add animations when disabled
+    if (!this.getEnable()) return;
+
     // Retrieve active events from config
     const now = new Date();
     const activeAnimationGroups = new Set();
@@ -226,7 +233,9 @@ export class AnimatedBackground extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating event ${animationEventName}...`));
       for (const animationEventTriggerConfig of (animationEventConfig["triggers"] || [])) {
         const animationEvent = new AnimationEvent(animationEventTriggerConfig);
-        if (animationEvent.isActiveForDate(now)) {
+
+        // Add animated groups only when event active and event enabled
+        if (animationEvent.isActiveForDate(now) && animationEvent.getEnable()) {
           for (const animationGroupName of (animationEventConfig["animations"] || [])) {
             activeAnimationGroups.add(animationGroupName);
           }
@@ -241,7 +250,9 @@ export class AnimatedBackground extends HTMLElement {
       if (!hasDeclaredEvents || activeAnimationGroups.has(animationName)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`doUpdateLayout(): creating group ${animationName}...`));
         const group = this.doCreateGroup(animationName, animationConfig);
-        this.getGroups().add(group);
+
+        // Add animated group only when group enabled
+        if (group.getEnable()) this.getGroups().add(group);
       }
     }
 
@@ -513,6 +524,7 @@ export class AnimatedBackground extends HTMLElement {
   static getStubConfig() {
     return {
       debounce_trigger: 300,
+      enable: true,
       events: {},
       animations: {}
     }

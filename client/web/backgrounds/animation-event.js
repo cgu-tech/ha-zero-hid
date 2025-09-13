@@ -42,6 +42,10 @@ export class AnimationEvent {
     return this._config?.[configName] || this.constructor.getStubConfig()[configName];
   }
 
+  getEnable() {
+    return this.getConfigOrStub("enable");
+  }
+
   getDateStart() {
     return this._dateStart;
   }
@@ -426,6 +430,7 @@ export class AnimationEvent {
   static getStubConfig() {
     return {
       groups: [],
+      enable: true,
       date_start: null,
       date_end: null
     }

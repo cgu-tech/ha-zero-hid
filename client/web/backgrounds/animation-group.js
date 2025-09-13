@@ -47,6 +47,10 @@ export class AnimationGroup {
     return this.getConfigOrStub("shape");
   }
 
+  getEnable() {
+    return this.getConfigOrStub("enable");
+  }
+
   getColors() {
     return this.getConfigOrStub("colors");
   }
@@ -72,6 +76,7 @@ export class AnimationGroup {
     return {
       name: "",
       shape: "",
+      enable: true,
       colors: ['#FFFFFF'],
       opacities: [1.0, 1.0],
       scales: [1.0, 1.0],
