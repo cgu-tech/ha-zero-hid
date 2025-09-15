@@ -365,7 +365,7 @@ export const androidRemoteCardConfig = {
     html: 
     `<svg id="microphone-icon" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf">
       <!-- Microphone body -->
-      <rect x="30" y="40" width="40" height="80" rx="20" ry="20" stroke="black" fill="none" stroke-width="4"/>
+      <rect x="30" y="40" width="40" height="80" rx="20" ry="20" fill="none" stroke-width="4"/>
 
       <!-- Microphone grill (lines for wireframe look) -->
       <line x1="30" y1="50" x2="70" y2="50" stroke-width="2"/>
