@@ -368,19 +368,19 @@ export const androidRemoteCardConfig = {
       <rect x="30" y="40" width="40" height="80" rx="20" ry="20" stroke="black" fill="none" stroke-width="4"/>
 
       <!-- Microphone grill (lines for wireframe look) -->
-      <line x1="30" y1="50" x2="70" y2="50" stroke="black" stroke-width="2"/>
-      <line x1="30" y1="60" x2="70" y2="60" stroke="black" stroke-width="2"/>
-      <line x1="30" y1="70" x2="70" y2="70" stroke="black" stroke-width="2"/>
-      <line x1="30" y1="80" x2="70" y2="80" stroke="black" stroke-width="2"/>
-      <line x1="30" y1="90" x2="70" y2="90" stroke="black" stroke-width="2"/>
-      <line x1="30" y1="100" x2="70" y2="100" stroke="black" stroke-width="2"/>
-      <line x1="30" y1="110" x2="70" y2="110" stroke="black" stroke-width="2"/>
+      <line x1="30" y1="50" x2="70" y2="50" stroke-width="2"/>
+      <line x1="30" y1="60" x2="70" y2="60" stroke-width="2"/>
+      <line x1="30" y1="70" x2="70" y2="70" stroke-width="2"/>
+      <line x1="30" y1="80" x2="70" y2="80" stroke-width="2"/>
+      <line x1="30" y1="90" x2="70" y2="90" stroke-width="2"/>
+      <line x1="30" y1="100" x2="70" y2="100" stroke-width="2"/>
+      <line x1="30" y1="110" x2="70" y2="110" stroke-width="2"/>
 
       <!-- Stem -->
-      <line x1="50" y1="120" x2="50" y2="160" stroke="black" stroke-width="4"/>
+      <line x1="50" y1="120" x2="50" y2="160" stroke-width="4"/>
 
       <!-- Base -->
-      <ellipse cx="50" cy="170" rx="20" ry="5" stroke="black" fill="none" stroke-width="4"/>
+      <ellipse cx="50" cy="170" rx="20" ry="5" stroke-width="4"/>
     </svg>`
   }
 };
