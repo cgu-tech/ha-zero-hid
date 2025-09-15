@@ -360,6 +360,27 @@ export const androidRemoteCardConfig = {
       <path id="trail-02" stroke-width="1.5" stroke-dasharray="none" d="m 17.067569,11.442729 c 18.850616,-1.7329121 27.017504,8.007246 27.017504,8.007246" />
       <path id="trail-03" stroke-width="1" stroke-dasharray="none" d="M 26.175265,21.9471 C 38.735711,20.479367 44.17743,28.729039 44.17743,28.729039" />
     </svg>`
-  }
+  },
+  "remote-button-microphone": {
+    html: 
+    `<svg id="microphone-icon" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf">
+      <!-- Microphone body -->
+      <rect x="30" y="40" width="40" height="80" rx="20" ry="20" stroke="black" fill="none" stroke-width="4"/>
 
+      <!-- Microphone grill (lines for wireframe look) -->
+      <line x1="30" y1="50" x2="70" y2="50" stroke="black" stroke-width="2"/>
+      <line x1="30" y1="60" x2="70" y2="60" stroke="black" stroke-width="2"/>
+      <line x1="30" y1="70" x2="70" y2="70" stroke="black" stroke-width="2"/>
+      <line x1="30" y1="80" x2="70" y2="80" stroke="black" stroke-width="2"/>
+      <line x1="30" y1="90" x2="70" y2="90" stroke="black" stroke-width="2"/>
+      <line x1="30" y1="100" x2="70" y2="100" stroke="black" stroke-width="2"/>
+      <line x1="30" y1="110" x2="70" y2="110" stroke="black" stroke-width="2"/>
+
+      <!-- Stem -->
+      <line x1="50" y1="120" x2="50" y2="160" stroke="black" stroke-width="4"/>
+
+      <!-- Base -->
+      <ellipse cx="50" cy="170" rx="20" ry="5" stroke="black" fill="none" stroke-width="4"/>
+    </svg>`
+  }
 };

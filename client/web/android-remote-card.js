@@ -830,11 +830,17 @@ class AndroidRemoteCard extends HTMLElement {
       }
       #volumeup-icon {
         height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
+        width: auto;
+        display: block;
         transform: scale(0.5, 0.5);
       }
       #airmouse-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        transform: scale(0.5, 0.5);
+      }
+      #microphone-icon {
         height: 100%;
         width: auto;  /* maintain aspect ratio */
         display: block; /* removes any inline space */
