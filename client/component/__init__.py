@@ -77,6 +77,11 @@ CONPRESS_SERVICE_SCHEMA = vol.Schema({
     vol.Optional("sendCons", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
+AUDIO_SERVICE_SCHEMA = vol.Schema({
+    vol.Required("si"): cv.string,
+    vol.Optional("buf", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
+})
+
 LOG_SERVICE_SCHEMA = vol.Schema({
     vol.Required("level"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("origin"): vol.All(lambda v: v or "", ensure_string_or_empty),
@@ -422,6 +427,18 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_conpress: {e}")
 
+    """Handle streaming audio."""
+    @callback
+    async def handle_audio(call: ServiceCall) -> None:
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
+        if not authorized:
+            return
+
+        buf = call.data.get("buf")
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(f"handle_audio.call.data.buf: {buf}")
+
     """Handle logging to home assistant backend."""
     @callback
     async def handle_log(call: ServiceCall) -> None:
@@ -462,6 +479,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "chartap", handle_chartap, schema=CHARTAP_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "conpress", handle_conpress, schema=CONPRESS_SERVICE_SCHEMA)
+    hass.services.async_register(DOMAIN, "aux", handle_audio, schema=AUDIO_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "log", handle_log, schema=LOG_SERVICE_SCHEMA)
 
     # Register WebSocket command
