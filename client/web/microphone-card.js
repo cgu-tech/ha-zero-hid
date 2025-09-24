@@ -185,7 +185,7 @@ export class MicrophoneCard extends HTMLElement {
       this._workletNode.port.onmessage = (event) => {
         if (event.data) {
           // Send audio data to HA
-          const buffer = Array.from(new Uint8Array(event.data);
+          const buffer = Array.from(new Uint8Array(event.data));
           this.sendAudio(buffer);
         }
       };
