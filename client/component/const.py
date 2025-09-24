@@ -12,7 +12,8 @@ RESOURCES = [
     "trackpad-card.js",
     "windows-keyboard-card.js",
     "test-card.js",
-    "air-mouse-card.js"
+    "air-mouse-card.js",
+    "microphone-card.js"
 ]
 
 # This component name
