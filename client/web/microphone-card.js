@@ -158,15 +158,30 @@ export class MicrophoneCard extends HTMLElement {
 
       await this._audioContext.audioWorklet.addModule(URL.createObjectURL(new Blob([`
         class MicProcessor extends AudioWorkletProcessor {
+          constructor() {
+            super();
+            this.inputSampleRate = sampleRate; // whatever the browser gives us
+            this.outputSampleRate = 16000;
+            this.ratio = this.inputSampleRate / this.outputSampleRate;
+          }
+        
           process(inputs) {
             const input = inputs[0];
             if (input.length > 0) {
               const channelData = input[0];
-              const pcm = new Int16Array(channelData.length);
-              for (let i = 0; i < channelData.length; i++) {
-                let s = Math.max(-1, Math.min(1, channelData[i]));
+              const resampledLength = Math.floor(channelData.length / this.ratio);
+              const resampled = new Float32Array(resampledLength);
+              for (let i = 0; i < resampledLength; i++) {
+                const index = Math.floor(i * this.ratio);
+                resampled[i] = channelData[index];
+              }
+        
+              const pcm = new Int16Array(resampled.length);
+              for (let i = 0; i < resampled.length; i++) {
+                let s = Math.max(-1, Math.min(1, resampled[i]));
                 pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
               }
+        
               this.port.postMessage(pcm.buffer, [pcm.buffer]);
             }
             return true;
