@@ -154,7 +154,7 @@ export class MicrophoneCard extends HTMLElement {
       startBtn.disabled = true;
       stopBtn.disabled = false;
 
-      this._audioContext = new AudioContext({ sampleRate: 16000 });
+      this._audioContext = new AudioContext(); // Let browser decide
 
       await this._audioContext.audioWorklet.addModule(URL.createObjectURL(new Blob([`
         class MicProcessor extends AudioWorkletProcessor {
