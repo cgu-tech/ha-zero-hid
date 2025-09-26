@@ -223,6 +223,7 @@ export class MicrophoneCard extends HTMLElement {
   async onStopButtonRelease(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     
+    const statusLbl = this._elements.statusLbl;
     statusLbl.textContent = "Stopping...";
     this.stopMicrophone();
     statusLbl.textContent = "Stopped.";
