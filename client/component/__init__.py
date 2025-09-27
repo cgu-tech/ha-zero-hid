@@ -82,6 +82,10 @@ AUDIO_SERVICE_SCHEMA = vol.Schema({
     vol.Optional("buf", default=[]): vol.All(lambda v: v or [], ensure_list_or_empty),
 })
 
+AUDIO_COMMAND_SERVICE_SCHEMA = vol.Schema({
+    vol.Required("si"): cv.string,
+})
+
 LOG_SERVICE_SCHEMA = vol.Schema({
     vol.Required("level"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("origin"): vol.All(lambda v: v or "", ensure_string_or_empty),
@@ -439,6 +443,46 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"handle_audio.call.data.buf: {buf}")
 
+        ws_client = get_ws_client(info)
+        try:
+            await ws_client.handle_audio(buf)
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug(f"ws_client.handle_audio(buf): {buf}")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_audio: {e}")
+
+    """Handle start streaming audio."""
+    @callback
+    async def handle_audio_start(call: ServiceCall) -> None:
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
+        if not authorized:
+            return
+
+        ws_client = get_ws_client(info)
+        try:
+            await ws_client.send_audiostart()
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug("ws_client.send_audiostart()")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_audio_start: {e}")
+
+    """Handle stop streaming audio."""
+    @callback
+    async def handle_audio_stop(call: ServiceCall) -> None:
+        info: WSServerInfo = get_ws_server_info(hass, call)
+        authorized = is_user_authorized_from_service(info, call)
+        if not authorized:
+            return
+
+        ws_client = get_ws_client(info)
+        try:
+            await ws_client.send_audiostop()
+            if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                _LOGGER.debug("ws_client.send_audiostop()")
+        except Exception as e:
+            _LOGGER.exception(f"Unhandled error in handle_audio_stop: {e}")
+
     """Handle logging to home assistant backend."""
     @callback
     async def handle_log(call: ServiceCall) -> None:
@@ -480,6 +524,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "keypress", handle_keypress, schema=KEYPRESS_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "conpress", handle_conpress, schema=CONPRESS_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "aux", handle_audio, schema=AUDIO_SERVICE_SCHEMA)
+    hass.services.async_register(DOMAIN, "auxstart", handle_audio_start, schema=AUDIO_COMMAND_SERVICE_SCHEMA)
+    hass.services.async_register(DOMAIN, "auxstop", handle_audio_stop, schema=AUDIO_COMMAND_SERVICE_SCHEMA)
     hass.services.async_register(DOMAIN, "log", handle_log, schema=LOG_SERVICE_SCHEMA)
 
     # Register WebSocket command
