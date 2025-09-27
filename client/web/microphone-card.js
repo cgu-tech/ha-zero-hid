@@ -206,9 +206,7 @@ export class MicrophoneCard extends HTMLElement {
       };
 
       // Start stream notification
-      //this._hass.connection.sendMessage({
-      //  type: "your_integration/start_stream"
-      //});
+      this.startAudio();
 
       statusLbl.textContent = "Streaming audio...";
     } catch (err) {
@@ -239,9 +237,8 @@ export class MicrophoneCard extends HTMLElement {
     startBtn.disabled = false;
     stopBtn.disabled = true;
 
-    //this._hass?.connection.sendMessage({
-    //  type: "your_integration/stop_stream"
-    //});
+    // Stop stream notification
+    this.stopAudio();
 
     if (this._audioContext) {
       this._audioContext.close();
@@ -306,8 +303,16 @@ export class MicrophoneCard extends HTMLElement {
     return 3;
   }
 
+  startAudio() {
+    this._eventManager.callComponentServiceWithServerId("auxstart", {});
+  }
+
   sendAudio(buffer) {
     this._eventManager.callComponentServiceWithServerId("aux", { "buf": buffer, });
+  }
+
+  stopAudio() {
+    this._eventManager.callComponentServiceWithServerId("auxstop", {});
   }
 
 }
