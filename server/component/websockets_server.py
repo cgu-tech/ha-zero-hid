@@ -10,7 +10,7 @@ import struct
 
 from typing import Set
 from websockets.server import Request
-from zero_hid import Device, Mouse, Keyboard, KeyCodes, Consumer, ConsumerCodes
+from zero_hid import Device, Mouse, Microphone, Keyboard, KeyCodes, Consumer, ConsumerCodes
 
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ keyboard_state = {
 key_codes_map = KeyCodes.as_dict()
 consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
+aux = Microphone()
 
 async def process_request(connection, request: Request):
     # Get client IP from transport
@@ -118,7 +119,8 @@ async def handle_client(websocket) -> None:
             elif cmd == 0x20 and len(message) >= 2:  # chartap
                 length = message[1]
                 chars = message[2:2 + length].decode('utf-8', errors='ignore')
-                logger.debug("Chartap: %s", chars)
+                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    logger.debug("Chartap: %s", chars)
                 keyboard.type(chars)
 
             elif cmd == 0x30 and len(message) >= 3:  # keypress
@@ -127,8 +129,8 @@ async def handle_client(websocket) -> None:
                 key_count_index = 2 + mod_count
                 key_count = message[key_count_index]
                 keys = list(message[key_count_index + 1:key_count_index + 1 + key_count])
-
-                logger.debug("Keypress: modifiers=%s keys=%s", mods, keys)
+                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    logger.debug("Keypress: modifiers=%s keys=%s", mods, keys)
 
                 # Directly use raw codes
                 keyboard.press(mods, keys, release=False)
@@ -165,7 +167,8 @@ async def handle_client(websocket) -> None:
                     "scrolllock": keyboard_state["scrolllock"],
                 }
                 await websocket.send(json.dumps(response_data).encode('utf-8'))
-                logger.debug("Sync response: %s", response_data)
+                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    logger.debug("Sync response: %s", response_data)
 
             elif cmd == 0x60 :  # audio:start
                 logger.debug("Audio start requested")
