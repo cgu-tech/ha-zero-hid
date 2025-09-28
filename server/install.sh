@@ -168,7 +168,7 @@ install() {
         echo "Updating system..."
         apt-get update
 
-        echo "Installing system required packages (git, python3-pip, python3-venv)..."
+        echo "Installing system required packages (git, python3-pip, python3-venv, libasound2-dev)..."
         apt-get install -y git python3-pip python3-venv libasound2-dev
     else
         echo "System update skipped"
