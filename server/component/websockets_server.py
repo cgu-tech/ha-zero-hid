@@ -87,7 +87,8 @@ async def handle_client(websocket) -> None:
 
             if cmd == 0x01 and len(message) == 3:  # scroll
                 _, x, y = struct.unpack("<Bbb", message)
-                logger.debug("Scroll: x=%d, y=%d", x, y)
+                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    logger.debug("Scroll: x=%d, y=%d", x, y)
                 if x:
                     mouse.scroll_x(x)
                 if y:
@@ -95,7 +96,8 @@ async def handle_client(websocket) -> None:
 
             elif cmd == 0x02 and len(message) == 3:  # move
                 _, x, y = struct.unpack("<Bbb", message)
-                logger.debug("Move: x=%d, y=%d", x, y)
+                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    logger.debug("Move: x=%d, y=%d", x, y)
                 mouse.move(x, y)
 
             elif cmd in (0x10, 0x11, 0x12):  # clicks
@@ -172,15 +174,18 @@ async def handle_client(websocket) -> None:
                 if cmd == 0x61 and len(message) >= 2:  # small buffer (from 0 to 255)
                     length = message[1] # 1 byte
                     buffer = message[2:2 + length]
-                    logger.debug("Audio buffer (small): %s", length)
+                    if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                        logger.debug("Audio buffer (small): %s", length)
                 elif cmd == 0x62 and len(message) >= 3:  # medium buffer (from 256 to 65535)
                     length = struct.unpack_from("<H", message, 1)[0] # 2 bytes
                     buffer = message[3:3 + length]
-                    logger.debug("Audio buffer (medium): %s", length)
+                    if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                        logger.debug("Audio buffer (medium): %s", length)
                 elif cmd == 0x63 and len(message) >= 5:  # large buffer (from 65536 to 4294967295)
                     length = struct.unpack_from("<I", message, 1)[0] # 4 bytes
                     buffer = message[5:5 + length]
-                    logger.debug("Audio buffer (large): %s", length)
+                    if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                        logger.debug("Audio buffer (large): %s", length)
 
             elif cmd == 0x70 :  # audio:stop
                 logger.debug("Audio stop requested")
