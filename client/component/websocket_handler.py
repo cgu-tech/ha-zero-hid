@@ -72,6 +72,26 @@ class WebSocketClient:
             "scrolllock": bool(data.get("scrolllock", False)),
         }
 
+    # Audio start: [0x60]
+    async def send_audiostart(self) -> None:
+        await self.send(b'\x60')
+
+    # Audio transfert (send audio buffer optimized by size): [0x61|62|63][len][...bytes...]
+    async def send_audio(self, buffer: list[int]) -> None:
+        bufLen = len(buffer)
+        if bufLen < 256:
+            cmd = struct.pack("<BB", 0x61, bufLen)
+        elif bufLen < 65536:
+            cmd = struct.pack("<BH", 0x62, bufLen)
+        else:
+            cmd = struct.pack("<BI", 0x63, bufLen)
+        cmd += bytes(buffer)
+        await self.send(cmd)
+
+    # Audio stop: [0x70]
+    async def send_audiostart(self) -> None:
+        await self.send(b'\x70')
+
     async def send(self, cmd: bytes, wait_response: bool = False) -> bytes | None:
         """Send a command with safe (re)connection."""
         async with self._lock:

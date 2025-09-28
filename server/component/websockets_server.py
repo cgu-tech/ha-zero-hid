@@ -165,6 +165,26 @@ async def handle_client(websocket) -> None:
                 await websocket.send(json.dumps(response_data).encode('utf-8'))
                 logger.debug("Sync response: %s", response_data)
 
+            elif cmd == 0x60 :  # audio:start
+                logger.debug("Audio start requested")
+
+            elif cmd in (0x61, 0x62, 0x63):  # audio:transfert
+                if cmd == 0x61 and len(message) >= 2:  # small buffer (from 0 to 255)
+                    length = message[1] # 1 byte
+                    buffer = message[2:2 + length]
+                    logger.debug("Audio buffer (small): %s", length)
+                elif cmd == 0x62 and len(message) >= 3:  # medium buffer (from 256 to 65535)
+                    length = struct.unpack_from("<H", message, 1)[0] # 2 bytes
+                    buffer = message[3:3 + length]
+                    logger.debug("Audio buffer (medium): %s", length)
+                elif cmd == 0x63 and len(message) >= 5:  # large buffer (from 65536 to 4294967295)
+                    length = struct.unpack_from("<I", message, 1)[0] # 4 bytes
+                    buffer = message[5:5 + length]
+                    logger.debug("Audio buffer (large): %s", length)
+
+            elif cmd == 0x70 :  # audio:stop
+                logger.debug("Audio start requested")
+
             else:
                 logger.warning("Unknown or malformed command: 0x%02X", cmd)
 
