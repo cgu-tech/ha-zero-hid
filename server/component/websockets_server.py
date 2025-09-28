@@ -183,7 +183,7 @@ async def handle_client(websocket) -> None:
                     logger.debug("Audio buffer (large): %s", length)
 
             elif cmd == 0x70 :  # audio:stop
-                logger.debug("Audio start requested")
+                logger.debug("Audio stop requested")
 
             else:
                 logger.warning("Unknown or malformed command: 0x%02X", cmd)
