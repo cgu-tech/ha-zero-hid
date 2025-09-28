@@ -184,6 +184,10 @@ install() {
     echo "Installing python websockets dependency..."
     pip install websockets
 
+    # Install Python dependency "py-alsa-audio"
+    echo "Installing python pyalsaaudio dependency..."
+    pip install pyalsaaudio
+
     # Install Python dependency "zero-hid" (custom)
     # TODO: incorporate sources directly instead of building a development python dependency
     echo "Installing python zero-hid dependency..."

@@ -41,7 +41,7 @@ keyboard_state = {
 key_codes_map = KeyCodes.as_dict()
 consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
-aux = Microphone()
+microphone = Microphone()
 
 async def process_request(connection, request: Request):
     # Get client IP from transport
@@ -189,6 +189,7 @@ async def handle_client(websocket) -> None:
                     buffer = message[5:5 + length]
                     if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (large): %s", length)
+                microphone.write_audio(buffer)
 
             elif cmd == 0x70 :  # audio:stop
                 logger.debug("Audio stop requested")
