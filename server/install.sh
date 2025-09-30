@@ -207,6 +207,9 @@ install() {
     echo "Giving rights for server user ${OS_SERVICE_USER} to its home ${OS_SERVICE_USER_DIR}..."
     chmod 750 "${OS_SERVICE_USER_DIR}"
 
+    echo "Giving server user ${OS_SERVICE_USER} audio rights..."
+    (usermod -aG audio "${OS_SERVICE_USER}" >/dev/null 2>&1 || true)
+
     # ------------------
     # Retrieving configs
     # ------------------

@@ -14,6 +14,15 @@ StandardError=journal
 User=ha_zero_hid
 Group=ha_zero_hid
 Environment=PYTHONUNBUFFERED=1
+SupplementaryGroups=audio
+PrivateDevices=no
+ProtectKernelModules=no
+ProtectControlGroups=no
+Environment=ALSA_CONFIG_PATH=/usr/share/alsa/alsa.confSupplementaryGroups=audio
+PrivateDevices=no
+ProtectKernelModules=no
+ProtectControlGroups=no
+Environment=ALSA_CONFIG_PATH=/usr/share/alsa/alsa.conf
 
 [Install]
 WantedBy=multi-user.target
