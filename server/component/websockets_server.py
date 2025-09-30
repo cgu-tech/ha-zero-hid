@@ -88,7 +88,7 @@ async def handle_client(websocket) -> None:
 
             if cmd == 0x01 and len(message) == 3:  # scroll
                 _, x, y = struct.unpack("<Bbb", message)
-                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                if logger.getEffectiveLevel() == logging.DEBUG:
                     logger.debug("Scroll: x=%d, y=%d", x, y)
                 if x:
                     mouse.scroll_x(x)
@@ -97,7 +97,7 @@ async def handle_client(websocket) -> None:
 
             elif cmd == 0x02 and len(message) == 3:  # move
                 _, x, y = struct.unpack("<Bbb", message)
-                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                if logger.getEffectiveLevel() == logging.DEBUG:
                     logger.debug("Move: x=%d, y=%d", x, y)
                 mouse.move(x, y)
 
@@ -119,7 +119,7 @@ async def handle_client(websocket) -> None:
             elif cmd == 0x20 and len(message) >= 2:  # chartap
                 length = message[1]
                 chars = message[2:2 + length].decode('utf-8', errors='ignore')
-                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                if logger.getEffectiveLevel() == logging.DEBUG:
                     logger.debug("Chartap: %s", chars)
                 keyboard.type(chars)
 
@@ -129,7 +129,7 @@ async def handle_client(websocket) -> None:
                 key_count_index = 2 + mod_count
                 key_count = message[key_count_index]
                 keys = list(message[key_count_index + 1:key_count_index + 1 + key_count])
-                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                if logger.getEffectiveLevel() == logging.DEBUG:
                     logger.debug("Keypress: modifiers=%s keys=%s", mods, keys)
 
                 # Directly use raw codes
@@ -167,7 +167,7 @@ async def handle_client(websocket) -> None:
                     "scrolllock": keyboard_state["scrolllock"],
                 }
                 await websocket.send(json.dumps(response_data).encode('utf-8'))
-                if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                if logger.getEffectiveLevel() == logging.DEBUG:
                     logger.debug("Sync response: %s", response_data)
 
             elif cmd == 0x60 :  # audio:start
@@ -177,17 +177,17 @@ async def handle_client(websocket) -> None:
                 if cmd == 0x61 and len(message) >= 2:  # small buffer (from 0 to 255)
                     length = message[1] # 1 byte
                     buffer = message[2:2 + length]
-                    if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (small): %s", length)
                 elif cmd == 0x62 and len(message) >= 3:  # medium buffer (from 256 to 65535)
                     length = struct.unpack_from("<H", message, 1)[0] # 2 bytes
                     buffer = message[3:3 + length]
-                    if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (medium): %s", length)
                 elif cmd == 0x63 and len(message) >= 5:  # large buffer (from 65536 to 4294967295)
                     length = struct.unpack_from("<I", message, 1)[0] # 4 bytes
                     buffer = message[5:5 + length]
-                    if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (large): %s", length)
                 microphone.write_audio(buffer)
 
