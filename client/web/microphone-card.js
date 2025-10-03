@@ -21,6 +21,7 @@ export class MicrophoneCard extends HTMLElement {
   _mediaStream;
   _sourceNode;
   _workletNode;
+  _recordedChunks;
 
   constructor() {
     super();
@@ -146,6 +147,8 @@ export class MicrophoneCard extends HTMLElement {
   async onStartButtonRelease(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     
+    this._recordedChunks = []; // Array of Uint8Arrays
+    
     const startBtn = this._elements.startBtn;
     const stopBtn = this._elements.stopBtn;
     const statusLbl = this._elements.statusLbl;
@@ -196,12 +199,13 @@ export class MicrophoneCard extends HTMLElement {
 
       this._sourceNode.connect(this._workletNode);
       this._workletNode.connect(this._audioContext.destination);
-
+      
       this._workletNode.port.onmessage = (event) => {
         if (event.data) {
           // Send audio data to HA
-          const buffer = Array.from(new Uint8Array(event.data));
-          this.sendAudio(buffer);
+          const buffer = new Uint8Array(event.data);
+          this._recordedChunks.push(buffer);  // Save raw audio buffer
+          this.sendAudio(Array.from(buffer));
         }
       };
 
@@ -258,6 +262,9 @@ export class MicrophoneCard extends HTMLElement {
     }
     this._sourceNode = null;
     this._workletNode = null;
+    
+    // Create WAV record file and trigger download
+    this.triggerWavDownload();
   };
 
   doUpdateConfig() {
@@ -313,6 +320,65 @@ export class MicrophoneCard extends HTMLElement {
 
   stopAudio() {
     this._eventManager.callComponentServiceWithServerId("auxstop", {});
+  }
+
+  triggerWavDownload() {
+    const wavBlob = this.createWavFile();
+    const url = URL.createObjectURL(wavBlob);
+    
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'recording.wav';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  createWavFile() {
+    const sampleRate = 16000;
+    const numChannels = 1;
+    const bitsPerSample = 16;
+  
+    // Merge all chunks into a single Uint8Array
+    const dataLength = this._recordedChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const wavBuffer = new ArrayBuffer(44 + dataLength);
+    const view = new DataView(wavBuffer);
+  
+    // WAV header
+    let offset = 0;
+    const writeString = (str) => {
+      for (let i = 0; i < str.length; i++) {
+        view.setUint8(offset++, str.charCodeAt(i));
+      }
+    };
+  
+    writeString('RIFF');
+    view.setUint32(offset, 36 + dataLength, true); offset += 4; // file length
+    writeString('WAVE');
+  
+    writeString('fmt ');
+    view.setUint32(offset, 16, true); offset += 4; // fmt chunk size
+    view.setUint16(offset, 1, true); offset += 2; // audio format (1 = PCM)
+    view.setUint16(offset, numChannels, true); offset += 2;
+    view.setUint32(offset, sampleRate, true); offset += 4;
+    view.setUint32(offset, sampleRate * numChannels * bitsPerSample / 8, true); offset += 4; // byte rate
+    view.setUint16(offset, numChannels * bitsPerSample / 8, true); offset += 2; // block align
+    view.setUint16(offset, bitsPerSample, true); offset += 2;
+  
+    writeString('data');
+    view.setUint32(offset, dataLength, true); offset += 4;
+  
+    // Write audio data
+    let dataOffset = offset;
+    for (const chunk of this._recordedChunks) {
+      new Uint8Array(wavBuffer, dataOffset, chunk.length).set(chunk);
+      dataOffset += chunk.length;
+    }
+  
+    // Create and return the Blob
+    const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+    return blob;
   }
 
 }
