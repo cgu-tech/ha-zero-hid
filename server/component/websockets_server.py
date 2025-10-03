@@ -171,6 +171,7 @@ async def handle_client(websocket) -> None:
                     logger.debug("Sync response: %s", response_data)
 
             elif cmd == 0x60 :  # audio:start
+                microphone.start_audio()
                 logger.debug("Audio start requested")
 
             elif cmd in (0x61, 0x62, 0x63):  # audio:transfert
