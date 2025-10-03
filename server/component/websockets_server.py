@@ -171,8 +171,8 @@ async def handle_client(websocket) -> None:
                     logger.debug("Sync response: %s", response_data)
 
             elif cmd == 0x60 :  # audio:start
-                microphone.start_audio()
                 logger.debug("Audio start requested")
+                microphone.start_audio()
 
             elif cmd in (0x61, 0x62, 0x63):  # audio:transfert
                 if cmd == 0x61 and len(message) >= 2:  # small buffer (from 0 to 255)
@@ -194,6 +194,7 @@ async def handle_client(websocket) -> None:
 
             elif cmd == 0x70 :  # audio:stop
                 logger.debug("Audio stop requested")
+                microphone.stop_audio()
 
             else:
                 logger.warning("Unknown or malformed command: 0x%02X", cmd)
