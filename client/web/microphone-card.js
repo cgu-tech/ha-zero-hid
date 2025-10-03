@@ -194,6 +194,10 @@ export class MicrophoneCard extends HTMLElement {
       `], { type: 'application/javascript' })));
 
       this._mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Start stream notification
+      this.startAudio();
+      
       this._sourceNode = this._audioContext.createMediaStreamSource(this._mediaStream);
       this._workletNode = new AudioWorkletNode(this._audioContext, 'mic-processor');
 
@@ -208,9 +212,6 @@ export class MicrophoneCard extends HTMLElement {
           this.sendAudio(Array.from(buffer));
         }
       };
-
-      // Start stream notification
-      this.startAudio();
 
       statusLbl.textContent = "Streaming audio...";
     } catch (err) {

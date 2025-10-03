@@ -89,7 +89,7 @@ class WebSocketClient:
         await self.send(cmd)
 
     # Audio stop: [0x70]
-    async def send_audiostart(self) -> None:
+    async def send_audiostop(self) -> None:
         await self.send(b'\x70')
 
     async def send(self, cmd: bytes, wait_response: bool = False) -> bytes | None:
