@@ -227,26 +227,28 @@ async def handle_client(websocket) -> None:
                 if cmd == 0x61 and len(message) >= 2:  # small buffer (from 0 to 255)
                     length = message[1] # 1 byte
                     buffer = message[2:2 + length]
-                    recorded_chunks.append(buffer)
+                    #recorded_chunks.append(buffer)
+                    microphone.write_audio(buffer)
                     if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (small): %s", length)
                 elif cmd == 0x62 and len(message) >= 3:  # medium buffer (from 256 to 65535)
                     length = struct.unpack_from("<H", message, 1)[0] # 2 bytes
                     buffer = message[3:3 + length]
-                    recorded_chunks.append(buffer)
+                    #recorded_chunks.append(buffer)
+                    microphone.write_audio(buffer)
                     if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (medium): %s", length)
                 elif cmd == 0x63 and len(message) >= 5:  # large buffer (from 65536 to 4294967295)
                     length = struct.unpack_from("<I", message, 1)[0] # 4 bytes
                     buffer = message[5:5 + length]
-                    recorded_chunks.append(buffer)
+                    #recorded_chunks.append(buffer)
+                    microphone.write_audio(buffer)
                     if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (large): %s", length)
-                # microphone.write_audio(buffer)
 
             elif cmd == 0x70 :  # audio:stop
                 logger.debug("Audio stop requested")
-                microphone.stop_audio()
+                # microphone.stop_audio()
                 with open("/home/ha_zero_hid/output.wav", "wb") as f:
                     f.write(create_wav_file())
 
