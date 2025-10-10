@@ -154,6 +154,10 @@ export class MicrophoneCard extends HTMLElement {
     const statusLbl = this._elements.statusLbl;
     try {
       statusLbl.textContent = "Starting...";
+      
+      // Start stream notification
+      this.startAudio();
+      
       startBtn.disabled = true;
       stopBtn.disabled = false;
 
@@ -194,10 +198,7 @@ export class MicrophoneCard extends HTMLElement {
       `], { type: 'application/javascript' })));
 
       this._mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // Start stream notification
-      this.startAudio();
-      
+            
       this._sourceNode = this._audioContext.createMediaStreamSource(this._mediaStream);
       this._workletNode = new AudioWorkletNode(this._audioContext, 'mic-processor');
 

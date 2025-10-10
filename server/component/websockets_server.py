@@ -43,6 +43,55 @@ consumer = Consumer(hid)
 consumer_codes_map = ConsumerCodes.as_dict()
 microphone = Microphone()
 
+recorded_chunks = []
+
+def create_wav_file():
+    sample_rate = 16000
+    num_channels = 1
+    bits_per_sample = 16
+
+    # Merge all chunks into a single bytes object
+    audio_data = b''.join(recorded_chunks)
+    data_length = len(audio_data)
+
+    byte_rate = sample_rate * num_channels * bits_per_sample // 8
+    block_align = num_channels * bits_per_sample // 8
+
+    # WAV header (44 bytes total)
+    header = bytearray()
+
+    def write_string(s):
+        header.extend(s.encode('ascii'))
+
+    def write_uint32_le(val):
+        header.extend(struct.pack('<I', val))
+
+    def write_uint16_le(val):
+        header.extend(struct.pack('<H', val))
+
+    # RIFF header
+    write_string('RIFF')
+    write_uint32_le(36 + data_length)  # File size - 8 bytes
+    write_string('WAVE')
+
+    # fmt chunk
+    write_string('fmt ')
+    write_uint32_le(16)               # Subchunk1Size (PCM)
+    write_uint16_le(1)                # AudioFormat (1 = PCM)
+    write_uint16_le(num_channels)
+    write_uint32_le(sample_rate)
+    write_uint32_le(byte_rate)
+    write_uint16_le(block_align)
+    write_uint16_le(bits_per_sample)
+
+    # data chunk
+    write_string('data')
+    write_uint32_le(data_length)
+
+    # Combine header and audio data
+    wav_data = bytes(header) + audio_data
+    return wav_data
+
 async def process_request(connection, request: Request):
     # Get client IP from transport
     remote = connection.remote_address  # a tuple (host, port)
@@ -178,23 +227,28 @@ async def handle_client(websocket) -> None:
                 if cmd == 0x61 and len(message) >= 2:  # small buffer (from 0 to 255)
                     length = message[1] # 1 byte
                     buffer = message[2:2 + length]
+                    recorded_chunks.append(buffer)
                     if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (small): %s", length)
                 elif cmd == 0x62 and len(message) >= 3:  # medium buffer (from 256 to 65535)
                     length = struct.unpack_from("<H", message, 1)[0] # 2 bytes
                     buffer = message[3:3 + length]
+                    recorded_chunks.append(buffer)
                     if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (medium): %s", length)
                 elif cmd == 0x63 and len(message) >= 5:  # large buffer (from 65536 to 4294967295)
                     length = struct.unpack_from("<I", message, 1)[0] # 4 bytes
                     buffer = message[5:5 + length]
+                    recorded_chunks.append(buffer)
                     if logger.getEffectiveLevel() == logging.DEBUG:
                         logger.debug("Audio buffer (large): %s", length)
-                microphone.write_audio(buffer)
+                # microphone.write_audio(buffer)
 
             elif cmd == 0x70 :  # audio:stop
                 logger.debug("Audio stop requested")
                 microphone.stop_audio()
+                with open("/home/ha_zero_hid/output.wav", "wb") as f:
+                    f.write(create_wav_file(recorded_chunks))
 
             else:
                 logger.warning("Unknown or malformed command: 0x%02X", cmd)
