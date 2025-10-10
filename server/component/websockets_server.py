@@ -248,7 +248,7 @@ async def handle_client(websocket) -> None:
                 logger.debug("Audio stop requested")
                 microphone.stop_audio()
                 with open("/home/ha_zero_hid/output.wav", "wb") as f:
-                    f.write(create_wav_file(recorded_chunks))
+                    f.write(create_wav_file())
 
             else:
                 logger.warning("Unknown or malformed command: 0x%02X", cmd)
