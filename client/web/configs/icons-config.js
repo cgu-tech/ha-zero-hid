@@ -170,5 +170,29 @@ export const iconsConfig = {
     `<svg width="3144.3125" height="670.37506" viewBox="0 0 3144.3125 670.37506" version="1.0" xmlns="http://www.w3.org/2000/svg">
        <path class="primary-path" d="m 900.00003,0 52.56255,275 h -230.4063 v 47.15625 h -25 l 0.34375,37.5 H 522.15628 v 62.5 H 376.09378 V 383.9375 L 0,379.3125 c 6.8249,33.89017 58.0698,70.83095 121.0937,79.28125 l 0.7188,55 C 85.8611,561.32635 82.9796,632.99115 130,670.37505 h 2702.5001 c 359.2227,-7.7796 284.6551,-66.6305 311.8125,-318.56255 l -470.375,14.625 V 405 h -187.5 v -27.5 h -32.5 V 275 H 2327.7501 L 2274.1251,0 h -135.7188 l 52.5313,275 H 1912.7501 L 1859.1251,0 h -135.7188 l 52.5313,275 H 1506.2188 L 1452.6876,0.5 H 1316.9688 L 1369.4376,275 H 1089.3438 L 1035.7188,0 Z"/>
      </svg>`
+  },
+  "icon-star": {
+    html:
+    `<svg preserveAspectRatio="xMidYMid meet" focusable="false" role="img" aria-hidden="true" viewBox="0 0 24 24"> 
+       <g>
+         <path class="primary-path" d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"></path>
+       </g>
+     </svg>`
+  },
+  "icon-christmas-tree": {
+    html:
+    `<svg preserveAspectRatio="xMidYMid meet" focusable="false" role="img" aria-hidden="true" viewBox="0 0 24 24">
+      <g>
+        <path class="primary-path" d="M10,21V18H3L8,13H5L10,8H7L12,3L17,8H14L19,13H16L21,18H14V21H10Z"></path>
+      </g>
+    </svg>`
+  },
+  "icon-christmas-present": {
+    html:
+    `<svg preserveAspectRatio="xMidYMid meet" focusable="false" role="img" aria-hidden="true" viewBox="0 0 24 24">
+      <g>
+        <path class="primary-path" d="M9.06,1.93C7.17,1.92 5.33,3.74 6.17,6H3A2,2 0 0,0 1,8V10A1,1 0 0,0 2,11H11V8H13V11H22A1,1 0 0,0 23,10V8A2,2 0 0,0 21,6H17.83C19,2.73 14.6,0.42 12.57,3.24L12,4L11.43,3.22C10.8,2.33 9.93,1.94 9.06,1.93M9,4C9.89,4 10.34,5.08 9.71,5.71C9.08,6.34 8,5.89 8,5A1,1 0 0,1 9,4M15,4C15.89,4 16.34,5.08 15.71,5.71C15.08,6.34 14,5.89 14,5A1,1 0 0,1 15,4M2,12V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V12H13V20H11V12H2Z"></path>
+      </g>
+    </svg>`
   }
 };
