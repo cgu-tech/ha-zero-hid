@@ -7,19 +7,29 @@ START_COLOR_R,252
 START_COLOR_G,243
 START_COLOR_B,207
 START_RESET,false
-COLOR_#BD2A19,smartled100_color_red
-COLOR_#348C52,smartled100_color_green
-COLOR_#0A62B5,smartled100_color_blue
-COLOR_#FCF3CF,smartled100_color_white
-COLOR_#C74613,smartled100_color_red2
-COLOR_#04D971,smartled100_color_green2
-COLOR_#009BE8,smartled100_color_blue2
-COLOR_#189DC7,smartled100_color_indigo
-COLOR_#D98432,smartled100_color_orange
-COLOR_#4BDB95,smartled100_color_green3
-COLOR_#1FC9FF,smartled100_color_blue3
-COLOR_#C73385,smartled100_color_pink
-COLOR_#D4C560,smartled100_color_yellow
-COLOR_#1CFFE0,smartled100_color_green4
-COLOR_#781F50,smartled100_color_purple
-COLOR_#C48C83,smartled100_color_pink2
+COLOR_#BD2A19,smartled100_color_red,🔴 Rouge
+COLOR_#C74613,smartled100_color_red2,🟠 Orange foncé
+COLOR_#D98432,smartled100_color_orange,🟠 Orange clair
+COLOR_#D4C560,smartled100_color_yellow,🟡 Jaune
+COLOR_#348C52,smartled100_color_green,🟢 Vert foncé
+COLOR_#04D971,smartled100_color_green2,🟢 Vert clair
+COLOR_#4BDB95,smartled100_color_green3,🟢 Vert très clair
+COLOR_#1CFFE0,smartled100_color_green4,🟢 Vert jaune
+COLOR_#0A62B5,smartled100_color_blue,🔵 Bleu fonçé
+COLOR_#009BE8,smartled100_color_blue2,🔵 Bleu clair
+COLOR_#1FC9FF,smartled100_color_blue3,🔵 Bleu 3
+COLOR_#189DC7,smartled100_color_indigo,🔵 Indigo
+COLOR_#781F50,smartled100_color_purple,🟣 Violet
+COLOR_#C73385,smartled100_color_pink,🟣 Rose
+COLOR_#C48C83,smartled100_color_pink2,🟣 Rose pâle
+COLOR_#FCF3CF,smartled100_color_white,⚪ Blanc
+EFFECT_01,smartled100_speed_plus,Increase speed
+EFFECT_02,smartled100_speed_minus,Decrease speed
+EFFECT_03,smartled100_mode_auto,Auto
+EFFECT_04,smartled100_mode_auto_dupliquer,Change mode
+EFFECT_05,smartled100_mode_strobe,Strobe
+EFFECT_06,smartled100_mode_in_waves,In waves
+EFFECT_07,smartled100_mode_jump,Jump
+EFFECT_08,smartled100_mode_fade,Fade
+EFFECT_09,smartled100_mode_flash,Flash
+EFFECT_10,smartled100_mode_chase_flash,Chase flash

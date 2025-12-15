@@ -229,20 +229,124 @@ remove_yaml_top_level_block() {
   #echo "Done removing '${block_name}' from '${file}'"
 }
 
-# Indexed arrays to hold keys and values
+# First function: converts 2-digit hex to decimal
+hex_to_dec() {
+    local hex="$1"
+    local __resultvar="$2"
+    local dec=0
+    local i
+    local digit
+    hex="${hex^^}"  # Convert to uppercase
+
+    for (( i=0; i<${#hex}; i++ )); do
+        digit="${hex:i:1}"
+        case "$digit" in
+            [0-9]) digit=$((digit)) ;;
+            A) digit=10 ;;
+            B) digit=11 ;;
+            C) digit=12 ;;
+            D) digit=13 ;;
+            E) digit=14 ;;
+            F) digit=15 ;;
+            *) echo "Invalid hex: $hex" >&2; return 1 ;;
+        esac
+        dec=$((dec * 16 + digit))
+    done
+
+    # Assign to external variable
+    if [[ -n "$__resultvar" ]]; then
+        eval "$__resultvar=$dec"
+    else
+        echo "$dec"
+    fi
+}
+
+# Second function: converts #RRGGBB into three decimal values
+hex_to_rgb() {
+    local hex="$1"
+    local __rvar="$2"
+    local __gvar="$3"
+    local __bvar="$4"
+
+    # Remove leading '#' if present
+    hex="${hex#\#}"
+
+    # Validate length
+    if [[ ${#hex} -ne 6 ]]; then
+        echo "Invalid hex color: $1" >&2
+        return 1
+    fi
+
+    # Extract RR, GG, BB
+    local rr="${hex:0:2}"
+    local gg="${hex:2:2}"
+    local bb="${hex:4:2}"
+
+    # Convert each to decimal
+    hex_to_dec "$rr" "$__rvar"
+    hex_to_dec "$gg" "$__gvar"
+    hex_to_dec "$bb" "$__bvar"
+}
+
+# Convert a decimal (0-255) to 2-digit uppercase hex
+dec_to_hex() {
+    local dec=$1
+    local __resultvar=$2
+
+    # Validate input
+    if [[ $dec -lt 0 || $dec -gt 255 ]]; then
+        echo "Invalid decimal: $dec (must be 0-255)" >&2
+        return 1
+    fi
+
+    local hex_digits=(0 1 2 3 4 5 6 7 8 9 A B C D E F)
+    local high=$((dec / 16))
+    local low=$((dec % 16))
+    local hex="${hex_digits[high]}${hex_digits[low]}"
+
+    if [[ -n "$__resultvar" ]]; then
+        eval "$__resultvar=\"$hex\""
+    else
+        echo "$hex"
+    fi
+}
+
+# Convert three decimals (R,G,B) to #RRGGBB string
+rgb_to_hex() {
+    local r=$1
+    local g=$2
+    local b=$3
+    local __resultvar=$4
+    local hr hg hb hex
+
+    dec_to_hex "$r" hr
+    dec_to_hex "$g" hg
+    dec_to_hex "$b" hb
+
+    hex="#${hr}${hg}${hb}"
+
+    if [[ -n "$__resultvar" ]]; then
+        eval "$__resultvar=\"$hex\""
+    else
+        echo "$hex"
+    fi
+}
+
+# Indexed arrays to hold keys, values and displays
 CONFIG_KEYS=()
 CONFIG_VALUES=()
+CONFIG_DISPLAYS=()
 
 load_config_map() {
   local file="$1"
-  local key value line line_num=0
+  local key value display line line_num=0
 
   if [[ ! -f "$file" ]]; then
     echo "ERROR: File not found: $file" >&2
     return 1
   fi
 
-  while IFS=',' read -r key value; do
+  while IFS=',' read -r key value display; do
     line_num=$((line_num + 1))
 
     # Skip comments and empty lines
@@ -251,9 +355,16 @@ load_config_map() {
     # Trim whitespace and remove optional surrounding quotes
     key=$(echo "$key" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
     value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
+    # If display is missing, default to empty string
+    if [[ -z "$display" ]]; then
+      display=""
+    else
+      display=$(echo "$display" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
+    fi
 
     CONFIG_KEYS+=("$key")
     CONFIG_VALUES+=("$value")
+    CONFIG_DISPLAYS+=("$display")
   done < "$file"
 }
 
@@ -290,6 +401,21 @@ get_value_for_key() {
   for i in "${!CONFIG_KEYS[@]}"; do
     if [[ "${CONFIG_KEYS[i]}" == "$search_key" ]]; then
       echo "${CONFIG_VALUES[i]}"
+      return 0
+    fi
+  done
+
+  # Return empty if not found (or you can return an error code)
+  return 1
+}
+
+get_display_for_key() {
+  local search_key="$1"
+  local i
+
+  for i in "${!CONFIG_KEYS[@]}"; do
+    if [[ "${CONFIG_KEYS[i]}" == "$search_key" ]]; then
+      echo "${CONFIG_DISPLAYS[i]}"
       return 0
     fi
   done
@@ -397,6 +523,7 @@ FILE_SWITCH_TEMPLATES_NAME="switches.yaml"
 FILE_SCRIPTS_NAME="scripts.yaml"
 FILE_INPUT_NUMBERS_NAME="input_numbers.yaml"
 FILE_INPUT_BOOLEANS_NAME="input_booleans.yaml"
+FILE_INPUT_SELECTS_NAME="input_selects.yaml"
 
 FILE_CONFIG="${DIR_CONFIG}/${FILE_CONFIG_NAME}"
 FILE_TEMPLATES="${DIR_CONFIG}/${FILE_TEMPLATES_NAME}"
@@ -405,6 +532,7 @@ FILE_SWITCH_TEMPLATES="${DIR_CONFIG}/${FILE_SWITCH_TEMPLATES_NAME}"
 FILE_SCRIPTS="${DIR_CONFIG}/${FILE_SCRIPTS_NAME}"
 FILE_INPUT_NUMBERS="${DIR_CONFIG}/${FILE_INPUT_NUMBERS_NAME}"
 FILE_INPUT_BOOLEANS="${DIR_CONFIG}/${FILE_INPUT_BOOLEANS_NAME}"
+FILE_INPUT_SELECTS="${DIR_CONFIG}/${FILE_INPUT_SELECTS_NAME}"
 
 FILE_SAV_CONFIG="${DIR_CONFIG}/${TIMESTAMP}_${FILE_CONFIG_NAME}.sav"
 FILE_SAV_TEMPLATES="${DIR_CONFIG}/${TIMESTAMP}_${FILE_TEMPLATES_NAME}.sav"
@@ -413,6 +541,7 @@ FILE_SAV_SWITCH_TEMPLATES="${DIR_CONFIG}/${TIMESTAMP}_${FILE_SWITCH_TEMPLATES_NA
 FILE_SAV_SCRIPTS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_SCRIPTS_NAME}.sav"
 FILE_SAV_INPUT_NUMBERS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_INPUT_NUMBERS_NAME}.sav"
 FILE_SAV_INPUT_BOOLEANS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_INPUT_BOOLEANS_NAME}.sav"
+FILE_SAV_INPUT_SELECTS="${DIR_CONFIG}/${TIMESTAMP}_${FILE_INPUT_SELECTS_NAME}.sav"
 
 DIR_PYTHON_SCRIPTS="${DIR_CONFIG}/python_scripts"
 FILE_LED_COLOR_MATCH_SCRIPT="${DIR_PYTHON_SCRIPTS}/led_color_match.py"
@@ -423,6 +552,7 @@ SCRIPT_NAME_TURN_ON="${ENTITY_ID}_turn_on"
 SCRIPT_NAME_TURN_OFF="${ENTITY_ID}_turn_off"
 SCRIPT_NAME_SET_COLOR="${ENTITY_ID}_set_color"
 SCRIPT_NAME_SET_LEVEL="${ENTITY_ID}_set_level"
+SCRIPT_NAME_SET_EFFECT_COLOR="${ENTITY_ID}_set_effect_color"
 
 INPUT_NUMBER_R="${ENTITY_ID}_r"
 INPUT_NUMBER_G="${ENTITY_ID}_g"
@@ -430,6 +560,8 @@ INPUT_NUMBER_B="${ENTITY_ID}_b"
 INPUT_NUMBER_BRIGHTNESS="${ENTITY_ID}_brightness"
 
 INPUT_BOOLEAN_POWER="${ENTITY_ID}_power"
+
+INPUT_SELECT_EFFECTS="${ENTITY_ID}_effects"
 
 # Define target template file
 FILE_TEMPLATE_FOR_TYPE=""
@@ -450,6 +582,7 @@ ensure_file_exists "${FILE_SWITCH_TEMPLATES}"
 ensure_file_exists "${FILE_SCRIPTS}"
 ensure_file_exists "${FILE_INPUT_NUMBERS}"
 ensure_file_exists "${FILE_INPUT_BOOLEANS}"
+ensure_file_exists "${FILE_INPUT_SELECTS}"
 
 # Create timestamped save backup of files before editing them
 echo "Backuping HA configurations..."
@@ -460,6 +593,7 @@ cp "${FILE_SWITCH_TEMPLATES}" "${FILE_SAV_SWITCH_TEMPLATES}"
 cp "${FILE_SCRIPTS}" "${FILE_SAV_SCRIPTS}"
 cp "${FILE_INPUT_NUMBERS}" "${FILE_SAV_INPUT_NUMBERS}"
 cp "${FILE_INPUT_BOOLEANS}" "${FILE_SAV_INPUT_BOOLEANS}"
+cp "${FILE_INPUT_SELECTS}" "${FILE_SAV_INPUT_SELECTS}"
 
 # Remove previous entity artifacts from configurations files (to be able to restart from a clean base)
 echo "Cleaning ${ENTITY_FULL_ID} from HA configurations..."
@@ -468,6 +602,7 @@ sed -i "/^template:/d" "${FILE_CONFIG}"
 sed -i "/^script:/d" "${FILE_CONFIG}"
 sed -i "/^input_number:/d" "${FILE_CONFIG}"
 sed -i "/^input_boolean:/d" "${FILE_CONFIG}"
+sed -i "/^input_select:/d" "${FILE_CONFIG}"
 
 sed -i "/^- light:/d" "${FILE_TEMPLATES}"
 sed -i "/^- switch:/d" "${FILE_TEMPLATES}"
@@ -476,11 +611,13 @@ remove_yaml_subblock "${FILE_TEMPLATE_FOR_TYPE}" "${ENTITY_ID}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_ON}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_OFF}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_SET_COLOR}"
+remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_SET_EFFECT_COLOR}"
 remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_R}"
 remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_G}"
 remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_B}"
 remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_BRIGHTNESS}"
 remove_yaml_top_level_block "${FILE_INPUT_BOOLEANS}" "${INPUT_BOOLEAN_POWER}"
+remove_yaml_top_level_block "${FILE_INPUT_SELECTS}" "${INPUT_SELECT_EFFECTS}"
 
 # Register detached configurations files into main configuration file
 echo "Registering HA detached configurations into HA main configuration ${FILE_CONFIG}..."
@@ -489,6 +626,7 @@ grep -qxF "template:" "${FILE_CONFIG}" || echo "template: !include templates.yam
 grep -qxF "script:" "${FILE_CONFIG}" || echo "script: !include scripts.yaml" >> "${FILE_CONFIG}"
 grep -qxF "input_number:" "${FILE_CONFIG}" || echo "input_number: !include input_numbers.yaml" >> "${FILE_CONFIG}"
 grep -qxF "input_boolean:" "${FILE_CONFIG}" || echo "input_boolean: !include input_booleans.yaml" >> "${FILE_CONFIG}"
+grep -qxF "input_select:" "${FILE_CONFIG}" || echo "input_select: !include input_selects.yaml" >> "${FILE_CONFIG}"
 
 grep -qxF -- "- light:" "${FILE_TEMPLATES}" || echo "- light: !include lights.yaml" >> "${FILE_TEMPLATES}"
 grep -qxF -- "- switch:" "${FILE_TEMPLATES}" || echo "- switch: !include switches.yaml" >> "${FILE_TEMPLATES}"
@@ -609,6 +747,38 @@ EOF
 } >> "${FILE_INPUT_NUMBERS}"
 fi
 
+if [ "${ENTITY_TYPE}" == "light" ]; then
+# Write input_selects (create or append)
+echo "Writing input_selects..."
+{ echo; cat <<EOF
+${INPUT_SELECT_EFFECTS}:
+  name: "${ENTITY_NAME} selectable effects"
+  options:
+    - "none"
+EOF
+} >> "${FILE_INPUT_SELECTS}"
+
+echo "Adding color effects into input_selects..."
+COLOR_KEYS=$(get_keys_starting_with "COLOR_")
+for COLOR_KEY in $COLOR_KEYS; do
+  COLOR_IDX="${COLOR_KEY#COLOR_#}"
+{ cat <<EOF
+    - "effect_color_${COLOR_IDX}"
+EOF
+} >> "${FILE_INPUT_SELECTS}"
+done
+
+echo "Adding standard effects into input_selects..."
+EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
+for EFFECT_KEY in $EFFECT_KEYS; do
+  EFFECT_IDX="${EFFECT_KEY#EFFECT_}"
+{ cat <<EOF
+    - "effect_${EFFECT_IDX}"
+EOF
+} >> "${FILE_INPUT_SELECTS}"
+done
+fi
+
 # Write scripts (create or append)
 echo "Writing script..."
 
@@ -719,6 +889,55 @@ EOF
 done
 fi
 
+# Write "set_effect_color" (using RGB) script
+if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Adding set_effect_color service into script..."
+rgb_to_hex ${ENTITY_START_COLOR_R} ${ENTITY_START_COLOR_G} ${ENTITY_START_COLOR_B} START_COLOR_HEX
+{ echo; cat <<EOF
+${SCRIPT_NAME_SET_EFFECT_COLOR}:
+  alias: "Set ${ENTITY_NAME} color effect"
+  mode: single
+  fields:
+    r:
+      description: "Red component"
+      example: ${ENTITY_START_COLOR_R}
+    g:
+      description: "Green component"
+      example: ${ENTITY_START_COLOR_G}
+    b:
+      description: "Blue component"
+      example: ${ENTITY_START_COLOR_B}
+    effect_name:
+      description: "Color effect name"
+      example: "effect_color_${START_COLOR_HEX}"
+  sequence:
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.${INPUT_NUMBER_R}
+      data:
+        value: "{{ r }}"
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.${INPUT_NUMBER_G}
+      data:
+        value: "{{ g }}"
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.${INPUT_NUMBER_B}
+      data:
+        value: "{{ b }}"
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.${INPUT_SELECT_EFFECTS}
+      data:
+        option: "{{ effect_name }}"
+    - service: script.${SCRIPT_NAME_SET_COLOR}
+      data:
+        rgb_color: [ "{{ r }}", "{{ g }}", "{{ b }}" ]
+EOF
+} >> "${FILE_SCRIPTS}"
+fi
+
 # Write entity template (create or append)
 echo "Writing template..."
 echo "Adding entity start template..."
@@ -730,11 +949,40 @@ EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 if [ "${ENTITY_TYPE}" == "light" ]; then
+
 echo "Adding entity rgb template..."
 { cat <<EOF
   rgb: "({{states('input_number.${INPUT_NUMBER_R}') | int}}, {{states('input_number.${INPUT_NUMBER_G}') | int}}, {{states('input_number.${INPUT_NUMBER_B}') | int}})"
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+echo "Adding entity effects template start..."
+{ cat <<EOF
+  effect: "{{ states('input_select.${INPUT_SELECT_EFFECTS}') }}"
+  effect_list: "{{ ['None'
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+echo "Adding color to entity effects template..."
+COLOR_KEYS=$(get_keys_starting_with "COLOR_")
+for COLOR_KEY in $COLOR_KEYS; do
+  COLOR_DISPLAY=$(get_display_for_key "${COLOR_KEY}")
+  printf ", '%s'" "${COLOR_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+done
+
+echo "Adding effects to entity effects template..."
+EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
+for EFFECT_KEY in $EFFECT_KEYS; do
+  EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
+  printf ", '%s'" "${EFFECT_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+done
+
+echo "Adding entity effects template end..."
+{ cat <<EOF
+  ] }}"
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+
 fi
 
 echo "Adding entity turn_on/turn_off templates..."
@@ -762,15 +1010,66 @@ echo "Adding entity set_rgb template..."
       data:
         value: "{{ b }}"
         entity_id: input_number.${INPUT_NUMBER_B}
+    - action: input_select.select_option
+      data:
+        entity_id: input_select.${INPUT_SELECT_EFFECTS}
+        option: "None"
     - action: script.${SCRIPT_NAME_SET_COLOR}
       data:
         rgb_color:
           - "{{ r }}"
           - "{{ g }}"
           - "{{ b }}"
-
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+echo "Adding entity set_effect template start..."
+{ cat <<EOF
+  set_effect:
+    - choose:
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+echo "Adding entity set_effect colors template..."
+COLOR_KEYS=$(get_keys_starting_with "COLOR_")
+for COLOR_KEY in $COLOR_KEYS; do
+  COLOR_HEX="${COLOR_KEY#COLOR_#}"
+  COLOR_DISPLAY=$(get_display_for_key "${COLOR_KEY}")
+  hex_to_rgb "${COLOR_HEX}" COLOR_R COLOR_G COLOR_B
+{ cat <<EOF
+        - conditions: "{{ effect == '${COLOR_DISPLAY}' }}"
+          sequence:
+            - service: script.${SCRIPT_NAME_SET_EFFECT_COLOR}
+              data:
+                r: ${COLOR_R}
+                g: ${COLOR_G}
+                b: ${COLOR_B}
+                effect_name: "effect_color_${COLOR_HEX}"
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+done
+
+echo "Adding entity set_effect effects template..."
+EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
+for EFFECT_KEY in $EFFECT_KEYS; do
+  EFFECT_SCRIPT=$(get_value_for_key "${EFFECT_KEY}")
+  EFFECT_IDX="${EFFECT_KEY#EFFECT_}"
+  EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
+{ cat <<EOF
+        - conditions: "{{ effect == '${EFFECT_DISPLAY}' }}"
+          sequence:
+            - action: input_select.select_option
+              data:
+                entity_id: input_select.${INPUT_SELECT_EFFECTS}
+                option: "effect_${EFFECT_IDX}"
+            - action: script.${EFFECT_SCRIPT}
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+done
+
+echo "Adding entity set_effect template end..."
+printf "\n" >> "${FILE_SCRIPTS}"
+
 fi
 
 echo "Entity ${ENTITY_FULL_ID} created:"
