@@ -961,7 +961,7 @@ echo "Adding entity effects template start..."
   effect: "{{ states('input_select.${INPUT_SELECT_EFFECTS}') }}"
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
-printf "effect_list: \"{{ ['None'" >> "${FILE_TEMPLATE_FOR_TYPE}"
+printf "  effect_list: \"{{ ['None'" >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 echo "Adding color to entity effects template..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
