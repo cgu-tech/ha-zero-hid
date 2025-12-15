@@ -959,9 +959,9 @@ EOF
 echo "Adding entity effects template start..."
 { cat <<EOF
   effect: "{{ states('input_select.${INPUT_SELECT_EFFECTS}') }}"
-  effect_list: "{{ ['None'
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+printf "effect_list: \"{{ ['None'" >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 echo "Adding color to entity effects template..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
@@ -1037,14 +1037,14 @@ for COLOR_KEY in $COLOR_KEYS; do
   COLOR_DISPLAY=$(get_display_for_key "${COLOR_KEY}")
   hex_to_rgb "${COLOR_HEX}" COLOR_R COLOR_G COLOR_B
 { cat <<EOF
-        - conditions: "{{ effect == '${COLOR_DISPLAY}' }}"
-          sequence:
-            - service: script.${SCRIPT_NAME_SET_EFFECT_COLOR}
-              data:
-                r: ${COLOR_R}
-                g: ${COLOR_G}
-                b: ${COLOR_B}
-                effect_name: "effect_color_${COLOR_HEX}"
+      - conditions: "{{ effect == '${COLOR_DISPLAY}' }}"
+        sequence:
+          - service: script.${SCRIPT_NAME_SET_EFFECT_COLOR}
+            data:
+              r: ${COLOR_R}
+              g: ${COLOR_G}
+              b: ${COLOR_B}
+              effect_name: "effect_color_${COLOR_HEX}"
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
@@ -1056,13 +1056,13 @@ for EFFECT_KEY in $EFFECT_KEYS; do
   EFFECT_IDX="${EFFECT_KEY#EFFECT_}"
   EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
 { cat <<EOF
-        - conditions: "{{ effect == '${EFFECT_DISPLAY}' }}"
-          sequence:
-            - action: input_select.select_option
-              data:
-                entity_id: input_select.${INPUT_SELECT_EFFECTS}
-                option: "effect_${EFFECT_IDX}"
-            - action: script.${EFFECT_SCRIPT}
+      - conditions: "{{ effect == '${EFFECT_DISPLAY}' }}"
+        sequence:
+          - action: input_select.select_option
+            data:
+              entity_id: input_select.${INPUT_SELECT_EFFECTS}
+              option: "effect_${EFFECT_IDX}"
+          - service: script.${EFFECT_SCRIPT}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
