@@ -1013,7 +1013,7 @@ echo "Adding entity set_rgb template..."
     - action: input_select.select_option
       data:
         entity_id: input_select.${INPUT_SELECT_EFFECTS}
-        option: "None"
+        option: "none"
     - action: script.${SCRIPT_NAME_SET_COLOR}
       data:
         rgb_color:
