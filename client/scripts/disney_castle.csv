@@ -7,12 +7,27 @@ START_COLOR_R,230
 START_COLOR_G,221
 START_COLOR_B,189
 START_RESET,true
-COLOR_#BD2A19,briksmax_disney_castle_color_red
-COLOR_#348C52,briksmax_disney_castle_color_green
-COLOR_#0A62B5,briksmax_disney_castle_color_blue
-COLOR_#C74613,briksmax_disney_castle_color_orange
-COLOR_#781F50,briksmax_disney_castle_color_purple
-COLOR_#5C99BD,briksmax_disney_castle_color_cyan
-COLOR_#C48C83,briksmax_disney_castle_color_pink
-COLOR_#D4C560,briksmax_disney_castle_color_yellow
-COLOR_#E6DDBD,briksmax_disney_castle_color_white
+COLOR_#BD2A19,briksmax_disney_castle_color_red,🔴 Rouge
+COLOR_#C74613,briksmax_disney_castle_color_orange,🟠 Orange
+COLOR_#D4C560,briksmax_disney_castle_color_yellow,🟡 Jaune
+COLOR_#348C52,briksmax_disney_castle_color_green,🟢 Vert
+COLOR_#0A62B5,briksmax_disney_castle_color_blue,🔵 Bleu
+COLOR_#5C99BD,briksmax_disney_castle_color_cyan,🔵 Bleu clair
+COLOR_#781F50,briksmax_disney_castle_color_purple,🟣 Violet
+COLOR_#C48C83,briksmax_disney_castle_color_pink,🟣 Rose
+COLOR_#E6DDBD,briksmax_disney_castle_color_white,⚪ Blanc
+EFFECT_01,briksmax_disney_castle_sound_play_pause,Musique jouer/pause
+EFFECT_02,briksmax_disney_castle_sound_next,Musique suivante
+EFFECT_03,briksmax_disney_castle_sound_previous,Musique precedente
+EFFECT_04,briksmax_disney_castle_sound_up,Augmenter son
+EFFECT_05,briksmax_disney_castle_sound_down,Diminuer son
+EFFECT_06,briksmax_disney_castle_mode_fast,Augmenter vitesse
+EFFECT_07,briksmax_disney_castle_mode_slow,Diminuer vitesse
+EFFECT_08,briksmax_disney_castle_light_up,Augmenter luminosité
+EFFECT_09,briksmax_disney_castle_light_down,Diminuer luminosité
+EFFECT_10,briksmax_disney_castle_light_toggle,Changer mode
+EFFECT_11,briksmax_disney_castle_mode_breathe,Mode respiration
+EFFECT_12,briksmax_disney_castle_area_a,Mode zone A
+EFFECT_13,briksmax_disney_castle_area_b,Mode zone B
+EFFECT_14,briksmax_disney_castle_area_c,Mode zone C
+EFFECT_15,briksmax_disney_castle_area_d,Mode zone D
