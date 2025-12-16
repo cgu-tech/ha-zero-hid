@@ -10,15 +10,15 @@ START_RESET,false
 COLOR_#BD2A19,smartled100_color_red,🔴 Rouge
 COLOR_#C74613,smartled100_color_red2,🟠 Orange foncé
 COLOR_#D98432,smartled100_color_orange,🟠 Orange clair
-COLOR_#D4C560,smartled100_color_yellow,🟡 Jaune
+COLOR_#D4C560,smartled100_color_yellow,🟡 Jaune vert
 COLOR_#348C52,smartled100_color_green,🟢 Vert foncé
 COLOR_#04D971,smartled100_color_green2,🟢 Vert clair
-COLOR_#4BDB95,smartled100_color_green3,🟢 Vert très clair
-COLOR_#1CFFE0,smartled100_color_green4,🟢 Vert jaune
+COLOR_#4BDB95,smartled100_color_green3,🟢 Vert bleu clair
+COLOR_#1CFFE0,smartled100_color_green4,🟢 Vert bleu pâle
+COLOR_#1FC9FF,smartled100_color_blue3,🔵 Bleu vert pâle
 COLOR_#0A62B5,smartled100_color_blue,🔵 Bleu fonçé
-COLOR_#009BE8,smartled100_color_blue2,🔵 Bleu clair
-COLOR_#1FC9FF,smartled100_color_blue3,🔵 Bleu 3
-COLOR_#189DC7,smartled100_color_indigo,🔵 Indigo
+COLOR_#189DC7,smartled100_color_indigo,🔵 Bleu cyan
+COLOR_#009BE8,smartled100_color_blue2,🔵 Bleu cyan clair
 COLOR_#781F50,smartled100_color_purple,🟣 Violet
 COLOR_#C73385,smartled100_color_pink,🟣 Rose
 COLOR_#C48C83,smartled100_color_pink2,🟣 Rose pâle
