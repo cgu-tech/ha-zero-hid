@@ -441,6 +441,18 @@ get_keys_starting_with() {
   done
 }
 
+array_has_values() {
+  local array_name="$1"
+  local count
+
+  eval "count=\${#${array_name}[@]}"
+  (( count > 0 ))
+}
+
+newline_separated_has_values() {
+  [ -n "$1" ]
+}
+
 ask_confirm() {
   local prompt="$1"
   local answer
@@ -506,24 +518,38 @@ ENTITY_START_COLOR_R=""
 ENTITY_START_COLOR_G=""
 ENTITY_START_COLOR_B=""
 ENTITY_START_RESET=""
+ENTITY_LIGHT_HAS_RGB=1
+ENTITY_LIGHT_HAS_EFFECT=1
+ENTITY_LIGHT_HAS_BRIGHTNESS=1
 if [ "${ENTITY_TYPE}" == "light" ]; then
-  echo "Checking required keys for light from loaded CSV file..."
-  required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME")
-  if ! check_required_keys "${required[@]}"; then
-    echo "Missing keys for light. Exiting."
-    exit 1
-  fi
-  echo "All required keys found! ($required)"
-  
-  echo "Retrieving required light values..."
+  echo "Retrieving optional light values when present..."
   ENTITY_START_COLOR_R=$(get_value_for_key "START_COLOR_R")
   ENTITY_START_COLOR_G=$(get_value_for_key "START_COLOR_G")
   ENTITY_START_COLOR_B=$(get_value_for_key "START_COLOR_B")
   ENTITY_START_RESET=$(get_value_for_key "START_RESET")
+  
+  COLOR_KEYS=$(get_keys_starting_with "COLOR_")
+  EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
+  
+  # Check if any start color is non-empty OR if at least one "COLOR_*" key
+  if [ -n "$ENTITY_START_COLOR_R" ] || [ -n "$ENTITY_START_COLOR_G" ] || [ -n "$ENTITY_START_COLOR_B" ] || newline_separated_has_values "$COLOR_KEYS"; then
+    ENTITY_LIGHT_HAS_RGB=0
+  fi
+
+  # Check if RGB capability (implies color effects) OR if at least one "EFFECT_*" key
+  if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ] || newline_separated_has_values "$EFFECT_KEYS"; then
+    ENTITY_LIGHT_HAS_EFFECT=0
+  fi
+
+  # TODO: support brightness detection (not fully supported as of now)
+
   echo "Retrieved ENTITY_START_COLOR_R=$ENTITY_START_COLOR_R"
   echo "Retrieved ENTITY_START_COLOR_G=$ENTITY_START_COLOR_G"
   echo "Retrieved ENTITY_START_COLOR_B=$ENTITY_START_COLOR_B"
   echo "Retrieved ENTITY_START_RESET=$ENTITY_START_RESET"
+  echo "Retrieved ENTITY_LIGHT_HAS_RGB=$ENTITY_LIGHT_HAS_RGB"
+  echo "Retrieved ENTITY_LIGHT_HAS_EFFECT=$ENTITY_LIGHT_HAS_EFFECT"
+  echo "Retrieved ENTITY_LIGHT_HAS_BRIGHTNESS=$ENTITY_LIGHT_HAS_BRIGHTNESS"
 fi
 
 DIR_CONFIG="/config"
@@ -643,7 +669,8 @@ grep -qxF "input_select:" "${FILE_CONFIG}" || echo "input_select: !include input
 grep -qxF -- "- light:" "${FILE_TEMPLATES}" || echo "- light: !include lights.yaml" >> "${FILE_TEMPLATES}"
 grep -qxF -- "- switch:" "${FILE_TEMPLATES}" || echo "- switch: !include switches.yaml" >> "${FILE_TEMPLATES}"
 
-# Write python helper script (create or overwrite)
+# [ENTITY] Write python helper common to all RGB lights (create or overwrite)
+echo "Writing led_color_match python helper common to all RGB lights..."
 mkdir -p "${DIR_PYTHON_SCRIPTS}"
 { echo; cat <<'EOF'
 # led_color_match.py
@@ -714,6 +741,7 @@ EOF
 
 # Write input_booleans (create or append)
 echo "Writing input_booleans..."
+echo "Writing input_booleans for entity power state..."
 { echo; cat <<EOF
 ${INPUT_BOOLEAN_POWER}:
   name: ${ENTITY_NAME} Power
@@ -724,8 +752,11 @@ EOF
 
 # Write input_numbers (create or append)
 echo "Writing input_numbers..."
-
 if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Writing input_numbers for light state..."
+
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing input_numbers for light RGB state..."
 { echo; cat <<EOF
 ${INPUT_NUMBER_R}:
   name: ${ENTITY_NAME} Red value
@@ -748,6 +779,13 @@ ${INPUT_NUMBER_B}:
   step: 1
   initial: ${ENTITY_START_COLOR_B}
 
+EOF
+} >> "${FILE_INPUT_NUMBERS}"
+fi
+
+if [ "$ENTITY_LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+echo "Writing input_numbers for light Brightness state..."
+{ echo; cat <<EOF
 ${INPUT_NUMBER_BRIGHTNESS}:
   name: ${ENTITY_NAME} Brightness
   min: 0
@@ -759,18 +797,26 @@ EOF
 } >> "${FILE_INPUT_NUMBERS}"
 fi
 
-if [ "${ENTITY_TYPE}" == "light" ]; then
+fi
+
 # Write input_selects (create or append)
 echo "Writing input_selects..."
+if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Writing input_selects for light..."
+
+if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+echo "Writing input_selects for light effect state..."
 { echo; cat <<EOF
 ${INPUT_SELECT_EFFECTS}:
-  name: "${ENTITY_NAME} selectable effects"
+  name: "${ENTITY_NAME} effects"
   options:
     - "none"
 EOF
 } >> "${FILE_INPUT_SELECTS}"
+fi
 
-echo "Adding color effects into input_selects..."
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing input_selects list of light color effects..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_IDX="${COLOR_KEY#COLOR_#}"
@@ -779,8 +825,10 @@ for COLOR_KEY in $COLOR_KEYS; do
 EOF
 } >> "${FILE_INPUT_SELECTS}"
 done
+fi
 
-echo "Adding standard effects into input_selects..."
+if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+echo "Writing input_selects list of light standard effects..."
 EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
 for EFFECT_KEY in $EFFECT_KEYS; do
   EFFECT_IDX="${EFFECT_KEY#EFFECT_}"
@@ -791,11 +839,13 @@ EOF
 done
 fi
 
+fi
+
 # Write scripts (create or append)
-echo "Writing script..."
+echo "Writing scripts..."
 
 # Write "turn_on" script
-echo "Adding turn_on service start into script..."
+echo "Writing scripts turn_on..."
 { echo; cat <<EOF
 ${SCRIPT_NAME_TURN_ON}:
   alias: "Turns ON ${ENTITY_NAME}"
@@ -804,8 +854,13 @@ EOF
 } >> "${FILE_SCRIPTS}"
 
 if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Writing scripts turn_on for light..."
+
 if [ "${ENTITY_START_RESET}" == "true" ]; then
-  echo "Adding turn_on \"reset on start\" capabilites to turn_on service into script..."
+echo "Writing scripts turn_on for light reset..."
+
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing scripts turn_on for light reset RGB..."
 { cat <<EOF
     - service: input_number.set_value
       target:
@@ -825,9 +880,12 @@ if [ "${ENTITY_START_RESET}" == "true" ]; then
 EOF
 } >> "${FILE_SCRIPTS}"
 fi
+
 fi
 
-echo "Adding turn_on service parts into script..."
+fi
+
+echo "Writing scripts turn_on adding power on actions..."
 for ENTITY_POWER_ON_SCRIPT in $ENTITY_POWER_ON_SCRIPTS; do
 { cat <<EOF
     - service: script.${ENTITY_POWER_ON_SCRIPT}
@@ -835,7 +893,7 @@ EOF
 } >> "${FILE_SCRIPTS}"
 done
 
-echo "Adding turn_on service end into script..."
+echo "Writing scripts turn_on adding power on state update..."
 { cat <<EOF
     - service: input_boolean.turn_on
       target:
@@ -844,7 +902,7 @@ EOF
 } >> "${FILE_SCRIPTS}"
 
 # Write "turn_off" script
-echo "Adding turn_off service into script..."
+echo "Writing scripts turn_off..."
 { echo; cat <<EOF
 ${SCRIPT_NAME_TURN_OFF}:
   alias: "Turns OFF ${ENTITY_NAME}"
@@ -852,7 +910,7 @@ ${SCRIPT_NAME_TURN_OFF}:
 EOF
 } >> "${FILE_SCRIPTS}"
 
-echo "Adding turn_off service parts into script..."
+echo "Writing scripts turn_off adding power off actions..."
 for ENTITY_POWER_OFF_SCRIPT in $ENTITY_POWER_OFF_SCRIPTS; do
 { cat <<EOF
     - service: script.${ENTITY_POWER_OFF_SCRIPT}
@@ -860,7 +918,7 @@ EOF
 } >> "${FILE_SCRIPTS}"
 done
 
-echo "Adding turn_off service end into script..."
+echo "Writing scripts turn_off adding power off state update..."
 { cat <<EOF
     - service: input_boolean.turn_off
       target:
@@ -869,8 +927,12 @@ EOF
 } >> "${FILE_SCRIPTS}"
 
 # Write "set_level" (of brightness) script
+echo "Writing scripts set_level..."
 if [ "${ENTITY_TYPE}" == "light" ]; then
-echo "Adding set_level service into script..."
+echo "Writing scripts set_level for light..."
+
+if [ "$ENTITY_LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+echo "Writing scripts set_level for light Brightness state update..."
 { echo; cat <<EOF
 ${SCRIPT_NAME_SET_LEVEL}:
   alias: "Set ${ENTITY_NAME} Brightness"
@@ -884,9 +946,15 @@ EOF
 } >> "${FILE_SCRIPTS}"
 fi
 
-# Write "set_color" (using RGB) script
+fi
+
+# Write "set_color" (as RGB) script
+echo "Writing scripts set_color..."
 if [ "${ENTITY_TYPE}" == "light" ]; then
-echo "Adding set_color service start into script..."
+echo "Writing scripts set_color for light..."
+
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing scripts set_color for light RGB state update..."
 { echo; cat <<EOF
 ${SCRIPT_NAME_SET_COLOR}:
   alias: "Set ${ENTITY_NAME} Color"
@@ -906,7 +974,7 @@ ${SCRIPT_NAME_SET_COLOR}:
 EOF
 } >> "${FILE_SCRIPTS}"
 
-echo "Adding set_color \"color_map\" capabilities to set_color service into script..."
+echo "Writing scripts set_color map of restricted available colors for light RGB state update..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_HEX="${COLOR_KEY#COLOR_}"
@@ -918,11 +986,18 @@ for COLOR_KEY in $COLOR_KEYS; do
 EOF
 } >> "${FILE_SCRIPTS}"
 done
+
 fi
 
-# Write "set_effect_color" (using RGB) script
+fi
+
+# Write "set_effect_color" (as human-readable color effect) script
+echo "Writing scripts set_effect_color..."
 if [ "${ENTITY_TYPE}" == "light" ]; then
-echo "Adding set_effect_color service into script..."
+echo "Writing scripts set_effect_color for light..."
+
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing scripts set_effect_color for light RGB fixed color effect..."
 rgb_to_hex ${ENTITY_START_COLOR_R} ${ENTITY_START_COLOR_G} ${ENTITY_START_COLOR_B} START_COLOR_HEX
 { echo; cat <<EOF
 ${SCRIPT_NAME_SET_EFFECT_COLOR}:
@@ -969,9 +1044,13 @@ EOF
 } >> "${FILE_SCRIPTS}"
 fi
 
+fi
+
 # Write entity template (create or append)
-echo "Writing template..."
-echo "Adding entity start template..."
+echo "Writing ${ENTITY_TYPE}s template..."
+
+# Write "state" state template
+echo "Writing ${ENTITY_TYPE}s template for ${ENTITY_TYPE} main state..."
 { echo; cat <<EOF
 - unique_id: ${ENTITY_ID}
   name: "${ENTITY_NAME}"
@@ -980,35 +1059,41 @@ EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 if [ "${ENTITY_TYPE}" == "light" ]; then
+echo "Writing ${ENTITY_TYPE}s template for light other states..."
 
-echo "Adding entity rgb template..."
+# Write "rgb" state template
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing ${ENTITY_TYPE}s template for light RGB state..."
 { cat <<EOF
   rgb: "({{states('input_number.${INPUT_NUMBER_R}') | int}}, {{states('input_number.${INPUT_NUMBER_G}') | int}}, {{states('input_number.${INPUT_NUMBER_B}') | int}})"
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+fi
 
-echo "Adding entity effects template start..."
+# Write "effect" state template
+if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+echo "Writing ${ENTITY_TYPE}s template for light Effect state..."
 { cat <<EOF
   effect: "{{ states('input_select.${INPUT_SELECT_EFFECTS}') }}"
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 printf "  effect_list: \"{{ ['None'" >> "${FILE_TEMPLATE_FOR_TYPE}"
 
-echo "Adding color to entity effects template..."
+echo "Writing ${ENTITY_TYPE}s template list of supported RGB color effect states..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_DISPLAY=$(get_display_for_key "${COLOR_KEY}")
   printf ", '%s'" "${COLOR_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
 
-echo "Adding effects to entity effects template..."
+echo "Writing ${ENTITY_TYPE}s template list of supported standard effect states..."
 EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
 for EFFECT_KEY in $EFFECT_KEYS; do
   EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
   printf ", '%s'" "${EFFECT_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
 
-echo "Adding entity effects template end..."
+echo "Writing ${ENTITY_TYPE}s template list end for all effects..."
 { cat <<EOF
   ] }}"
 EOF
@@ -1016,7 +1101,10 @@ EOF
 
 fi
 
-echo "Adding entity turn_on/turn_off templates..."
+fi
+
+# Write "turn_on" and "turn_off" actions templates
+echo "Writing ${ENTITY_TYPE}s template for turn_on and turn_off actions..."
 { cat <<EOF
   turn_on:
     action: script.${SCRIPT_NAME_TURN_ON}
@@ -1025,8 +1113,15 @@ echo "Adding entity turn_on/turn_off templates..."
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 
+# Write other actions templates
+echo "Writing ${ENTITY_TYPE}s template for other actions..."
+
 if [ "${ENTITY_TYPE}" == "light" ]; then
-echo "Adding entity set_rgb template..."
+echo "Writing ${ENTITY_TYPE}s template for light other actions..."
+
+# Write "set_rgb" action template
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing ${ENTITY_TYPE}s template for light set_rgb action..."
 { cat <<EOF
   set_rgb:
     - action: input_number.set_value
@@ -1053,15 +1148,19 @@ echo "Adding entity set_rgb template..."
           - "{{ b }}"
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+fi
 
-echo "Adding entity set_effect template start..."
+# Write "set_effect" action template
+if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+echo "Writing ${ENTITY_TYPE}s template for light set_effect action..."
 { cat <<EOF
   set_effect:
     - choose:
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 
-echo "Adding entity set_effect colors template..."
+# Write "set_effect" actions templates for fixed colors
+echo "Writing ${ENTITY_TYPE}s template list of supported RGB color effect actions..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_HEX="${COLOR_KEY#COLOR_#}"
@@ -1080,7 +1179,8 @@ EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
 
-echo "Adding entity set_effect effects template..."
+# Write "set_effect" actions templates for standard effects
+echo "Writing ${ENTITY_TYPE}s template list of supported standard effect actions..."
 EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
 for EFFECT_KEY in $EFFECT_KEYS; do
   EFFECT_SCRIPT=$(get_value_for_key "${EFFECT_KEY}")
@@ -1098,20 +1198,28 @@ EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
 
-echo "Adding entity set_effect template end..."
+echo "Writing ${ENTITY_TYPE}s template list end for all effect actions..."
 printf "\n" >> "${FILE_SCRIPTS}"
+fi
 
 fi
 
 echo "Entity ${ENTITY_FULL_ID} created:"
-echo "- Ensure these scripts exist (create them when manually missing):"
-echo "  - Power ON: ${ENTITY_POWER_ON_SCRIPT}"
-echo "  - Power OFF: ${ENTITY_POWER_OFF_SCRIPT}"
+echo "- Ensure these scripts exist (create them when manually when missing):"
+echo "  - Power ON:"
+printf '    %s\n' "${ENTITY_POWER_ON_SCRIPTS[@]}"
+echo "  - Power OFF:"
+printf '    %s\n' "${ENTITY_POWER_OFF_SCRIPTS[@]}"
 if [ "${ENTITY_TYPE}" == "light" ]; then
   for COLOR_KEY in $COLOR_KEYS; do
     COLOR_HEX="${COLOR_KEY#COLOR_}"
     COLOR_SCRIPT=$(get_value_for_key "${COLOR_KEY}")
     echo "  - Color ${COLOR_HEX}: ${COLOR_SCRIPT}"
+  done
+  for EFFECT_KEY in $EFFECT_KEYS; do
+    EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
+    EFFECT_SCRIPT=$(get_value_for_key "${EFFECT_KEY}")
+    echo "  - Effect ${EFFECT_DISPLAY}: ${EFFECT_SCRIPT}"
   done
 fi
 echo "- Then restart HA to ensure everything is correctly reloaded (python scripts in particular)"
