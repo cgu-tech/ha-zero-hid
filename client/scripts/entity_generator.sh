@@ -471,7 +471,7 @@ echo "Loading CSV file that contains entity configurations..."
 load_config_map "${ENTITY_CONFIG_FILE}"
 
 echo "Checking required keys from loaded CSV file..."
-required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME" "POWER_ON_SCRIPT" "POWER_OFF_SCRIPT")
+required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME")
 if ! check_required_keys "${required[@]}"; then
   echo "Missing keys. Exiting."
   exit 1
@@ -482,21 +482,33 @@ echo "Retrieving required values..."
 ENTITY_TYPE=$(get_value_for_key "ENTITY_TYPE")
 ENTITY_ID=$(get_value_for_key "ENTITY_ID")
 ENTITY_NAME=$(get_value_for_key "ENTITY_NAME")
-ENTITY_POWER_ON_SCRIPT=$(get_value_for_key "POWER_ON_SCRIPT")
-ENTITY_POWER_OFF_SCRIPT=$(get_value_for_key "POWER_OFF_SCRIPT")
+ENTITY_POWER_ON_SCRIPTS=$(get_keys_starting_with "POWER_ON_SCRIPT")
+ENTITY_POWER_OFF_SCRIPTS=$(get_keys_starting_with "POWER_OFF_SCRIPT")
 echo "Retrieved ENTITY_TYPE=$ENTITY_TYPE"
 echo "Retrieved ENTITY_ID=$ENTITY_ID"
 echo "Retrieved ENTITY_NAME=$ENTITY_NAME"
-echo "Retrieved ENTITY_POWER_ON_SCRIPT=$ENTITY_POWER_ON_SCRIPT"
-echo "Retrieved ENTITY_POWER_OFF_SCRIPT=$ENTITY_POWER_OFF_SCRIPT"
+echo "Retrieved ENTITY_POWER_ON_SCRIPTS="
+printf '%s\n' "${ENTITY_POWER_ON_SCRIPTS[@]}"
+echo "Retrieved ENTITY_POWER_OFF_SCRIPTS="
+printf '%s\n' "${ENTITY_POWER_OFF_SCRIPTS[@]}"
 
+FIRST_POWER_ON_SCRIPT="${ENTITY_POWER_ON_SCRIPTS[0]}"
+if [ -z "${FIRST_POWER_ON_SCRIPT}" ]; then
+  echo "Missing key: at least one key POWER_ON_SCRIPT[...] is required. Exiting."
+  exit 1
+fi
+FIRST_POWER_OFF_SCRIPT="${ENTITY_POWER_OFF_SCRIPTS[0]}"
+if [ -z "${FIRST_POWER_OFF_SCRIPT}" ]; then
+  echo "Missing key: at least one key POWER_OFF_SCRIPT[...] is required. Exiting."
+  exit 1
+fi
 ENTITY_START_COLOR_R=""
 ENTITY_START_COLOR_G=""
 ENTITY_START_COLOR_B=""
 ENTITY_START_RESET=""
 if [ "${ENTITY_TYPE}" == "light" ]; then
   echo "Checking required keys for light from loaded CSV file..."
-  required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME" "POWER_ON_SCRIPT" "POWER_OFF_SCRIPT")
+  required=("ENTITY_TYPE" "ENTITY_ID" "ENTITY_NAME")
   if ! check_required_keys "${required[@]}"; then
     echo "Missing keys for light. Exiting."
     exit 1
@@ -815,9 +827,16 @@ EOF
 fi
 fi
 
-echo "Adding turn_on service start into script..."
+echo "Adding turn_on service parts into script..."
+for ENTITY_POWER_ON_SCRIPT in $ENTITY_POWER_ON_SCRIPTS; do
 { cat <<EOF
     - service: script.${ENTITY_POWER_ON_SCRIPT}
+EOF
+} >> "${FILE_SCRIPTS}"
+done
+
+echo "Adding turn_on service end into script..."
+{ cat <<EOF
     - service: input_boolean.turn_on
       target:
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
@@ -830,7 +849,19 @@ echo "Adding turn_off service into script..."
 ${SCRIPT_NAME_TURN_OFF}:
   alias: "Turns OFF ${ENTITY_NAME}"
   sequence:
+EOF
+} >> "${FILE_SCRIPTS}"
+
+echo "Adding turn_off service parts into script..."
+for ENTITY_POWER_OFF_SCRIPT in $ENTITY_POWER_OFF_SCRIPTS; do
+{ cat <<EOF
     - service: script.${ENTITY_POWER_OFF_SCRIPT}
+EOF
+} >> "${FILE_SCRIPTS}"
+done
+
+echo "Adding turn_off service end into script..."
+{ cat <<EOF
     - service: input_boolean.turn_off
       target:
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}

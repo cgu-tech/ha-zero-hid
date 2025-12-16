@@ -1,5 +1,8 @@
-ENTITY_TYPE,switch
-ENTITY_ID,lighthouse_switch
-ENTITY_NAME,Lighthouse Switch
+ENTITY_TYPE,light
+ENTITY_ID,lighthouse_light
+ENTITY_NAME,Lighthouse light
 POWER_ON_SCRIPT,lighthouse_power_on
-POWER_OFF_SCRIPT,lighthouse_power_off
+POWER_OFF_SCRIPT_01,lighthouse_projector_power_off
+POWER_OFF_SCRIPT_02,lighthouse_power_off
+EFFECT_01,lighthouse_projector_power_on,Allumer projecteur
+EFFECT_02,lighthouse_projector_power_off,Éteindre projecteur

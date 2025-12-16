@@ -25,11 +25,11 @@ COLOR_#C48C83,smartled100_color_pink2,🟣 Rose pâle
 COLOR_#FCF3CF,smartled100_color_white,⚪ Blanc
 EFFECT_01,smartled100_speed_plus,Augmenter vitesse
 EFFECT_02,smartled100_speed_minus,Diminuer vitesse
-EFFECT_03,smartled100_mode_auto_dupliquer,Changer mode
-EFFECT_04,smartled100_mode_auto,Mode Auto
+EFFECT_03,smartled100_mode_auto_dupliquer,Passer au mode suivant
+EFFECT_04,smartled100_mode_auto,Activer changement auto mode
 EFFECT_05,smartled100_mode_strobe,Mode stroboscope
 EFFECT_06,smartled100_mode_in_waves,Mode par vagues
 EFFECT_07,smartled100_mode_jump,Mode sauts
 EFFECT_08,smartled100_mode_fade,Mode progressif
-EFFECT_09,smartled100_mode_flash,Mode flash
-EFFECT_10,smartled100_mode_chase_flash,Mode poursuite et flash
+EFFECT_09,smartled100_mode_flash,Mode serpentin
+EFFECT_10,smartled100_mode_chase_flash,Mode poursuite
