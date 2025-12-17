@@ -921,7 +921,8 @@ EOF
 } >> "${FILE_SCRIPTS}"
 
 echo "Writing scripts turn_off adding power off actions..."
-for ENTITY_POWER_OFF_SCRIPT in $ENTITY_POWER_OFF_SCRIPTS; do
+for ENTITY_POWER_OFF_SCRIPT_KEY in $ENTITY_POWER_OFF_SCRIPTS_KEYS; do
+  ENTITY_POWER_OFF_SCRIPT=$(get_value_for_key "${ENTITY_POWER_OFF_SCRIPT_KEY}")
 { cat <<EOF
     - service: script.${ENTITY_POWER_OFF_SCRIPT}
 EOF
