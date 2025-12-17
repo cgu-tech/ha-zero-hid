@@ -499,7 +499,7 @@ ENTITY_POWER_OFF_SCRIPTS_KEYS=$(get_keys_starting_with "POWER_OFF_SCRIPT")
 echo "Retrieved ENTITY_TYPE=$ENTITY_TYPE"
 echo "Retrieved ENTITY_ID=$ENTITY_ID"
 echo "Retrieved ENTITY_NAME=$ENTITY_NAME"
-echo "Retrieved ENTITY_POWER_ON_SCRIPTS_KEYS="
+echo "Retrieved ENTITY_POWER_ON_SCRIPTS="
 for ENTITY_POWER_ON_SCRIPT_KEY in $ENTITY_POWER_ON_SCRIPTS_KEYS; do
   ENTITY_POWER_ON_SCRIPT=$(get_value_for_key "${ENTITY_POWER_ON_SCRIPT_KEY}")
   echo "    - ${ENTITY_POWER_ON_SCRIPT}"
@@ -510,16 +510,19 @@ for ENTITY_POWER_OFF_SCRIPT_KEY in $ENTITY_POWER_OFF_SCRIPTS_KEYS; do
   echo "    - ${ENTITY_POWER_OFF_SCRIPT}"
 done
 
-FIRST_POWER_ON_SCRIPT_KEY="${ENTITY_POWER_ON_SCRIPTS_KEYS[0]}"
-if [ -z "${FIRST_POWER_ON_SCRIPT_KEY}" ]; then
+if newline_separated_has_values "$ENTITY_POWER_ON_SCRIPTS_KEYS"; then
+  echo -n ""
+else
   echo "Missing key: at least one key POWER_ON_SCRIPT[...] is required. Exiting."
   exit 1
 fi
-FIRST_POWER_OFF_SCRIPT_KEY="${ENTITY_POWER_OFF_SCRIPTS[0]}"
-if [ -z "${FIRST_POWER_OFF_SCRIPT_KEY}" ]; then
+if newline_separated_has_values "$ENTITY_POWER_OFF_SCRIPTS_KEYS"; then
+  echo -n ""
+else
   echo "Missing key: at least one key POWER_OFF_SCRIPT[...] is required. Exiting."
   exit 1
 fi
+
 ENTITY_START_COLOR_R=""
 ENTITY_START_COLOR_G=""
 ENTITY_START_COLOR_B=""
