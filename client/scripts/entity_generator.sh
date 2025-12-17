@@ -619,66 +619,132 @@ if [ "${ENTITY_TYPE}" == "switch" ]; then
   FILE_TEMPLATE_FOR_TYPE="${FILE_SWITCH_TEMPLATES}"
 fi
 
-
 # Check that needed files exist
-echo "Ensure HA configurations exists..."
+echo "Ensuring HA configurations files common to all entities exists..."
 ensure_file_exists "${FILE_CONFIG}"
 ensure_file_exists "${FILE_TEMPLATES}"
-ensure_file_exists "${FILE_LIGHT_TEMPLATES}"
-ensure_file_exists "${FILE_SWITCH_TEMPLATES}"
 ensure_file_exists "${FILE_SCRIPTS}"
-ensure_file_exists "${FILE_INPUT_NUMBERS}"
 ensure_file_exists "${FILE_INPUT_BOOLEANS}"
+ensure_file_exists "${FILE_LIGHT_TEMPLATES}"
+ensure_file_exists "${FILE_INPUT_NUMBERS}"
 ensure_file_exists "${FILE_INPUT_SELECTS}"
+ensure_file_exists "${FILE_SWITCH_TEMPLATES}"
 
 # Create timestamped save backup of files before editing them
-echo "Backuping HA configurations..."
+echo "Backuping HA configurations files common to all entities..."
 cp "${FILE_CONFIG}" "${FILE_SAV_CONFIG}"
 cp "${FILE_TEMPLATES}" "${FILE_SAV_TEMPLATES}"
-cp "${FILE_LIGHT_TEMPLATES}" "${FILE_SAV_LIGHT_TEMPLATES}"
-cp "${FILE_SWITCH_TEMPLATES}" "${FILE_SAV_SWITCH_TEMPLATES}"
 cp "${FILE_SCRIPTS}" "${FILE_SAV_SCRIPTS}"
-cp "${FILE_INPUT_NUMBERS}" "${FILE_SAV_INPUT_NUMBERS}"
 cp "${FILE_INPUT_BOOLEANS}" "${FILE_SAV_INPUT_BOOLEANS}"
+cp "${FILE_LIGHT_TEMPLATES}" "${FILE_SAV_LIGHT_TEMPLATES}"
+cp "${FILE_INPUT_NUMBERS}" "${FILE_SAV_INPUT_NUMBERS}"
 cp "${FILE_INPUT_SELECTS}" "${FILE_SAV_INPUT_SELECTS}"
+cp "${FILE_SWITCH_TEMPLATES}" "${FILE_SAV_SWITCH_TEMPLATES}"
 
 # Remove previous entity artifacts from configurations files (to be able to restart from a clean base)
-echo "Cleaning ${ENTITY_FULL_ID} from HA configurations..."
-sed -i "/^python_script:/d" "${FILE_CONFIG}"
-sed -i "/^template:/d" "${FILE_CONFIG}"
-sed -i "/^script:/d" "${FILE_CONFIG}"
-sed -i "/^input_number:/d" "${FILE_CONFIG}"
-sed -i "/^input_boolean:/d" "${FILE_CONFIG}"
-sed -i "/^input_select:/d" "${FILE_CONFIG}"
-
-sed -i "/^- light:/d" "${FILE_TEMPLATES}"
-sed -i "/^- switch:/d" "${FILE_TEMPLATES}"
-
+echo "Removing ${ENTITY_FULL_ID} from HA ${FILE_TEMPLATE_FOR_TYPE} file..."
 remove_yaml_subblock "${FILE_TEMPLATE_FOR_TYPE}" "${ENTITY_ID}"
+
+echo "Removing ${ENTITY_FULL_ID} scripts from HA ${FILE_SCRIPTS} file..."
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_ON}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_OFF}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_SET_COLOR}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_SET_EFFECT_COLOR}"
+
+echo "Removing ${ENTITY_FULL_ID} input_numbers from HA ${FILE_INPUT_NUMBERS} file..."
 remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_R}"
 remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_G}"
 remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_B}"
 remove_yaml_top_level_block "${FILE_INPUT_NUMBERS}" "${INPUT_NUMBER_BRIGHTNESS}"
+
+echo "Removing ${ENTITY_FULL_ID} input_booleans from HA ${FILE_INPUT_BOOLEANS} file..."
 remove_yaml_top_level_block "${FILE_INPUT_BOOLEANS}" "${INPUT_BOOLEAN_POWER}"
+
+echo "Removing ${ENTITY_FULL_ID} input_selects from HA ${FILE_INPUT_SELECTS} file..."
 remove_yaml_top_level_block "${FILE_INPUT_SELECTS}" "${INPUT_SELECT_EFFECTS}"
 
+echo "Unregistering HA configurations files references common to all entities from HA main configuration file..."
+sed -i "/^python_script:/d" "${FILE_CONFIG}"
+sed -i "/^template:/d" "${FILE_CONFIG}"
+sed -i "/^script:/d" "${FILE_CONFIG}"
+sed -i "/^input_boolean:/d" "${FILE_CONFIG}"
+
+if [ "${ENTITY_TYPE}" == "light" ]; then
+  echo "Unregistering HA configurations files references specific to light entities from HA templates configuration file..."
+  sed -i "/^- light:/d" "${FILE_TEMPLATES}"
+else
+  if [ -z "$(tr -d '[:space:]' < ${FILE_LIGHT_TEMPLATES})" ]; then
+    echo "Detected unused HA file ${FILE_LIGHT_TEMPLATES}: removing it with associated reference into HA templates configuration file"
+    sed -i "/^- light:/d" "${FILE_TEMPLATES}"
+    rm "${FILE_LIGHT_TEMPLATES}"
+  else
+    echo "Detected used HA file ${FILE_LIGHT_TEMPLATES}: will preserve this file and its reference into HA templates configuration file"
+  fi
+fi
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ] || [ "$ENTITY_LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+  echo "Unregistering HA configurations files references specific to RGB or Brightness entities from HA main configuration file..."
+  sed -i "/^input_number:/d" "${FILE_CONFIG}"
+else
+  if [ -z "$(tr -d '[:space:]' < ${FILE_INPUT_NUMBERS})" ]; then
+    echo "Detected unused HA file ${FILE_INPUT_NUMBERS}: removing it with associated reference into HA main configuration file"
+    sed -i "/^input_number:/d" "${FILE_CONFIG}"
+    rm "${FILE_INPUT_NUMBERS}"
+  else
+    echo "Detected used HA file ${FILE_INPUT_NUMBERS}: will preserve this file and its reference into HA main configuration file"
+  fi
+fi
+if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+  echo "Unregistering HA configurations files references specific to Effect entities from HA main configuration file..."
+  sed -i "/^input_select:/d" "${FILE_CONFIG}"
+else
+  if [ -z "$(tr -d '[:space:]' < ${FILE_INPUT_SELECTS})" ]; then
+    echo "Detected unused HA file ${FILE_INPUT_SELECTS}: removing it with associated reference into HA main configuration file"
+    sed -i "/^input_select:/d" "${FILE_CONFIG}"
+    rm "${FILE_INPUT_SELECTS}"
+  else
+    echo "Detected used HA file ${FILE_INPUT_SELECTS}: will preserve this file and its reference into HA main configuration file"
+  fi
+fi
+if [ "${ENTITY_TYPE}" == "switch" ]; then
+  echo "Unregistering HA configurations files references specific to switch entities from HA templates configuration file..."
+  sed -i "/^- switch:/d" "${FILE_TEMPLATES}"
+else
+  if [ -z "$(tr -d '[:space:]' < ${FILE_SWITCH_TEMPLATES})" ]; then
+    echo "Detected unused HA file ${FILE_SWITCH_TEMPLATES}: removing it with associated reference into HA templates configuration file"
+    sed -i "/^- switch:/d" "${FILE_TEMPLATES}"
+    rm "${FILE_SWITCH_TEMPLATES}"
+  else
+    echo "Detected used HA file ${FILE_SWITCH_TEMPLATES}: will preserve this file and its reference into HA templates configuration file"
+  fi
+fi
+
+
 # Register detached configurations files into main configuration file
-echo "Registering HA detached configurations into HA main configuration ${FILE_CONFIG}..."
+echo "Registering HA configurations files references common to all entities into HA main configuration..."
 grep -qxF "python_script:" "${FILE_CONFIG}" || echo "python_script:" >> "${FILE_CONFIG}"
 grep -qxF "template:" "${FILE_CONFIG}" || echo "template: !include templates.yaml" >> "${FILE_CONFIG}"
 grep -qxF "script:" "${FILE_CONFIG}" || echo "script: !include scripts.yaml" >> "${FILE_CONFIG}"
-grep -qxF "input_number:" "${FILE_CONFIG}" || echo "input_number: !include input_numbers.yaml" >> "${FILE_CONFIG}"
 grep -qxF "input_boolean:" "${FILE_CONFIG}" || echo "input_boolean: !include input_booleans.yaml" >> "${FILE_CONFIG}"
-grep -qxF "input_select:" "${FILE_CONFIG}" || echo "input_select: !include input_selects.yaml" >> "${FILE_CONFIG}"
 
-grep -qxF -- "- light:" "${FILE_TEMPLATES}" || echo "- light: !include lights.yaml" >> "${FILE_TEMPLATES}"
-grep -qxF -- "- switch:" "${FILE_TEMPLATES}" || echo "- switch: !include switches.yaml" >> "${FILE_TEMPLATES}"
+if [ "${ENTITY_TYPE}" == "light" ]; then
+  echo "Registering HA lights configuration file reference into HA templates configuration file..."
+  grep -qxF -- "- light:" "${FILE_TEMPLATES}" || echo "- light: !include lights.yaml" >> "${FILE_TEMPLATES}"
+fi
+if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ] || [ "$ENTITY_LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+  echo "Registering HA input_numbers configuration file reference into HA main configuration file..."
+  grep -qxF "input_number:" "${FILE_CONFIG}" || echo "input_number: !include input_numbers.yaml" >> "${FILE_CONFIG}"
+fi
+if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+  echo "Registering HA input_numbers configuration file reference into HA main configuration file..."
+  grep -qxF "input_select:" "${FILE_CONFIG}" || echo "input_select: !include input_selects.yaml" >> "${FILE_CONFIG}"
+fi
+if [ "${ENTITY_TYPE}" == "switch" ]; then
+  echo "Registering HA switches configuration file reference into HA templates configuration file..."
+  grep -qxF -- "- switch:" "${FILE_TEMPLATES}" || echo "- switch: !include switches.yaml" >> "${FILE_TEMPLATES}"
+fi
 
-# [ENTITY] Write python helper common to all RGB lights (create or overwrite)
+
+# Write python helper common to all RGB lights (create or overwrite)
 echo "Writing led_color_match python helper common to all RGB lights..."
 mkdir -p "${DIR_PYTHON_SCRIPTS}"
 { echo; cat <<'EOF'
@@ -1085,28 +1151,49 @@ fi
 if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
 echo "Writing ${ENTITY_TYPE}s template for light Effect state..."
 { cat <<EOF
-  effect: "{{ states('input_select.${INPUT_SELECT_EFFECTS}') }}"
+  effect: >
+    {% set e = states('input_select.${INPUT_SELECT_EFFECTS}') %}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 printf "  effect_list: \"{{ ['None'" >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+# to track first effect (will need "if" condtion only for the first, "elif" condition for second+)
+IS_FIRST_EFFECT=0
 
 echo "Writing ${ENTITY_TYPE}s template list of supported RGB color effect states..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_DISPLAY=$(get_display_for_key "${COLOR_KEY}")
-  printf ", '%s'" "${COLOR_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+  COLOR_IDX="${COLOR_KEY#COLOR_#}"
+  CONDITION_PREFIX=""
+  if [ "$IS_FIRST_EFFECT" -eq 0 ]; then
+    IS_FIRST_EFFECT=1
+    CONDITION_PREFIX="if"
+  else
+    CONDITION_PREFIX="elif"
+  fi
+  printf "    {%% %s e == '%s' %%}%s\n" "${CONDITION_PREFIX}" "effect_color_${COLOR_IDX}" "${COLOR_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
 
 echo "Writing ${ENTITY_TYPE}s template list of supported standard effect states..."
 EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
 for EFFECT_KEY in $EFFECT_KEYS; do
   EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
-  printf ", '%s'" "${EFFECT_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+  EFFECT_IDX="${EFFECT_KEY#EFFECT_}"
+  CONDITION_PREFIX=""
+  if [ "$IS_FIRST_EFFECT" -eq 0 ]; then
+    IS_FIRST_EFFECT=1
+    CONDITION_PREFIX="if"
+  else
+    CONDITION_PREFIX="elif"
+  fi
+  printf "    {%% %s e == '%s' %%}%s\n" "${CONDITION_PREFIX}" "effect_${EFFECT_IDX}" "${EFFECT_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
 
 echo "Writing ${ENTITY_TYPE}s template list end for all effects..."
 { cat <<EOF
-  ] }}"
+    {% else %}None
+    {% endif %}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 
