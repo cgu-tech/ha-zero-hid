@@ -494,23 +494,29 @@ echo "Retrieving required values..."
 ENTITY_TYPE=$(get_value_for_key "ENTITY_TYPE")
 ENTITY_ID=$(get_value_for_key "ENTITY_ID")
 ENTITY_NAME=$(get_value_for_key "ENTITY_NAME")
-ENTITY_POWER_ON_SCRIPTS=$(get_keys_starting_with "POWER_ON_SCRIPT")
-ENTITY_POWER_OFF_SCRIPTS=$(get_keys_starting_with "POWER_OFF_SCRIPT")
+ENTITY_POWER_ON_SCRIPTS_KEYS=$(get_keys_starting_with "POWER_ON_SCRIPT")
+ENTITY_POWER_OFF_SCRIPTS_KEYS=$(get_keys_starting_with "POWER_OFF_SCRIPT")
 echo "Retrieved ENTITY_TYPE=$ENTITY_TYPE"
 echo "Retrieved ENTITY_ID=$ENTITY_ID"
 echo "Retrieved ENTITY_NAME=$ENTITY_NAME"
-echo "Retrieved ENTITY_POWER_ON_SCRIPTS="
-printf '%s\n' "${ENTITY_POWER_ON_SCRIPTS[@]}"
+echo "Retrieved ENTITY_POWER_ON_SCRIPTS_KEYS="
+for ENTITY_POWER_ON_SCRIPT_KEY in $ENTITY_POWER_ON_SCRIPTS_KEYS; do
+  ENTITY_POWER_ON_SCRIPT=$(get_value_for_key "${ENTITY_POWER_ON_SCRIPT_KEY}")
+  echo "    - ${ENTITY_POWER_ON_SCRIPT}"
+done
 echo "Retrieved ENTITY_POWER_OFF_SCRIPTS="
-printf '%s\n' "${ENTITY_POWER_OFF_SCRIPTS[@]}"
+for ENTITY_POWER_OFF_SCRIPT_KEY in $ENTITY_POWER_OFF_SCRIPTS_KEYS; do
+  ENTITY_POWER_OFF_SCRIPT=$(get_value_for_key "${ENTITY_POWER_OFF_SCRIPT_KEY}")
+  echo "    - ${ENTITY_POWER_OFF_SCRIPT}"
+done
 
-FIRST_POWER_ON_SCRIPT="${ENTITY_POWER_ON_SCRIPTS[0]}"
-if [ -z "${FIRST_POWER_ON_SCRIPT}" ]; then
+FIRST_POWER_ON_SCRIPT_KEY="${ENTITY_POWER_ON_SCRIPTS_KEYS[0]}"
+if [ -z "${FIRST_POWER_ON_SCRIPT_KEY}" ]; then
   echo "Missing key: at least one key POWER_ON_SCRIPT[...] is required. Exiting."
   exit 1
 fi
-FIRST_POWER_OFF_SCRIPT="${ENTITY_POWER_OFF_SCRIPTS[0]}"
-if [ -z "${FIRST_POWER_OFF_SCRIPT}" ]; then
+FIRST_POWER_OFF_SCRIPT_KEY="${ENTITY_POWER_OFF_SCRIPTS[0]}"
+if [ -z "${FIRST_POWER_OFF_SCRIPT_KEY}" ]; then
   echo "Missing key: at least one key POWER_OFF_SCRIPT[...] is required. Exiting."
   exit 1
 fi
@@ -886,7 +892,8 @@ fi
 fi
 
 echo "Writing scripts turn_on adding power on actions..."
-for ENTITY_POWER_ON_SCRIPT in $ENTITY_POWER_ON_SCRIPTS; do
+for ENTITY_POWER_ON_SCRIPT_KEY in $ENTITY_POWER_ON_SCRIPTS_KEYS; do
+  ENTITY_POWER_ON_SCRIPT=$(get_value_for_key "${ENTITY_POWER_ON_SCRIPT_KEY}")
 { cat <<EOF
     - service: script.${ENTITY_POWER_ON_SCRIPT}
 EOF
@@ -1207,9 +1214,15 @@ fi
 echo "Entity ${ENTITY_FULL_ID} created:"
 echo "- Ensure these scripts exist (create them when manually when missing):"
 echo "  - Power ON:"
-printf '    %s\n' "${ENTITY_POWER_ON_SCRIPTS[@]}"
+for ENTITY_POWER_ON_SCRIPT_KEY in $ENTITY_POWER_ON_SCRIPTS_KEYS; do
+  ENTITY_POWER_ON_SCRIPT=$(get_value_for_key "${ENTITY_POWER_ON_SCRIPT_KEY}")
+  echo "    - ${ENTITY_POWER_ON_SCRIPT}"
+done
 echo "  - Power OFF:"
-printf '    %s\n' "${ENTITY_POWER_OFF_SCRIPTS[@]}"
+for ENTITY_POWER_OFF_SCRIPT_KEY in $ENTITY_POWER_OFF_SCRIPTS_KEYS; do
+  ENTITY_POWER_OFF_SCRIPT=$(get_value_for_key "${ENTITY_POWER_OFF_SCRIPT_KEY}")
+  echo "    - ${ENTITY_POWER_OFF_SCRIPT}"
+done
 if [ "${ENTITY_TYPE}" == "light" ]; then
   for COLOR_KEY in $COLOR_KEYS; do
     COLOR_HEX="${COLOR_KEY#COLOR_}"
