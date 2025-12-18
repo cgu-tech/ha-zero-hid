@@ -1155,12 +1155,11 @@ echo "Writing ${ENTITY_TYPE}s template for light Effect state..."
     {% set e = states('input_select.${INPUT_SELECT_EFFECTS}') %}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
-printf "  effect_list: \"{{ ['None'" >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 # to track first effect (will need "if" condtion only for the first, "elif" condition for second+)
 IS_FIRST_EFFECT=0
 
-echo "Writing ${ENTITY_TYPE}s template list of supported RGB color effect states..."
+echo "Writing ${ENTITY_TYPE}s mapping between supported RGB color effect backend and frontend states..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
   COLOR_DISPLAY=$(get_display_for_key "${COLOR_KEY}")
@@ -1175,7 +1174,7 @@ for COLOR_KEY in $COLOR_KEYS; do
   printf "    {%% %s e == '%s' %%}%s\n" "${CONDITION_PREFIX}" "effect_color_${COLOR_IDX}" "${COLOR_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
 done
 
-echo "Writing ${ENTITY_TYPE}s template list of supported standard effect states..."
+echo "Writing ${ENTITY_TYPE}s mapping between supported standard effect backend and frontend states..."
 EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
 for EFFECT_KEY in $EFFECT_KEYS; do
   EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
@@ -1196,6 +1195,30 @@ echo "Writing ${ENTITY_TYPE}s template list end for all effects..."
     {% endif %}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+# Write "effect_list" state template
+printf "  effect_list: \"{{ ['None'" >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+echo "Writing ${ENTITY_TYPE}s template list of supported RGB color effect states..."
+COLOR_KEYS=$(get_keys_starting_with "COLOR_")
+for COLOR_KEY in $COLOR_KEYS; do
+  COLOR_DISPLAY=$(get_display_for_key "${COLOR_KEY}")
+  printf ", '%s'" "${COLOR_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+done
+
+echo "Writing ${ENTITY_TYPE}s template list of supported standard effect states..."
+EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
+for EFFECT_KEY in $EFFECT_KEYS; do
+  EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
+  printf ", '%s'" "${EFFECT_DISPLAY}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+done
+
+echo "Writing ${ENTITY_TYPE}s template list end for all effects..."
+{ cat <<EOF
+  ] }}"
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+
 
 fi
 
