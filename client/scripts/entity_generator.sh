@@ -1371,8 +1371,30 @@ echo "Writing ${ENTITY_TYPE}s template for light set_level action..."
     - variables:
         current: "{{ states('input_number.${INPUT_NUMBER_BRIGHTNESS}') | int(${LIGHT_BRIGHTNESS_MAX}) }}"
         target: >
-          {% if brightness <= 128 %} ${LIGHT_BRIGHTNESS_MIN}
-          {% elif brightness <= 212 %} 170
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+# Fill all fixed brightness levels
+LIGHT_BRIGHTNESS_MARK="$LIGHT_BRIGHTNESS_MAX"
+LIGHT_BRIGHTNESS_STEP_IDX="1"
+LIGHT_BRIGHTNESS_FIRST_LEVEL=0
+
+while (( LIGHT_BRIGHTNESS_MARK > LIGHT_BRIGHTNESS_MIN )); do
+  LIGHT_BRIGHTNESS_LEVEL_TRIGGER=$(( LIGHT_BRIGHTNESS_STEP_IDX * LIGHT_BRIGHTNESS_STEP + LIGHT_BRIGHTNESS_STEP / 2 ))
+  LIGHT_BRIGHTNESS_LEVEL=$(( LIGHT_BRIGHTNESS_STEP_IDX * LIGHT_BRIGHTNESS_STEP ))
+
+  if [ "$LIGHT_BRIGHTNESS_FIRST_LEVEL" -eq 0 ]; then
+    LIGHT_BRIGHTNESS_FIRST_LEVEL=1
+    printf "          {%% if brightness <= %s %%} %s\n" "${LIGHT_BRIGHTNESS_LEVEL_TRIGGER}" "${LIGHT_BRIGHTNESS_LEVEL}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+  else
+    printf "          {%% elif brightness <= %s %%} %s\n" "${LIGHT_BRIGHTNESS_LEVEL_TRIGGER}" "${LIGHT_BRIGHTNESS_LEVEL}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+  fi
+
+  LIGHT_BRIGHTNESS_MARK=$(( LIGHT_BRIGHTNESS_MARK - LIGHT_BRIGHTNESS_STEP ))
+  LIGHT_BRIGHTNESS_STEP_IDX=$(( LIGHT_BRIGHTNESS_STEP_IDX + 1 ))
+done
+
+{ cat <<EOF
           {% else %} ${LIGHT_BRIGHTNESS_MAX}
           {% endif %}
         steps: "{{ (target - current) // ${LIGHT_BRIGHTNESS_STEP} }}"
