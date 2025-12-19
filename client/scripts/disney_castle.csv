@@ -3,11 +3,15 @@ ENTITY_ID,disney_castle_light
 ENTITY_NAME,Disney Castle light
 POWER_ON_SCRIPT,briksmax_disney_castle_switch_on_then_power_on
 POWER_OFF_SCRIPT,briksmax_disney_castle_power_off_then_switch_off
+BRIGHTNESS_START,255
+BRIGHTNESS_MAX,255
+BRIGHTNESS_MIN,85
+BRIGHTNESS_STEP,85
+BRIGHTNESS_STEP_UP,briksmax_disney_castle_light_up
+BRIGHTNESS_STEP_DOWN,briksmax_disney_castle_light_down
 START_COLOR_R,230
 START_COLOR_G,221
 START_COLOR_B,189
-START_BRIGHTNESS,255
-START_RESET,true
 COLOR_#BD2A19,briksmax_disney_castle_color_red,🔴 Rouge
 COLOR_#C74613,briksmax_disney_castle_color_orange,🟠 Orange
 COLOR_#D4C560,briksmax_disney_castle_color_yellow,🟡 Jaune

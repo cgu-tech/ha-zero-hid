@@ -523,42 +523,115 @@ else
   exit 1
 fi
 
-ENTITY_START_COLOR_R=""
-ENTITY_START_COLOR_G=""
-ENTITY_START_COLOR_B=""
-ENTITY_START_RESET=""
-ENTITY_LIGHT_HAS_RGB=1
-ENTITY_LIGHT_HAS_EFFECT=1
-ENTITY_LIGHT_HAS_BRIGHTNESS=1
+LIGHT_BRIGHTNESS_MAX=""
+LIGHT_BRIGHTNESS_MIN=""
+LIGHT_BRIGHTNESS_STEP=""
+LIGHT_BRIGHTNESS_STEP_UP=""
+LIGHT_BRIGHTNESS_STEP_DOWN=""
+LIGHT_BRIGHTNESS_DEFAULT=""
+LIGHT_COLOR_START_R=""
+LIGHT_COLOR_START_G=""
+LIGHT_COLOR_START_B=""
+LIGHT_COLOR_DEFAULT_R=""
+LIGHT_COLOR_DEFAULT_G=""
+LIGHT_COLOR_DEFAULT_B=""
+LIGHT_HAS_BRIGHTNESS_RESET=1
+LIGHT_HAS_BRIGHTNESS=1
+LIGHT_HAS_COLOR_RESET=1
+LIGHT_HAS_RGB=1
+LIGHT_HAS_EFFECT=1
 if [ "${ENTITY_TYPE}" == "light" ]; then
   echo "Retrieving optional light values when present..."
-  ENTITY_START_COLOR_R=$(get_value_for_key "START_COLOR_R")
-  ENTITY_START_COLOR_G=$(get_value_for_key "START_COLOR_G")
-  ENTITY_START_COLOR_B=$(get_value_for_key "START_COLOR_B")
-  ENTITY_START_RESET=$(get_value_for_key "START_RESET")
-  
+  LIGHT_BRIGHTNESS_START=$(get_value_for_key "BRIGHTNESS_START")
+  LIGHT_BRIGHTNESS_MAX=$(get_value_for_key "BRIGHTNESS_MAX")
+  LIGHT_BRIGHTNESS_MIN=$(get_value_for_key "BRIGHTNESS_MIN")
+  LIGHT_BRIGHTNESS_STEP=$(get_value_for_key "BRIGHTNESS_STEP")
+  LIGHT_BRIGHTNESS_STEP_UP=$(get_value_for_key "BRIGHTNESS_STEP_UP")
+  LIGHT_BRIGHTNESS_STEP_DOWN=$(get_value_for_key "BRIGHTNESS_STEP_DOWN")
+  LIGHT_COLOR_START_R=$(get_value_for_key "START_COLOR_R")
+  LIGHT_COLOR_START_G=$(get_value_for_key "START_COLOR_G")
+  LIGHT_COLOR_START_B=$(get_value_for_key "START_COLOR_B")
+  BRIGHTNESS_KEYS=$(get_keys_starting_with "BRIGHTNESS_")
   COLOR_KEYS=$(get_keys_starting_with "COLOR_")
   EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
-  
-  # Check if any start color is non-empty OR if at least one "COLOR_*" key
-  if [ -n "$ENTITY_START_COLOR_R" ] || [ -n "$ENTITY_START_COLOR_G" ] || [ -n "$ENTITY_START_COLOR_B" ] || newline_separated_has_values "$COLOR_KEYS"; then
-    ENTITY_LIGHT_HAS_RGB=0
+
+  # Check whether or not entity has a reset brightness value (ie. has START_BRIGHTNESS key)
+  if [ -n "$LIGHT_BRIGHTNESS_START" ]; then
+    LIGHT_HAS_BRIGHTNESS_RESET=0
+  fi
+
+  # Check whether or not entity has a reset brightness value (ie. has START_BRIGHTNESS key)
+  if [ "$LIGHT_HAS_BRIGHTNESS_RESET" -eq 0 ]; then
+    LIGHT_BRIGHTNESS_DEFAULT="$LIGHT_BRIGHTNESS_START"
+  else
+    LIGHT_BRIGHTNESS_DEFAULT=255
+  fi
+
+  # Check whether or not entity has adjustable brightness light (ie. has reset brightness or any COLOR_* key)
+  if [ "$LIGHT_HAS_BRIGHTNESS_RESET" -eq 0 ] || newline_separated_has_values "$BRIGHTNESS_"; then
+    LIGHT_HAS_BRIGHTNESS=0
+  fi
+
+  # Check whether or not entity has a reset color value (ie. has any START_COLOR_* key)
+  if [ -n "$LIGHT_COLOR_START_R" ] || [ -n "$LIGHT_COLOR_START_G" ] || [ -n "$LIGHT_COLOR_START_B" ]; then
+    LIGHT_HAS_COLOR_RESET=0
+  fi
+
+  # Set default RGB colors for input_numbers helper, start colors and colors examples
+  if [ "$LIGHT_HAS_COLOR_RESET" -eq 0 ]; then
+    # Init to 0 for all 3-components
+    LIGHT_COLOR_DEFAULT_R="0"
+    LIGHT_COLOR_DEFAULT_G="0"
+    LIGHT_COLOR_DEFAULT_B="0"
+    
+    # Override defined components with user value
+    if [ -n "$LIGHT_COLOR_START_R" ]; then
+      LIGHT_COLOR_DEFAULT_R="$LIGHT_COLOR_START_R"
+    fi
+    if [ -n "$LIGHT_COLOR_START_G" ]; then
+      LIGHT_COLOR_DEFAULT_G="$LIGHT_COLOR_START_G"
+    fi
+    if [ -n "$LIGHT_COLOR_START_B" ]; then
+      LIGHT_COLOR_DEFAULT_B="$LIGHT_COLOR_START_B"
+    fi
+  else
+    # Fallback to default "entity on" HA color
+    LIGHT_COLOR_DEFAULT_R="255"
+    LIGHT_COLOR_DEFAULT_G="193"
+    LIGHT_COLOR_DEFAULT_B="7"
+  fi
+
+  # Check whether or not entity is RGB colored light (ie. has reset color or any COLOR_* key)
+  if [ "$LIGHT_HAS_COLOR_RESET" -eq 0 ] || newline_separated_has_values "$COLOR_KEYS"; then
+    LIGHT_HAS_RGB=0
   fi
 
   # Check if RGB capability (implies color effects) OR if at least one "EFFECT_*" key
-  if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ] || newline_separated_has_values "$EFFECT_KEYS"; then
-    ENTITY_LIGHT_HAS_EFFECT=0
+  if [ "$LIGHT_HAS_RGB" -eq 0 ] || newline_separated_has_values "$EFFECT_KEYS"; then
+    LIGHT_HAS_EFFECT=0
   fi
 
-  # TODO: support brightness detection (not fully supported as of now)
-
-  echo "Retrieved ENTITY_START_COLOR_R=$ENTITY_START_COLOR_R"
-  echo "Retrieved ENTITY_START_COLOR_G=$ENTITY_START_COLOR_G"
-  echo "Retrieved ENTITY_START_COLOR_B=$ENTITY_START_COLOR_B"
-  echo "Retrieved ENTITY_START_RESET=$ENTITY_START_RESET"
-  echo "Retrieved ENTITY_LIGHT_HAS_RGB=$ENTITY_LIGHT_HAS_RGB"
-  echo "Retrieved ENTITY_LIGHT_HAS_EFFECT=$ENTITY_LIGHT_HAS_EFFECT"
-  echo "Retrieved ENTITY_LIGHT_HAS_BRIGHTNESS=$ENTITY_LIGHT_HAS_BRIGHTNESS"
+  echo "Retrieved LIGHT_COLOR_START_R=$LIGHT_COLOR_START_R"
+  echo "Retrieved LIGHT_COLOR_START_G=$LIGHT_COLOR_START_G"
+  echo "Retrieved LIGHT_COLOR_START_B=$LIGHT_COLOR_START_B"
+  for COLOR_KEY in $COLOR_KEYS; do
+    COLOR_VALUE=$(get_value_for_key "${COLOR_KEY}")
+    COLOR_DISPLAY=$(get_display_for_key "${COLOR_KEY}")
+    echo "Retrieved ${COLOR_KEY}=${COLOR_VALUE} (display=${COLOR_DISPLAY})"
+  done
+  for EFFECT_KEY in $EFFECT_KEYS; do
+    EFFECT_VALUE=$(get_value_for_key "${EFFECT_KEY}")
+    EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
+    echo "Retrieved ${EFFECT_KEY}=${EFFECT_VALUE} (display=${EFFECT_DISPLAY})"
+  done
+  echo "Computed LIGHT_COLOR_DEFAULT_R=$LIGHT_COLOR_DEFAULT_R"
+  echo "Computed LIGHT_COLOR_DEFAULT_G=$LIGHT_COLOR_DEFAULT_G"
+  echo "Computed LIGHT_COLOR_DEFAULT_B=$LIGHT_COLOR_DEFAULT_B"
+  echo "Computed LIGHT_HAS_BRIGHTNESS_RESET=$LIGHT_HAS_BRIGHTNESS_RESET"
+  echo "Computed LIGHT_HAS_BRIGHTNESS=$LIGHT_HAS_BRIGHTNESS"
+  echo "Computed LIGHT_HAS_COLOR_RESET=$LIGHT_HAS_COLOR_RESET"
+  echo "Computed LIGHT_HAS_RGB=$LIGHT_HAS_RGB"
+  echo "Computed LIGHT_HAS_EFFECT=$LIGHT_HAS_EFFECT"
 fi
 
 DIR_CONFIG="/config"
@@ -598,7 +671,8 @@ ENTITY_FULL_ID="${ENTITY_TYPE}.${ENTITY_ID}"
 SCRIPT_NAME_TURN_ON="${ENTITY_ID}_turn_on"
 SCRIPT_NAME_TURN_OFF="${ENTITY_ID}_turn_off"
 SCRIPT_NAME_SET_COLOR="${ENTITY_ID}_set_color"
-SCRIPT_NAME_SET_LEVEL="${ENTITY_ID}_set_level"
+SCRIPT_NAME_INCREASE_BRIGHTNESS="${ENTITY_ID}_increase_brightness"
+SCRIPT_NAME_DECREASE_BRIGHTNESS="${ENTITY_ID}_decrease_brightness"
 SCRIPT_NAME_SET_EFFECT_COLOR="${ENTITY_ID}_set_effect_color"
 
 INPUT_NUMBER_R="${ENTITY_ID}_r"
@@ -681,7 +755,7 @@ else
     echo "Detected used HA file ${FILE_LIGHT_TEMPLATES}: will preserve this file and its reference into HA templates configuration file"
   fi
 fi
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ] || [ "$ENTITY_LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+if [ "$LIGHT_HAS_RGB" -eq 0 ] || [ "$LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
   echo "Unregistering HA configurations files references specific to RGB or Brightness entities from HA main configuration file..."
   sed -i "/^input_number:/d" "${FILE_CONFIG}"
 else
@@ -693,7 +767,7 @@ else
     echo "Detected used HA file ${FILE_INPUT_NUMBERS}: will preserve this file and its reference into HA main configuration file"
   fi
 fi
-if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+if [ "$LIGHT_HAS_EFFECT" -eq 0 ]; then
   echo "Unregistering HA configurations files references specific to Effect entities from HA main configuration file..."
   sed -i "/^input_select:/d" "${FILE_CONFIG}"
 else
@@ -730,11 +804,11 @@ if [ "${ENTITY_TYPE}" == "light" ]; then
   echo "Registering HA lights configuration file reference into HA templates configuration file..."
   grep -qxF -- "- light:" "${FILE_TEMPLATES}" || echo "- light: !include lights.yaml" >> "${FILE_TEMPLATES}"
 fi
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ] || [ "$ENTITY_LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+if [ "$LIGHT_HAS_RGB" -eq 0 ] || [ "$LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
   echo "Registering HA input_numbers configuration file reference into HA main configuration file..."
   grep -qxF "input_number:" "${FILE_CONFIG}" || echo "input_number: !include input_numbers.yaml" >> "${FILE_CONFIG}"
 fi
-if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+if [ "$LIGHT_HAS_EFFECT" -eq 0 ]; then
   echo "Registering HA input_numbers configuration file reference into HA main configuration file..."
   grep -qxF "input_select:" "${FILE_CONFIG}" || echo "input_select: !include input_selects.yaml" >> "${FILE_CONFIG}"
 fi
@@ -830,7 +904,7 @@ echo "Writing input_numbers..."
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing input_numbers for light state..."
 
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
 echo "Writing input_numbers for light RGB state..."
 { echo; cat <<EOF
 ${INPUT_NUMBER_R}:
@@ -838,35 +912,35 @@ ${INPUT_NUMBER_R}:
   min: 0
   max: 255
   step: 1
-  initial: ${ENTITY_START_COLOR_R}
+  initial: ${LIGHT_COLOR_DEFAULT_R}
 
 ${INPUT_NUMBER_G}:
   name: ${ENTITY_NAME} Green value
   min: 0
   max: 255
   step: 1
-  initial: ${ENTITY_START_COLOR_G}
+  initial: ${LIGHT_COLOR_DEFAULT_G}
 
 ${INPUT_NUMBER_B}:
   name: ${ENTITY_NAME} Blue value
   min: 0
   max: 255
   step: 1
-  initial: ${ENTITY_START_COLOR_B}
+  initial: ${LIGHT_COLOR_DEFAULT_B}
 
 EOF
 } >> "${FILE_INPUT_NUMBERS}"
 fi
 
-if [ "$ENTITY_LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+if [ "$LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
 echo "Writing input_numbers for light Brightness state..."
 { echo; cat <<EOF
 ${INPUT_NUMBER_BRIGHTNESS}:
   name: ${ENTITY_NAME} Brightness
-  min: 0
-  max: 255
-  step: 1
-  initial: 128
+  min: ${LIGHT_BRIGHTNESS_MIN}
+  max: ${LIGHT_BRIGHTNESS_MAX}
+  step: ${LIGHT_BRIGHTNESS_STEP}
+  initial: ${LIGHT_BRIGHTNESS_DEFAULT}
 
 EOF
 } >> "${FILE_INPUT_NUMBERS}"
@@ -879,7 +953,7 @@ echo "Writing input_selects..."
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing input_selects for light..."
 
-if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+if [ "$LIGHT_HAS_EFFECT" -eq 0 ]; then
 echo "Writing input_selects for light effect state..."
 { echo; cat <<EOF
 ${INPUT_SELECT_EFFECTS}:
@@ -890,7 +964,7 @@ EOF
 } >> "${FILE_INPUT_SELECTS}"
 fi
 
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
 echo "Writing input_selects list of light color effects..."
 COLOR_KEYS=$(get_keys_starting_with "COLOR_")
 for COLOR_KEY in $COLOR_KEYS; do
@@ -902,7 +976,7 @@ EOF
 done
 fi
 
-if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+if [ "$LIGHT_HAS_EFFECT" -eq 0 ]; then
 echo "Writing input_selects list of light standard effects..."
 EFFECT_KEYS=$(get_keys_starting_with "EFFECT_")
 for EFFECT_KEY in $EFFECT_KEYS; do
@@ -931,31 +1005,38 @@ EOF
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing scripts turn_on for light..."
 
-if [ "${ENTITY_START_RESET}" == "true" ]; then
-echo "Writing scripts turn_on for light reset..."
+if [ "$LIGHT_HAS_BRIGHTNESS_RESET" -eq 0 ]; then
+echo "Writing scripts turn_on for light brightness reset..."
+{ cat <<EOF
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.${INPUT_NUMBER_BRIGHTNESS}
+      data:
+        value: ${LIGHT_BRIGHTNESS_DEFAULT}
+EOF
+} >> "${FILE_SCRIPTS}"
+fi
 
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
-echo "Writing scripts turn_on for light reset RGB..."
+if [ "$LIGHT_HAS_COLOR_RESET" -eq 0 ]; then
+echo "Writing scripts turn_on for light color reset..."
 { cat <<EOF
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_R}
       data:
-        value: ${ENTITY_START_COLOR_R}
+        value: ${LIGHT_COLOR_DEFAULT_R}
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_G}
       data:
-        value: ${ENTITY_START_COLOR_G}
+        value: ${LIGHT_COLOR_DEFAULT_G}
     - service: input_number.set_value
       target:
         entity_id: input_number.${INPUT_NUMBER_B}
       data:
-        value: ${ENTITY_START_COLOR_B}
+        value: ${LIGHT_COLOR_DEFAULT_B}
 EOF
 } >> "${FILE_SCRIPTS}"
-fi
-
 fi
 
 fi
@@ -1008,17 +1089,42 @@ echo "Writing scripts set_level..."
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing scripts set_level for light..."
 
-if [ "$ENTITY_LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
-echo "Writing scripts set_level for light Brightness state update..."
+if [ "$LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+echo "Writing scripts set_level for light brightness increase..."
 { echo; cat <<EOF
-${SCRIPT_NAME_SET_LEVEL}:
-  alias: "Set ${ENTITY_NAME} Brightness"
+${SCRIPT_NAME_INCREASE_BRIGHTNESS}:
+  mode: single
   sequence:
+    - variables:
+        current: "{{ states('input_number.${INPUT_NUMBER_BRIGHTNESS}') | int(${LIGHT_BRIGHTNESS_MAX}) }}"
+        next: "{{ [current + ${LIGHT_BRIGHTNESS_STEP}, ${LIGHT_BRIGHTNESS_MAX}] | min }}"
+    - condition: template
+      value_template: "{{ next > current }}"
     - service: input_number.set_value
-      target:
-        entity_id: input_number.${INPUT_NUMBER_BRIGHTNESS}
       data:
-        value: "{{ brightness }}"
+        entity_id: input_number.${INPUT_NUMBER_BRIGHTNESS}
+        value: "{{ next }}"
+    - service: script.${LIGHT_BRIGHTNESS_STEP_UP}
+    - delay: "00:00:01"
+EOF
+} >> "${FILE_SCRIPTS}"
+
+echo "Writing scripts set_level for light brightness decrease..."
+{ echo; cat <<EOF
+${SCRIPT_NAME_DECREASE_BRIGHTNESS}:
+  mode: single
+  sequence:
+    - variables:
+        current: "{{ states('input_number.${INPUT_NUMBER_BRIGHTNESS}') | int(${LIGHT_BRIGHTNESS_MAX}) }}"
+        next: "{{ [current - ${LIGHT_BRIGHTNESS_STEP}, ${LIGHT_BRIGHTNESS_MIN}] | max }}"
+    - condition: template
+      value_template: "{{ next < current }}"
+    - service: input_number.set_value
+      data:
+        entity_id: input_number.${INPUT_NUMBER_BRIGHTNESS}
+        value: "{{ next }}"
+    - service: script.${LIGHT_BRIGHTNESS_STEP_DOWN}
+    - delay: "00:00:01"
 EOF
 } >> "${FILE_SCRIPTS}"
 fi
@@ -1030,7 +1136,7 @@ echo "Writing scripts set_color..."
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing scripts set_color for light..."
 
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
 echo "Writing scripts set_color for light RGB state update..."
 { echo; cat <<EOF
 ${SCRIPT_NAME_SET_COLOR}:
@@ -1039,7 +1145,7 @@ ${SCRIPT_NAME_SET_COLOR}:
   fields:
     rgb_color:
       description: "Expected [R,G,B] color to set (will default on nearest color when not available)"
-      example: "[${ENTITY_START_COLOR_R}, ${ENTITY_START_COLOR_G}, ${ENTITY_START_COLOR_B}]"
+      example: "[${LIGHT_COLOR_DEFAULT_R}, ${LIGHT_COLOR_DEFAULT_G}, ${LIGHT_COLOR_DEFAULT_B}]"
   sequence:
     - condition: template
       value_template: >
@@ -1073,9 +1179,9 @@ echo "Writing scripts set_effect_color..."
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing scripts set_effect_color for light..."
 
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
 echo "Writing scripts set_effect_color for light RGB fixed color effect..."
-rgb_to_hex ${ENTITY_START_COLOR_R} ${ENTITY_START_COLOR_G} ${ENTITY_START_COLOR_B} START_COLOR_HEX
+rgb_to_hex ${LIGHT_COLOR_DEFAULT_R} ${LIGHT_COLOR_DEFAULT_G} ${LIGHT_COLOR_DEFAULT_B} START_COLOR_HEX
 { echo; cat <<EOF
 ${SCRIPT_NAME_SET_EFFECT_COLOR}:
   alias: "Set ${ENTITY_NAME} color effect"
@@ -1083,13 +1189,13 @@ ${SCRIPT_NAME_SET_EFFECT_COLOR}:
   fields:
     r:
       description: "Red component"
-      example: ${ENTITY_START_COLOR_R}
+      example: ${LIGHT_COLOR_DEFAULT_R}
     g:
       description: "Green component"
-      example: ${ENTITY_START_COLOR_G}
+      example: ${LIGHT_COLOR_DEFAULT_G}
     b:
       description: "Blue component"
-      example: ${ENTITY_START_COLOR_B}
+      example: ${LIGHT_COLOR_DEFAULT_B}
     effect_name:
       description: "Color effect name"
       example: "effect_color_${START_COLOR_HEX}"
@@ -1139,7 +1245,7 @@ if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing ${ENTITY_TYPE}s template for light other states..."
 
 # Write "rgb" state template
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
 echo "Writing ${ENTITY_TYPE}s template for light RGB state..."
 { cat <<EOF
   rgb: "({{states('input_number.${INPUT_NUMBER_R}') | int}}, {{states('input_number.${INPUT_NUMBER_G}') | int}}, {{states('input_number.${INPUT_NUMBER_B}') | int}})"
@@ -1148,7 +1254,7 @@ EOF
 fi
 
 # Write "effect" state template
-if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+if [ "$LIGHT_HAS_EFFECT" -eq 0 ]; then
 echo "Writing ${ENTITY_TYPE}s template for light Effect state..."
 { cat <<EOF
   effect: >
@@ -1219,7 +1325,6 @@ echo "Writing ${ENTITY_TYPE}s template list end for all effects..."
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 
-
 fi
 
 fi
@@ -1241,7 +1346,7 @@ if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing ${ENTITY_TYPE}s template for light other actions..."
 
 # Write "set_rgb" action template
-if [ "$ENTITY_LIGHT_HAS_RGB" -eq 0 ]; then
+if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
 echo "Writing ${ENTITY_TYPE}s template for light set_rgb action..."
 { cat <<EOF
   set_rgb:
@@ -1272,7 +1377,7 @@ EOF
 fi
 
 # Write "set_effect" action template
-if [ "$ENTITY_LIGHT_HAS_EFFECT" -eq 0 ]; then
+if [ "$LIGHT_HAS_EFFECT" -eq 0 ]; then
 echo "Writing ${ENTITY_TYPE}s template for light set_effect action..."
 { cat <<EOF
   set_effect:
