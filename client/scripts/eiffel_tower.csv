@@ -3,6 +3,7 @@ ENTITY_ID,eiffel_tower_light
 ENTITY_NAME,Eiffel Tower light
 POWER_ON_SCRIPT,smartled100_switch_on_then_power_on
 POWER_OFF_SCRIPT,smartled100_power_off_then_switch_off
+START_OVERRIDE,WHEN_EFFECT_SET_COLOR
 COLOR_#BD2A19,smartled100_color_red,🔴 Rouge
 COLOR_#C74613,smartled100_color_red2,🟠 Orange foncé
 COLOR_#D98432,smartled100_color_orange,🟠 Orange clair

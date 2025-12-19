@@ -545,6 +545,7 @@ else
   echo "Missing key: at least one key POWER_OFF_SCRIPT[...] is required. Exiting."
   exit 1
 fi
+ENTITY_START_OVERRIDE=$(get_value_for_key "START_OVERRIDE")
 
 LIGHT_BRIGHTNESS_MAX=""
 LIGHT_BRIGHTNESS_MIN=""
@@ -1027,6 +1028,18 @@ ${SCRIPT_NAME_TURN_ON}:
 EOF
 } >> "${FILE_SCRIPTS}"
 
+if [ "${ENTITY_START_OVERRIDE}" == "WHEN_EFFECT_SET_COLOR" ]; then
+echo "Writing scripts turn_on start override WHEN_EFFECT_SET_COLOR start..."
+{ echo; cat <<EOF
+  - variables:
+      previous_effect: "{{ states('input_select.${INPUT_SELECT_EFFECTS}') }}"
+      previous_r: "{{ states('input_number.${INPUT_NUMBER_R}') | int }}"
+      previous_g: "{{ states('input_number.${INPUT_NUMBER_G}') | int }}"
+      previous_b: "{{ states('input_number.${INPUT_NUMBER_B}') | int }}"
+EOF
+} >> "${FILE_SCRIPTS}"
+fi
+
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing scripts turn_on for light..."
 
@@ -1082,6 +1095,24 @@ echo "Writing scripts turn_on adding power on state update..."
         entity_id: input_boolean.${INPUT_BOOLEAN_POWER}
 EOF
 } >> "${FILE_SCRIPTS}"
+
+if [ "${ENTITY_START_OVERRIDE}" == "WHEN_EFFECT_SET_COLOR" ]; then
+echo "Writing scripts turn_on start override WHEN_EFFECT_SET_COLOR end..."
+{ echo; cat <<EOF
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ previous_effect != 'none' }}"
+        sequence:
+          - action: script.${SCRIPT_NAME_SET_COLOR}
+            data:
+              rgb_color:
+                - "{{ previous_r }}"
+                - "{{ previous_g }}"
+                - "{{ previous_b }}"
+EOF
+} >> "${FILE_SCRIPTS}"
+fi
 
 # Write "turn_off" script
 echo "Writing scripts turn_off..."
