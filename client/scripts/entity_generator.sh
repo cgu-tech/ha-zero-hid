@@ -1534,7 +1534,6 @@ EOF
 
 if [ "${EFFECT_OPTIONS}" == "BUTTON" ]; then
 { cat <<EOF
-          - delay: "00:00:00.300"
           - action: input_select.select_option
             data:
               entity_id: input_select.${INPUT_SELECT_EFFECTS}
