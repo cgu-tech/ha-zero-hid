@@ -1,0 +1,24 @@
+ENTITY_TYPE,light
+ENTITY_ID,small_cars_light
+ENTITY_NAME,Cars light
+POWER_ON_SCRIPT,briksmaxlegogenerictoggle
+POWER_OFF_SCRIPT,briksmaxlegogenerictoggle
+EFFECT_03,briksmaxlegogenericsoundtoggle,Son muter/jouer,BUTTON
+EFFECT_04,briksmaxlegogenericvolumeup,Augmenter son,BUTTON
+EFFECT_05,briksmaxlegogenericvolumedown,Diminuer son,BUTTON
+EFFECT_06,briksmaxlegogenericscenea,Scene A,BUTTON
+EFFECT_07,briksmaxlegogenericsceneb,Scene B,BUTTON
+EFFECT_08,briksmaxlegogenericscenec,Scene C,BUTTON
+EFFECT_09,briksmaxlegogenericscenenext,Scene suivante,BUTTON
+EFFECT_10,briksmaxlegogenericsceneprevious,Scene precedente,BUTTON
+EFFECT_11,briksmaxlegogenericcycle,Cycle,BUTTON
+EFFECT_12,briksmaxlegogenericaction1,Action 1,BUTTON
+EFFECT_13,briksmaxlegogenericaction2,Action 2,BUTTON
+EFFECT_14,briksmaxlegogenericaction3,Action 3,BUTTON
+EFFECT_15,briksmaxlegogenericaction4,Action 4,BUTTON
+EFFECT_16,briksmaxlegogenericaction5,Action 5,BUTTON
+EFFECT_17,briksmaxlegogenericaction6,Action 6,BUTTON
+EFFECT_18,briksmaxlegogenericaction7,Action 7,BUTTON
+EFFECT_19,briksmaxlegogenericaction8,Action 8,BUTTON
+EFFECT_20,briksmaxlegogenericlightup,Augmenter luminosité,BUTTON
+EFFECT_21,briksmaxlegogenericlightdown,Diminuer luminosité,BUTTON
