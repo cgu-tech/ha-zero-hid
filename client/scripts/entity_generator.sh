@@ -1251,7 +1251,9 @@ echo "Writing ${ENTITY_TYPE}s template for light brightness state..."
   level: "{{ states('input_number.${INPUT_NUMBER_BRIGHTNESS}') | int(${LIGHT_BRIGHTNESS_MAX}) }}"
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+
 else
+
 # Write "static brightness" template for RGB color with non-customizable brightness (but still HA displays the slider)
 if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
 echo "Writing ${ENTITY_TYPE}s template for light static brightness state..."
@@ -1260,6 +1262,7 @@ echo "Writing ${ENTITY_TYPE}s template for light static brightness state..."
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 fi
+
 fi
 
 # Write "rgb" state template
@@ -1410,6 +1413,19 @@ done
                 - service: script.${LIGHT_BRIGHTNESS_STEP_DOWN}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+
+else
+
+# Write "static brightness" template for RGB color with non-customizable brightness (but still HA displays the slider)
+if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing ${ENTITY_TYPE}s template for light set_level action with static brightness..."
+{ cat <<EOF
+  set_level:
+    - stop: "Brightness locked"
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+fi
+
 fi
 
 # Write "set_rgb" action template
