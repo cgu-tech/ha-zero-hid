@@ -19,9 +19,9 @@ COLOR_#781F50,smartled100_color_purple,🟣 Violet
 COLOR_#C73385,smartled100_color_pink,🟣 Rose
 COLOR_#C48C83,smartled100_color_pink2,🟣 Rose pâle
 COLOR_#FCF3CF,smartled100_color_white,⚪ Blanc
-EFFECT_01,smartled100_speed_plus,Augmenter vitesse
-EFFECT_02,smartled100_speed_minus,Diminuer vitesse
-EFFECT_03,smartled100_mode_auto_dupliquer,Passer au mode suivant
+EFFECT_01,smartled100_speed_plus,Augmenter vitesse,BUTTON
+EFFECT_02,smartled100_speed_minus,Diminuer vitesse,BUTTON
+EFFECT_03,smartled100_mode_auto_dupliquer,Passer au mode suivant,BUTTON
 EFFECT_04,smartled100_mode_auto,Activer changement auto mode
 EFFECT_05,smartled100_mode_strobe,Mode stroboscope
 EFFECT_06,smartled100_mode_in_waves,Mode par vagues

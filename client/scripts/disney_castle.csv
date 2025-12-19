@@ -21,18 +21,18 @@ COLOR_#5C99BD,briksmax_disney_castle_color_cyan,🔵 Bleu clair
 COLOR_#781F50,briksmax_disney_castle_color_purple,🟣 Violet
 COLOR_#C48C83,briksmax_disney_castle_color_pink,🟣 Rose
 COLOR_#E6DDBD,briksmax_disney_castle_color_white,⚪ Blanc
-EFFECT_01,briksmax_disney_castle_sound_play_pause,Musique jouer/pause
-EFFECT_02,briksmax_disney_castle_sound_next,Musique suivante
-EFFECT_03,briksmax_disney_castle_sound_previous,Musique precedente
-EFFECT_04,briksmax_disney_castle_sound_up,Augmenter son
-EFFECT_05,briksmax_disney_castle_sound_down,Diminuer son
-EFFECT_06,briksmax_disney_castle_light_toggle,Changer mode
-EFFECT_07,briksmax_disney_castle_mode_breathe,Mode progressif
-EFFECT_08,briksmax_disney_castle_area_a,Mode zone entrée
-EFFECT_09,briksmax_disney_castle_area_b,Mode zone rempart extérieur
-EFFECT_10,briksmax_disney_castle_area_c,Mode zone rempart intérieur
-EFFECT_11,briksmax_disney_castle_area_d,Mode zone donjon
-EFFECT_12,briksmax_disney_castle_mode_fast,Augmenter vitesse
-EFFECT_13,briksmax_disney_castle_mode_slow,Diminuer vitesse
-EFFECT_14,briksmax_disney_castle_light_up,Augmenter luminosité
-EFFECT_15,briksmax_disney_castle_light_down,Diminuer luminosité
+EFFECT_01,briksmax_disney_castle_sound_play_pause,Musique jouer/pause,BUTTON
+EFFECT_02,briksmax_disney_castle_sound_next,Musique suivante,BUTTON
+EFFECT_03,briksmax_disney_castle_sound_previous,Musique precedente,BUTTON
+EFFECT_04,briksmax_disney_castle_sound_up,Augmenter son,BUTTON
+EFFECT_05,briksmax_disney_castle_sound_down,Diminuer son,BUTTON
+EFFECT_06,briksmax_disney_castle_light_toggle,Changer mode,BUTTON
+EFFECT_07,briksmax_disney_castle_mode_breathe,Mode progressif,BUTTON
+EFFECT_08,briksmax_disney_castle_area_a,Mode zone entrée,BUTTON
+EFFECT_09,briksmax_disney_castle_area_b,Mode zone rempart extérieur,BUTTON
+EFFECT_10,briksmax_disney_castle_area_c,Mode zone rempart intérieur,BUTTON
+EFFECT_11,briksmax_disney_castle_area_d,Mode zone donjon,BUTTON
+EFFECT_12,briksmax_disney_castle_mode_fast,Augmenter vitesse,BUTTON
+EFFECT_13,briksmax_disney_castle_mode_slow,Diminuer vitesse,BUTTON
+EFFECT_14,briksmax_disney_castle_light_up,Augmenter luminosité,BUTTON
+EFFECT_15,briksmax_disney_castle_light_down,Diminuer luminosité,BUTTON

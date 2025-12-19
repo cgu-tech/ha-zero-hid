@@ -336,17 +336,18 @@ rgb_to_hex() {
 CONFIG_KEYS=()
 CONFIG_VALUES=()
 CONFIG_DISPLAYS=()
+CONFIG_OPTIONS=()
 
 load_config_map() {
   local file="$1"
-  local key value display line line_num=0
+  local key value display options line line_num=0
 
   if [[ ! -f "$file" ]]; then
     echo "ERROR: File not found: $file" >&2
     return 1
   fi
 
-  while IFS=',' read -r key value display; do
+  while IFS=',' read -r key value display options; do
     line_num=$((line_num + 1))
 
     # Skip comments and empty lines
@@ -361,10 +362,17 @@ load_config_map() {
     else
       display=$(echo "$display" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
     fi
+    # If options is missing, default to empty string
+    if [[ -z "$options" ]]; then
+      options=""
+    else
+      options=$(echo "$options" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
+    fi
 
     CONFIG_KEYS+=("$key")
     CONFIG_VALUES+=("$value")
     CONFIG_DISPLAYS+=("$display")
+    CONFIG_OPTIONS+=("$options")
   done < "$file"
 }
 
@@ -416,6 +424,21 @@ get_display_for_key() {
   for i in "${!CONFIG_KEYS[@]}"; do
     if [[ "${CONFIG_KEYS[i]}" == "$search_key" ]]; then
       echo "${CONFIG_DISPLAYS[i]}"
+      return 0
+    fi
+  done
+
+  # Return empty if not found (or you can return an error code)
+  return 1
+}
+
+get_options_for_key() {
+  local search_key="$1"
+  local i
+
+  for i in "${!CONFIG_KEYS[@]}"; do
+    if [[ "${CONFIG_KEYS[i]}" == "$search_key" ]]; then
+      echo "${CONFIG_OPTIONS[i]}"
       return 0
     fi
   done
@@ -1497,16 +1520,22 @@ for EFFECT_KEY in $EFFECT_KEYS; do
   EFFECT_SCRIPT=$(get_value_for_key "${EFFECT_KEY}")
   EFFECT_IDX="${EFFECT_KEY#EFFECT_}"
   EFFECT_DISPLAY=$(get_display_for_key "${EFFECT_KEY}")
+  EFFECT_OPTIONS=$(get_options_for_key "${EFFECT_KEY}")
 { cat <<EOF
       - conditions: "{{ effect == '${EFFECT_DISPLAY}' }}"
         sequence:
           - action: input_select.select_option
             data:
               entity_id: input_select.${INPUT_SELECT_EFFECTS}
-              option: "effect_${EFFECT_IDX}"
-          - service: script.${EFFECT_SCRIPT}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+if [ "${EFFECT_OPTIONS}" == "BUTTON" ]; then
+  printf "              option: \"none\"\n" >> "${FILE_TEMPLATE_FOR_TYPE}"
+else
+  printf "              option: \"effect_%s\"\n" "${EFFECT_IDX}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+fi
+printf "          - service: script.%s\n" "${EFFECT_SCRIPT}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+
 done
 
 echo "Writing ${ENTITY_TYPE}s template list end for all effect actions..."
