@@ -1244,6 +1244,24 @@ EOF
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing ${ENTITY_TYPE}s template for light other states..."
 
+# Write "brightness" state template
+if [ "$LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+echo "Writing ${ENTITY_TYPE}s template for light brightness state..."
+{ cat <<EOF
+  level: "{{ states('input_number.${INPUT_NUMBER_BRIGHTNESS}') | int(${LIGHT_BRIGHTNESS_MAX}) }}"
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+else
+# Write "static brightness" template for RGB color with non-customizable brightness (but still HA displays the slider)
+if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
+echo "Writing ${ENTITY_TYPE}s template for light static brightness state..."
+{ cat <<EOF
+  level: 255
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+fi
+fi
+
 # Write "rgb" state template
 if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
 echo "Writing ${ENTITY_TYPE}s template for light RGB state..."
@@ -1344,6 +1362,33 @@ echo "Writing ${ENTITY_TYPE}s template for other actions..."
 
 if [ "${ENTITY_TYPE}" == "light" ]; then
 echo "Writing ${ENTITY_TYPE}s template for light other actions..."
+
+# Write "set_level" action template
+if [ "$LIGHT_HAS_BRIGHTNESS" -eq 0 ]; then
+echo "Writing ${ENTITY_TYPE}s template for light set_level action..."
+{ cat <<EOF
+  set_level:
+    - variables:
+        current: "{{ states('input_number.${INPUT_NUMBER_BRIGHTNESS}') | int(${LIGHT_BRIGHTNESS_MAX}) }}"
+        target: >
+          {% if brightness <= 128 %} ${LIGHT_BRIGHTNESS_MIN}
+          {% elif brightness <= 212 %} 170
+          {% else %} ${LIGHT_BRIGHTNESS_MAX}
+          {% endif %}
+        steps: "{{ (target - current) // ${LIGHT_BRIGHTNESS_STEP} }}"
+    - repeat:
+        count: "{{ steps | abs }}"
+        sequence:
+          - choose:
+            - conditions: "{{ steps > 0 }}"
+              sequence:
+                - service: script.${LIGHT_BRIGHTNESS_STEP_UP}
+            - conditions: "{{ steps < 0 }}"
+              sequence:
+                - service: script.${LIGHT_BRIGHTNESS_STEP_DOWN}
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
+fi
 
 # Write "set_rgb" action template
 if [ "$LIGHT_HAS_RGB" -eq 0 ]; then
