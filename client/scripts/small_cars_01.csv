@@ -1,8 +1,8 @@
 ENTITY_TYPE,light
-ENTITY_ID,small_cars_light
-ENTITY_NAME,Cars light
-POWER_ON_SCRIPT,briksmaxlegogenerictoggle
-POWER_OFF_SCRIPT,briksmaxlegogenerictoggle
+ENTITY_ID,small_cars_light_01
+ENTITY_NAME,Cars light 01
+POWER_ON_SCRIPT,small_cars_01_power_on
+POWER_OFF_SCRIPT,small_cars_01_power_off
 EFFECT_03,briksmaxlegogenericsoundtoggle,Son muter/jouer,BUTTON
 EFFECT_04,briksmaxlegogenericvolumeup,Augmenter son,BUTTON
 EFFECT_05,briksmaxlegogenericvolumedown,Diminuer son,BUTTON
