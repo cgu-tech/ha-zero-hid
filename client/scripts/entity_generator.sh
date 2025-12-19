@@ -1527,14 +1527,21 @@ for EFFECT_KEY in $EFFECT_KEYS; do
           - action: input_select.select_option
             data:
               entity_id: input_select.${INPUT_SELECT_EFFECTS}
+              option: "effect_${EFFECT_IDX}"
+          - service: script.${EFFECT_SCRIPT}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
+
 if [ "${EFFECT_OPTIONS}" == "BUTTON" ]; then
-  printf "              option: \"none\"\n" >> "${FILE_TEMPLATE_FOR_TYPE}"
-else
-  printf "              option: \"effect_%s\"\n" "${EFFECT_IDX}" >> "${FILE_TEMPLATE_FOR_TYPE}"
+{ cat <<EOF
+          - delay: "00:00:00.300"
+          - action: input_select.select_option
+            data:
+              entity_id: input_select.${INPUT_SELECT_EFFECTS}
+              option: "none"
+EOF
+} >> "${FILE_TEMPLATE_FOR_TYPE}"
 fi
-printf "          - service: script.%s\n" "${EFFECT_SCRIPT}" >> "${FILE_TEMPLATE_FOR_TYPE}"
 
 done
 
