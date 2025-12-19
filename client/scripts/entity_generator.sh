@@ -722,6 +722,8 @@ remove_yaml_subblock "${FILE_TEMPLATE_FOR_TYPE}" "${ENTITY_ID}"
 echo "Removing ${ENTITY_FULL_ID} scripts from HA ${FILE_SCRIPTS} file..."
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_ON}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_TURN_OFF}"
+remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_INCREASE_BRIGHTNESS}"
+remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_DECREASE_BRIGHTNESS}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_SET_COLOR}"
 remove_yaml_top_level_block "${FILE_SCRIPTS}" "${SCRIPT_NAME_SET_EFFECT_COLOR}"
 
@@ -1407,10 +1409,10 @@ done
           - choose:
             - conditions: "{{ steps > 0 }}"
               sequence:
-                - service: script.${LIGHT_BRIGHTNESS_STEP_UP}
+                - service: script.${SCRIPT_NAME_INCREASE_BRIGHTNESS}
             - conditions: "{{ steps < 0 }}"
               sequence:
-                - service: script.${LIGHT_BRIGHTNESS_STEP_DOWN}
+                - service: script.${SCRIPT_NAME_DECREASE_BRIGHTNESS}
 EOF
 } >> "${FILE_TEMPLATE_FOR_TYPE}"
 
