@@ -986,7 +986,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Update layout server dependent parts
     // Note: this code is racing with set hass,
     // so check hass is safe before attempting layout refresh
-    if (this._hass) doUpdateLayoutHass();
+    if (this._hass) this.doUpdateLayoutHass();
   }
 
   doUpdateManagedPreferences() {
