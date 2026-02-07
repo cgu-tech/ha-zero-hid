@@ -565,26 +565,59 @@ export class EventManager {
     }
     // Override typed config available
 
-    // When sensor detected in override config, 
-    // choose override action to execute according to current sensor state (on/off)
+    // When sensor is defined in override config
     let overrideAction;
     if (overrideTypedConfig['sensor']) {
+      // try to retrieve separated on/off action
       if (btn?._sensorState?.toLowerCase() === 'on') {
-        overrideAction = overrideTypedConfig['action_when_on'];
+        overrideAction = overrideTypedConfig?.['action_when_on'];
       } else {
-        overrideAction = overrideTypedConfig['action_when_off'];
+        overrideAction = overrideTypedConfig?.['action_when_off'];
       }
     } else {
-      // Otherwise, retrieve the only action to execute
-      overrideAction = overrideTypedConfig['action'];
+      // try to retrieve action
+      overrideAction = overrideTypedConfig?.['action'];
     }
 
-    // Execute selected override action
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
-    this.triggerHaosTapAction(btn, overrideAction);
+    // When successfully retrieved override action, execute it
+    if (overrideAction) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
+      this.triggerHaosTapAction(btn, overrideAction);
+      return;
+    }
+
+    // When no override action found, try to retrieve entity id
+    const entityId = overrideTypedConfig?.['entity'];
+    if (entityId) {
+
+      // When entity id is found, determine which domain (switch, light, etc)
+      // and use current entity state to dtermine the service to call (turn_on when state is off, turn_off when state is on)
+      const domain = entityId?.split('.')?.[0];
+      const service = this.isHassEntityOn(entityId) ? 'turn_off' : 'turn_on';
+
+      // Execute configured override entity service
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override entity service ${domain}.${service} on ${btn.id}:`, entityId));
+      this.callService(domain, service, {
+        "entity_id": entityId,
+      });
+    }
   }
 
+  getHassEntity(entityId) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`getHassEntity(entityId): undefined hass. Unable to retrieve the Hass entity`, entityId));
+      return;
+    }
+    return this.getHass?.states?.[entityId];
+  }
 
+  isHassEntityOn(entityId) {
+    return entityId && (this.getHassEntity(entityId)?.state === 'on');
+  }
+
+  getEntityRgbColor(entityId) {
+    return (this.getHassEntity(entityId)?.attributes?.rgb_color ?? null);
+  }
 
   // Aynchronously retrieves user preferences, including authorized list of HID servers. 
   loadPreferences() {

@@ -899,21 +899,26 @@ class AndroidRemoteCard extends HTMLElement {
       const overrideTypedConfigShort = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_SHORT_PRESS);
       const overrideTypedConfigLong = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_LONG_PRESS);
 
-      const sensorEntityId = overrideTypedConfigShort?.['sensor'] ?? overrideTypedConfigLong?.['sensor'];
-      if (sensorEntityId) {
+      // Supports entity or sensor
+      const entityId =
+        overrideTypedConfigShort?.['entity'] ??
+        overrideTypedConfigLong?.['entity'] ??
+        overrideTypedConfigShort?.['sensor'] ??
+        overrideTypedConfigLong?.['sensor'];
+      if (entityId) {
 
         // Search if current override configuration matches an element from DOM
         const btn = this._elements.wrapper.querySelector(`#${overrideId}`);
         if (btn) {
 
           // Update overriden button with up-to-date sensor state
-          const isSensorOn = this.isHassEntityOn(sensorEntityId);
-          btn._sensorState = isSensorOn ? 'on' : 'off';
+          const isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
+          btn._sensorState = isHassEntityOn ? 'on' : 'off';
 
           // Set overriden button content classes relative to sensor current state, for visual feedback
           for (const child of (btn.children ? Array.from(btn.children) : [])) {
-            if (isSensorOn) child.classList.add("sensor-on");
-            if (!isSensorOn) child.classList.remove("sensor-on");
+            if (isHassEntityOn) child.classList.add("sensor-on");
+            if (!isHassEntityOn) child.classList.remove("sensor-on");
           }
         }
       }
@@ -929,28 +934,16 @@ class AndroidRemoteCard extends HTMLElement {
 
       // Checks whether cell configured entity is ON (when entity is configured and exists into HA)
       const entityId = this.getAddonCellEntity(addonCellConfig);
-      const isHassEntityOn = this.isHassEntityOn(entityId);
+      const isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
       this.setSensorClass(addonCell, entityId, isHassEntityOn);
     }
-  }
-
-  getHassEntity(entityId) {
-    return this._hass?.states?.[entityId];
-  }
-
-  getEntityRgbColor(entityId) {
-    return (this.getHassEntity(entityId)?.attributes?.rgb_color ?? null);
-  }
-
-  isHassEntityOn(entityId) {
-    return entityId && (this.getHassEntity(entityId)?.state === 'on');
   }
   
   setSensorClass(addonCell, entityId, isSensorOn) {
     const img = addonCell?._img;
     if (img) {
       const svg = img.querySelector('svg');
-      const rgbColor = this.getEntityRgbColor(entityId);
+      const rgbColor = this._eventManager.getEntityRgbColor(entityId);
       if (svg && rgbColor) {
         // RGB color available
 
@@ -1659,9 +1652,9 @@ class AndroidRemoteCard extends HTMLElement {
       // Retrieve service parameters
       const entityId = this.getAddonCellEntity(addonCellConfig);
       const domain = entityId?.split('.')?.[0];
-      const service = this.isHassEntityOn(entityId) ? 'turn_off' : 'turn_on';
+      const service = this._eventManager.isHassEntityOn(entityId) ? 'turn_off' : 'turn_on';
 
-      // Call service to sitch the entity state
+      // Call service to switch the entity state
       this._eventManager.callService(domain, service, {
         "entity_id": entityId,
       });
