@@ -982,6 +982,11 @@ class AndroidRemoteCard extends HTMLElement {
     // Update remote UI to display current server to end user
     const serverLabel = this._elements.serverBtnLabel;
     if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
+
+    // Update layout server dependent parts
+    // Note: this code is racing with set hass,
+    // so check hass is safe before attempting layout refresh
+    if (this._hass) doUpdateLayoutHass();
   }
 
   doUpdateManagedPreferences() {
