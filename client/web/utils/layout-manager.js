@@ -136,6 +136,13 @@ export class LayoutManager {
     return (btn.id && this.getTypedButtonOverrideForServer(serverId, btn, mode, type));
   }
 
+  getTypedButtonRepeatOverrideForServer(serverId, btn, mode, type) {
+    return this.getTypedButtonOverrideForServer(serverId, btn, mode, type).?['repeat'];
+  }
+
+  hasTypedButtonRepeatOverrideForServer(serverId, btn, mode, type) {
+    return (btn.id && this.getTypedButtonRepeatOverrideForServer(serverId, btn, mode, type));
+  }
 
   getLayoutsNames() {
     return this._layoutsNames;

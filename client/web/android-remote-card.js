@@ -57,6 +57,7 @@ class AndroidRemoteCard extends HTMLElement {
   _threeStatesToggleState;
   _knownRemoteModes = new Set([this._OVERRIDE_NORMAL_MODE, this._OVERRIDE_ALTERNATIVE_MODE]);
   _overrideMode = this._OVERRIDE_NORMAL_MODE;
+  _overrideRepeatedTimeouts = new Map();
   _overrideLongPressTimeouts = new Map();
   _moreInfoLongPressTimeouts = new Map();
   _sidePanelVisible = false;
@@ -172,6 +173,16 @@ class AndroidRemoteCard extends HTMLElement {
 
   getTriggerLongClickDelay() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_long_click_delay");
+  }
+
+  getTriggerRepeatOverrideDelay() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_repeat_override_delay");
+  }
+  getTriggerRepeatOverrideDecreaseInterval() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_repeat_override_decrease_interval");
+  }
+  getTriggerRepeatOverrideMinInterval() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("trigger_repeat_override_min_interval");
   }
 
   getKeyboard() {
@@ -1785,6 +1796,9 @@ class AndroidRemoteCard extends HTMLElement {
       log_pushback: false,
       buttons_overrides: {},
       trigger_long_click_delay: 500,
+      trigger_repeat_override_delay: 500,
+      trigger_repeat_override_decrease_interval: 100,
+      trigger_repeat_override_min_interval: 100,
       keyboard: {},
       trackpad: {},
       activities: {},
@@ -1847,7 +1861,17 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to press
     const code = btnData.code;
-    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
+    if (this.hasValidTypedButtonOverrideShortRepeatable(btn)) {
+      // Overriden repeated action
+
+      // Execute the override action once
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden repeated key detected, suppressing ${code} to execute override...`));
+      this.executeButtonOverride(btn, this._OVERRIDE_TYPE_SHORT_PRESS);
+
+      // Setup repeated override action short while overriden button is pressed
+      this.setupOverrideRepeatedTimeout(evt, btn, this._OVERRIDE_TYPE_SHORT_PRESS);
+
+    } else if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
 
       // Nothing to do: overriden action will be executed on key release
       if (this.hasTypedButtonOverrideShort(btn)) {
@@ -1858,10 +1882,10 @@ class AndroidRemoteCard extends HTMLElement {
       if (this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: server switch or overridden key for ${this.getRemoteMode()} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
         this._overrideLongPressTimeouts.set(evt.pointerId, { 
-          "can-run": true,                   // until proven wrong, long press action can be run
-          "was-ran": false,                      // true when action was executed
-          "source": btn,                        // long press source button
-          "source-mode": this.getRemoteMode(),          // long press source mode when timeout starts
+          "can-run": true,                                   // until proven wrong, long press action can be run
+          "was-ran": false,                                  // true when action was executed
+          "source": btn,                                     // long press source button
+          "source-mode": this.getRemoteMode(),               // long press source mode when timeout starts (normal, alt)
           "timeout": this.addOverrideLongPressTimeout(evt)   // when it expires, triggers the associated inner callback to run the action
         });
       }
@@ -1882,6 +1906,10 @@ class AndroidRemoteCard extends HTMLElement {
     // Remove override long press timeout (when set before)
     this.clearOverrideLongPressTimeout(evt);
     this._overrideLongPressTimeouts.delete(evt.pointerId);
+
+    // Remove repeated override timeout (when set before)
+    this.clearOverrideRepeatedTimeout(evt)
+    this._overrideRepeatedTimeouts.delete(evt.pointerId);
 
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
@@ -1915,10 +1943,15 @@ class AndroidRemoteCard extends HTMLElement {
   doKeyRelease(btn, evt) {
 
     const overrideLongPressEntry = this._overrideLongPressTimeouts.get(evt.pointerId);
+    const overrideRepeatedEntry = this._overrideRepeatedTimeouts.get(evt.pointerId);
     
     // Remove override long press timeout (when set before)
     this.clearOverrideLongPressTimeout(evt);
     this._overrideLongPressTimeouts.delete(evt.pointerId);
+
+    // Remove repeated override timeout (when set before)
+    this.clearOverrideRepeatedTimeout(evt)
+    this._overrideRepeatedTimeouts.delete(evt.pointerId);
 
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
@@ -1926,7 +1959,11 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to release
     const code = btnData.code;
-    if (overrideLongPressEntry && overrideLongPressEntry["was-ran"]) {
+    if (overrideRepeatedEntry) {
+      // Overriden repeated action already executed into its short-press or long-press Form
+      const overrideType = overrideRepeatedEntry['source-type'];
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden repeated key detected but action already executed into ${this.getRemoteMode()} ${overrideType}, nothing else to do`));
+    } else if (overrideLongPressEntry && overrideLongPressEntry["was-ran"]) {
       // Overriden action already executed into its long-press Form
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: overridden key detected but action already executed into ${this.getRemoteMode()} ${this._OVERRIDE_TYPE_LONG_PRESS}, nothing else to do`));
     } else if (this.isAirmouseButton(btn)) {
@@ -1953,6 +1990,18 @@ class AndroidRemoteCard extends HTMLElement {
     this._layoutManager.hapticFeedback();
   }
 
+  hasValidTypedButtonOverrideShortRepeatable(btn) {
+    return this.hasTypedButtonOverrideShortRepeatable(btn);
+  }
+  hasValidTypedButtonOverrideLongRepeatable(btn) {
+    return this.hasTypedButtonOverrideLongRepeatable(btn) && !this.hasTypedButtonOverrideShortRepeatable(btn);
+  }
+  hasTypedButtonOverrideShortRepeatable(btn) {
+    return this._layoutManager.hasTypedButtonRepeatOverrideForServer(this._eventManager.getCurrentServerId(), btn, this.getRemoteMode(), this._OVERRIDE_TYPE_SHORT_PRESS);
+  }
+  hasTypedButtonOverrideLongRepeatable(btn) {
+    return this._layoutManager.hasTypedButtonRepeatOverrideForServer(this._eventManager.getCurrentServerId(), btn, this.getRemoteMode(), this._OVERRIDE_TYPE_LONG_PRESS);
+  }
   hasTypedButtonOverrideShort(btn) {
     return this._layoutManager.hasTypedButtonOverrideForServer(this._eventManager.getCurrentServerId(), btn, this.getRemoteMode(), this._OVERRIDE_TYPE_SHORT_PRESS);
   }
@@ -1973,7 +2022,7 @@ class AndroidRemoteCard extends HTMLElement {
 
       // When no entry: key has been released before timeout
       if (overrideLongPressEntry && overrideLongPressEntry["can-run"] && !overrideLongPressEntry["was-ran"]) {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Long action waiting to be executed...`));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry: Long action waiting to be executed...`, evt, overrideLongPressEntry));
         const btn = overrideLongPressEntry["source"];
 
         // Check whether or not long click action can be run in current mode
@@ -1986,12 +2035,69 @@ class AndroidRemoteCard extends HTMLElement {
         // Execute action
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry: executing ${this.getRemoteMode()} ${this._OVERRIDE_TYPE_LONG_PRESS} action...`, evt, overrideLongPressEntry));
         this.executeButtonOverride(btn, this._OVERRIDE_TYPE_LONG_PRESS);
+
+        if (this.hasValidTypedButtonOverrideLongRepeatable(btn)) {
+          // Overriden repeated action
+
+          // Setup repeated override action long while overriden button is pressed
+          this.setupOverrideRepeatedTimeout(evt, btn, this._OVERRIDE_TYPE_LONG_PRESS);
+        }
+
       }
     }, this.getTriggerLongClickDelay()); // long-press duration
   }
 
   clearOverrideLongPressTimeout(evt) {
     const timeout = this._overrideLongPressTimeouts.get(evt.pointerId)?.["timeout"];
+    if (timeout) clearTimeout(timeout);
+  }
+
+  setupOverrideRepeatedTimeout(evt, btn, overridetype) {
+    this._overrideRepeatedTimeouts.set(evt.pointerId, {
+      "can-run": true,                                      // until proven wrong, repeated override action can be run
+      "source": btn,                                        // source button
+      "source-mode": this.getRemoteMode(),                  // source mode when timeout starts (normal, alt)
+      "source-type": overridetype,       // source type when timeout starts (short, long)
+      "timeout": this.addOverrideRepeatedTimeout(evt, this.getTriggerRepeatOverrideDelay())  // when it expires, triggers the associated inner callback to run the action
+    });
+  }
+
+  addOverrideRepeatedTimeout(evt, triggerDelay) {
+    return setTimeout(() => {
+      const overrideRepeatedTriggerEntry = this._overrideRepeatedTimeouts.get(evt.pointerId);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay)`, evt, triggerDelay));
+
+      if (overrideRepeatedTriggerEntry) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay) + overrideRepeatedTriggerEntry: repeated override action waiting to be executed...`, evt, triggerDelay, overrideLongPressEntry));
+        const btn = overrideRepeatedTriggerEntry["source"];
+
+        // Check whether or not long click action can be run in current mode
+        overrideRepeatedTriggerEntry["can-run"] = (overrideRepeatedTriggerEntry["source-mode"] === this.getRemoteMode());
+        if (!overrideRepeatedTriggerEntry["can-run"]) return;
+
+        // Execute action
+        const overrideType = overrideRepeatedTriggerEntry["source-type"];
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay) + overrideRepeatedTriggerEntry: executing ${this.getRemoteMode()} ${overrideType} action...`, evt, triggerDelay, overrideLongPressEntry));
+        this.executeButtonOverride(btn, overrideType);
+
+        // Compute next trigger delay
+        const nextTriggerDelay = Math.max(this.getTriggerRepeatOverrideMinInterval(), triggerDelay - this.getTriggerRepeatOverrideDecreaseInterval())
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay): next override action will be triggered in ${nextTriggerDelay}ms`));
+
+        // Add next override trigger event
+        this._overrideRepeatedTimeouts.set(evt.pointerId, {
+          "can-run": overrideRepeatedTriggerEntry["can-run"],
+          "source": overrideRepeatedTriggerEntry["source"],
+          "source-mode": overrideRepeatedTriggerEntry["source-mode"],
+          "source-type": overrideRepeatedTriggerEntry["source-type"],
+          "timeout": this.addOverrideRepeatedTimeout(evt, nextTriggerDelay)  // New delay before next override action
+        });
+      }
+    }, triggerDelay); // next override action duration
+  }
+
+  clearOverrideRepeatedTimeout(evt) {
+    const timeout = this._overrideRepeatedTimeouts.get(evt.pointerId)?.["timeout"];
     if (timeout) clearTimeout(timeout);
   }
 
