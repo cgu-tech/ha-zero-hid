@@ -137,7 +137,7 @@ export class LayoutManager {
   }
 
   getTypedButtonRepeatOverrideForServer(serverId, btn, mode, type) {
-    return this.getTypedButtonOverrideForServer(serverId, btn, mode, type).?['repeat'];
+    return this.getTypedButtonOverrideForServer(serverId, btn, mode, type)?.['repeat'];
   }
 
   hasTypedButtonRepeatOverrideForServer(serverId, btn, mode, type) {
