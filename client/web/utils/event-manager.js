@@ -608,7 +608,7 @@ export class EventManager {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`getHassEntity(entityId): undefined hass. Unable to retrieve the Hass entity`, entityId));
       return;
     }
-    return this.getHass?.states?.[entityId];
+    return this.getHass()?.states?.[entityId];
   }
 
   isHassEntityOn(entityId) {
