@@ -116,34 +116,6 @@ export class LayoutManager {
     return this.isDefined(configValue) ? configValue : this.getFromConfigOrDefaultConfig(configName);
   }
 
-  getButtonsOverridesForServer(serverId) {
-    return this.getFromConfigOrDefaultConfigForServer('buttons_overrides', serverId);
-  }
-
-  getButtonOverrideForServer(serverId, btn) {
-    return this.getButtonsOverridesForServer(serverId)?.[btn.id];
-  }
-  
-  hasButtonOverrideForServer(serverId, btn) {
-    return (btn.id && this.getButtonOverrideForServer(serverId, btn));
-  }
-
-  getTypedButtonOverrideForServer(serverId, btn, mode, type) {
-    return this.getButtonOverrideForServer(serverId, btn)?.[mode]?.[type];
-  }
-
-  hasTypedButtonOverrideForServer(serverId, btn, mode, type) {
-    return (btn.id && this.getTypedButtonOverrideForServer(serverId, btn, mode, type));
-  }
-
-  getTypedButtonRepeatOverrideForServer(serverId, btn, mode, type) {
-    return this.getTypedButtonOverrideForServer(serverId, btn, mode, type)?.['repeat'];
-  }
-
-  hasTypedButtonRepeatOverrideForServer(serverId, btn, mode, type) {
-    return (btn.id && this.getTypedButtonRepeatOverrideForServer(serverId, btn, mode, type));
-  }
-
   getLayoutsNames() {
     return this._layoutsNames;
   }

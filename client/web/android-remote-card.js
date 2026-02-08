@@ -184,6 +184,34 @@ class AndroidRemoteCard extends HTMLElement {
   getTriggerRepeatOverrideMinInterval() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_repeat_override_min_interval");
   }
+  getButtonsOverridesConfigForServer(serverId) {
+    return this._layoutManager.getFromConfigOrDefaultConfigForServer('buttons_overrides', serverId);
+  }
+  getButtonOverrideRawConfig(serverId, buttonId, mode, type) {
+    return this.getButtonsOverridesConfigForServer(serverId)?.[buttonId]?.[mode]?.[type];
+  }
+  getButtonOverrideConfig(serverId, buttonId, mode, type) {
+    // Retrieve raw button override config
+    let overrideConfig = this.getButtonOverrideRawConfig(serverId, buttonId, mode, type);
+
+    // Config shortcut "same" specified
+    if (overrideConfig === this._OVERRIDE_SAME) {
+
+      // Retrieve opposite raw button override config
+      const referenceType = (type === this._OVERRIDE_TYPE_SHORT_PRESS ? this._OVERRIDE_TYPE_LONG_PRESS : this._OVERRIDE_TYPE_SHORT_PRESS);
+      overrideConfig = this.getButtonOverrideRawConfig(serverId, buttonId, mode, referenceType);
+    }
+
+    // When both config types are "same": error
+    if (overrideConfig === this._OVERRIDE_SAME) {
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`getButtonOverrideConfig(serverId, buttonId, mode, type): invalid config (serverId: ${serverId}, buttonId: ${buttonId}). Both ${this._OVERRIDE_TYPE_SHORT_PRESS} and ${this._OVERRIDE_TYPE_LONG_PRESS} are referencing "${this._OVERRIDE_SAME}" (only one reference expected)`, serverId, buttonId, mode, type));
+    }
+
+    return overrideConfig;
+  }
+  getButtonOverrideRepeatConfig(serverId, buttonId, mode, type) {
+    return this.getButtonOverrideConfig(serverId, buttonId, mode, type)?.['repeat'];
+  }
 
   getKeyboard() {
     return this._elements.foldables.keyboard;
@@ -261,32 +289,6 @@ class AndroidRemoteCard extends HTMLElement {
   }
   createDynamicAddonCellConfig(addonCellName) {
     return { "name": addonCellName };
-  }
-
-  getTypedOverride(overrideId, overrideConfig, pressType) {
-    // Retrieve override typed config
-    let overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this.getRemoteMode(), pressType);
-    
-    // When "same" config specified, retrieve reference config from the other config type
-    if (overrideTypedConfig === this._OVERRIDE_SAME) {
-      const referencePressType = (pressType === this._OVERRIDE_TYPE_SHORT_PRESS ? this._OVERRIDE_TYPE_LONG_PRESS : this._OVERRIDE_TYPE_SHORT_PRESS);
-      overrideTypedConfig = this._eventManager.getTypedButtonOverrideConfig(overrideConfig, this.getRemoteMode(), referencePressType);
-    }
-
-    // When both config types are "same": error
-    if (overrideTypedConfig === this._OVERRIDE_SAME) {
-      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`getTypedOverride(overrideId, overrideConfig, pressType): invalid config ${this.getRemoteMode()} for overrideId ${overrideId} (both ${this._OVERRIDE_TYPE_SHORT_PRESS} and ${this._OVERRIDE_TYPE_LONG_PRESS} reference "${this._OVERRIDE_SAME}"`));
-    }
-
-    return overrideTypedConfig;
-  }
-
-  getRemoteMode() {
-    const mode = this._eventManager.getUserPreferenceRemoteMode();
-    return this._knownRemoteModes.has(mode) ? mode : this._OVERRIDE_NORMAL_MODE; // Default to normal mode when unknown mode (undefined, not in known modes...)
-  }
-  setRemoteMode(mode) {
-    this._eventManager.setUserPreferenceRemoteMode(mode);
   }
 
   getFoldableChild() {
@@ -903,23 +905,25 @@ class AndroidRemoteCard extends HTMLElement {
 
   doUpdateLayoutHass() {
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
-    const overridesConfigs = this._layoutManager.getButtonsOverridesForServer(this._eventManager.getCurrentServerId());
-    for (const [overrideId, overrideConfig] of Object.entries(overridesConfigs ?? {})) {
+    const serverId = this._eventManager.getCurrentServerId();
+    const remoteMode = this.getRemoteMode();
+    const overridesConfigsForServer = this.getButtonsOverridesConfigForServer(serverId);
+    for (const [buttonId, overrideConfigForServer] of Object.entries(overridesConfigsForServer ?? {})) {
 
       // Retrieve short or long press config (whatever is defined, in this order)
-      const overrideTypedConfigShort = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_SHORT_PRESS);
-      const overrideTypedConfigLong = this.getTypedOverride(overrideId, overrideConfig, this._OVERRIDE_TYPE_LONG_PRESS);
+      const overrideConfigShort = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS);
+      const overrideConfigLong = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS);
 
       // Supports entity or sensor
       const entityId =
-        overrideTypedConfigShort?.['entity'] ??
-        overrideTypedConfigLong?.['entity'] ??
-        overrideTypedConfigShort?.['sensor'] ??
-        overrideTypedConfigLong?.['sensor'];
+        overrideConfigShort?.['entity'] ??
+        overrideConfigLong?.['entity'] ??
+        overrideConfigShort?.['sensor'] ??
+        overrideConfigLong?.['sensor'];
       if (entityId) {
 
         // Search if current override configuration matches an element from DOM
-        const btn = this._elements.wrapper.querySelector(`#${overrideId}`);
+        const btn = this._elements.wrapper.querySelector(`#${buttonId}`);
         if (btn) {
 
           // Update overriden button with up-to-date sensor state
@@ -1797,8 +1801,8 @@ class AndroidRemoteCard extends HTMLElement {
       buttons_overrides: {},
       trigger_long_click_delay: 500,
       trigger_repeat_override_delay: 500,
-      trigger_repeat_override_decrease_interval: 100,
-      trigger_repeat_override_min_interval: 100,
+      trigger_repeat_override_decrease_interval: 50,
+      trigger_repeat_override_min_interval: 350,
       keyboard: {},
       trackpad: {},
       activities: {},
@@ -1861,7 +1865,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to press
     const code = btnData.code;
-    if (this.hasValidTypedButtonOverrideShortRepeatable(btn)) {
+    if (this.hasValidButtonOverrideRepeatConfigShort(btn)) {
       // Overriden repeated action
 
       // Execute the override action once
@@ -1871,15 +1875,15 @@ class AndroidRemoteCard extends HTMLElement {
       // Setup repeated override action short while overriden button is pressed
       this.setupOverrideRepeatedTimeout(evt, btn, this._OVERRIDE_TYPE_SHORT_PRESS);
 
-    } else if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
+    } else if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
 
       // Nothing to do: overriden action will be executed on key release
-      if (this.hasTypedButtonOverrideShort(btn)) {
+      if (this.hasButtonOverrideConfigShort(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: overridden key for ${this.getRemoteMode()} on ${this._OVERRIDE_TYPE_SHORT_PRESS} detected, nothing to press`));
       }
 
       // Triggering override long click timeout
-      if (this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
+      if (this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: server switch or overridden key for ${this.getRemoteMode()} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
         this._overrideLongPressTimeouts.set(evt.pointerId, { 
           "can-run": true,                                   // until proven wrong, long press action can be run
@@ -1917,15 +1921,15 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to abort press
     const code = btnData.code;
-    if (this.hasTypedButtonOverrideShort(btn) || this.hasTypedButtonOverrideLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
+    if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
-      if (this.hasTypedButtonOverrideShort(btn)) {
+      if (this.hasButtonOverrideConfigShort(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden short key press detected, nothing to abort`));
       }
 
       // Overriden long click did not happened: nothing to do, overriden action has not (and wont be) executed because key release wont happen
-      if (this.hasTypedButtonOverrideLong(btn)) {
+      if (this.hasButtonOverrideConfigLong(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} abort press: overridden long key press detected, nothing to abort`));
       }
     } else {
@@ -1972,7 +1976,7 @@ class AndroidRemoteCard extends HTMLElement {
       const nextAirmouseMode = !currentAirmouseMode;
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: switching airmouse mode from ${currentAirmouseMode} to ${nextAirmouseMode}...`, btn));
       this.setAirmouseEnabled(nextAirmouseMode);
-    } else if (this.hasTypedButtonOverrideShort(btn)) {
+    } else if (this.hasButtonOverrideConfigShort(btn)) {
       // Overriden action
       
       // Execute the override action
@@ -1990,29 +1994,37 @@ class AndroidRemoteCard extends HTMLElement {
     this._layoutManager.hapticFeedback();
   }
 
-  hasValidTypedButtonOverrideShortRepeatable(btn) {
-    return this.hasTypedButtonOverrideShortRepeatable(btn);
+  hasValidButtonOverrideRepeatConfigShort(btn) {
+    return this.hasButtonOverrideRepeatConfigShort(btn);
   }
-  hasValidTypedButtonOverrideLongRepeatable(btn) {
-    return this.hasTypedButtonOverrideLongRepeatable(btn) && !this.hasTypedButtonOverrideShortRepeatable(btn);
+  hasValidButtonOverrideRepeatConfigLong(btn) {
+    return this.hasButtonOverrideRepeatConfigLong(btn) && !this.hasButtonOverrideRepeatConfigShort(btn);
   }
-  hasTypedButtonOverrideShortRepeatable(btn) {
-    return this._layoutManager.hasTypedButtonRepeatOverrideForServer(this._eventManager.getCurrentServerId(), btn, this.getRemoteMode(), this._OVERRIDE_TYPE_SHORT_PRESS);
+  hasButtonOverrideRepeatConfigShort(btn) {
+    return (btn.id && this.getButtonOverrideRepeatConfig(this._eventManager.getCurrentServerId(), btn.id, this.getRemoteMode(), this._OVERRIDE_TYPE_SHORT_PRESS));
   }
-  hasTypedButtonOverrideLongRepeatable(btn) {
-    return this._layoutManager.hasTypedButtonRepeatOverrideForServer(this._eventManager.getCurrentServerId(), btn, this.getRemoteMode(), this._OVERRIDE_TYPE_LONG_PRESS);
+  hasButtonOverrideRepeatConfigLong(btn) {
+    return (btn.id && this.getButtonOverrideRepeatConfig(this._eventManager.getCurrentServerId(), btn.id, this.getRemoteMode(), this._OVERRIDE_TYPE_LONG_PRESS));
   }
-  hasTypedButtonOverrideShort(btn) {
-    return this._layoutManager.hasTypedButtonOverrideForServer(this._eventManager.getCurrentServerId(), btn, this.getRemoteMode(), this._OVERRIDE_TYPE_SHORT_PRESS);
+  hasButtonOverrideConfigShort(btn) {
+    return (btn.id && this.getButtonOverrideRawConfig(this._eventManager.getCurrentServerId(), btn.id, this.getRemoteMode(), this._OVERRIDE_TYPE_SHORT_PRESS));
   }
-  hasTypedButtonOverrideLong(btn) {
-    return this._layoutManager.hasTypedButtonOverrideForServer(this._eventManager.getCurrentServerId(), btn, this.getRemoteMode(), this._OVERRIDE_TYPE_LONG_PRESS);
+  hasButtonOverrideConfigLong(btn) {
+    return (btn.id && this.getButtonOverrideRawConfig(this._eventManager.getCurrentServerId(), btn.id, this.getRemoteMode(), this._OVERRIDE_TYPE_LONG_PRESS));
   }
+
   isServerButton(btn) {
     return (btn && this._elements.serverBtn === btn);
   }
   isAirmouseButton(btn) {
     return (btn && this._elements.airmouseBtn === btn);
+  }
+  getRemoteMode() {
+    const mode = this._eventManager.getUserPreferenceRemoteMode();
+    return this._knownRemoteModes.has(mode) ? mode : this._OVERRIDE_NORMAL_MODE; // Default to normal mode when unknown mode (undefined, not in known modes...)
+  }
+  setRemoteMode(mode) {
+    this._eventManager.setUserPreferenceRemoteMode(mode);
   }
 
   addOverrideLongPressTimeout(evt) {
@@ -2036,7 +2048,7 @@ class AndroidRemoteCard extends HTMLElement {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideLongPressTimeout(evt) + overrideLongPressEntry: executing ${this.getRemoteMode()} ${this._OVERRIDE_TYPE_LONG_PRESS} action...`, evt, overrideLongPressEntry));
         this.executeButtonOverride(btn, this._OVERRIDE_TYPE_LONG_PRESS);
 
-        if (this.hasValidTypedButtonOverrideLongRepeatable(btn)) {
+        if (this.hasValidButtonOverrideRepeatConfigLong(btn)) {
           // Overriden repeated action
 
           // Setup repeated override action long while overriden button is pressed
@@ -2103,12 +2115,11 @@ class AndroidRemoteCard extends HTMLElement {
 
   executeButtonOverride(btn, pressType) {
 
-    // Retrieve override config
-    const overrideConfig = this._layoutManager.getButtonOverrideForServer(this._eventManager.getCurrentServerId(), btn);
-
-    // Retrieve override typed config
-    const overrideId = btn.id;
-    const overrideTypedConfig = this.getTypedOverride(overrideId, overrideConfig, pressType);
+    // Retrieve button override config
+    const serverId = this._eventManager.getCurrentServerId();
+    const buttonId = btn.id;
+    const remoteMode = this.getRemoteMode();
+    const overrideConfig = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, pressType);
     if (this.isServerButton(btn)) {
       // Server button retrieved
       
@@ -2125,18 +2136,18 @@ class AndroidRemoteCard extends HTMLElement {
       const nextAirmouseMode = !currentAirmouseMode;
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching airmouse mode from ${currentAirmouseMode} to ${nextAirmouseMode}...`, btn));
       this.setAirmouseEnabled(nextAirmouseMode);
-    } else if (overrideTypedConfig ===  this._OVERRIDE_NONE) {
+    } else if (overrideConfig ===  this._OVERRIDE_NONE) {
       // Typed config "none"
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${this.getRemoteMode()} mode ${pressType} press, nothing to do`, btn));
-    } else if (overrideTypedConfig ===  this._OVERRIDE_ALTERNATIVE_MODE || 
-        overrideTypedConfig === this._OVERRIDE_NORMAL_MODE) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${remoteMode} mode ${pressType} press, nothing to do`, btn));
+    } else if (overrideConfig ===  this._OVERRIDE_ALTERNATIVE_MODE ||
+        overrideConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
 
       // Switch mode
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this.getRemoteMode()} mode to ${overrideTypedConfig} mode ...`, btn));
-      this.setRemoteMode(overrideTypedConfig);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${remoteMode} mode to ${overrideConfig} mode ...`, btn));
+      this.setRemoteMode(overrideConfig);
       this.doUpdateRemoteMode();
-    } else if (overrideTypedConfig ===  this._OVERRIDE_SWITCH_SIDE_PANEL) {
+    } else if (overrideConfig ===  this._OVERRIDE_SWITCH_SIDE_PANEL) {
       // Typed config switches side panel open/close
 
       // Switch mode
@@ -2154,19 +2165,19 @@ class AndroidRemoteCard extends HTMLElement {
     } else {
       // Typed config defines an action (related to sensor state or not)
 
-      // Execute action whenever sub-config defined (handled by this._eventManager.executeTypedButtonOverride)
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): executing ${pressType} action into ${this.getRemoteMode()}...`, btn));
-      this._eventManager.executeTypedButtonOverride(btn, overrideConfig, this.getRemoteMode(), pressType);
+      // Execute action whenever sub-config defined (handled by this._eventManager.executeButtonOverride)
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): executing override action for serverId: ${serverId}, buttonId: ${buttonId}, remoteMode: ${remoteMode}, pressType: ${pressType}...`, btn));
+      this._eventManager.executeButtonOverride(btn, overrideConfig);
     }
   }
 
   doUpdateRemoteMode() {
-    const remoteMode = this.getRemoteMode();
     const serverId = this._eventManager.getCurrentServerId();
+    const remoteMode = this.getRemoteMode();
     const remoteModeBtns = (this._elements.cellContents ?? []).filter(btn => {
-      const overrideConfig = this._layoutManager.getButtonOverrideForServer(serverId, btn);
-      return this._knownRemoteModes.has(this.getTypedOverride(btn.id, overrideConfig, this._OVERRIDE_TYPE_SHORT_PRESS)) || 
-             this._knownRemoteModes.has(this.getTypedOverride(btn.id, overrideConfig, this._OVERRIDE_TYPE_LONG_PRESS));
+      const buttonId = btn.id;
+      return this._knownRemoteModes.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS)) ||
+             this._knownRemoteModes.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS));
     });
     for (const remoteModeBtn of remoteModeBtns) {
       if (remoteMode === this._OVERRIDE_ALTERNATIVE_MODE) remoteModeBtn.classList.add("locked");

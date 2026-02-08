@@ -543,51 +543,41 @@ export class EventManager {
     if (typeof evt?.preventDefault === 'function') evt.preventDefault();
   }
 
-  getTypedButtonOverrideConfig(overrideConfig, overrideMode, overrideType) {
-    return overrideConfig?.[overrideMode]?.[overrideType];
-  }
-
   executeButtonOverride(btn, overrideConfig) {
-    return this.executeTypedButtonOverride(btn, overrideConfig, 'normal_mode', 'short_press');
-  }
-
-  executeTypedButtonOverride(btn, overrideConfig, overrideMode, overrideType) {
     if (!this.getHass()) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`executeButtonOverride(btn, overrideConfig): undefined hass. Unable to execute the override action (called too early before HA hass init or HA unresponsive)`, btn, overrideConfig));
       return;
     }
 
-    // Retrieve override typed config
-    const overrideTypedConfig = this.getTypedButtonOverrideConfig(overrideConfig, overrideMode, overrideType);
-    if (!overrideTypedConfig) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`executeButtonOverride(btn, overrideConfig): undefined typed button override. Unable to execute the override action.`, btn, overrideConfig));
+    if (!overrideConfig) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`executeButtonOverride(btn, overrideConfig): undefined overrideConfig. Unable to execute the override action.`, btn, overrideConfig));
       return;
     }
     // Override typed config available
 
     // When sensor is defined in override config
     let overrideAction;
-    if (overrideTypedConfig['sensor']) {
+    if (overrideConfig['sensor']) {
       // try to retrieve separated on/off action
       if (btn?._sensorState?.toLowerCase() === 'on') {
-        overrideAction = overrideTypedConfig?.['action_when_on'];
+        overrideAction = overrideConfig?.['action_when_on'];
       } else {
-        overrideAction = overrideTypedConfig?.['action_when_off'];
+        overrideAction = overrideConfig?.['action_when_off'];
       }
     } else {
       // try to retrieve action
-      overrideAction = overrideTypedConfig?.['action'];
+      overrideAction = overrideConfig?.['action'];
     }
 
     // When successfully retrieved override action, execute it
     if (overrideAction) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override action on ${btn.id}:`, overrideAction));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn, overrideConfig) + overrideAction: Executing override action on ${btn.id}:`, btn, overrideConfig, overrideAction));
       this.triggerHaosTapAction(btn, overrideAction);
       return;
     }
 
     // When no override action found, try to retrieve entity id
-    const entityId = overrideTypedConfig?.['entity'];
+    const entityId = overrideConfig?.['entity'];
     if (entityId) {
 
       // When entity id is found, determine which domain (switch, light, etc)
@@ -596,7 +586,7 @@ export class EventManager {
       const service = this.isHassEntityOn(entityId) ? 'turn_off' : 'turn_on';
 
       // Execute configured override entity service
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Executing override entity service ${domain}.${service} on ${btn.id}:`, entityId));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn, overrideConfig) + overrideAction: Executing override entity service ${domain}.${service} on ${btn.id}:`, entityId));
       this.callService(domain, service, {
         "entity_id": entityId,
       });
@@ -819,13 +809,13 @@ export class EventManager {
   // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
   // 
   // Parameters:
-  //  - target: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - source: the HTML element that originated the event (might be any HTML element from the front js)
   //  - type: the event type (knwon types: "hass-action")
   //  - detail: the event configuration (knwon configurations: { config: <ui_action_object_retrieved_from_yaml_config>, action: "tap", })
   //  - options: optional object for options (known options: do not specify)
-  triggerHaosEvent(target, type, detail, options = {}) {
+  triggerHaosEvent(source, type, detail, options = {}) {
     if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`triggerHaosEvent(target, type, detail, options = {}): undefined hass. Unable to execute the HAOS event (called too early before HA hass init or HA unresponsive)`, target, type, detail, options));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`triggerHaosEvent(source, type, detail, options = {}): undefined hass. Unable to execute the HAOS event (called too early before HA hass init or HA unresponsive)`, source, type, detail, options));
       return;
     }
     const event = new CustomEvent(type, {
@@ -834,17 +824,17 @@ export class EventManager {
       composed: options.composed ?? true,
       detail,
     });
-    target.dispatchEvent(event);
+    source.dispatchEvent(event);
   }
 
   // Trigger a tap action into HAOS, target
   // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
   // 
   // Parameters:
-  //  - target: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - source: the HTML element that originated the event (might be any HTML element from the front js)
   //  - actionConfig: the <config> section for the tap action to trigger
-  triggerHaosTapAction(target, actionConfig) {
-    this.triggerHaosEvent(target, "hass-action", {
+  triggerHaosTapAction(source, actionConfig) {
+    this.triggerHaosEvent(source, "hass-action", {
       config: actionConfig,
       action: "tap",
     });
@@ -854,10 +844,10 @@ export class EventManager {
   // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
   // 
   // Parameters:
-  //  - target: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - source: the HTML element that originated the event (might be any HTML element from the front js)
   //  - actionConfig: the <config> section for the tap action to trigger
-  triggerHaosMoreInfoAction(target, entityId) {
-    this.triggerHaosEvent(target, "hass-more-info", {
+  triggerHaosMoreInfoAction(source, entityId) {
+    this.triggerHaosEvent(source, "hass-more-info", {
       "entityId": entityId 
     },
     {
