@@ -2109,7 +2109,7 @@ class AndroidRemoteCard extends HTMLElement {
       const overrideRepeatedTriggerEntry = this._overrideRepeatedTimeouts.get(evt.pointerId);
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay)`, evt, triggerDelay));
 
-      if (overrideRepeatedTriggerEntry && overrideLongPressEntry["can-run"]) {
+      if (overrideRepeatedTriggerEntry && overrideRepeatedTriggerEntry["can-run"]) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay) + overrideRepeatedTriggerEntry: repeated override action waiting to be executed...`, evt, triggerDelay, overrideLongPressEntry));
         const btn = overrideRepeatedTriggerEntry["source"];
 
