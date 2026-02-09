@@ -187,8 +187,14 @@ class AndroidRemoteCard extends HTMLElement {
   getButtonsOverridesConfigForServer(serverId) {
     return this._layoutManager.getFromConfigOrDefaultConfigForServer('buttons_overrides', serverId);
   }
+  getButtonOverrideModeConfig(serverId, buttonId, mode) {
+    return this.getButtonsOverridesConfigForServer(serverId)?.[buttonId]?.[mode];
+  }
+  getButtonOverrideImageUrlConfig(serverId, buttonId, mode) {
+    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_url']
+  }
   getButtonOverrideRawConfig(serverId, buttonId, mode, type) {
-    return this.getButtonsOverridesConfigForServer(serverId)?.[buttonId]?.[mode]?.[type];
+    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.[type];
   }
   getButtonOverrideConfig(serverId, buttonId, mode, type) {
     // Retrieve raw button override config
@@ -211,6 +217,10 @@ class AndroidRemoteCard extends HTMLElement {
   }
   getButtonOverrideRepeatConfig(serverId, buttonId, mode, type) {
     return this.getButtonOverrideConfig(serverId, buttonId, mode, type)?.['repeat'];
+  }
+
+  getClickables() {
+    return this._elements.clickables;
   }
 
   getKeyboard() {
@@ -907,8 +917,16 @@ class AndroidRemoteCard extends HTMLElement {
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
     const serverId = this._eventManager.getCurrentServerId();
     const remoteMode = this.getRemoteMode();
-    const overridesConfigsForServer = this.getButtonsOverridesConfigForServer(serverId);
-    for (const [buttonId, overrideConfigForServer] of Object.entries(overridesConfigsForServer ?? {})) {
+
+    // Update all clickables content according to their override config (or default config)
+    for (const clickable of this.getClickables()) {
+
+      // Retrieve buttonId
+      const buttonId = clickable.id;
+      const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
+      const imgHtml = overrideImageUrl ? iconsConfig[overrideImageUrl]?.["html"] : '';
+
+      // TODO: backup default imgHtml (at clickable creation). Here: apply new imgHtml or restore default when empty
 
       // Retrieve short or long press config (whatever is defined, in this order)
       const overrideConfigShort = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS);
@@ -916,10 +934,8 @@ class AndroidRemoteCard extends HTMLElement {
 
       // Supports entity or sensor
       const entityId =
-        overrideConfigShort?.['entity'] ??
-        overrideConfigLong?.['entity'] ??
-        overrideConfigShort?.['sensor'] ??
-        overrideConfigLong?.['sensor'];
+        overrideConfigShort?.['entity'] ?? overrideConfigLong?.['entity'] ??
+        overrideConfigShort?.['sensor'] ?? overrideConfigLong?.['sensor'];
       if (entityId) {
 
         // Search if current override configuration matches an element from DOM
@@ -938,6 +954,37 @@ class AndroidRemoteCard extends HTMLElement {
         }
       }
     }
+
+    // // Retrieve current server configs
+    // const overridesConfigsForServer = (this.getButtonsOverridesConfigForServer(serverId) ?? {});
+    // for (const [buttonId, overrideConfigForServer] of Object.entries(overridesConfigsForServer ?? {})) {
+    // 
+    //   // Retrieve short or long press config (whatever is defined, in this order)
+    //   const overrideConfigShort = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS);
+    //   const overrideConfigLong = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS);
+    // 
+    //   // Supports entity or sensor
+    //   const entityId =
+    //     overrideConfigShort?.['entity'] ?? overrideConfigLong?.['entity'] ??
+    //     overrideConfigShort?.['sensor'] ?? overrideConfigLong?.['sensor'];
+    //   if (entityId) {
+    // 
+    //     // Search if current override configuration matches an element from DOM
+    //     const btn = this._elements.wrapper.querySelector(`#${buttonId}`);
+    //     if (btn) {
+    // 
+    //       // Update overriden button with up-to-date sensor state
+    //       const isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
+    //       btn._sensorState = isHassEntityOn ? 'on' : 'off';
+    // 
+    //       // Set overriden button content classes relative to sensor current state, for visual feedback
+    //       for (const child of (btn.children ? Array.from(btn.children) : [])) {
+    //         if (isHassEntityOn) child.classList.add("sensor-on");
+    //         if (!isHassEntityOn) child.classList.remove("sensor-on");
+    //       }
+    //     }
+    //   }
+    // }
   }
 
   doUpdateAddonsHass() {
@@ -1036,6 +1083,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Reset HID server button element (if any)
     this._elements.serverBtn = null;
+
+    // Reset clickable elements (if any)
+    this._elements.clickables = [];
 
     // Reset cells contents elements (if any)
     this._elements.cellContents = [];
@@ -1821,13 +1871,14 @@ class AndroidRemoteCard extends HTMLElement {
     return 4;
   }
 
-  // Set key data
+  // Set addon cell data
   setAddonCellData(cell, defaultConfig, overrideConfig) {
     this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedAddonCellData.has(key));
   }
 
-  // Set key data
+  // Set clickable data
   setClickableData(clickable, defaultConfig, overrideConfig) {
+    this._elements.clickables.push(clickable);
     this._layoutManager.setElementData(clickable, defaultConfig, overrideConfig, (key, value, source) => this._allowedClickableData.has(key));
   }
 
@@ -2079,7 +2130,7 @@ class AndroidRemoteCard extends HTMLElement {
       const overrideRepeatedTriggerEntry = this._overrideRepeatedTimeouts.get(evt.pointerId);
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay)`, evt, triggerDelay));
 
-      if (overrideRepeatedTriggerEntry) {
+      if (overrideRepeatedTriggerEntry && overrideLongPressEntry["can-run"]) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay) + overrideRepeatedTriggerEntry: repeated override action waiting to be executed...`, evt, triggerDelay, overrideLongPressEntry));
         const btn = overrideRepeatedTriggerEntry["source"];
 
@@ -2174,7 +2225,7 @@ class AndroidRemoteCard extends HTMLElement {
   doUpdateRemoteMode() {
     const serverId = this._eventManager.getCurrentServerId();
     const remoteMode = this.getRemoteMode();
-    const remoteModeBtns = (this._elements.cellContents ?? []).filter(btn => {
+    const remoteModeBtns = (this.getClickables() ?? []).filter(btn => {
       const buttonId = btn.id;
       return this._knownRemoteModes.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS)) ||
              this._knownRemoteModes.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS));
