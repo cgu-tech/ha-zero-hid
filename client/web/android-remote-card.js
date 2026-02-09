@@ -934,8 +934,8 @@ class AndroidRemoteCard extends HTMLElement {
       // Retrieve clickable config
       const clickableConfig = this._layoutManager.getElementData(clickable);
 
-      // Check if clickable HTML is overridable
-      if (clickableConfig && clickableConfig.html) {
+      // Check if clickable HTML is overridable and overrided by at least one configuration
+      if (clickableConfig && clickableConfig.html && this.hasButtonOverrideImageConfig(clickable)) {
         const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
 
         // clickable has an HTML override in current configuration
@@ -2029,6 +2029,38 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
+  }
+
+  hasButtonOverrideImageConfig(btn) {
+    const imageConfigKeys = ['image_url']; // Override configuration keys related to image override to seek for
+    const buttonId = btn.id;
+    const serversOverrides = this._layoutManager.getFromConfigOrDefaultConfig("buttons_overrides");
+
+    for (const serverId of Object.keys(serversOverrides)) {
+      const serverOverrides = serversOverrides[serverId];
+
+      if (serverOverrides && typeof serverOverrides === "object" && Object.hasOwn(serverOverrides, buttonId)) {
+        const buttonOverrides = serverOverrides[buttonId];
+
+        if (buttonOverrides && typeof buttonOverrides === "object") {
+          for (const mode of Object.keys(buttonOverrides)) {
+            const modeOverrides = buttonOverrides[mode];
+
+            if (modeOverrides && typeof modeOverrides === "object" && this.hasAnyOwn(modeOverrides, imageConfigKeys)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  hasAnyOwn(obj, keys) {
+    for (let i = 0; i < keys.length; i++) {
+      if (Object.hasOwn(obj, keys[i])) return true;
+    }
+    return false;
   }
 
   hasValidButtonOverrideRepeatConfigShort(btn) {
