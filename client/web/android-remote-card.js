@@ -943,6 +943,8 @@ class AndroidRemoteCard extends HTMLElement {
 
         // Apply new imgHtml (when set) or restore default (when empty)
         clickable.innerHTML = imgHtml ? imgHtml : clickableConfig.html;
+        clickable.classList.add(this.createClassFromId(overrideImageUrl));
+        clickable.classList.add('standard-grey');
       }
 
       // Retrieve short or long press config (whatever is defined, in this order)
@@ -1555,6 +1557,36 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Automatically scroll-down to the added foldable
     this._layoutManager.autoScrollTo(foldable);
+  }
+
+  createClassFromId(id) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createClassFromId(id):", id));
+    const styleName = `${id}-override-config`;
+    if (!this._dynamicStyleNames.has(styleName)) {
+
+      // Find the CSSRule for the ID
+      let cssText = "";
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.selectorText === `#${id}`) {
+              cssText = rule.cssText;
+              break;
+            }
+          }
+        } catch (e) {
+          // Ignore cross-origin stylesheets
+        }
+        if (cssText) break;
+      }
+      if (!cssText) return className; // nothing found
+
+      // Convert from "#id { ... }" to ".className { ... }"
+      const dynamicStyle = cssText.replace(new RegExp(`^#${id}`), `.${className}`);
+      this._elements.style.textContent += dynamicStyle;
+      this._dynamicStyleNames.add(styleName);
+    }
+    return styleName;
   }
 
   createSpanClass(flex) {
