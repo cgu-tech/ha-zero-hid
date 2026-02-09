@@ -216,7 +216,14 @@ class AndroidRemoteCard extends HTMLElement {
     return overrideConfig;
   }
   getButtonOverrideRepeatConfig(serverId, buttonId, mode, type) {
-    return this.getButtonOverrideConfig(serverId, buttonId, mode, type)?.['repeat'];
+    const overrideConfig = this.getButtonOverrideConfig(serverId, buttonId, mode, type);
+    // Javascript gotcha 'prototype pollution by design':
+    // strings already have a .repeat() method, so when we do a generic "give me repeat if it exists", 
+    // JS happily hands us the native one instead of nothing.
+    if (overrideConfig && typeof overrideConfig === "object" && Object.hasOwn(overrideConfig, "repeat")) {
+      return overrideConfig.repeat;
+    }
+    return undefined;
   }
 
   getClickables() {
