@@ -26,7 +26,7 @@ class AndroidRemoteCard extends HTMLElement {
   _defaultCellConfigs = androidRemoteCardConfig;
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _allowedClickableData = new Set(['code']);
+  _allowedClickableData = new Set(['code', 'html']);
   _allowedAddonCellData = new Set(['name', 'action', 'entity']);
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
@@ -921,12 +921,22 @@ class AndroidRemoteCard extends HTMLElement {
     // Update all clickables content according to their override config (or default config)
     for (const clickable of this.getClickables()) {
 
-      // Retrieve buttonId
+      // Retrieve clickable buttonId
       const buttonId = clickable.id;
-      const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
-      const imgHtml = overrideImageUrl ? iconsConfig[overrideImageUrl]?.["html"] : '';
 
-      // TODO: backup default imgHtml (at clickable creation). Here: apply new imgHtml or restore default when empty
+      // Retrieve clickable config
+      const clickableConfig = this._layoutManager.getElementData(clickable);
+
+      // Check if clickable HTML is overridable
+      if (clickableConfig && clickableConfig.html) {
+        const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
+
+        // clickable has an HTML override in current configuration
+        const imgHtml = overrideImageUrl ? iconsConfig[overrideImageUrl]?.["html"] : '';
+
+        // Apply new imgHtml (when set) or restore default (when empty)
+        clickable.innerHTML = imgHtml ? imgHtml : clickableConfig.html;
+      }
 
       // Retrieve short or long press config (whatever is defined, in this order)
       const overrideConfigShort = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS);
@@ -954,37 +964,6 @@ class AndroidRemoteCard extends HTMLElement {
         }
       }
     }
-
-    // // Retrieve current server configs
-    // const overridesConfigsForServer = (this.getButtonsOverridesConfigForServer(serverId) ?? {});
-    // for (const [buttonId, overrideConfigForServer] of Object.entries(overridesConfigsForServer ?? {})) {
-    // 
-    //   // Retrieve short or long press config (whatever is defined, in this order)
-    //   const overrideConfigShort = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS);
-    //   const overrideConfigLong = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS);
-    // 
-    //   // Supports entity or sensor
-    //   const entityId =
-    //     overrideConfigShort?.['entity'] ?? overrideConfigLong?.['entity'] ??
-    //     overrideConfigShort?.['sensor'] ?? overrideConfigLong?.['sensor'];
-    //   if (entityId) {
-    // 
-    //     // Search if current override configuration matches an element from DOM
-    //     const btn = this._elements.wrapper.querySelector(`#${buttonId}`);
-    //     if (btn) {
-    // 
-    //       // Update overriden button with up-to-date sensor state
-    //       const isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
-    //       btn._sensorState = isHassEntityOn ? 'on' : 'off';
-    // 
-    //       // Set overriden button content classes relative to sensor current state, for visual feedback
-    //       for (const child of (btn.children ? Array.from(btn.children) : [])) {
-    //         if (isHassEntityOn) child.classList.add("sensor-on");
-    //         if (!isHassEntityOn) child.classList.remove("sensor-on");
-    //       }
-    //     }
-    //   }
-    // }
   }
 
   doUpdateAddonsHass() {
