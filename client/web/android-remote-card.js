@@ -943,8 +943,13 @@ class AndroidRemoteCard extends HTMLElement {
 
         // Apply new imgHtml (when set) or restore default (when empty)
         clickable.innerHTML = imgHtml ? imgHtml : clickableConfig.html;
-        clickable.classList.add(this.createClassFromId(overrideImageUrl));
-        clickable.classList.add('standard-grey');
+        if (imgHtml) {
+          // Automatic styling of image overrides
+          for (const child of clickable.children) {
+            clickable.classList.add(this.createClassFromId(overrideImageUrl));
+            clickable.classList.add('standard-grey');
+          }
+        }
       }
 
       // Retrieve short or long press config (whatever is defined, in this order)
