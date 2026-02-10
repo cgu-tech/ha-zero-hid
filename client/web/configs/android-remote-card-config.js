@@ -92,7 +92,7 @@ export const androidRemoteCardConfig = {
   },
   "ts-toggle-container": {
     "tag": "div",
-    "image-styles": ["keyboard-icon", "toggle-neutral", "mouse-icon"]
+    "image-styles": ["keyboard-icon", "toggle-neutral", "mouse-icon"],
     "style": "ts-toggle-container", 
     "html": 
     `<div class="ts-toggle-indicator"></div>
