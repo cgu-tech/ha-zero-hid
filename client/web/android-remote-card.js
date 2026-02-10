@@ -939,14 +939,17 @@ class AndroidRemoteCard extends HTMLElement {
         const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
 
         // clickable has an HTML override in current configuration
-        const imgHtml = overrideImageUrl ? iconsConfig[overrideImageUrl]?.["html"] : '';
+        const imgHtml = overrideImageUrl ? (iconsConfig[overrideImageUrl]?.["html"] ?? this._defaultCellConfigs[overrideImageUrl]?.["html"] ?? '') : '';
 
         // Apply new imgHtml (when set) or restore default (when empty)
         clickable.innerHTML = imgHtml ? imgHtml : clickableConfig.html;
         if (imgHtml) {
-          // Automatic styling of image overrides
+          // Retrieve first child CSS rule id for current buttonId
+          // this._defaultCellConfigs[overrideImageUrl]
+
+          // Automatic styling of image override using first child CSS rule
           for (const child of clickable.children) {
-            clickable.classList.add(this.createClassFromId(overrideImageUrl));
+            // clickable.classList.add(this.createClassFromId(overrideImageUrl));
             clickable.classList.add('standard-grey');
           }
         }
