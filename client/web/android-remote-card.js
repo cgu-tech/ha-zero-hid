@@ -1088,7 +1088,7 @@ class AndroidRemoteCard extends HTMLElement {
           // Load cellContent children style
           const cellContentChildStyle = this.createImageClass(cellContentChildClass)
           // But apply it only when not HTML (because HTML has and should control style by hands)
-          if (isCellContentFromHtml) cellContentChild.classList.add(cellContentChildStyle);
+          if (!isCellContentFromHtml) cellContentChild.classList.add(cellContentChildStyle);
         }
       }
     }
