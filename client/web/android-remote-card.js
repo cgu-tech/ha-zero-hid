@@ -1058,9 +1058,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Define cell content inner html (when available)
     let cellContentHtml = null;
-    if (defaultCellConfig && defaultCellConfig.image) cellContentHtml = this._defaultCellImages[defaultCellConfig.image]; // Default config (predefined image)
-    if (cellConfig.image) cellContentHtml = this._defaultCellImages[cellConfig.image]; // Override with user configured image when specified
+    if (defaultCellConfig && defaultCellConfig.image) cellContentHtml = this._defaultCellImages[defaultCellConfig.image].html; // Default config (predefined image)
     if (defaultCellConfig && defaultCellConfig.html) cellContentHtml = defaultCellConfig.html; // Default config (predefined html)
+    if (cellConfig.image) cellContentHtml = this._defaultCellImages[cellConfig.image].html; // Override with user configured image when specified
     if (cellConfig.html) cellContentHtml = cellConfig.html; // Override with user configured html when specified
     // No default html fallback
 
@@ -1245,7 +1245,9 @@ class AndroidRemoteCard extends HTMLElement {
     dpad.appendChild(btn);
 
     // Retrieve arrow content from default config
-    const arrowContentHtml = defaultQuarterConfig.html;
+    let arrowContentHtml = null;
+    if (defaultQuarterConfig && defaultQuarterConfig.image) arrowContentHtml = this._defaultCellImages[defaultQuarterConfig.image].html;
+    if (defaultQuarterConfig && defaultQuarterConfig.html) arrowContentHtml = defaultQuarterConfig.html;
     const parser = new DOMParser();
     const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
     const arrowSvg = doc.documentElement;
