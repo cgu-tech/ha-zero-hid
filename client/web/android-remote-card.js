@@ -1440,7 +1440,7 @@ class AndroidRemoteCard extends HTMLElement {
   createImageClass(styleName) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createImageClass(styleName):", styleName));
     const styleContent = this._defaultCellStyles[styleName];
-    if (!this._dynamicStyleNames.has(styleName)) {
+    if (styleContent && !this._dynamicStyleNames.has(styleName)) {
       const dynamicStyle = `
         .${styleName} ${styleContent}`;
       this._elements.style.textContent += dynamicStyle;

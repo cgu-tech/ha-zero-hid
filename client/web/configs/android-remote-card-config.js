@@ -6,8 +6,7 @@ export const androidRemoteCardConfig = {
   },
   "remote-button-power-android": {
     "code": "CON_POWER",
-    "image": "icon-power-android",
-    "image-styles": ["android-icon"]
+    "image": "icon-power-android"
   },
   "remote-button-power-shield-1": {
     "code": "CON_POWER",
@@ -216,9 +215,6 @@ export const androidRemoteCardStyles = {
     width: auto;
     display: block;
     transform: scale(0.4, 0.4);
-  }`,
-  "android-icon": `{
-    
   }`,
   "shield-tv-icon": `{
     height: 100%;
