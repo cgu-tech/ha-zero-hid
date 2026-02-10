@@ -350,7 +350,7 @@ export const iconsConfig = {
       <!-- Base -->
       <ellipse cx="50" cy="170" rx="20" ry="5" stroke-width="4"/>
     </svg>`
-  }
+  },
   "icon-lamp-small": {
     html:
     `<svg version="1.0" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" focusable="false" role="img" aria-hidden="true" viewBox="0 0 24 24">
