@@ -5,7 +5,7 @@ import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
-import { androidRemoteCardConfig } from './configs/android-remote-card-config.js';
+import { androidRemoteCardConfig, androidRemoteCardStyles } from './configs/android-remote-card-config.js';
 import { iconsConfig } from './configs/icons-config.js';
 import * as layoutsRemote from './layouts/remote/index.js';
 
@@ -24,6 +24,8 @@ class AndroidRemoteCard extends HTMLElement {
 
   // private constants
   _defaultCellConfigs = androidRemoteCardConfig;
+  _defaultCellStyles = androidRemoteCardStyles;
+  _defaultCellImages = iconsConfig;
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedClickableData = new Set(['code', 'html']);
@@ -724,158 +726,6 @@ class AndroidRemoteCard extends HTMLElement {
         width: 100%;
         display: none;
       }
-      #power-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.4, 0.4);
-      }
-      #shield-tv-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.6, 0.6);
-      }
-      #shield-tv-icon-2 {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.6, 0.6);
-      }
-      #tv-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.6, 0.6);
-      }
-      #old-tv-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #device-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #light-bulb {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #arrow-up-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-      }
-      #arrow-right-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-      }
-      #arrow-down-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-      }
-      #arrow-left-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-      }
-      #return-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.6, 0.6);
-      }
-      #home-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.6, 0.6);
-      }
-      #backspace-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.4, 0.4);
-      }
-      #keyboard-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.4, 0.4);
-      }
-      #toggle-neutral {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.1, 0.1);
-      }
-      #mouse-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.4, 0.4) rotate(315deg);
-      }
-      #settings-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.4, 0.4);
-      }
-      #previous-track-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #play-pause-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #next-track-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #volumemute-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #volumedown-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #volumeup-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #airmouse-icon {
-        height: 100%;
-        width: auto;
-        display: block;
-        transform: scale(0.5, 0.5);
-      }
-      #microphone-icon {
-        height: 100%;
-        width: auto;  /* maintain aspect ratio */
-        display: block; /* removes any inline space */
-        transform: scale(0.8, 0.8);
-      }
     `;
   }
 
@@ -939,7 +789,7 @@ class AndroidRemoteCard extends HTMLElement {
         const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
 
         // clickable has an HTML override in current configuration
-        const imgHtml = overrideImageUrl ? (iconsConfig[overrideImageUrl]?.["html"] ?? this._defaultCellConfigs[overrideImageUrl]?.["html"] ?? '') : '';
+        const imgHtml = overrideImageUrl ? (this._defaultCellImages[overrideImageUrl]?.["html"] ?? this._defaultCellConfigs[overrideImageUrl]?.["html"] ?? '') : '';
 
         // Apply new imgHtml (when set) or restore default (when empty)
         clickable.innerHTML = imgHtml ? imgHtml : clickableConfig.html;
@@ -1202,14 +1052,16 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Define cell content class
     let cellContentClass = null;
-    if (defaultCellConfig && defaultCellConfig.visual) cellContentClass = defaultCellConfig.visual; // Default config
-    if (cellConfig.visual) cellContentClass = cellConfig.visual; // Override with user config when specified
-    if (!cellContentClass && cellContentTag === "button") cellContentClass = "circle-button"; // Fallback to "circle-button" visual when no default nor user config available and tag is a button
+    if (defaultCellConfig && defaultCellConfig.style) cellContentClass = defaultCellConfig.style; // Default config
+    if (cellConfig.style) cellContentClass = cellConfig.style; // Override with user config when specified
+    if (!cellContentClass && cellContentTag === "button") cellContentClass = "circle-button"; // Fallback to "circle-button" style when no default nor user config available and tag is a button
 
     // Define cell content inner html (when available)
     let cellContentHtml = null;
-    if (defaultCellConfig && defaultCellConfig.html) cellContentHtml = defaultCellConfig.html; // Default config
-    if (cellConfig.html) cellContentHtml = cellConfig.html; // Override with user config when specified
+    if (defaultCellConfig && defaultCellConfig.image) cellContentHtml = this._defaultCellImages[defaultCellConfig.image]; // Default config (predefined image)
+    if (cellConfig.image) cellContentHtml = this._defaultCellImages[cellConfig.image]; // Override with user configured image when specified
+    if (defaultCellConfig && defaultCellConfig.html) cellContentHtml = defaultCellConfig.html; // Default config (predefined html)
+    if (cellConfig.html) cellContentHtml = cellConfig.html; // Override with user configured html when specified
     // No default html fallback
 
     // Build cell content using previously defined tag + style + inner html
@@ -1224,6 +1076,22 @@ class AndroidRemoteCard extends HTMLElement {
     cellContent.id = cellName;
     if (cellContentClass) cellContent.className = cellContentClass;
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
+
+    // Apply cellContent children styles
+    let cellContentChildrenClasses = null;
+    if (defaultCellConfig && defaultCellConfig["image-styles"]) cellContentChildrenClasses = defaultCellConfig["image-styles"]; // Default config
+    if (cellConfig && cellConfig["image-styles"]) cellContentChildrenClasses = cellConfig["image-styles"]; // Override with user config when specified
+    if (cellContentChildrenClasses) {
+      const isCellContentFromHtml = ((defaultCellConfig && defaultCellConfig.html) || cellConfig.html);
+      for (const cellContentChild of (cellContent.children ? Array.from(cellContent.children) : [])) {
+        for (const cellContentChildClass of cellContentChildrenClasses) {
+          // Load cellContent children style
+          const cellContentChildStyle = this.createImageClass(cellContentChildClass)
+          // But apply it only when not HTML (because HTML has and should control style by hands)
+          if (isCellContentFromHtml) cellContentChild.classList.add(cellContentChildStyle);
+        }
+      }
+    }
 
     // Add cell content data when cell content is a button
     if (cellContentTag === "button") this.setClickableData(cellContent, defaultCellConfig, cellConfig);
@@ -1257,7 +1125,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContent?.id === "remote-button-hid-server") {
       const serverBtn = cellContent;
       this._elements.serverBtn = serverBtn;
-      this._elements.serverBtnLabel = serverBtn.querySelector("#hid-server-status");
+      this._elements.serverBtnLabel = (serverBtn.children ? Array.from(serverBtn.children) : []).at(0);
     }
     // Query airmouse button
     if (cellContent?.id === "remote-button-air-mouse") {
@@ -1567,36 +1435,16 @@ class AndroidRemoteCard extends HTMLElement {
     this._layoutManager.autoScrollTo(foldable);
   }
 
-  createClassFromId(id) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createClassFromId(id):", id));
-    const styleName = `${id}-override-config`;
+  createImageClass(styleName) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createImageClass(styleName):", styleName));
+    const styleContent = this._defaultCellStyles[styleName];
     if (!this._dynamicStyleNames.has(styleName)) {
-  
-      // Regular expression to match rules like "#id { ... }"
-      // It also works with pseudo-classes like #id:hover
-      const idRuleRegex = new RegExp(`#${id}([^\\{]*)\\{([^\\}]*)\\}`, "g");
-
-      // Find all CSS rules for the ID
-      let styleNameMatched;
-      let match;
-      while ((match = idRuleRegex.exec(this._elements.style.textContent)) !== null) {
-        const selectorSuffix = match[1].trim(); // e.g., ":hover" or ""
-        const body = match[2].trim();
-        // Create new style and add it to custom styles when unique
-        const newStyleName = `${styleName}${selectorSuffix}`;
-        if (!this._dynamicStyleNames.has(newStyleName)) {
-          const dynamicStyle = `
-            .${newStyleName} {
-              ${body}
-            }`;
-          this._elements.style.textContent += dynamicStyle;
-          this._dynamicStyleNames.add(newStyleName);
-          styleNameMatched = newStyleName;
-        }
-      }
+      const dynamicStyle = `
+        .${styleName} ${styleContent}`;
+      this._elements.style.textContent += dynamicStyle;
+      this._dynamicStyleNames.add(styleName);
     }
-    if (styleNameMatched) return styleName;
-    return undefined;
+    return styleName;
   }
 
   createSpanClass(flex) {
@@ -1818,7 +1666,7 @@ class AndroidRemoteCard extends HTMLElement {
 
 
     // Create addon cell content inner image
-    const imgHtml = this.getAddonCellImageUrl(addonCellConfig) ? iconsConfig[this.getAddonCellImageUrl(addonCellConfig)]?.["html"] : '';
+    const imgHtml = this.getAddonCellImageUrl(addonCellConfig) ? this._defaultCellImages[this.getAddonCellImageUrl(addonCellConfig)]?.["html"] : '';
     const img = document.createElement("div");
     img.className = "addon-img";
     img.innerHTML = imgHtml;
@@ -1831,7 +1679,7 @@ class AndroidRemoteCard extends HTMLElement {
     addonCellContentImage.appendChild(img);
 
     // Create addon cell content inner icon
-    const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? iconsConfig[this.getAddonCellIconUrl(addonCellConfig)]?.["html"] : '';
+    const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? this._defaultCellImages[this.getAddonCellIconUrl(addonCellConfig)]?.["html"] : '';
     const ico = document.createElement("div");
     ico.className = "addon-icon";
     ico.innerHTML = icoHtml;
