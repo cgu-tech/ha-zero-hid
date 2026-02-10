@@ -1563,30 +1563,32 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createClassFromId(id):", id));
     const styleName = `${id}-override-config`;
     if (!this._dynamicStyleNames.has(styleName)) {
+  
+      // Regular expression to match rules like "#id { ... }"
+      // It also works with pseudo-classes like #id:hover
+      const idRuleRegex = new RegExp(`#${id}([^\\{]*)\\{([^\\}]*)\\}`, "g");
 
-      // Find the CSSRule for the ID
-      let cssText = "";
-      for (const sheet of document.styleSheets) {
-        try {
-          for (const rule of sheet.cssRules) {
-            if (rule.selectorText === `#${id}`) {
-              cssText = rule.cssText;
-              break;
-            }
-          }
-        } catch (e) {
-          // Ignore cross-origin stylesheets
+      // Find all CSS rules for the ID
+      let styleNameMatched;
+      let match;
+      while ((match = idRuleRegex.exec(this._elements.style.textContent)) !== null) {
+        const selectorSuffix = match[1].trim(); // e.g., ":hover" or ""
+        const body = match[2].trim();
+        // Create new style and add it to custom styles when unique
+        const newStyleName = `${styleName}${selectorSuffix}`;
+        if (!this._dynamicStyleNames.has(newStyleName)) {
+          const dynamicStyle = `
+            .${newStyleName} {
+              ${body}
+            }`;
+          this._elements.style.textContent += dynamicStyle;
+          this._dynamicStyleNames.add(newStyleName);
+          styleNameMatched = newStyleName;
         }
-        if (cssText) break;
       }
-      if (!cssText) return className; // nothing found
-
-      // Convert from "#id { ... }" to ".className { ... }"
-      const dynamicStyle = cssText.replace(new RegExp(`^#${id}`), `.${className}`);
-      this._elements.style.textContent += dynamicStyle;
-      this._dynamicStyleNames.add(styleName);
     }
-    return styleName;
+    if (styleNameMatched) return styleName;
+    return undefined;
   }
 
   createSpanClass(flex) {
