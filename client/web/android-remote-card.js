@@ -99,6 +99,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateManagedPreferences();
     this.doUpdateCurrentServer();
     this.doUpdateRemoteMode();
+    this.doUpdateCellsVisualAndState();
     this.doUpdateAirmouseMode();
   }
 
@@ -106,6 +107,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentServer(server):", server));
     this._eventManager.setCurrentServer(server);
     this.doUpdateCurrentServer();
+    this.doUpdateCellsVisualAndState();
   }
 
   setAirmouseEnabled(enable) {
@@ -874,11 +876,6 @@ class AndroidRemoteCard extends HTMLElement {
     // Update remote UI to display current server to end user
     const serverLabel = this._elements.serverBtnLabel;
     if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
-
-    // Update layout server dependent parts
-    // Note: this code is racing with set hass,
-    // so check hass is safe before attempting layout refresh
-    if (this._hass) this.doUpdateLayoutHass();
   }
 
   doUpdateManagedPreferences() {
@@ -2180,6 +2177,7 @@ class AndroidRemoteCard extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${remoteMode} mode to ${overrideConfig} mode ...`, btn));
       this.setRemoteMode(overrideConfig);
       this.doUpdateRemoteMode();
+      this.doUpdateCellsVisualAndState();
     } else if (overrideConfig ===  this._OVERRIDE_SWITCH_SIDE_PANEL) {
       // Typed config switches side panel open/close
 
