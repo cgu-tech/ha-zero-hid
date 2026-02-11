@@ -28,8 +28,9 @@ class AndroidRemoteCard extends HTMLElement {
   _defaultCellImages = iconsConfig;
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _allowedClickableData = new Set(['code', 'image', 'image-styles', 'html']);
+  _allowedClickableData = new Set(['code']);
   _allowedAddonCellData = new Set(['name', 'action', 'entity']);
+  _visuallyOverridableConfigKeys = ['image_url'];
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
   _sideCellButtonFg = '#bfbfbf';
@@ -79,6 +80,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doListen();
 
     this.doUpdateLayout();
+    this.doUpdateOverridables();
     this.doUpdateAddons();
   }
 
@@ -192,8 +194,14 @@ class AndroidRemoteCard extends HTMLElement {
   getButtonOverrideModeConfig(serverId, buttonId, mode) {
     return this.getButtonsOverridesConfigForServer(serverId)?.[buttonId]?.[mode];
   }
+  getButtonOverrideImageRemoteButtonConfig(serverId, buttonId, mode) {
+    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_remote_button']
+  }
   getButtonOverrideImageUrlConfig(serverId, buttonId, mode) {
     return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_url']
+  }
+  getButtonOverrideImageStylesConfig(serverId, buttonId, mode) {
+    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_styles']
   }
   getButtonOverrideRawConfig(serverId, buttonId, mode, type) {
     return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.[type];
@@ -228,10 +236,42 @@ class AndroidRemoteCard extends HTMLElement {
     return undefined;
   }
 
+  getCellConfigOrDefault(defaultCellConfig, cellConfig, key) {
+   let value = null;
+   if (defaultCellConfig && defaultCellConfig[key]) value = defaultCellConfig[key]; // Default config
+   if (cellConfig && cellConfig[key]) value = cellConfig[key]; // User defined Config
+   return value;
+  }
+
+  getCellConfigImageStyles(defaultCellConfig, cellConfig) {
+    return this.getCellConfigOrDefault(defaultCellConfig, cellConfig, "image-styles");
+  }
+
+  getCellConfigImage(defaultCellConfig, cellConfig) {
+   return this.getCellConfigOrDefault(defaultCellConfig, cellConfig, "image");
+  }
+
+  getCellConfigImageHtml(defaultCellConfig, cellConfig) {
+   const cellImage = this.getCellConfigImage(defaultCellConfig, cellConfig);
+   return this.getCellImageHtml(cellImage);
+  }
+
+  isFromCellConfigHtml(defaultCellConfig, cellConfig) {
+    return ((defaultCellConfig && defaultCellConfig.html) || cellConfig.html);
+  }
+
+  getCellImageHtml(cellImage) {
+   return cellImage ? this._defaultCellImages[cellImage]?.["html"] : null;
+  }
+
+  getCellsConfigs() {
+    return this._elements.cellsConfigs;
+  }
+
   getClickables() {
     return this._elements.clickables;
   }
-
+  
   getKeyboard() {
     return this._elements.foldables.keyboard;
   }
@@ -749,6 +789,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (this._layoutManager.configuredLayoutChanged()) {
       this.doUpdateLayout();
     }
+    this.doUpdateOverridables();
     this.doUpdateAddons();
   }
 
@@ -771,95 +812,8 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateLayoutHass() {
-    // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
-    const serverId = this._eventManager.getCurrentServerId();
-    const remoteMode = this.getRemoteMode();
-
-    // TODO: refactor and optimize
-    // Update all clickables content according to their override config (or default config)
-    for (const btn of this.getClickables()) {
-
-      // Retrieve btn id
-      const buttonId = btn.id;
-
-      // Retrieve clickable config
-      const buttonConfig = this._layoutManager.getElementData(btn);
-      const clickableHtml =
-        (buttonConfig && buttonConfig.html) ?
-        buttonConfig.html :
-        (
-          (buttonConfig && buttonConfig.image) ?
-          buttonConfig.image : null
-        );
-
-      // Check if clickable HTML is overridable and overrided by at least one configuration
-      if (clickableHtml && this.hasButtonOverrideImageConfig(btn)) {
-        const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
-
-        // Define new cellContent inner html (from overrideImageUrl when available or from default)        
-        const imgHtml = overrideImageUrl ? this._defaultCellImages[overrideImageUrl]?.["html"] : '';
-        const newHtml = imgHtml ? imgHtml : clickableHtml;
-        btn.innerHTML = newHtml;
-
-        // Retrieve default cell config that matches the clickable name or its override (when available)
-        const cellId = imgHtml ? overrideImageUrl : buttonId;
-        const newDefaultCellConfig = this._defaultCellConfigs[cellId];
-        let newCellConfig = null;
-        for (const rowConfig of this._layoutManager.getLayout().rows) {
-          for (const cellConfig of rowConfig.cells) {
-            const cellName = cellConfig.name;
-            if (cellName && cellName === cellId) {
-              newCellConfig = cellConfig;
-              break;
-            }
-          }
-          if (newCellConfig) break;
-        }
-
-        // Apply new cellContent children styles
-        const cellContent = btn;
-        let cellContentChildrenClasses = null;
-        if (newDefaultCellConfig && newDefaultCellConfig["image-styles"]) cellContentChildrenClasses = newDefaultCellConfig["image-styles"]; // Default config
-        if (newCellConfig && newCellConfig["image-styles"]) cellContentChildrenClasses = newCellConfig["image-styles"]; // Override with user config when specified
-        if (cellContentChildrenClasses) {
-          const isCellContentFromHtml = ((newDefaultCellConfig && newDefaultCellConfig.html) || newCellConfig.html);
-          for (const cellContentChild of (cellContent.children ? Array.from(cellContent.children) : [])) {
-            for (const cellContentChildClass of cellContentChildrenClasses) {
-              // Load cellContent children style
-              const cellContentChildStyle = this.createImageClass(cellContentChildClass)
-              // But apply it only when not HTML (because HTML has and should control style by hands)
-              if (!isCellContentFromHtml) cellContentChild.classList.add(cellContentChildStyle);
-            }
-          }
-        }
-      }
-
-      // Retrieve short or long press config (whatever is defined, in this order)
-      const overrideConfigShort = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS);
-      const overrideConfigLong = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS);
-
-      // Supports entity or sensor
-      const entityId =
-        overrideConfigShort?.['entity'] ?? overrideConfigLong?.['entity'] ??
-        overrideConfigShort?.['sensor'] ?? overrideConfigLong?.['sensor'];
-      if (entityId) {
-
-        // Search if current override configuration matches an element from DOM
-        const btn = this._elements.wrapper.querySelector(`#${buttonId}`);
-        if (btn) {
-
-          // Update overriden button with up-to-date sensor state
-          const isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
-          btn._sensorState = isHassEntityOn ? 'on' : 'off';
-
-          // Set overriden button content classes relative to sensor current state, for visual feedback
-          for (const child of (btn.children ? Array.from(btn.children) : [])) {
-            if (isHassEntityOn) child.classList.add("sensor-on");
-            if (!isHassEntityOn) child.classList.remove("sensor-on");
-          }
-        }
-      }
-    }
+    // Update visually overridable cells and cells bound to state entities
+    this.doUpdateCellsVisualAndState();
   }
 
   doUpdateAddonsHass() {
@@ -962,6 +916,9 @@ class AndroidRemoteCard extends HTMLElement {
     // Reset clickable elements (if any)
     this._elements.clickables = [];
 
+    // Reset cells configs mapped by id (if any)
+    this._elements.cellsConfigs = new Map();
+
     // Reset cells contents elements (if any)
     this._elements.cellContents = [];
 
@@ -970,7 +927,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Reset rows elements (if any)
     this._elements.rows = [];
-    
+
     // Reset attached layout
     this._layoutManager.resetAttachedLayout();
   }
@@ -1070,6 +1027,9 @@ class AndroidRemoteCard extends HTMLElement {
     // Filler does not have cell content: skip cell content creation
     if (cellName === "filler") return null;
 
+    // Append current cell config
+    this._elements.cellsConfigs.set(cellName, cellConfig);
+
     // Retrieve default cell config that matches the cell name (when available)
     const defaultCellConfig = this._defaultCellConfigs[cellName];
 
@@ -1087,9 +1047,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Define cell content inner html (when available)
     let cellContentHtml = null;
-    if (defaultCellConfig && defaultCellConfig.image) cellContentHtml = this._defaultCellImages[defaultCellConfig.image].html; // Default config (predefined image)
+    if (defaultCellConfig && defaultCellConfig.image) cellContentHtml = this.getCellImageHtml(defaultCellConfig.image); // Default config (predefined image)
     if (defaultCellConfig && defaultCellConfig.html) cellContentHtml = defaultCellConfig.html; // Default config (predefined html)
-    if (cellConfig.image) cellContentHtml = this._defaultCellImages[cellConfig.image].html; // Override with user configured image when specified
+    if (cellConfig.image) cellContentHtml = this.getCellImageHtml(cellConfig.image); // Override with user configured image when specified
     if (cellConfig.html) cellContentHtml = cellConfig.html; // Override with user configured html when specified
     // No default html fallback
 
@@ -1107,20 +1067,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
 
     // Apply cellContent children styles
-    let cellContentChildrenClasses = null;
-    if (defaultCellConfig && defaultCellConfig["image-styles"]) cellContentChildrenClasses = defaultCellConfig["image-styles"]; // Default config
-    if (cellConfig && cellConfig["image-styles"]) cellContentChildrenClasses = cellConfig["image-styles"]; // Override with user config when specified
-    if (cellContentChildrenClasses) {
-      const isCellContentFromHtml = ((defaultCellConfig && defaultCellConfig.html) || cellConfig.html);
-      for (const cellContentChild of (cellContent.children ? Array.from(cellContent.children) : [])) {
-        for (const cellContentChildClass of cellContentChildrenClasses) {
-          // Load cellContent children style
-          const cellContentChildStyle = this.createImageClass(cellContentChildClass)
-          // But apply it only when not HTML (because HTML has and should control style by hands)
-          if (!isCellContentFromHtml) cellContentChild.classList.add(cellContentChildStyle);
-        }
-      }
-    }
+    this.doStyleCellContentChildren(cellContent, defaultCellConfig, cellConfig);
 
     // Add cell content data when cell content is a button
     if (cellContentTag === "button") this.setClickableData(cellContent, defaultCellConfig, cellConfig);
@@ -1174,6 +1121,24 @@ class AndroidRemoteCard extends HTMLElement {
         && cellContent?.id !== "ts-toggle-container" 
         && cellContent?.id !== "foldable-container") {
       this.addClickableListeners(cellContent); 
+    }
+  }
+
+  doStyleCellContentChildren(cellContent, defaultCellConfig, cellConfig) {
+    let imageStyles = this.getCellConfigImageStyles(defaultCellConfig, cellConfig);
+    if (imageStyles) {
+      const isFromImage = !this.isFromCellConfigHtml(defaultCellConfig, cellConfig);
+      for (const cellContentChild of (cellContent.children ? Array.from(cellContent.children) : [])) {
+        for (const imageStyle of imageStyles) {
+
+          // Create cellContent child style
+          const cellContentChildStyle = this.createImageClass(imageStyle)
+
+          // Apply style to cellContent child when child is a predefined image 
+          // (custom HTML child should manage its own styles)
+          if (isFromImage) cellContentChild.classList.add(cellContentChildStyle);
+        }
+      }
     }
   }
 
@@ -1275,7 +1240,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Retrieve arrow content from default config
     let arrowContentHtml = null;
-    if (defaultQuarterConfig && defaultQuarterConfig.image) arrowContentHtml = this._defaultCellImages[defaultQuarterConfig.image].html;
+    if (defaultQuarterConfig && defaultQuarterConfig.image) arrowContentHtml = this.getCellImageHtml(defaultQuarterConfig.image);
     if (defaultQuarterConfig && defaultQuarterConfig.html) arrowContentHtml = defaultQuarterConfig.html;
     const parser = new DOMParser();
     const doc = parser.parseFromString(arrowContentHtml, "image/svg+xml");
@@ -1499,6 +1464,111 @@ class AndroidRemoteCard extends HTMLElement {
     return `span-${styleId}`;
   }
 
+  doUpdateOverridables() {
+    this.doResetOverridables();
+    this.doCreateOverridables();
+  }
+
+  doResetOverridables() {
+    // Reset overridables elements (if any)
+    this._elements.visuallyOverridables = new Set();
+  }
+
+  doCreateOverridables() {
+    // Setup visually overridables cells list
+    this.doUpdateVisuallyOverridableCells();
+
+    // Update visually overridables cells and update cells states
+    this.doUpdateCellsVisualAndState();
+  }
+
+  doUpdateVisuallyOverridableCells() {
+    const overrides = this._layoutManager.getFromConfigOrDefaultConfig("buttons_overrides");
+    const serversOverrides = (overrides && typeof overrides === "object") ? overrides : {};
+    for (const [serverId, serverOverrides] of Object.entries(serversOverrides)) {
+
+      const buttonsOverrides = (serverOverrides && typeof serverOverrides === "object") ? serverOverrides : {};
+      for (const [buttonId, buttonOverrides] of Object.entries(buttonsOverrides)) {
+
+        const modesOverrides = (buttonsOverrides && typeof buttonsOverrides === "object") ? buttonsOverrides : {};
+        for (const [modeId, modeOverrides] of Object.entries(modesOverrides)) {
+
+          if (modeOverrides && typeof modeOverrides === "object" && this.hasAnyOwn(modeOverrides, this._visuallyOverridableConfigKeys)) {
+            this._elements.visuallyOverridables.add(buttonId);
+          }
+        }
+      }
+    }
+  }
+
+  doUpdateCellsVisualAndState() {
+    // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
+    const serverId = this._eventManager.getCurrentServerId();
+    const remoteMode = this.getRemoteMode();
+
+    // Update visually overridable cells visuals
+    for (const btn of (this.getClickables() ?? [])) {
+      const buttonId = btn.id;
+
+      // When cell visual is overridable, update cell visual
+      if (this._elements.visuallyOverridables.has(buttonId)) this.doUpdateCellVisual(serverId, buttonId, remoteMode, btn);
+
+      // Update cell state and associated visual
+      this.doUpdateCellState(serverId, buttonId, remoteMode, btn);
+    }
+  }
+
+  doUpdateCellVisual(serverId, buttonId, remoteMode, btn) {
+    // Retrieve cell configurations overrides related to image
+    const overrideCellId = this.getButtonOverrideImageRemoteButtonConfig(serverId, buttonId, remoteMode);
+    const overrideImageId = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
+    const overrideImageStyles = this.getButtonOverrideImageStylesConfig(serverId, buttonId, remoteMode);
+
+    // Retrieve new cellContent related cell id
+    const newCellId = overrideCellId ?? buttonId;
+    const newDefaultCellConfig = this._defaultCellConfigs[newCellId];
+    const newCellConfig = this.getCellsConfigs().get(newCellId);
+
+    // Retrieve cellContent image new HTML
+    const newImageId = overrideImageId ?? this.getCellConfigImage(newDefaultCellConfig, newCellConfig);
+    const newHtmlImage = this.getCellImageHtml(newImageId);
+
+    // Retrieve cellContent image new CSS
+    const newImageStyles = overrideImageStyles ?? ( (!newImageId || overrideCellId) ? this.getCellConfigImageStyles(newDefaultCellConfig, newCellConfig) : []);
+    const newHtmlImageStyles = (newImageStyles ? (Array.isArray(newImageStyles) ? newImageStyles : [newImageStyles]) : []);
+
+    // Apply cellContent image new HTML + CSS
+    visuallyOverridableCell.innerHTML = newHtmlImage;
+    for (const visuallyOverridableCellChild of (visuallyOverridableCell.children ? Array.from(visuallyOverridableCell.children) : [])) {
+      for (const imageStyle of newHtmlImageStyles) {
+        visuallyOverridableCellChild.classList.add(this.createImageClass(imageStyle));
+      }
+    }
+  }
+
+  doUpdateCellState(serverId, buttonId, remoteMode, btn) {
+    // Retrieve short or long press config (whatever is defined, in this order)
+    const overrideConfigShort = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS);
+    const overrideConfigLong = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS);
+
+    // Retrieve watched entity id (entity and sensor supported)
+    const entityId =
+      overrideConfigShort?.['entity'] ?? overrideConfigLong?.['entity'] ??
+      overrideConfigShort?.['sensor'] ?? overrideConfigLong?.['sensor'];
+    if (entityId) {
+
+      // Update button _sensorState with up-to-date entity state (on or off)
+      const isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
+      btn._sensorState = isHassEntityOn ? 'on' : 'off';
+
+      // Update button visuals to reflect updated state, for visual feedback
+      for (const child of (btn.children ? Array.from(btn.children) : [])) {
+        if (isHassEntityOn) child.classList.add("sensor-on");
+        if (!isHassEntityOn) child.classList.remove("sensor-on");
+      }
+    }
+  }
+
   doUpdateAddons() {
     this.doResetAddons();
     this.doCreateAddons();
@@ -1697,7 +1767,7 @@ class AndroidRemoteCard extends HTMLElement {
 
 
     // Create addon cell content inner image
-    const imgHtml = this.getAddonCellImageUrl(addonCellConfig) ? this._defaultCellImages[this.getAddonCellImageUrl(addonCellConfig)]?.["html"] : '';
+    const imgHtml = this.getAddonCellImageUrl(addonCellConfig) ? this.getCellImageHtml(this.getAddonCellImageUrl(addonCellConfig)) : '';
     const img = document.createElement("div");
     img.className = "addon-img";
     img.innerHTML = imgHtml;
@@ -1710,7 +1780,7 @@ class AndroidRemoteCard extends HTMLElement {
     addonCellContentImage.appendChild(img);
 
     // Create addon cell content inner icon
-    const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? this._defaultCellImages[this.getAddonCellIconUrl(addonCellConfig)]?.["html"] : '';
+    const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? this.getCellImageHtml(this.getAddonCellIconUrl(addonCellConfig)) : '';
     const ico = document.createElement("div");
     ico.className = "addon-icon";
     ico.innerHTML = icoHtml;
@@ -1785,7 +1855,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Set clickable data
   setClickableData(clickable, defaultConfig, overrideConfig) {
-    this._elements.clickables.push(clickable);
+    this.getClickables().push(clickable);
     this._layoutManager.setElementData(clickable, defaultConfig, overrideConfig, (key, value, source) => this._allowedClickableData.has(key));
   }
 
@@ -1950,31 +2020,6 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
-  }
-
-  hasButtonOverrideImageConfig(btn) {
-    const imageConfigKeys = ['image_url']; // Override configuration keys related to image override to seek for
-    const buttonId = btn.id;
-    const serversOverrides = this._layoutManager.getFromConfigOrDefaultConfig("buttons_overrides");
-
-    for (const serverId of Object.keys(serversOverrides)) {
-      const serverOverrides = serversOverrides[serverId];
-
-      if (serverOverrides && typeof serverOverrides === "object" && Object.hasOwn(serverOverrides, buttonId)) {
-        const buttonOverrides = serverOverrides[buttonId];
-
-        if (buttonOverrides && typeof buttonOverrides === "object") {
-          for (const mode of Object.keys(buttonOverrides)) {
-            const modeOverrides = buttonOverrides[mode];
-
-            if (modeOverrides && typeof modeOverrides === "object" && this.hasAnyOwn(modeOverrides, imageConfigKeys)) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-    return false;
   }
 
   hasAnyOwn(obj, keys) {
