@@ -804,7 +804,7 @@ class AndroidRemoteCard extends HTMLElement {
         // Retrieve default cell config that matches the clickable name or its override (when available)
         const cellId = imgHtml ? overrideImageUrl : buttonId;
         const newDefaultCellConfig = this._defaultCellConfigs[cellId];
-        const newCellConfig = null;
+        let newCellConfig = null;
         for (const rowConfig of this._layoutManager.getLayout().rows) {
           for (const cellConfig of rowConfig.cells) {
             const cellName = cellConfig.name;
