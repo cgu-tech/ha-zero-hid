@@ -835,7 +835,8 @@ class AndroidRemoteCard extends HTMLElement {
     if (img) {
       const svg = img.querySelector('svg');
       const rgbColor = this._eventManager.getEntityRgbColor(entityId);
-      if (svg && rgbColor) {
+      const stateColor = this._layoutManager.getStateColor();
+      if (svg && rgbColor && stateColor === 'rgb') {
         // RGB color available
 
         // Remove "sensor-on" class just in case (to avoid styles collision)
@@ -847,7 +848,7 @@ class AndroidRemoteCard extends HTMLElement {
         svg.style.fill = color;
         svg.style.stroke = color;
       } else {
-        // RGB color unavailable (entity could be off, or could be unrelated to lights - ie. a switch)
+        // RGB color unavailable or RGB state color disabled (entity could be off, or could be unrelated to lights - ie. a switch)
         
         // Revert to original styles or empty string
         if (svg) svg.style.removeProperty('fill');
@@ -1821,6 +1822,7 @@ class AndroidRemoteCard extends HTMLElement {
       auto_scroll: true,
       log_level: "warn",
       log_pushback: false,
+      state_color: "rgb",
       buttons_overrides: {},
       trigger_long_click_delay: 500,
       trigger_repeat_override_delay: 500,

@@ -65,6 +65,10 @@ export class LayoutManager {
     return this.getFromConfigOrDefaultConfig('auto_scroll');
   }
 
+  getStateColor() {
+    return this.getFromConfigOrDefaultConfig("state_color");
+  }
+
   isTouchDevice() {
     return this._isTouchDevice;
   }
