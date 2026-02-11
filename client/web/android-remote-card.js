@@ -796,7 +796,7 @@ class AndroidRemoteCard extends HTMLElement {
         const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
 
         // Define new cellContent inner html (from overrideImageUrl when available or from default)        
-        const imgHtml = overrideImageUrl ? this._defaultCellImages[overrideImageUrl]?.["html"] ?? : '';
+        const imgHtml = overrideImageUrl ? this._defaultCellImages[overrideImageUrl]?.["html"] : '';
         const newHtml = imgHtml ? imgHtml : clickableHtml;
         btn.innerHTML = newHtml;
 
