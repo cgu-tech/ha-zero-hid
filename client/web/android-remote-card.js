@@ -1490,7 +1490,7 @@ class AndroidRemoteCard extends HTMLElement {
       const buttonsOverrides = (serverOverrides && typeof serverOverrides === "object") ? serverOverrides : {};
       for (const [buttonId, buttonOverrides] of Object.entries(buttonsOverrides)) {
 
-        const modesOverrides = (buttonsOverrides && typeof buttonsOverrides === "object") ? buttonsOverrides : {};
+        const modesOverrides = (buttonOverrides && typeof buttonOverrides === "object") ? buttonOverrides : {};
         for (const [modeId, modeOverrides] of Object.entries(modesOverrides)) {
 
           if (modeOverrides && typeof modeOverrides === "object" && this.hasAnyOwn(modeOverrides, this._visuallyOverridableConfigKeys)) {
