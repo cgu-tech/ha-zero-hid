@@ -28,7 +28,7 @@ class AndroidRemoteCard extends HTMLElement {
   _defaultCellImages = iconsConfig;
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
-  _allowedClickableData = new Set(['code', 'html']);
+  _allowedClickableData = new Set(['code', 'image', 'image-styles', 'html']);
   _allowedAddonCellData = new Set(['name', 'action', 'entity']);
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
@@ -776,31 +776,56 @@ class AndroidRemoteCard extends HTMLElement {
     const remoteMode = this.getRemoteMode();
 
     // Update all clickables content according to their override config (or default config)
-    for (const clickable of this.getClickables()) {
+    for (const btn of this.getClickables()) {
 
-      // Retrieve clickable buttonId
-      const buttonId = clickable.id;
+      // Retrieve btn id
+      const buttonId = btn.id;
 
       // Retrieve clickable config
-      const clickableConfig = this._layoutManager.getElementData(clickable);
+      const buttonConfig = this._layoutManager.getElementData(btn);
+      const clickableHtml =
+        (buttonConfig && buttonConfig.html) ?
+        buttonConfig.html :
+        (
+          (buttonConfig && buttonConfig.image) ?
+          buttonConfig.image : null
+        );
 
       // Check if clickable HTML is overridable and overrided by at least one configuration
-      if (clickableConfig && clickableConfig.html && this.hasButtonOverrideImageConfig(clickable)) {
+      if (clickableHtml && this.hasButtonOverrideImageConfig(btn)) {
         const overrideImageUrl = this.getButtonOverrideImageUrlConfig(serverId, buttonId, remoteMode);
 
-        // clickable has an HTML override in current configuration
-        const imgHtml = overrideImageUrl ? (this._defaultCellImages[overrideImageUrl]?.["html"] ?? this._defaultCellConfigs[overrideImageUrl]?.["html"] ?? '') : '';
+        // Define new cellContent inner html (from overrideImageUrl when available or from default)        
+        const imgHtml = overrideImageUrl ? this._defaultCellImages[overrideImageUrl]?.["html"] ?? : '';
+        const newHtml = imgHtml ? imgHtml : clickableHtml;
+        btn.innerHTML = newHtml;
 
-        // Apply new imgHtml (when set) or restore default (when empty)
-        clickable.innerHTML = imgHtml ? imgHtml : clickableConfig.html;
-        if (imgHtml) {
-          // Retrieve first child CSS rule id for current buttonId
-          // this._defaultCellConfigs[overrideImageUrl]
+        // Retrieve default cell config that matches the clickable name or its override (when available)
+        const cellId = imgHtml ? overrideImageUrl : buttonId;
+        const newDefaultCellConfig = this._defaultCellConfigs[cellId];
+        const newCellConfig = null;
+        for (const rowConfig of this._layoutManager.getLayout().rows) {
+          for (const cellConfig of rowConfig.cells) {
+            const cellName = cellConfig.name;
+            if (cellName && cellName === cellId) newCellConfig = cellConfig;
+            break;
+          }
+          if (newCellConfig) break;
+        }
 
-          // Automatic styling of image override using first child CSS rule
-          for (const child of clickable.children) {
-            // clickable.classList.add(this.createClassFromId(overrideImageUrl));
-            clickable.classList.add('standard-grey');
+        // Apply new cellContent children styles
+        let cellContentChildrenClasses = null;
+        if (newDefaultCellConfig && newDefaultCellConfig["image-styles"]) cellContentChildrenClasses = newDefaultCellConfig["image-styles"]; // Default config
+        if (cellConfig && cellConfig["image-styles"]) cellContentChildrenClasses = cellConfig["image-styles"]; // Override with user config when specified
+        if (cellContentChildrenClasses) {
+          const isCellContentFromHtml = ((newDefaultCellConfig && newDefaultCellConfig.html) || cellConfig.html);
+          for (const cellContentChild of (cellContent.children ? Array.from(cellContent.children) : [])) {
+            for (const cellContentChildClass of cellContentChildrenClasses) {
+              // Load cellContent children style
+              const cellContentChildStyle = this.createImageClass(cellContentChildClass)
+              // But apply it only when not HTML (because HTML has and should control style by hands)
+              if (!isCellContentFromHtml) cellContentChild.classList.add(cellContentChildStyle);
+            }
           }
         }
       }
