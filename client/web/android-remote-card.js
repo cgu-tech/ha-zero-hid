@@ -775,6 +775,7 @@ class AndroidRemoteCard extends HTMLElement {
     const serverId = this._eventManager.getCurrentServerId();
     const remoteMode = this.getRemoteMode();
 
+    // TODO: refactor and optimize
     // Update all clickables content according to their override config (or default config)
     for (const btn of this.getClickables()) {
 
@@ -807,8 +808,10 @@ class AndroidRemoteCard extends HTMLElement {
         for (const rowConfig of this._layoutManager.getLayout().rows) {
           for (const cellConfig of rowConfig.cells) {
             const cellName = cellConfig.name;
-            if (cellName && cellName === cellId) newCellConfig = cellConfig;
-            break;
+            if (cellName && cellName === cellId) {
+              newCellConfig = cellConfig;
+              break;
+            }
           }
           if (newCellConfig) break;
         }
