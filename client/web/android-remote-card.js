@@ -30,7 +30,7 @@ class AndroidRemoteCard extends HTMLElement {
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedClickableData = new Set(['code']);
   _allowedAddonCellData = new Set(['name', 'action', 'entity']);
-  _visuallyOverridableConfigKeys = ['image_url'];
+  _visuallyOverridableConfigKeys = ['image_remote_button', 'image_url', 'image_styles'];
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
   _sideCellButtonFg = '#bfbfbf';
@@ -1066,9 +1066,6 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContentClass) cellContent.className = cellContentClass;
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
 
-    // Apply cellContent children styles
-    this.doStyleCellContentChildren(cellContent, defaultCellConfig, cellConfig);
-
     // Add cell content data when cell content is a button
     if (cellContentTag === "button") this.setClickableData(cellContent, defaultCellConfig, cellConfig);
 
@@ -1121,24 +1118,6 @@ class AndroidRemoteCard extends HTMLElement {
         && cellContent?.id !== "ts-toggle-container" 
         && cellContent?.id !== "foldable-container") {
       this.addClickableListeners(cellContent); 
-    }
-  }
-
-  doStyleCellContentChildren(cellContent, defaultCellConfig, cellConfig) {
-    let imageStyles = this.getCellConfigImageStyles(defaultCellConfig, cellConfig);
-    if (imageStyles) {
-      const isFromImage = !this.isFromCellConfigHtml(defaultCellConfig, cellConfig);
-      for (const cellContentChild of (cellContent.children ? Array.from(cellContent.children) : [])) {
-        for (const imageStyle of imageStyles) {
-
-          // Create cellContent child style
-          const cellContentChildStyle = this.createImageClass(imageStyle)
-
-          // Apply style to cellContent child when child is a predefined image 
-          // (custom HTML child should manage its own styles)
-          if (isFromImage) cellContentChild.classList.add(cellContentChildStyle);
-        }
-      }
     }
   }
 
