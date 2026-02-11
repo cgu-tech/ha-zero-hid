@@ -817,6 +817,7 @@ class AndroidRemoteCard extends HTMLElement {
         }
 
         // Apply new cellContent children styles
+        const cellContent = btn;
         let cellContentChildrenClasses = null;
         if (newDefaultCellConfig && newDefaultCellConfig["image-styles"]) cellContentChildrenClasses = newDefaultCellConfig["image-styles"]; // Default config
         if (newCellConfig && newCellConfig["image-styles"]) cellContentChildrenClasses = newCellConfig["image-styles"]; // Override with user config when specified
