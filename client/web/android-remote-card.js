@@ -1538,8 +1538,8 @@ class AndroidRemoteCard extends HTMLElement {
     const newHtmlImageStyles = (newImageStyles ? (Array.isArray(newImageStyles) ? newImageStyles : [newImageStyles]) : []);
 
     // Apply cellContent image new HTML + CSS
-    visuallyOverridableCell.innerHTML = newHtmlImage;
-    for (const visuallyOverridableCellChild of (visuallyOverridableCell.children ? Array.from(visuallyOverridableCell.children) : [])) {
+    btn.innerHTML = newHtmlImage;
+    for (const visuallyOverridableCellChild of (btn.children ? Array.from(btn.children) : [])) {
       for (const imageStyle of newHtmlImageStyles) {
         visuallyOverridableCellChild.classList.add(this.createImageClass(imageStyle));
       }
