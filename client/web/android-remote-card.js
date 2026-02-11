@@ -819,7 +819,7 @@ class AndroidRemoteCard extends HTMLElement {
         // Apply new cellContent children styles
         let cellContentChildrenClasses = null;
         if (newDefaultCellConfig && newDefaultCellConfig["image-styles"]) cellContentChildrenClasses = newDefaultCellConfig["image-styles"]; // Default config
-        if (cellConfig && cellConfig["image-styles"]) cellContentChildrenClasses = cellConfig["image-styles"]; // Override with user config when specified
+        if (newCellConfig && newCellConfig["image-styles"]) cellContentChildrenClasses = newCellConfig["image-styles"]; // Override with user config when specified
         if (cellContentChildrenClasses) {
           const isCellContentFromHtml = ((newDefaultCellConfig && newDefaultCellConfig.html) || cellConfig.html);
           for (const cellContentChild of (cellContent.children ? Array.from(cellContent.children) : [])) {
