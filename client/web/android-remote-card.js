@@ -1531,7 +1531,7 @@ class AndroidRemoteCard extends HTMLElement {
     const newHtmlImage = this.getCellImageHtml(newImageId);
 
     // Retrieve cellContent image new CSS
-    const newImageStyles = overrideImageStyles ?? ( (!newImageId || overrideCellId) ? this.getCellConfigImageStyles(newDefaultCellConfig, newCellConfig) : []);
+    const newImageStyles = overrideImageStyles ?? ( ((!overrideCellId && !overrideImageId && !overrideImageStyles) || overrideCellId) ? this.getCellConfigImageStyles(newDefaultCellConfig, newCellConfig) : []);
     const newHtmlImageStyles = (newImageStyles ? (Array.isArray(newImageStyles) ? newImageStyles : [newImageStyles]) : []);
 
     // Apply cellContent image new HTML + CSS
