@@ -1066,6 +1066,23 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContentClass) cellContent.className = cellContentClass;
     if (cellContentHtml) cellContent.innerHTML = cellContentHtml;
 
+    // Apply cellContent children styles
+    let imageStyles = this.getCellConfigImageStyles(defaultCellConfig, cellConfig);
+    if (imageStyles) {
+      const isFromImage = !this.isFromCellConfigHtml(defaultCellConfig, cellConfig);
+      for (const cellContentChild of (cellContent.children ? Array.from(cellContent.children) : [])) {
+        for (const imageStyle of imageStyles) {
+
+          // Create cellContent child style
+          const cellContentChildStyle = this.createImageClass(imageStyle)
+
+          // Apply style to cellContent child when child is a predefined image 
+          // (custom HTML child should manage its own styles)
+          if (isFromImage) cellContentChild.classList.add(cellContentChildStyle);
+        }
+      }
+    }
+
     // Add cell content data when cell content is a button
     if (cellContentTag === "button") this.setClickableData(cellContent, defaultCellConfig, cellConfig);
 
