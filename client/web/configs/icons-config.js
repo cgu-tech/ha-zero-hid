@@ -101,147 +101,83 @@ export const iconsConfig = {
   },
   "icon-arrow-left": {
     html:
-    `<svg viewBox="4 4 14 16" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf">
-      <polygon points="18,4 4,12 18,20" />
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="4 4 14 16">
+      <g>
+        <path style="stroke:none" d="M 18,4 4,12 18,20 Z"/>
+      </g>
     </svg>`
   },
   "icon-return": {
     html:
-    `<svg viewBox="-14 0 80 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-      <!-- Top horizontal line -->
-      <line x1="8" y1="17" x2="48" y2="17" />
-      <!-- Bottom horizontal line -->
-      <line x1="8" y1="47" x2="48" y2="47" />
-      <!-- Vertically flipped arc from bottom right to top right -->
-      <path d="M48 47 A15 15 0 0 0 48 17" />
-      <!-- Left-pointing isosceles triangle with reduced width -->
-      <path  fill="#bfbfbf" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" d="M-12 17 L8 7 L8 27 Z" />
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-14 0 80 64">
+      <g>
+        <path style="stroke:none" d="M 7.859375,4.5039062 A 2.50025,2.50025 0 0 0 6.8828125,4.7636719 L -13.117188,14.763672 a 2.50025,2.50025 0 0 0 0,4.472656 l 20.0000005,10 A 2.50025,2.50025 0 0 0 10.5,27 V 19.5 H 48 c 6.933177,0 12.5,5.566827 12.5,12.5 0,6.933173 -5.566823,12.5 -12.5,12.5 H 8 A 2.5,2.5 0 0 0 5.5,47 2.5,2.5 0 0 0 8,49.5 H 48 C 57.635376,49.5 65.5,41.635369 65.5,32 65.5,22.364631 57.635376,14.5 48,14.5 H 10.5 V 7 A 2.50025,2.50025 0 0 0 7.859375,4.5039062 Z"/>
+      </g>
     </svg>`
   },
   "icon-home": {
     html:
-    `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-      <!-- Roof (triangle) -->
-      <path d="M 12 32 L 32 12 L 52 32" />
-
-      <!-- House base without top line -->
-      <line x1="16" y1="32" x2="16" y2="52" /> <!-- Left side -->
-      <line x1="48" y1="32" x2="48" y2="52" /> <!-- Right side -->
-      <line x1="16" y1="52" x2="48" y2="52" /> <!-- Bottom side -->
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <g>
+        <path style="stroke:none" d="M 32 9.5 A 2.50025 2.50025 0 0 0 30.232422 10.232422 L 10.232422 30.232422 A 2.5 2.5 0 0 0 10.232422 33.767578 A 2.5 2.5 0 0 0 13.5 34 L 13.5 52 A 2.5 2.5 0 0 0 16 54.5 L 48 54.5 A 2.5 2.5 0 0 0 50.5 52 L 50.5 34 A 2.5 2.5 0 0 0 53.767578 33.767578 A 2.5 2.5 0 0 0 53.767578 30.232422 L 33.767578 10.232422 A 2.50025 2.50025 0 0 0 32 9.5 z M 32 15.535156 L 46.480469 30.015625 A 2.5 2.5 0 0 0 45.5 32 L 45.5 49.5 L 18.5 49.5 L 18.5 32 A 2.5 2.5 0 0 0 17.519531 30.015625 L 32 15.535156 z "/>
+      </g>
     </svg>`
   },
   "icon-keyboard": {
     html:
-    `<svg viewBox="0 0 66 46" fill="none" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-       <!-- Outer keyboard body with transparent background and stroke color #bfbfbf -->
-       <rect x="1" y="1" width="64" height="44" rx="4" ry="4" fill="none" stroke="#bfbfbf" />
-
-       <!-- Row 1 -->
-       <rect x="5"  y="5"  width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="15" y="5"  width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="25" y="5"  width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="35" y="5"  width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="45" y="5"  width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="55" y="5"  width="6" height="6" rx="1" fill="#bfbfbf" />
-
-       <!-- Row 2 -->
-       <rect x="5"  y="15" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="15" y="15" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="25" y="15" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="35" y="15" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="45" y="15" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="55" y="15" width="6" height="6" rx="1" fill="#bfbfbf" />
-
-       <!-- Row 3 -->
-       <rect x="5"  y="25" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="15" y="25" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="25" y="25" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="35" y="25" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="45" y="25" width="6" height="6" rx="1" fill="#bfbfbf" />
-       <rect x="55" y="25" width="6" height="6" rx="1" fill="#bfbfbf" />
-
-       <!-- Spacebar row -->
-       <rect x="12" y="35" width="42" height="6" rx="1" fill="#bfbfbf" />
-     </svg>`
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66 46">
+      <g>
+        <path style="stroke:none" d="m 13,34 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 40 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 40 v 4 H 13 Z m 0,0 v 4 H 53 V 36 Z M 56,24 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 26 Z M 46,24 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 26 Z M 36,24 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 26 Z M 26,24 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 26 Z M 16,24 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 26 Z M 6,24 c -1.0907028,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.9092972,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 H 6 Z m 0,0 v 4 h 4 V 26 Z M 56,14 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 16 Z M 46,14 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 16 Z M 36,14 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 16 Z M 26,14 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 16 Z M 16,14 c -1.090703,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 16 Z M 6,14 c -1.0907028,0 -2,0.909297 -2,2 v 4 c 0,1.090703 0.9092972,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 v -4 c 0,-1.090703 -0.909297,-2 -2,-2 z m 0,2 h 4 v 4 H 6 Z m 0,0 v 4 h 4 V 16 Z M 56,4 c -1.090703,0 -2,0.9092972 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 V 6 C 62,4.9092972 61.090703,4 60,4 Z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 6 Z M 46,4 c -1.090703,0 -2,0.9092972 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 V 6 C 52,4.9092972 51.090703,4 50,4 Z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 6 Z M 36,4 c -1.090703,0 -2,0.9092972 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 V 6 C 42,4.9092972 41.090703,4 40,4 Z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 6 Z M 26,4 c -1.090703,0 -2,0.9092972 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 V 6 C 32,4.9092972 31.090703,4 30,4 Z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 6 Z M 16,4 c -1.090703,0 -2,0.9092972 -2,2 v 4 c 0,1.090703 0.909297,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 V 6 C 22,4.9092972 21.090703,4 20,4 Z m 0,2 h 4 v 4 h -4 z m 0,0 v 4 h 4 V 6 Z M 6,4 C 4.9092972,4 4,4.9092972 4,6 v 4 c 0,1.090703 0.9092972,2 2,2 h 4 c 1.090703,0 2,-0.909297 2,-2 V 6 C 12,4.9092972 11.090703,4 10,4 Z m 0,2 h 4 v 4 H 6 Z m 0,0 v 4 h 4 V 6 Z M 5,0 C 2.2472972,0 0,2.2472972 0,5 v 36 c 0,2.752703 2.2472972,5 5,5 h 56 c 2.752703,0 5,-2.247297 5,-5 V 5 C 66,2.2472972 63.752703,0 61,0 Z m 0,2 h 56 c 1.679297,0 3,1.3207028 3,3 v 36 c 0,1.679297 -1.320703,3 -3,3 H 5 C 3.3207028,44 2,42.679297 2,41 V 5 C 2,3.3207028 3.3207028,2 5,2 Z"/>
+      </g>
+    </svg>`
   },
   "icon-dot": {
     html:
-    `<svg id="toggle-neutral" xmlns="http://www.w3.org/2000/svg" viewBox="10 10 80 80">
-       <circle cx="50" cy="50" r="40" fill="#bfbfbf" />
-     </svg>`
+    `<svg id="toggle-neutral" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="10 10 80 80">
+      <g>
+        <path style="stroke:none" d="M 50,10 A 40,40 0 0 0 10,50 40,40 0 0 0 50,90 40,40 0 0 0 90,50 40,40 0 0 0 50,10 Z"/>
+      </g>
+    </svg>`
   },
   "icon-mouse": {
     html:
-    `<svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-       <!-- Mouse body with rounded top and slightly rounded bottom corners -->
-       <path d="
-         M 20 30 
-         Q 20 10, 50 10 
-         Q 80 10, 80 30
-         L 80 115
-         Q 80 125, 70 125
-         L 30 125
-         Q 20 125, 20 115
-         Z
-       " />
-
-       <!-- Vertical center line (split buttons) -->
-       <line x1="50" y1="10" x2="50" y2="70" />
-
-       <!-- Larger scroll wheel, moved near the top -->
-       <line x1="50" y1="30" x2="50" y2="50" stroke-width="8" stroke-linecap="round" />
-
-       <!-- Cable (wire) -->
-       <path d="M50 130 C 50 140, 60 145, 70 150" />
-     </svg>`
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 160">
+      <g>
+        <path style="stroke:none" d="m 50,126 a 4,4 0 0 0 -4,4 c 0,6.33333 3.402118,11.37449 7.689453,14.94727 4.287335,3.57277 9.521484,6.13085 14.521484,8.63085 a 4,4 0 0 0 5.367188,-1.78906 4,4 0 0 0 -1.789063,-5.36719 c -5,-2.5 -9.76585,-4.94191 -12.978515,-7.61914 C 55.597882,136.12551 54,133.66667 54,130 a 4,4 0 0 0 -4,-4 z M 50,26 a 4,4 0 0 0 -4,4 v 20 a 4,4 0 0 0 4,4 4,4 0 0 0 4,-4 V 30 A 4,4 0 0 0 50,26 Z M 50,6 a 4,4 0 0 0 -4,4 v 20 a 4,4 0 0 1 4,-4 4,4 0 0 1 4,4 V 10 A 4,4 0 0 0 50,6 Z m -4,44 v 20 a 4,4 0 0 0 4,4 4,4 0 0 0 4,-4 V 50 a 4,4 0 0 1 -4,4 4,4 0 0 1 -4,-4 z M 50,6 a 4,4 0 0 1 4,4 v 4.105469 c 7.46445,0.404984 12.884888,1.958415 16.28125,4.222656 C 74.257188,20.97875 76,24.333333 76,30 v 85 c 0,2.66667 -0.604267,3.94801 -1.328125,4.67188 C 73.948017,120.39573 72.666667,121 70,121 H 30 c -2.666667,0 -3.948017,-0.60427 -4.671875,-1.32812 C 24.604267,118.94801 24,117.66667 24,115 V 30 C 24,24.333333 25.742812,20.97875 29.71875,18.328125 33.115112,16.063884 38.53555,14.510453 46,14.105469 V 10 a 4,4 0 0 1 4,-4 z m 0,0 C 39.555556,6 31.305312,7.6558337 25.28125,11.671875 19.257188,15.687916 16,22.333333 16,30 v 85 c 0,4 1.062399,7.71864 3.671875,10.32813 C 22.281351,127.9376 26,129 30,129 H 46.126953 A 4,4 0 0 1 50,126 a 4,4 0 0 1 3.873047,3 H 70 c 4,0 7.718649,-1.06241 10.328125,-3.67187 C 82.937601,122.71864 84,119 84,115 V 30 C 84,22.333333 80.742812,15.687916 74.71875,11.671875 68.694688,7.6558337 60.444444,6 50,6 Z"/>
+      </g>
+    </svg>`
   },
   "icon-backspace": {
     html:
-    `<svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bfbfbf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-      <!-- Backspace key outline (trapezoid-like shape) -->
-      <path d="M8 24 L20 8 H56 V40 H20 Z" />
-
-      <!-- 'X' inside the key (representing delete action) -->
-      <line x1="28" y1="18" x2="44" y2="30" />
-      <line x1="44" y1="18" x2="28" y2="30" />
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48">
+      <g>
+        <path style="stroke:none" d="M 44.027344,15.5 A 2.5,2.5 0 0 0 42.5,16 l -16,12 A 2.5,2.5 0 0 0 26,31.5 2.5,2.5 0 0 0 29.5,32 l 16,-12 a 2.5,2.5 0 0 0 0.5,-3.5 2.5,2.5 0 0 0 -1.972656,-1 z m -16.054688,0 A 2.5,2.5 0 0 0 26,16.5 2.5,2.5 0 0 0 26.5,20 L 31.833984,24 36,20.875 29.5,16 A 2.5,2.5 0 0 0 27.972656,15.5 Z M 40.166016,24 36,27.125 42.5,32 A 2.5,2.5 0 0 0 46,31.5 2.5,2.5 0 0 0 45.5,28 Z M 20,5.5 a 2.50025,2.50025 0 0 0 -2,1 l -12,16 a 2.50025,2.50025 0 0 0 0,3 l 12,16 a 2.50025,2.50025 0 0 0 2,1 H 56 A 2.50025,2.50025 0 0 0 58.5,40 V 8 A 2.50025,2.50025 0 0 0 56,5.5 Z m 1.25,5 H 53.5 v 27 H 21.25 L 11.125,24 Z"/>
+      </g>
     </svg>`
   },
   "icon-track-previous": {
     html:
-    `<svg viewBox="0 4 36 16" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf">
-      <!-- Vertical bar -->
-      <rect x="0" y="4" width="4" height="16" />
-
-      <!-- First left-pointing triangle -->
-      <polygon points="18,4 4,12 18,20" />
-
-      <!-- Second left-pointing triangle shifted right by 4 -->
-      <polygon points="32,4 18,12 32,20" />
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 4 36 16">
+      <g>
+        <path style="stroke:none" d="m 32,4 -14,8 14,8 z M 18,4 4,12 18,20 V 12 Z M 0,4 V 20 H 4 V 12 4 Z"/>
+      </g>
     </svg>`
   },
   "icon-play-pause": {
     html:
-    `<svg viewBox="0 0 32 24" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf">
-      <!-- Play triangle -->
-      <polygon points="0,4 14,12 0,20" />
-
-      <!-- Pause bars -->
-      <rect x="18" y="4" width="4" height="16" />
-      <rect x="26" y="4" width="4" height="16" />
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 24">
+      <g>
+        <path style="stroke:none" d="m 26,4 v 16 h 4 V 4 Z m -8,0 v 16 h 4 V 4 Z M 0,4 v 16 l 14,-8 z"/>
+      </g>
     </svg>`
   },
   "icon-track-next": {
     html:
-    `<svg viewBox="0 0 44 24" xmlns="http://www.w3.org/2000/svg" fill="#bfbfbf">
-       <!-- First play triangle shifted left by 4 -->
-       <polygon points="0,4 14,12 0,20" />
-
-       <!-- Second play triangle shifted left by 4 -->
-       <polygon points="14,4 28,12 14,20" />
-
-       <!-- Vertical bar shifted left by 4 -->
-       <rect x="28" y="4" width="4" height="16" />
-     </svg>`
+    `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 24">
+      <g>
+        <path style="stroke:none" d="m 28,4 v 16 h 4 V 4 Z M 14,4 V 20 L 28,12 Z M 0,4 v 16 l 14,-8 z"/>
+      </g>
+    </svg>`
   },
   "icon-volume-mute": {
     html:
