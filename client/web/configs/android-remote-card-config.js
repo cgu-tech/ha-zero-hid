@@ -207,6 +207,14 @@ export const androidRemoteCardConfig = {
   "remote-button-microphone": {
     "image": "icon-microphone",
     "image-styles": ["standard-grey", "microphone-icon"]
+  },
+  "remote-button-windows": {
+    "image": "icon-windows",
+    "image-styles": ["standard-grey", "windows-icon"]
+  },
+  "remote-button-switch": {
+    "image": "icon-switch",
+    "image-styles": ["standard-grey", "switch-icon"]
   }
 };
 
@@ -362,5 +370,17 @@ export const androidRemoteCardStyles = {
     width: auto;  /* maintain aspect ratio */
     display: block; /* removes any inline space */
     transform: scale(0.8, 0.8);
+  }`,
+  "windows-icon": `{
+    height: 100%;
+    width: auto;
+    display: block;
+    transform: scale(0.5, 0.5);
+  }`,
+  "swicth-icon": `{
+    height: 100%;
+    width: auto;
+    display: block;
+    transform: scale(0.5, 0.5);
   }`
 };
