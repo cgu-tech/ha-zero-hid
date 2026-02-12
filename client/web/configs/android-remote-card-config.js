@@ -31,7 +31,7 @@ export const androidRemoteCardConfig = {
     "image-styles": ["device-icon", "standard-grey"]
   },
   "remote-button-bulb": {
-    "image": "icon-bulb",
+    "image": "icon-light-bulb",
     "image-styles": ["light-bulb", "standard-grey"]
   },
   "remote-button-settings": {
