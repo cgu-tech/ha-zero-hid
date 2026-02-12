@@ -2,42 +2,43 @@ export const androidRemoteCardConfig = {
   "remote-button-power": {
     "code": "CON_POWER",
     "image": "icon-power",
-    "image-styles": ["power-icon"]
+    "image-styles": ["standard-grey", "power-icon"]
   },
   "remote-button-power-android": {
     "code": "CON_POWER",
-    "image": "icon-power-android"
+    "image": "icon-power-android",
+    "image-styles": ["standard-grey"]
   },
   "remote-button-power-shield-1": {
     "code": "CON_POWER",
     "image": "icon-power-shield-1",
-    "image-styles": ["shield-tv-icon"]
+    "image-styles": ["standard-grey", "shield-tv-icon"]
   },
   "remote-button-power-shield-2": {
     "code": "CON_POWER",
     "image": "icon-power-shield-2",
-    "image-styles": ["shield-tv-icon-2"]
+    "image-styles": ["standard-grey", "shield-tv-icon-2"]
   },
   "remote-button-power-tv": {
     "image": "icon-power-tv",
-    "image-styles": ["tv-icon"]
+    "image-styles": ["standard-grey", "tv-icon"]
   },
   "remote-button-power-old-tv": {
     "image": "icon-power-old-tv",
-    "image-styles": ["old-tv-icon"]
+    "image-styles": ["standard-grey", "old-tv-icon"]
   },
   "remote-button-power-device": {
     "image": "icon-power-device",
-    "image-styles": ["device-icon", "standard-grey"]
+    "image-styles": ["standard-grey", "device-icon"]
   },
   "remote-button-bulb": {
     "image": "icon-light-bulb",
-    "image-styles": ["light-bulb", "standard-grey"]
+    "image-styles": ["standard-grey", "light-bulb"]
   },
   "remote-button-settings": {
     "code": "KEY_COMPOSE", 
     "image": "icon-settings",
-    "image-styles": ["settings-icon"]
+    "image-styles": ["standard-grey", "settings-icon"]
   },
   "dpad": { 
     "tag": "svg"
@@ -45,22 +46,22 @@ export const androidRemoteCardConfig = {
   "remote-button-arrow-up": {
     "code": "KEY_UP", 
     "image": "icon-arrow-up",
-    "image-styles": ["arrow-up-icon"]
+    "image-styles": ["standard-grey", "arrow-up-icon"]
   },
   "remote-button-arrow-right": {
     "code": "KEY_RIGHT", 
     "image": "icon-arrow-right",
-    "image-styles": ["arrow-right-icon"]
+    "image-styles": ["standard-grey", "arrow-right-icon"]
   },
   "remote-button-arrow-down": {
     "code": "KEY_DOWN", 
     "image": "icon-arrow-down",
-    "image-styles": ["arrow-down-icon"]
+    "image-styles": ["standard-grey", "arrow-down-icon"]
   },
   "remote-button-arrow-left": {
     "code": "KEY_LEFT", 
     "image": "icon-arrow-left",
-    "image-styles": ["arrow-left-icon"]
+    "image-styles": ["standard-grey", "arrow-left-icon"]
   },
   "remote-button-center": {
     "code": "KEY_ENTER"
@@ -68,26 +69,26 @@ export const androidRemoteCardConfig = {
   "remote-button-return": {
     "code": "CON_AC_BACK", 
     "image": "icon-return",
-    "image-styles": ["return-icon"],
+    "image-styles": ["standard-grey", "return-icon"],
     "style": "side-button left",
   },
   "remote-button-home": {
     "code": "CON_AC_HOME",
     "image": "icon-home",
-    "image-styles": ["home-icon"],
+    "image-styles": ["standard-grey", "home-icon"],
     "style": "side-button right"
   },
   "remote-button-keyboard": {
     "image": "icon-keyboard",
-    "image-styles": ["keyboard-icon"]
+    "image-styles": ["standard-grey", "keyboard-icon"]
   },
   "remote-button-dot": {
     "image": "icon-dot",
-    "image-styles": ["toggle-neutral"]
+    "image-styles": ["standard-grey", "toggle-neutral"]
   },
   "remote-button-mouse": {
     "image": "icon-mouse",
-    "image-styles": ["mouse-icon"]
+    "image-styles": ["standard-grey", "mouse-icon"]
   },
   "ts-toggle-container": {
     "tag": "div",
@@ -161,7 +162,7 @@ export const androidRemoteCardConfig = {
   "remote-button-backspace": {
     "code": "KEY_BACKSPACE",
     "image": "icon-backspace",
-    "image-styles": ["backspace-icon"]
+    "image-styles": ["standard-grey", "backspace-icon"]
   },
   "foldable-container": {
     "tag": "div"
@@ -169,43 +170,43 @@ export const androidRemoteCardConfig = {
   "remote-button-track-previous": {
     "code": "CON_SCAN_PREVIOUS_TRACK",
     "image": "icon-track-previous",
-    "image-styles": ["previous-track-icon"]
+    "image-styles": ["standard-grey", "previous-track-icon"]
   },
   "remote-button-play-pause": {
     "code": "CON_PLAY_PAUSE",
     "image": "icon-play-pause",
-    "image-styles": ["play-pause-icon"]
+    "image-styles": ["standard-grey", "play-pause-icon"]
   },
   "remote-button-track-next": {
     "code": "CON_SCAN_NEXT_TRACK",
     "image": "icon-track-next",
-    "image-styles": ["next-track-icon"]
+    "image-styles": ["standard-grey", "next-track-icon"]
   },
   "remote-button-volume-mute": {
     "code": "CON_MUTE",
     "image": "icon-volume-mute",
-    "image-styles": ["volumemute-icon"]
+    "image-styles": ["standard-grey", "volumemute-icon"]
   },
   "remote-button-volume-down": {
     "code": "CON_VOLUME_DECREMENT",
     "image": "icon-volume-down",
-    "image-styles": ["volumedown-icon"]
+    "image-styles": ["standard-grey", "volumedown-icon"]
   },
   "remote-button-volume-up": {
     "code": "CON_VOLUME_INCREMENT",
     "image": "icon-volume-up",
-    "image-styles": ["volumeup-icon"]
+    "image-styles": ["standard-grey", "volumeup-icon"]
   },
   "remote-button-hid-server": {
     "image": "icon-hid-server"
   },
   "remote-button-air-mouse": {
     "image": "icon-air-mouse",
-    "image-styles": ["airmouse-icon"]
+    "image-styles": ["standard-grey", "airmouse-icon"]
   },
   "remote-button-microphone": {
     "image": "icon-microphone",
-    "image-styles": ["microphone-icon"]
+    "image-styles": ["standard-grey", "microphone-icon"]
   }
 };
 
