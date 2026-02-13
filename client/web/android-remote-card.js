@@ -2150,7 +2150,7 @@ class AndroidRemoteCard extends HTMLElement {
     const buttonId = btn.id;
     const remoteMode = this.getRemoteMode();
     const overrideConfig = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, pressType);
-    if (this.isServerButton(btn)) {
+    if (this.isServerButton(btn) && (!overrideConfig || overrideConfig === this._OVERRIDE_NONE)) {
       // Server button retrieved
       
       // switch to next available HID server
@@ -2158,7 +2158,7 @@ class AndroidRemoteCard extends HTMLElement {
       const nextServer = this._eventManager.getNextServer();
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
       this.setCurrentServer(nextServer);
-    } else if (this.isAirmouseButton(btn)) {
+    } else if (this.isAirmouseButton(btn) && (!overrideConfig || overrideConfig === this._OVERRIDE_NONE)) {
       // Airmouse button retrieved
       
       // switch airmouse mode
@@ -2166,10 +2166,10 @@ class AndroidRemoteCard extends HTMLElement {
       const nextAirmouseMode = !currentAirmouseMode;
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching airmouse mode from ${currentAirmouseMode} to ${nextAirmouseMode}...`, btn));
       this.setAirmouseEnabled(nextAirmouseMode);
-    } else if (overrideConfig ===  this._OVERRIDE_NONE) {
+    } else if (overrideConfig === this._OVERRIDE_NONE) {
       // Typed config "none"
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${remoteMode} mode ${pressType} press, nothing to do`, btn));
-    } else if (overrideConfig ===  this._OVERRIDE_ALTERNATIVE_MODE ||
+    } else if (overrideConfig === this._OVERRIDE_ALTERNATIVE_MODE ||
         overrideConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
 
@@ -2178,7 +2178,7 @@ class AndroidRemoteCard extends HTMLElement {
       this.setRemoteMode(overrideConfig);
       this.doUpdateRemoteMode();
       this.doUpdateCellsVisualAndState();
-    } else if (overrideConfig ===  this._OVERRIDE_SWITCH_SIDE_PANEL) {
+    } else if (overrideConfig === this._OVERRIDE_SWITCH_SIDE_PANEL) {
       // Typed config switches side panel open/close
 
       // Switch mode
