@@ -44,6 +44,10 @@ class AndroidRemoteCard extends HTMLElement {
   _OVERRIDE_TYPE_LONG_PRESS = 'long_press';
   _OVERRIDE_SAME = 'same';
   _OVERRIDE_NONE = 'none';
+  _STYLENAME_SPAN_RGX = /^span-(\d+)(?:-(\d+))?$/;
+  _STYLENAME_SCALE_RGX = /^scale-(\d+)(?:-(\d+))?$/;
+  _STYLENAME_ROTATE_RGX = /^rotate-(\d+)(?:-(\d+))?$/;
+  _STYLENAME_SCALE_ROTATE_RGX = /^scale-(\d+)(?:-(\d+))?-rotate-(\d+)(?:-(\d+))?$/;
 
   // private properties
   _config;
@@ -665,6 +669,11 @@ class AndroidRemoteCard extends HTMLElement {
       }
       .circle-button.locked.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background: var(--cell-button-locked-press-bg);
+      }
+      .circle-button-icon {
+        height: 100%;
+        width: auto;
+        display: block;
       }
       .side-button {
         aspect-ratio: 3 / 1;
@@ -1427,35 +1436,112 @@ class AndroidRemoteCard extends HTMLElement {
 
   createImageClass(styleName) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createImageClass(styleName):", styleName));
+
+    // Default image style (when existing)
     const styleContent = this._defaultCellStyles[styleName];
-    if (styleContent && !this._dynamicStyleNames.has(styleName)) {
-      const dynamicStyle = `
-        .${styleName} ${styleContent}`;
-      this._elements.style.textContent += dynamicStyle;
-      this._dynamicStyleNames.add(styleName);
-    }
+    if (styleContent) return this.createOrRetrieveClass(styleName, (name) => {
+      return `
+      .${styleName} ${styleContent}`
+    });
+
+    // Custom span style
+    const span = this.extractOneNumber(this._STYLENAME_SPAN_RGX);
+    if (span !== null) return this.createSpanClass(flex);
+
+    // Custom scale style
+    let scale = this.extractOneNumber(this._STYLENAME_SCALE_RGX);
+    if (scale !== null) return this.createScaleClass(scale);
+
+    // Custom rotate style
+    let rotate = this.extractOneNumber(this._STYLENAME_ROTATE_RGX);
+    if (rotate !== null) return this.createRotateClass(rotate);
+
+    // Custom scale then rotate style
+    [scale, rotate] = this.extractTwoNumbers(this._STYLENAME_SCALE_ROTATE_RGX);
+    if (scale !== null && rotate !== null) return this.createScaleThenRotateClass(scale, rotate);
+
     return styleName;
   }
 
   createSpanClass(flex) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createSpanClass(flex):", flex));
-    const styleName = this.getStyleSpanName(flex);
-    if (!this._dynamicStyleNames.has(styleName)) {
-      const dynamicStyle = `
+    const styleName = `span-${this.getSafeStyleName(flex)}`;
+    return this.createOrRetrieveClass(styleName, (name) => {
+        return `
         .${styleName} {
           flex: ${flex};
-        }`;
+        }`
+    });
+  }
+
+  createScaleClass(scale) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createScaleClass(scale):", scale));
+    const styleName = `scale-${this.getSafeStyleName(scale)}`;
+    return this.createOrRetrieveClass(styleName, (name) => {
+      return `
+      .${styleName} {
+        transform: scale(${scale}, ${scale});
+      }`
+    });
+  }
+
+  createRotateClass(rotate) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createRotateClass(rotate):", rotate));
+    const styleName = `rotate-${this.getSafeStyleName(rotate)}`;
+    return this.createOrRetrieveClass(styleName, (name) => {
+      return `
+      .${styleName} {
+        transform: rotate(${rotate}deg);
+      }`
+    });
+  }
+
+  createScaleThenRotateClass(scale, rotate) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createScaleThenRotateClass(scale, rotate):", scale, rotate));
+    const styleName = `scale-${this.getSafeStyleName(scale)}-rotate-${this.getSafeStyleName(rotate)}`;
+    return this.createOrRetrieveClass(styleName, (name) => {
+        return `
+        .${styleName} {
+          transform: scale(${scale}, ${scale}) rotate(${rotate}deg);
+        }`
+    });
+  }
+
+  createOrRetrieveClass(styleName, styleCallback) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("createOrRetrieveClass(styleName, styleCallback):", styleName, styleCallback));
+    if (styleName && styleCallback && !this._dynamicStyleNames.has(styleName)) {
+      const dynamicStyle = styleCallback(styleName) ?? '';
       this._elements.style.textContent += dynamicStyle;
       this._dynamicStyleNames.add(styleName);
     }
     return styleName;
   }
 
-  getStyleSpanName(flex) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("getStyleSpanName(flex):", flex));
-    const flexStr = String(flex);
-    const styleId = flexStr.replace(/\./g, '-');
-    return `span-${styleId}`;
+  extractNumber(rgx, styleName) {
+    const match = styleName.match(rgx);
+    if (!match) return null;
+    return this.getNumberFrom(match[1], match[2]);
+  }
+
+  extractTwoNumbers(rgx, styleName) {
+    const match = styleName.match(rgx);
+    if (!match) return null;
+    return [
+      this.getNumberFrom(match[1], match[2]), 
+      this.getNumberFrom(match[3], match[4])
+    ];
+  }
+
+  getNumberFrom(integerPart, decimalPart) {
+    const value = decimalPart !== undefined
+      ? `${integerPart}.${decimalPart}`
+      : integerPart;
+    return Number(value);
+  }
+
+  getSafeStyleName(decimal) {
+    const decimalStr = String(decimal);
+    return decimalStr.replace(/\./g, '-');
   }
 
   doUpdateOverridables() {
