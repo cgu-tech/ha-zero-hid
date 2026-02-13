@@ -2184,12 +2184,21 @@ class AndroidRemoteCard extends HTMLElement {
       // Switch mode
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching side panel visibility (from ${this._sidePanelVisible} to ${!this._sidePanelVisible})...`, btn));
       this._sidePanelVisible = !this._sidePanelVisible;
+
+      const sidePanelBtns = (this.getClickables() ?? []).filter(clickable => {
+        const clickableId = clickable.id;
+        return (this.getButtonOverrideConfig(serverId, clickableId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS) === this._OVERRIDE_SWITCH_SIDE_PANEL ||
+               this.getButtonOverrideConfig(serverId, clickableId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS)  === this._OVERRIDE_SWITCH_SIDE_PANEL);
+      });
+      for (const sidePanelBtn of sidePanelBtns) {
+        if (this._sidePanelVisible) sidePanelBtn.classList.add("locked");
+        if (!this._sidePanelVisible) sidePanelBtn.classList.remove("locked");
+      }
+
       if (this._sidePanelVisible) {
-        btn.classList.add("locked");
         this._elements.wrapper.classList.add("with-addons");
         this.getAddonsWrapper().classList.remove("hide");
       } else {
-        btn.classList.remove("locked");
         this._elements.wrapper.classList.remove("with-addons");
         this.getAddonsWrapper().classList.add("hide");
       }
