@@ -1614,7 +1614,7 @@ class AndroidRemoteCard extends HTMLElement {
       if (this._elements.remoteModeOverridables.has(buttonId)) this.doUpdateCellRemoteMode(serverId, buttonId, remoteMode, btn);
 
       // When cell visual is side panel mode overridable, update cell side panel mode
-      if (this._elements.remoteModeOverridables.has(buttonId)) this.doUpdateCellSidePanelMode(serverId, buttonId, remoteMode, btn);
+      if (this._elements.sidePanelOverridables.has(buttonId)) this.doUpdateCellSidePanelMode(serverId, buttonId, remoteMode, btn);
 
       // Update cell state and associated visual
       this.doUpdateCellState(serverId, buttonId, remoteMode, btn);
