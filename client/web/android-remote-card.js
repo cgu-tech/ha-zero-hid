@@ -1466,17 +1466,20 @@ class AndroidRemoteCard extends HTMLElement {
   doResetOverridables() {
     // Reset overridables elements (if any)
     this._elements.visuallyOverridables = new Set();
+
+    // Reset side panel overridables elements (if any)
+    this._elements.sidePanelOverridables = [];
   }
 
   doCreateOverridables() {
-    // Setup visually overridables cells list
-    this.doUpdateVisuallyOverridableCells();
+    // Setup visually overridables cells Set()
+    this.doSetupVisuallyOverridableCells();
 
     // Update visually overridables cells and update cells states
     this.doUpdateCellsVisualAndState();
   }
 
-  doUpdateVisuallyOverridableCells() {
+  doSetupVisuallyOverridableCells() {
     const overrides = this._layoutManager.getFromConfigOrDefaultConfig("buttons_overrides");
     const serversOverrides = (overrides && typeof overrides === "object") ? overrides : {};
     for (const [serverId, serverOverrides] of Object.entries(serversOverrides)) {
@@ -2173,7 +2176,7 @@ class AndroidRemoteCard extends HTMLElement {
         overrideConfig === this._OVERRIDE_NORMAL_MODE) {
       // Typed config switches mode
 
-      // Switch mode
+      // Switch remote mode (normal/alternative)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${remoteMode} mode to ${overrideConfig} mode ...`, btn));
       this.setRemoteMode(overrideConfig);
       this.doUpdateRemoteMode();
@@ -2181,27 +2184,10 @@ class AndroidRemoteCard extends HTMLElement {
     } else if (overrideConfig === this._OVERRIDE_SWITCH_SIDE_PANEL) {
       // Typed config switches side panel open/close
 
-      // Switch mode
+      // Switch side panel mode (opened/closed)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching side panel visibility (from ${this._sidePanelVisible} to ${!this._sidePanelVisible})...`, btn));
       this._sidePanelVisible = !this._sidePanelVisible;
-
-      const sidePanelBtns = (this.getClickables() ?? []).filter(clickable => {
-        const clickableId = clickable.id;
-        return (this.getButtonOverrideConfig(serverId, clickableId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS) === this._OVERRIDE_SWITCH_SIDE_PANEL ||
-               this.getButtonOverrideConfig(serverId, clickableId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS)  === this._OVERRIDE_SWITCH_SIDE_PANEL);
-      });
-      for (const sidePanelBtn of sidePanelBtns) {
-        if (this._sidePanelVisible) sidePanelBtn.classList.add("locked");
-        if (!this._sidePanelVisible) sidePanelBtn.classList.remove("locked");
-      }
-
-      if (this._sidePanelVisible) {
-        this._elements.wrapper.classList.add("with-addons");
-        this.getAddonsWrapper().classList.remove("hide");
-      } else {
-        this._elements.wrapper.classList.remove("with-addons");
-        this.getAddonsWrapper().classList.add("hide");
-      }
+      this.doUpdateSidePanelMode();
     } else {
       // Typed config defines an action (related to sensor state or not)
 
@@ -2212,6 +2198,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateRemoteMode() {
+    // Update remote mode switch cells
     const serverId = this._eventManager.getCurrentServerId();
     const remoteMode = this.getRemoteMode();
     const remoteModeBtns = (this.getClickables() ?? []).filter(btn => {
@@ -2224,7 +2211,31 @@ class AndroidRemoteCard extends HTMLElement {
       if (remoteMode === this._OVERRIDE_NORMAL_MODE) remoteModeBtn.classList.remove("locked");
     }
   }
-  
+
+  doUpdateSidePanelMode() {
+    // Update side panel switch cells
+    const serverId = this._eventManager.getCurrentServerId();
+    const remoteMode = this.getRemoteMode();
+    const sidePanelBtns = (this.getClickables() ?? []).filter(clickable => {
+      const clickableId = clickable.id;
+      return (this.getButtonOverrideConfig(serverId, clickableId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS) === this._OVERRIDE_SWITCH_SIDE_PANEL ||
+             this.getButtonOverrideConfig(serverId, clickableId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS)  === this._OVERRIDE_SWITCH_SIDE_PANEL);
+    });
+    for (const sidePanelBtn of sidePanelBtns) {
+      if (this._sidePanelVisible) sidePanelBtn.classList.add("locked");
+      if (!this._sidePanelVisible) sidePanelBtn.classList.remove("locked");
+    }
+
+    // Expand or collapse side panel
+    if (this._sidePanelVisible) {
+      this._elements.wrapper.classList.add("with-addons");
+      this.getAddonsWrapper().classList.remove("hide");
+    } else {
+      this._elements.wrapper.classList.remove("with-addons");
+      this.getAddonsWrapper().classList.add("hide");
+    }
+  }
+
   doUpdateAirmouseMode() {
     const airMouseBtn = this._elements.airmouseBtn;
     if (airMouseBtn) {
