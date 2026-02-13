@@ -1517,7 +1517,7 @@ class AndroidRemoteCard extends HTMLElement {
     return styleName;
   }
 
-  extractNumber(rgx, styleName) {
+  extractOneNumber(rgx, styleName) {
     const match = styleName.match(rgx);
     if (!match) return null;
     return this.getNumberFrom(match[1], match[2]);
