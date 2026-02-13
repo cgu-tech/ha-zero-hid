@@ -1449,16 +1449,16 @@ class AndroidRemoteCard extends HTMLElement {
     if (span !== null) return this.createSpanClass(flex);
 
     // Custom scale style
-    let scale = this.extractOneNumber(this._STYLENAME_SCALE_RGX, styleName);
+    const scale = this.extractOneNumber(this._STYLENAME_SCALE_RGX, styleName);
     if (scale !== null) return this.createScaleClass(scale);
 
     // Custom rotate style
-    let rotate = this.extractOneNumber(this._STYLENAME_ROTATE_RGX, styleName);
+    const rotate = this.extractOneNumber(this._STYLENAME_ROTATE_RGX, styleName);
     if (rotate !== null) return this.createRotateClass(rotate);
 
     // Custom scale then rotate style
-    [scale, rotate] = this.extractTwoNumbers(this._STYLENAME_SCALE_ROTATE_RGX, styleName);
-    if (scale !== null && rotate !== null) return this.createScaleThenRotateClass(scale, rotate);
+    const {one, two} = this.extractTwoNumbers(this._STYLENAME_SCALE_ROTATE_RGX, styleName);
+    if (one !== null && two !== null) return this.createScaleThenRotateClass(one, two);
 
     return styleName;
   }
@@ -1526,10 +1526,10 @@ class AndroidRemoteCard extends HTMLElement {
   extractTwoNumbers(rgx, styleName) {
     const match = styleName.match(rgx);
     if (!match) return null;
-    return [
-      this.getNumberFrom(match[1], match[2]), 
-      this.getNumberFrom(match[3], match[4])
-    ];
+    return {
+      one: this.getNumberFrom(match[1], match[2]), 
+      two: this.getNumberFrom(match[3], match[4])
+    };
   }
 
   getNumberFrom(integerPart, decimalPart) {
