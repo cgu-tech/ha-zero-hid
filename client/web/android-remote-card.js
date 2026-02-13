@@ -1445,19 +1445,19 @@ class AndroidRemoteCard extends HTMLElement {
     });
 
     // Custom span style
-    const span = this.extractOneNumber(this._STYLENAME_SPAN_RGX);
+    const span = this.extractOneNumber(this._STYLENAME_SPAN_RGX, styleName);
     if (span !== null) return this.createSpanClass(flex);
 
     // Custom scale style
-    let scale = this.extractOneNumber(this._STYLENAME_SCALE_RGX);
+    let scale = this.extractOneNumber(this._STYLENAME_SCALE_RGX, styleName);
     if (scale !== null) return this.createScaleClass(scale);
 
     // Custom rotate style
-    let rotate = this.extractOneNumber(this._STYLENAME_ROTATE_RGX);
+    let rotate = this.extractOneNumber(this._STYLENAME_ROTATE_RGX, styleName);
     if (rotate !== null) return this.createRotateClass(rotate);
 
     // Custom scale then rotate style
-    [scale, rotate] = this.extractTwoNumbers(this._STYLENAME_SCALE_ROTATE_RGX);
+    [scale, rotate] = this.extractTwoNumbers(this._STYLENAME_SCALE_ROTATE_RGX, styleName);
     if (scale !== null && rotate !== null) return this.createScaleThenRotateClass(scale, rotate);
 
     return styleName;
