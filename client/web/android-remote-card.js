@@ -63,6 +63,7 @@ class AndroidRemoteCard extends HTMLElement {
   _pressedConsumers = new Set();
   _threeStatesToggleState;
   _knownRemoteModes = new Set([this._OVERRIDE_NORMAL_MODE, this._OVERRIDE_ALTERNATIVE_MODE]);
+  _knownRemoteSwitchSides = new Set([this._OVERRIDE_SWITCH_SIDE_PANEL]);
   _overrideMode = this._OVERRIDE_NORMAL_MODE;
   _overrideRepeatedTimeouts = new Map();
   _overrideLongPressTimeouts = new Map();
@@ -102,7 +103,6 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.setUserPreferences(preferences);
     this.doUpdateManagedPreferences();
     this.doUpdateCurrentServer();
-    this.doUpdateRemoteMode();
     this.doUpdateCellsVisualAndState();
     this.doUpdateAirmouseMode();
   }
@@ -1553,19 +1553,22 @@ class AndroidRemoteCard extends HTMLElement {
     // Reset overridables elements (if any)
     this._elements.visuallyOverridables = new Set();
 
+    // Reset remote mode overridables elements (if any)
+    this._elements.remoteModeOverridables = new Set();
+
     // Reset side panel overridables elements (if any)
-    this._elements.sidePanelOverridables = [];
+    this._elements.sidePanelOverridables = new Set();
   }
 
   doCreateOverridables() {
     // Setup visually overridables cells Set()
-    this.doSetupVisuallyOverridableCells();
+    this.doSetupOverridables();
 
     // Update visually overridables cells and update cells states
     this.doUpdateCellsVisualAndState();
   }
 
-  doSetupVisuallyOverridableCells() {
+  doSetupOverridables() {
     const overrides = this._layoutManager.getFromConfigOrDefaultConfig("buttons_overrides");
     const serversOverrides = (overrides && typeof overrides === "object") ? overrides : {};
     for (const [serverId, serverOverrides] of Object.entries(serversOverrides)) {
@@ -1576,8 +1579,19 @@ class AndroidRemoteCard extends HTMLElement {
         const modesOverrides = (buttonOverrides && typeof buttonOverrides === "object") ? buttonOverrides : {};
         for (const [modeId, modeOverrides] of Object.entries(modesOverrides)) {
 
+          const shortPressOverride = modeOverrides?.[this._OVERRIDE_TYPE_SHORT_PRESS];
+          const longPressOverride = modeOverrides?.[this._OVERRIDE_TYPE_LONG_PRESS];
+
           if (modeOverrides && typeof modeOverrides === "object" && this.hasAnyOwn(modeOverrides, this._visuallyOverridableConfigKeys)) {
             this._elements.visuallyOverridables.add(buttonId);
+          }
+
+          if (this._knownRemoteModes.has(shortPressOverride) || this._knownRemoteModes.has(longPressOverride)) {
+            this._elements.remoteModeOverridables.add(buttonId);
+          }
+
+          if (this._knownRemoteSwitchSides.has(shortPressOverride) || this._knownRemoteSwitchSides.has(longPressOverride)) {
+            this._elements.sidePanelOverridables.add(buttonId);
           }
         }
       }
@@ -1589,16 +1603,24 @@ class AndroidRemoteCard extends HTMLElement {
     const serverId = this._eventManager.getCurrentServerId();
     const remoteMode = this.getRemoteMode();
 
-    // Update visually overridable cells visuals
+    // Update clickable cells visuals
     for (const btn of (this.getClickables() ?? [])) {
       const buttonId = btn.id;
 
-      // When cell visual is overridable, update cell visual
+      // When cell visual is visually overridable, update cell visual
       if (this._elements.visuallyOverridables.has(buttonId)) this.doUpdateCellVisual(serverId, buttonId, remoteMode, btn);
+
+      // When cell visual is remote mode overridable, update cell remote mode
+      if (this._elements.remoteModeOverridables.has(buttonId)) this.doUpdateCellRemoteMode(serverId, buttonId, remoteMode, btn);
+
+      // When cell visual is side panel mode overridable, update cell side panel mode
+      if (this._elements.remoteModeOverridables.has(buttonId)) this.doUpdateCellSidePanelMode(serverId, buttonId, remoteMode, btn);
 
       // Update cell state and associated visual
       this.doUpdateCellState(serverId, buttonId, remoteMode, btn);
     }
+    // Update side panel state
+    this.doUpdateSidePanel();
   }
 
   doUpdateCellVisual(serverId, buttonId, remoteMode, btn) {
@@ -1626,6 +1648,37 @@ class AndroidRemoteCard extends HTMLElement {
       for (const imageStyle of newHtmlImageStyles) {
         visuallyOverridableCellChild.classList.add(this.createImageClass(imageStyle));
       }
+    }
+  }
+
+  doUpdateCellRemoteMode(serverId, buttonId, remoteMode, btn) {
+    if (this._knownRemoteModes.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS)) ||
+        this._knownRemoteModes.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS))) {
+      if (remoteMode === this._OVERRIDE_ALTERNATIVE_MODE) btn.classList.add("locked");
+      if (remoteMode === this._OVERRIDE_NORMAL_MODE) btn.classList.remove("locked");
+    } else {
+      btn.classList.remove("locked");
+    }
+  }
+  
+  doUpdateCellSidePanelMode(serverId, buttonId, remoteMode, btn) {
+    if (this._knownRemoteSwitchSides.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS)) ||
+        this._knownRemoteSwitchSides.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS))) {
+       if (this._sidePanelVisible) btn.classList.add("locked");
+       if (!this._sidePanelVisible) btn.classList.remove("locked");
+    } else {
+      btn.classList.remove("locked");
+    }
+  }
+
+  doUpdateSidePanel() {
+    // Expand or collapse side panel
+    if (this._sidePanelVisible) {
+      this._elements.wrapper.classList.add("with-addons");
+      this.getAddonsWrapper().classList.remove("hide");
+    } else {
+      this._elements.wrapper.classList.remove("with-addons");
+      this.getAddonsWrapper().classList.add("hide");
     }
   }
 
@@ -2265,7 +2318,6 @@ class AndroidRemoteCard extends HTMLElement {
       // Switch remote mode (normal/alternative)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching from ${remoteMode} mode to ${overrideConfig} mode ...`, btn));
       this.setRemoteMode(overrideConfig);
-      this.doUpdateRemoteMode();
       this.doUpdateCellsVisualAndState();
     } else if (overrideConfig === this._OVERRIDE_SWITCH_SIDE_PANEL) {
       // Typed config switches side panel open/close
@@ -2273,52 +2325,13 @@ class AndroidRemoteCard extends HTMLElement {
       // Switch side panel mode (opened/closed)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching side panel visibility (from ${this._sidePanelVisible} to ${!this._sidePanelVisible})...`, btn));
       this._sidePanelVisible = !this._sidePanelVisible;
-      this.doUpdateSidePanelMode();
+      this.doUpdateCellsVisualAndState();
     } else {
       // Typed config defines an action (related to sensor state or not)
 
       // Execute action whenever sub-config defined (handled by this._eventManager.executeButtonOverride)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): executing override action for serverId: ${serverId}, buttonId: ${buttonId}, remoteMode: ${remoteMode}, pressType: ${pressType}...`, btn));
       this._eventManager.executeButtonOverride(btn, overrideConfig);
-    }
-  }
-
-  doUpdateRemoteMode() {
-    // Update remote mode switch cells
-    const serverId = this._eventManager.getCurrentServerId();
-    const remoteMode = this.getRemoteMode();
-    const remoteModeBtns = (this.getClickables() ?? []).filter(btn => {
-      const buttonId = btn.id;
-      return this._knownRemoteModes.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS)) ||
-             this._knownRemoteModes.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS));
-    });
-    for (const remoteModeBtn of remoteModeBtns) {
-      if (remoteMode === this._OVERRIDE_ALTERNATIVE_MODE) remoteModeBtn.classList.add("locked");
-      if (remoteMode === this._OVERRIDE_NORMAL_MODE) remoteModeBtn.classList.remove("locked");
-    }
-  }
-
-  doUpdateSidePanelMode() {
-    // Update side panel switch cells
-    const serverId = this._eventManager.getCurrentServerId();
-    const remoteMode = this.getRemoteMode();
-    const sidePanelBtns = (this.getClickables() ?? []).filter(clickable => {
-      const clickableId = clickable.id;
-      return (this.getButtonOverrideConfig(serverId, clickableId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS) === this._OVERRIDE_SWITCH_SIDE_PANEL ||
-             this.getButtonOverrideConfig(serverId, clickableId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS)  === this._OVERRIDE_SWITCH_SIDE_PANEL);
-    });
-    for (const sidePanelBtn of sidePanelBtns) {
-      if (this._sidePanelVisible) sidePanelBtn.classList.add("locked");
-      if (!this._sidePanelVisible) sidePanelBtn.classList.remove("locked");
-    }
-
-    // Expand or collapse side panel
-    if (this._sidePanelVisible) {
-      this._elements.wrapper.classList.add("with-addons");
-      this.getAddonsWrapper().classList.remove("hide");
-    } else {
-      this._elements.wrapper.classList.remove("with-addons");
-      this.getAddonsWrapper().classList.add("hide");
     }
   }
 
