@@ -1457,8 +1457,8 @@ class AndroidRemoteCard extends HTMLElement {
     if (rotate !== null) return this.createRotateClass(rotate);
 
     // Custom scale then rotate style
-    const {one, two} = this.extractTwoNumbers(this._STYLENAME_SCALE_ROTATE_RGX, styleName);
-    if (one !== null && two !== null) return this.createScaleThenRotateClass(one, two);
+    const scaleRotate = this.extractTwoNumbers(this._STYLENAME_SCALE_ROTATE_RGX, styleName);
+    if (scaleRotate !== null) return this.createScaleThenRotateClass(scaleRotate[0], scaleRotate[1]);
 
     return styleName;
   }
