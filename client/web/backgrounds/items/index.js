@@ -3,6 +3,7 @@ export { createCircle        } from './circle.js';
 export { createFlower        } from './flower.js';
 export { createGhost         } from './ghost.js';
 export { createGift          } from './gift.js';
+export { createHeart         } from './heart.js';
 export { createLeave         } from './leave.js';
 export { createPumkin        } from './pumkin.js';
 export { createSnowFlake     } from './snow-flake.js';
