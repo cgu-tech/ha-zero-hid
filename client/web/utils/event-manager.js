@@ -220,6 +220,21 @@ export class EventManager {
     return servers[nextIndex];
   }
 
+  getServer(serverId) {
+    if (!this.areServersAvailable()) return null; // No available servers
+
+    const servers = this.getUserPreferenceServers();
+    const currentServerId = this.getUserPreferenceServerId();
+    const server = servers.find(server => this.getServerId(server) === serverId);
+    if (!server) return null; // No serverId or serverId not in servers listx
+    return server;
+  }
+
+  getServers() {
+    if (!this.areServersAvailable()) return null; // No available servers
+    return this.getUserPreferenceServers();
+  }
+
   getUserPreferences() {
     return this._userPreferences;
   }

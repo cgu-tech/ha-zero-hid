@@ -30,6 +30,7 @@ class AndroidRemoteCard extends HTMLElement {
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedClickableData = new Set(['code']);
   _allowedAddonCellData = new Set(['name', 'action', 'entity']);
+  _allowedServerCellData = new Set(['name', 'server_id', 'server_name']);
   _visuallyOverridableConfigKeys = ['image_remote_button', 'image_url', 'image_styles'];
   _cellButtonFg = '#bfbfbf';
   _cellButtonBg = '#3a3a3a';
@@ -40,6 +41,7 @@ class AndroidRemoteCard extends HTMLElement {
   _OVERRIDE_NORMAL_MODE = 'normal_mode';
   _OVERRIDE_ALTERNATIVE_MODE = 'alt_mode';
   _OVERRIDE_SWITCH_SIDE_PANEL = 'switch_side';
+  _OVERRIDE_SWITCH_BOTTOM_PANEL = 'switch_bottom';
   _OVERRIDE_TYPE_SHORT_PRESS = 'short_press';
   _OVERRIDE_TYPE_LONG_PRESS = 'long_press';
   _OVERRIDE_SAME = 'same';
@@ -64,11 +66,13 @@ class AndroidRemoteCard extends HTMLElement {
   _threeStatesToggleState;
   _knownRemoteModes = new Set([this._OVERRIDE_NORMAL_MODE, this._OVERRIDE_ALTERNATIVE_MODE]);
   _knownRemoteSwitchSides = new Set([this._OVERRIDE_SWITCH_SIDE_PANEL]);
+  _knownRemoteSwitchBottoms = new Set([this._OVERRIDE_SWITCH_BOTTOM_PANEL]);
   _overrideMode = this._OVERRIDE_NORMAL_MODE;
   _overrideRepeatedTimeouts = new Map();
   _overrideLongPressTimeouts = new Map();
   _moreInfoLongPressTimeouts = new Map();
   _sidePanelVisible = false;
+  _bottomPanelVisible = false;
 
   constructor() {
     super();
@@ -101,6 +105,7 @@ class AndroidRemoteCard extends HTMLElement {
   setUserPreferences(preferences) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setUserPreferences(preferences):", preferences));
     this._eventManager.setUserPreferences(preferences);
+    this.doUpdateServers();
     this.doUpdateManagedPreferences();
     this.doUpdateCurrentServer();
     this.doUpdateCellsVisualAndState();
@@ -171,6 +176,14 @@ class AndroidRemoteCard extends HTMLElement {
 
   getAnimatedBackgroundConfig() {
     return this._layoutManager.getFromConfigOrDefaultConfig("animated_background");
+  }
+
+  getServersConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("servers");
+  }
+
+  getServersCellsConfig() {
+    return this.getServersConfig()?.["cells"];
   }
 
   getAddonsConfig() {
@@ -298,6 +311,73 @@ class AndroidRemoteCard extends HTMLElement {
     return this._elements.animatedBackground;
   }
 
+  getServersWrapper() {
+    return this._elements.servers.wrapper;
+  }
+  
+  getServersCells() {
+    return this._elements.servers.cells;
+  }
+
+  // Per server cell config
+  getServerCellLabel(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "label"); 
+  }
+  getServerCellLabelFontScale(serverCellConfig) {
+    return this._layoutManager.getScaleOrDefault(this.getServerCellConfigOrDefault(serverCellConfig, "label_font_scale"), "1rem");
+  }
+  getServerCellLabelColor(serverCellConfig) {
+    return this._sideCellButtonFg;
+  }
+  getServerCellLabelGap(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "label_gap");
+  }
+  getServerCellIconUrl(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "icon_url");
+  }
+  getServerCellIconGap(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "icon_gap");
+  }
+  getServerCellImageUrl(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "image_url");
+  }
+  getServerCellImageGap(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "image_gap");
+  }
+  getServerCellAction(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "action");
+  }
+  getServerCellEntity(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "entity");
+  }
+
+  // Per cell config helper
+  getServerCellConfigOrDefault(serverCellConfig, property) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("getServerCellConfigOrDefault(serverCellConfig, property):", serverCellConfig, property));
+    const cellProperty = `cell_${property}`;
+    return serverCellConfig?.[property] || 
+          (this._layoutManager.isDefined(this._layoutManager.getFromConfig("servers")?.[cellProperty]) 
+            ? this._layoutManager.getFromConfig("servers")?.[cellProperty] 
+            : this._layoutManager.getFromDefaultConfig("servers")?.[cellProperty]);
+  }
+
+  // Dynamic config
+  getDynamicServerCellName(defaultServerCellConfig) {
+    return defaultServerCellConfig["name"]; 
+  }
+  getDynamicServerCellServerId(defaultServerCellConfig) {
+    return defaultServerCellConfig["server_id"]; 
+  }
+  getDynamicServerCellServerName(defaultServerCellConfig) {
+    return defaultServerCellConfig["server_name"]; 
+  }
+  createDynamicServerCellConfig(server) {
+    const serverId = server?.id;
+    const name = `server-${serverId}`;
+    const serverName = server?.name;
+    return { "name": name, "server_id": serverId, "server_name": serverName };
+  }
+
   getAddonsWrapper() {
     return this._elements.addons.wrapper;
   }
@@ -400,6 +480,8 @@ class AndroidRemoteCard extends HTMLElement {
         </div>
         <div class="addons-wrapper hide">
         </div>
+        <div class="servers-wrapper hide">
+        </div>
       </div>
     `;
 
@@ -454,9 +536,6 @@ class AndroidRemoteCard extends HTMLElement {
         position: relative;
          z-index: 1; /* sits above */
       }
-      .wrapper.with-addons {
-        width: 83.3333%; /* 5/6 */
-      }
       .addons-wrapper {
         width: 16.6667%; /* 1/6 */
         position: absolute;
@@ -470,10 +549,30 @@ class AndroidRemoteCard extends HTMLElement {
         border: 1px solid var(--cell-button-bg);
         border-radius: var(--card-border-radius);
       }
+      .servers-wrapper {
+        width: 100%;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 11.1112%; /* 1/9 */
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        box-sizing: border-box;
+        border: 1px solid var(--cell-button-bg);
+        border-radius: var(--card-border-radius);
+      }
+      .wrapper.with-addons {
+        width: 83.3333%; /* 5/6 */
+      }
+      .wrapper.with-servers,
+      .addons-wrapper.with-servers {
+        height: 88.8888%; /* 8/9 */
+      }
       .hide {
         display: none;
       }
-      .addon-cell {
+      .device-cell {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -495,20 +594,20 @@ class AndroidRemoteCard extends HTMLElement {
         box-sizing: border-box;
         transition: background-color 0.2s ease;
       }
-      .addon-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+      .device-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background-color: var(--cell-active-bg);
       }
-      .addon-cell.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+      .device-cell.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background-color: var(--cell-press-bg);
         transform: scale(0.95);
       }
-      .addon-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} * {
+      .device-cell.${this._eventManager.constructor._BUTTON_CLASS_HOVER} * {
         opacity: 0.95;
       }
-      .addon-cell.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} * {
+      .device-cell.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} * {
         opacity: 0.85;
       }
-      .addon-cell-content {
+      .device-cell-content {
         position: relative;
         display: inline-flex;
         flex-direction: column;
@@ -524,21 +623,21 @@ class AndroidRemoteCard extends HTMLElement {
         width: 100%;
         padding: 2px;
       }
-      .addon-cell-content-part {
+      .device-cell-content-part {
         width: 100%;
         height: 100%;
         box-sizing: border-box;
       }
-      .addon-cell-content-part.img.half {
+      .device-cell-content-part.img.half {
         height: 60%;
       }
-      .addon-cell-content-part.label.half {
+      .device-cell-content-part.label.half {
         height: 40%;
       }
-      .addon-cell-content-part.full {
+      .device-cell-content-part.full {
         height: 100%;
       }
-      .addon-icon-wrapper {
+      .device-icon-wrapper {
         background: transparent !important;
         transition: none !important;
         -webkit-tap-highlight-color: transparent;
@@ -556,7 +655,7 @@ class AndroidRemoteCard extends HTMLElement {
         background: transparent !important;
         transition: none !important;
       }
-      .addon-icon {
+      .device-icon {
         background: transparent !important;
         transition: none !important;
         -webkit-tap-highlight-color: transparent;
@@ -569,13 +668,13 @@ class AndroidRemoteCard extends HTMLElement {
         stroke: var(--side-cell-button-fg);
         cursor: pointer;
       }
-      .addon-icon svg {
+      .device-icon svg {
         width: 100%;
         height: 100%;
         object-fit: contain;
         display: block;
       }
-      .addon-img {
+      .device-img {
         background: transparent !important;
         transition: none !important;
         -webkit-tap-highlight-color: transparent;
@@ -588,13 +687,13 @@ class AndroidRemoteCard extends HTMLElement {
         stroke: var(--side-cell-button-fg);
         cursor: pointer;
       }
-      .addon-img svg {
+      .device-img svg {
         width: 100%;
         height: 100%;
         object-fit: contain;
         display: block;
       }
-      .addon-label {
+      .device-label {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -789,6 +888,7 @@ class AndroidRemoteCard extends HTMLElement {
     const card = this._elements.card;
     this._elements.wrapper = card.querySelector(".wrapper");
     this._elements.addons.wrapper = card.querySelector(".addons-wrapper");
+    this._elements.servers.wrapper = card.querySelector(".servers-wrapper");
     this._elements.animatedBackground = card.querySelector(".animated-background");
   }
 
@@ -802,6 +902,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
     this.doUpdateOverridables();
     this.doUpdateAddons();
+    this.doUpdateServers();
   }
 
   doUpdateManagedConfigs() {
@@ -1558,6 +1659,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Reset side panel overridables elements (if any)
     this._elements.sidePanelOverridables = new Set();
+
+    // Reset bottom panel overridables elements (if any)
+    this._elements.bottomPanelOverridables = new Set();
   }
 
   doCreateOverridables() {
@@ -1593,6 +1697,10 @@ class AndroidRemoteCard extends HTMLElement {
           if (this._knownRemoteSwitchSides.has(shortPressOverride) || this._knownRemoteSwitchSides.has(longPressOverride)) {
             this._elements.sidePanelOverridables.add(buttonId);
           }
+
+          if (this._knownRemoteSwitchBottoms.has(shortPressOverride) || this._knownRemoteSwitchBottoms.has(longPressOverride)) {
+            this._elements.bottomPanelOverridables.add(buttonId);
+          }
         }
       }
     }
@@ -1616,11 +1724,18 @@ class AndroidRemoteCard extends HTMLElement {
       // When cell visual is side panel mode overridable, update cell side panel mode
       if (this._elements.sidePanelOverridables.has(buttonId)) this.doUpdateCellSidePanelMode(serverId, buttonId, remoteMode, btn);
 
+      // When cell visual is side panel mode overridable, update cell side panel mode
+      if (this._elements.bottomPanelOverridables.has(buttonId)) this.doUpdateCellBottomPanelMode(serverId, buttonId, remoteMode, btn);
+
       // Update cell state and associated visual
       this.doUpdateCellState(serverId, buttonId, remoteMode, btn);
     }
+
     // Update side panel state
     this.doUpdateSidePanel();
+
+    // Update bottom panel state
+    this.doUpdateBottomPanel();
   }
 
   doUpdateCellVisual(serverId, buttonId, remoteMode, btn) {
@@ -1671,6 +1786,16 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
+  doUpdateCellBottomPanelMode(serverId, buttonId, remoteMode, btn) {
+    if (this._knownRemoteSwitchBottoms.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_SHORT_PRESS)) ||
+        this._knownRemoteSwitchBottoms.has(this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS))) {
+       if (this._bottomPanelVisible) btn.classList.add("locked");
+       if (!this._bottomPanelVisible) btn.classList.remove("locked");
+    } else {
+      btn.classList.remove("locked");
+    }
+  }
+
   doUpdateSidePanel() {
     // Expand or collapse side panel
     if (this._sidePanelVisible) {
@@ -1679,6 +1804,19 @@ class AndroidRemoteCard extends HTMLElement {
     } else {
       this._elements.wrapper.classList.remove("with-addons");
       this.getAddonsWrapper().classList.add("hide");
+    }
+  }
+
+  doUpdateBottomPanel() {
+    // Expand or collapse bottom panel
+    if (this._bottomPanelVisible) {
+      this._elements.wrapper.classList.add("with-servers");
+      this.getAddonsWrapper().classList.add("with-servers");
+      this.getServersWrapper().classList.remove("hide");
+    } else {
+      this._elements.wrapper.classList.remove("with-servers");
+      this.getAddonsWrapper().classList.remove("with-servers");
+      this.getServersWrapper().classList.add("hide");
     }
   }
 
@@ -1704,6 +1842,207 @@ class AndroidRemoteCard extends HTMLElement {
       }
     }
   }
+
+  //#################
+  //# SERVERS CELLS #
+  //#################
+
+  doUpdateServers() {
+    this.doResetServers();
+    this.doCreateServers();
+  }
+
+  doResetServers() {
+    // Clear previous listeners
+    this._eventManager.clearListeners("serversContainer");
+
+    // Detach existing layout from DOM
+    this._elements.servers.wrapper.innerHTML = '';
+
+    // Reset servers cells elements (if any)
+    this._elements.servers.cells = [];
+  }
+
+  doCreateServers() {
+    // Create all servers cells from :
+    // - servers stored into read-only user preferences
+    // - servers overrides stored into read-only default configurations
+    // - servers overrides stored into read/write user configurations
+    const serversCellsConfig = this.getServersCellsConfig();
+    for (const server of (this._eventManager.getServers() ?? [])) {
+      const serverCellConfig = serversCellsConfig?.[server.id];
+      const serverCell = this.doServerCell(server, serverCellConfig);
+      this.doStyleServerCell(serverCell, serverCellConfig);
+      this.doAttachServerCell(serverCell);
+      this.doQueryServerCellElements();
+      this.doListenServerCell(serverCell);
+    }
+  }
+
+  doServerCell(server, serverCellConfig) {
+
+    // Define cell default config
+    const defaultServerCellConfig = this.createDynamicServerCellConfig(server);
+    const serverCellName = this.getDynamicServerCellName(defaultServerCellConfig);
+
+    // Create a new server cell
+    const serverCell = document.createElement("div");
+    this.getServersCells().push(serverCell);
+    serverCell.classList.add('device-cell');
+    serverCell.id = serverCellName;
+    this.setServerCellData(serverCell, serverCellConfig, defaultServerCellConfig);
+
+    // Create server cell content
+    const serverCellContent = this.doServerCellContent(serverCellConfig, defaultServerCellConfig);
+    this.doStyleServerCellContent(serverCellContent, serverCellConfig);
+    this.doAttachServerCellContent(serverCell, serverCellContent);
+    this.doQueryServerCellContentElements(serverCell, serverCellContent);
+    this.doListenServerCellContent();
+  
+    return serverCell;
+  }
+
+  doStyleServerCell(serverCell, serverConfig) {
+    // Nothing to do
+  }
+  doAttachServerCell(serverCell) {
+    this.getServersWrapper().appendChild(serverCell);
+  }
+  doQueryServerCellElements() {
+    // Nothing to do
+  }
+  doListenServerCell(serverCell) {
+    // Action and visual events
+    this._eventManager.addButtonListeners("serversContainer", serverCell, 
+      {
+        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onServerCellPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onServerCellAbortPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onServerCellRelease.bind(this)
+      }
+    );
+  }
+
+  onServerCellPress(serverCell, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doServerCellPress(serverCell, evt);
+  }
+
+  onServerCellAbortPress(serverCell, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doServerCellAbortPress(serverCell, evt);
+  }
+
+  onServerCellRelease(serverCell, evt) {
+    this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.doServerCellRelease(serverCell, evt);
+  }
+
+  doServerCellPress(serverCell, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Server cell ${serverCell.id} press: action will be triggered on release, nothing to do`));
+    // Nothing to do: server will be switched on cell release
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doServerCellAbortPress(serverCell, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Server cell ${serverCell.id} abort press: action wont be triggered at all, nothing to do`));
+    // Nothing to do: server will be switched on cell release
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doServerCellRelease(serverCell, evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Server cell ${serverCell.id} release: triggering associated action...`));
+
+    // Retrieve server cell config
+    const serverCellConfig = this._layoutManager.getElementData(serverCell);
+    const serverId = serverCellConfig.id;
+
+    // switch to selected HID server (when different than current server)
+    const currentServer = this._eventManager.getCurrentServer();
+    if (currentServer.id !== serverId) {
+      const nextServer = this._eventManager.getServer(serverId);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Server cell ${serverCell.id} release: switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
+      this.setCurrentServer(nextServer);
+    }
+
+    // Send haptic feedback to make user acknownledgable of succeeded event
+    this._layoutManager.hapticFeedback();
+  }
+
+  doServerCellContent(serverCellConfig, defaultServerCellConfig) {
+
+    // Create server cell content inner label
+    const label = document.createElement("div");
+    label.className = "device-label";
+    label.textContent = this.getServerCellLabel(serverCellConfig)
+      || this.getDynamicServerCellServerName(defaultServerCellConfig)
+      || this.getDynamicServerCellName(defaultServerCellConfig);
+    label.style.color = this.getServerCellLabelColor(serverCellConfig);
+    label.style.fontSize = this.getServerCellLabelFontScale(serverCellConfig);
+
+    const serverCellContentLabel = document.createElement("div");
+    serverCellContentLabel.className = "device-cell-content-part label half";
+    serverCellContentLabel.style.padding = this.getServerCellLabelGap(serverCellConfig);
+    serverCellContentLabel.appendChild(label);
+
+
+    // Create server cell content inner image
+    const imgHtml = this.getServerCellImageUrl(serverCellConfig) ? this.getCellImageHtml(this.getServerCellImageUrl(serverCellConfig)) : '';
+    const img = document.createElement("div");
+    img.className = "device-img";
+    img.innerHTML = imgHtml;
+    img._originalFill = this._sideCellButtonFg;
+    img._originalStroke = this._sideCellButtonFg;
+
+    const serverCellContentImage = document.createElement("div");
+    serverCellContentImage.className = "device-cell-content-part img half";
+    serverCellContentImage.style.padding = this.getServerCellImageGap(serverCellConfig);
+    serverCellContentImage.appendChild(img);
+
+    // Create server cell content inner icon
+    const icoHtml = this.getServerCellIconUrl(serverCellConfig) ? this.getCellImageHtml(this.getServerCellIconUrl(serverCellConfig)) : '';
+    const ico = document.createElement("div");
+    ico.className = "device-icon";
+    ico.innerHTML = icoHtml;
+
+    const serverCellContentIcon = document.createElement("div");
+    serverCellContentIcon.className = "device-icon-wrapper";
+    serverCellContentIcon.style.padding = this.getServerCellIconGap(serverCellConfig);
+    serverCellContentIcon.appendChild(ico);
+
+
+    // Create server cell content
+    const serverCellContent = document.createElement("div");
+    serverCellContent.className = "device-cell-content";
+    serverCellContent.appendChild(serverCellContentImage);
+    serverCellContent.appendChild(serverCellContentLabel);
+    serverCellContent.appendChild(serverCellContentIcon);
+    return serverCellContent;
+  }
+
+  doStyleServerCellContent(serverCellContent, serverCellConfig) {
+    // Nothing to do here
+  }
+
+  doAttachServerCellContent(serverCell, serverCellContent) {
+    serverCell.appendChild(serverCellContent);
+  }
+
+  doQueryServerCellContentElements(serverCell, serverCellContent) {
+    serverCell._img = serverCellContent.querySelector(".device-img");
+    serverCell._svg = serverCell._img.querySelector('svg');
+  }
+
+  doListenServerCellContent() {
+    // Nothing to do here: no events needed on cell content
+  }
+
+  //################
+  //# ADDONS CELLS #
+  //################
 
   doUpdateAddons() {
     this.doResetAddons();
@@ -1740,7 +2079,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Create a new addon cell
     const addonCell = document.createElement("div");
     this.getAddonsCells().push(addonCell);
-    addonCell.classList.add('addon-cell');
+    addonCell.classList.add('device-cell');
     addonCell.id = addonCellName;
     this.setAddonCellData(addonCell, addonCellConfig, defaultAddonCellConfig);
 
@@ -1891,13 +2230,13 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Create addon cell content inner label
     const label = document.createElement("div");
-    label.className = "addon-label";
+    label.className = "device-label";
     label.textContent = this.getAddonCellLabel(addonCellConfig) || this.getDynamicAddonCellName(defaultAddonCellConfig);
     label.style.color = this.getAddonCellLabelColor(addonCellConfig);
     label.style.fontSize = this.getAddonCellLabelFontScale(addonCellConfig);
 
     const addonCellContentLabel = document.createElement("div");
-    addonCellContentLabel.className = "addon-cell-content-part label half";
+    addonCellContentLabel.className = "device-cell-content-part label half";
     addonCellContentLabel.style.padding = this.getAddonCellLabelGap(addonCellConfig);
     addonCellContentLabel.appendChild(label);
 
@@ -1905,31 +2244,31 @@ class AndroidRemoteCard extends HTMLElement {
     // Create addon cell content inner image
     const imgHtml = this.getAddonCellImageUrl(addonCellConfig) ? this.getCellImageHtml(this.getAddonCellImageUrl(addonCellConfig)) : '';
     const img = document.createElement("div");
-    img.className = "addon-img";
+    img.className = "device-img";
     img.innerHTML = imgHtml;
     img._originalFill = this._sideCellButtonFg;
     img._originalStroke = this._sideCellButtonFg;
 
     const addonCellContentImage = document.createElement("div");
-    addonCellContentImage.className = "addon-cell-content-part img half";
+    addonCellContentImage.className = "device-cell-content-part img half";
     addonCellContentImage.style.padding = this.getAddonCellImageGap(addonCellConfig);
     addonCellContentImage.appendChild(img);
 
     // Create addon cell content inner icon
     const icoHtml = this.getAddonCellIconUrl(addonCellConfig) ? this.getCellImageHtml(this.getAddonCellIconUrl(addonCellConfig)) : '';
     const ico = document.createElement("div");
-    ico.className = "addon-icon";
+    ico.className = "device-icon";
     ico.innerHTML = icoHtml;
 
     const addonCellContentIcon = document.createElement("div");
-    addonCellContentIcon.className = "addon-icon-wrapper";
+    addonCellContentIcon.className = "device-icon-wrapper";
     addonCellContentIcon.style.padding = this.getAddonCellIconGap(addonCellConfig);
     addonCellContentIcon.appendChild(ico);
 
 
     // Create addon cell content
     const addonCellContent = document.createElement("div");
-    addonCellContent.className = "addon-cell-content";
+    addonCellContent.className = "device-cell-content";
     addonCellContent.appendChild(addonCellContentImage);
     addonCellContent.appendChild(addonCellContentLabel);
     addonCellContent.appendChild(addonCellContentIcon);
@@ -1945,7 +2284,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doQueryAddonCellContentElements(addonCell, addonCellContent) {
-    addonCell._img = addonCellContent.querySelector(".addon-img");
+    addonCell._img = addonCellContent.querySelector(".device-img");
     addonCell._svg = addonCell._img.querySelector('svg');
   }
 
@@ -1962,6 +2301,12 @@ class AndroidRemoteCard extends HTMLElement {
       log_level: "warn",
       log_pushback: false,
       state_color: "rgb",
+      servers: {
+        cell_label_font_scale: '0.8em',
+        cell_image_gap: '0.8em 0.8em 0em 0.8em',
+        cell_icon_gap: '0.2em 0.2em 0em 0em',
+        cells: {}
+      },
       buttons_overrides: {},
       trigger_long_click_delay: 500,
       trigger_repeat_override_delay: 500,
@@ -1983,6 +2328,11 @@ class AndroidRemoteCard extends HTMLElement {
 
   getCardSize() {
     return 4;
+  }
+
+  // Set server cell data
+  setServerCellData(cell, defaultConfig, overrideConfig) {
+    this._layoutManager.setElementData(cell, defaultConfig, overrideConfig, (key, value, source) => this._allowedServerCellData.has(key));
   }
 
   // Set addon cell data
@@ -2326,7 +2676,14 @@ class AndroidRemoteCard extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching side panel visibility (from ${this._sidePanelVisible} to ${!this._sidePanelVisible})...`, btn));
       this._sidePanelVisible = !this._sidePanelVisible;
       this.doUpdateCellsVisualAndState();
-    } else {
+    } else if (overrideConfig === this._OVERRIDE_SWITCH_BOTTOM_PANEL) {
+      // Typed config switches bottom panel open/close
+
+      // Switch bottom panel mode (opened/closed)
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching bottom panel visibility (from ${this._bottomPanelVisible} to ${!this._bottomPanelVisible})...`, btn));
+      this._bottomPanelVisible = !this._bottomPanelVisible;
+      this.doUpdateCellsVisualAndState();
+    }  else {
       // Typed config defines an action (related to sensor state or not)
 
       // Execute action whenever sub-config defined (handled by this._eventManager.executeButtonOverride)
