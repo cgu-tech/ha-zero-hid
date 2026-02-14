@@ -466,6 +466,10 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.addons = {};
   }
 
+  createServersContent() {
+    this._elements.servers = {};
+  }
+
   // jobs
   doCheckConfig() {
     this._layoutManager.checkConfiguredLayout();
@@ -487,6 +491,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     this.createManagedContent();
     this.createAddonsContent();
+    this.createServersContent();
   }
 
   doStyle() {
