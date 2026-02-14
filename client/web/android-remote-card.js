@@ -73,6 +73,7 @@ class AndroidRemoteCard extends HTMLElement {
   _moreInfoLongPressTimeouts = new Map();
   _sidePanelVisible = false;
   _bottomPanelVisible = false;
+  _currentServerConfig;
 
   constructor() {
     super();
@@ -184,6 +185,16 @@ class AndroidRemoteCard extends HTMLElement {
 
   getServersCellsConfig() {
     return this.getServersConfig()?.["cells"];
+  }
+
+  getServerCellConfig(serverId) {
+    return this.getServersCellsConfig()?.[serverId];
+  }
+
+  getServerCellLabelContent(serverCellConfig, defaultServerCellConfig) {
+    return this.getServerCellLabel(serverCellConfig)
+      || this.getDynamicServerCellServerName(defaultServerCellConfig)
+      || this.getDynamicServerCellName(defaultServerCellConfig);
   }
 
   getAddonsConfig() {
@@ -330,10 +341,10 @@ class AndroidRemoteCard extends HTMLElement {
     return this._sideCellButtonFg;
   }
   getServerCellWidth(serverCellConfig) {
-    return this.getServerCellConfigOrDefault(serverCellConfig, "width");
+    return this.getServerCellHeight(serverCellConfig);
   }
   getServerCellHeight(serverCellConfig) {
-    return this.getServerCellConfigOrDefault(serverCellConfig, "height");
+    return this.getServerCellConfigOrDefault(serverCellConfig, "size");
   }
   getServerCellLabelGap(serverCellConfig) {
     return this.getServerCellConfigOrDefault(serverCellConfig, "label_gap");
@@ -994,9 +1005,21 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateCurrentServer() {
-    // Update remote UI to display current server to end user
+    // Retrieve server label HTML element
     const serverLabel = this._elements.serverBtnLabel;
-    if (serverLabel) serverLabel.innerHTML = this._eventManager.getCurrentServerName() ?? 'No server';
+
+    // Retrieve server label content
+    let serverLabelContent = null;
+    const server = this._eventManager.getCurrentServer();
+    if (server) {
+      const serverId = this._eventManager.getServerId(server);
+      const serverCellConfig = this.getServerCellConfig(serverId);
+      const defaultServerCellConfig = this.createDynamicServerCellConfig(server);
+      serverLabelContent = this.getServerCellLabelContent(serverCellConfig, defaultServerCellConfig);
+    }
+
+    // Set content into server label HTML element
+    if (serverLabel) serverLabel.innerHTML = serverLabelContent ?? 'No server';
   }
 
   doUpdateManagedPreferences() {
@@ -1879,9 +1902,8 @@ class AndroidRemoteCard extends HTMLElement {
     // - servers stored into read-only user preferences
     // - servers overrides stored into read-only default configurations
     // - servers overrides stored into read/write user configurations
-    const serversCellsConfig = this.getServersCellsConfig();
     for (const server of (this._eventManager.getServers() ?? [])) {
-      const serverCellConfig = serversCellsConfig?.[server.id];
+      const serverCellConfig = this.getServerCellConfig(server.id);
       const serverCell = this.doServerCell(server, serverCellConfig);
       this.doStyleServerCell(serverCell, serverCellConfig);
       this.doAttachServerCell(serverCell);
@@ -1991,9 +2013,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Create server cell content inner label
     const label = document.createElement("div");
     label.className = "device-label";
-    label.textContent = this.getServerCellLabel(serverCellConfig)
-      || this.getDynamicServerCellServerName(defaultServerCellConfig)
-      || this.getDynamicServerCellName(defaultServerCellConfig);
+    label.textContent = this.getServerCellLabelContent(serverCellConfig, defaultServerCellConfig);
     label.style.color = this.getServerCellLabelColor(serverCellConfig);
     label.style.fontSize = this.getServerCellLabelFontScale(serverCellConfig);
 
@@ -2316,8 +2336,7 @@ class AndroidRemoteCard extends HTMLElement {
       log_pushback: false,
       state_color: "rgb",
       servers: {
-        cell_width: "80px",
-        cell_height: "60px",
+        cell_size: "80px",
         cell_label_font_scale: '0.8em',
         cell_image_gap: '0.8em 0.8em 0em 0.8em',
         cell_icon_gap: '0.2em 0.2em 0em 0em',
