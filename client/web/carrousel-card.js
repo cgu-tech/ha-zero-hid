@@ -666,7 +666,7 @@ export class CarrouselCard extends HTMLElement {
       orientation: this.constructor._ORIENTATION_HORIZONTAL,
       cell_display_mode: this.constructor._CELL_MODE_MIXED,
       cell_background: "transparent",
-      cell_width: 60,
+      cell_width: 80,
       cell_height: 60,
       cell_label: "",
       cell_label_font_scale: 1,

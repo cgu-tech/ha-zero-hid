@@ -329,6 +329,9 @@ class AndroidRemoteCard extends HTMLElement {
   getServerCellLabelColor(serverCellConfig) {
     return this._sideCellButtonFg;
   }
+  getServerCellWidth(serverCellConfig) {
+    return this.getServerCellConfigOrDefault(serverCellConfig, "width");
+  }
   getServerCellLabelGap(serverCellConfig) {
     return this.getServerCellConfigOrDefault(serverCellConfig, "label_gap");
   }
@@ -1908,7 +1911,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doStyleServerCell(serverCell, serverConfig) {
-    // Nothing to do
+    serverCell.style.width = this.getServerCellWidth(serverConfig);
   }
   doAttachServerCell(serverCell) {
     this.getServersWrapper().appendChild(serverCell);
@@ -2307,6 +2310,7 @@ class AndroidRemoteCard extends HTMLElement {
       log_pushback: false,
       state_color: "rgb",
       servers: {
+        cell_width: 80,
         cell_label_font_scale: '0.8em',
         cell_image_gap: '0.8em 0.8em 0em 0.8em',
         cell_icon_gap: '0.2em 0.2em 0em 0em',
