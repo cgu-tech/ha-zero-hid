@@ -539,7 +539,7 @@ class AndroidRemoteCard extends HTMLElement {
         flex-direction: column;
         box-sizing: border-box;
         position: relative;
-         z-index: 1; /* sits above */
+        z-index: 1; /* sits above */
       }
       .addons-wrapper {
         width: 16.6667%; /* 1/6 */
@@ -556,7 +556,7 @@ class AndroidRemoteCard extends HTMLElement {
       }
       .servers-wrapper {
         width: 100%;
-        position: absolute;
+        position: relative;
         bottom: 0;
         left: 0;
         height: 11.1112%; /* 1/9 */
@@ -567,11 +567,11 @@ class AndroidRemoteCard extends HTMLElement {
         border: 1px solid var(--cell-button-bg);
         border-radius: var(--card-border-radius);
       }
+      .servers-wrapper.with-addons,
       .wrapper.with-addons {
         width: 83.3333%; /* 5/6 */
       }
-      .wrapper.with-servers,
-      .addons-wrapper.with-servers {
+      .wrapper.with-servers {
         height: 88.8888%; /* 8/9 */
       }
       .hide {
@@ -1805,9 +1805,11 @@ class AndroidRemoteCard extends HTMLElement {
     // Expand or collapse side panel
     if (this._sidePanelVisible) {
       this._elements.wrapper.classList.add("with-addons");
+      this.getServersWrapper().classList.add("with-addons");
       this.getAddonsWrapper().classList.remove("hide");
     } else {
       this._elements.wrapper.classList.remove("with-addons");
+      this.getServersWrapper().classList.remove("with-addons");
       this.getAddonsWrapper().classList.add("hide");
     }
   }
@@ -1816,11 +1818,9 @@ class AndroidRemoteCard extends HTMLElement {
     // Expand or collapse bottom panel
     if (this._bottomPanelVisible) {
       this._elements.wrapper.classList.add("with-servers");
-      this.getAddonsWrapper().classList.add("with-servers");
       this.getServersWrapper().classList.remove("hide");
     } else {
       this._elements.wrapper.classList.remove("with-servers");
-      this.getAddonsWrapper().classList.remove("with-servers");
       this.getServersWrapper().classList.add("hide");
     }
   }
