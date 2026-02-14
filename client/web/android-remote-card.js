@@ -2310,7 +2310,7 @@ class AndroidRemoteCard extends HTMLElement {
       log_pushback: false,
       state_color: "rgb",
       servers: {
-        cell_width: 80,
+        cell_width: "80px",
         cell_label_font_scale: '0.8em',
         cell_image_gap: '0.8em 0.8em 0em 0.8em',
         cell_icon_gap: '0.2em 0.2em 0em 0em',
