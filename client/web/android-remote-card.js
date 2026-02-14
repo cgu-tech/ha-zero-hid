@@ -1970,12 +1970,14 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Retrieve server cell config
     const serverCellConfig = this._layoutManager.getElementData(serverCell);
-    const serverId = serverCellConfig.id;
+    const nextServerId = this.getDynamicServerCellServerId(serverCellConfig);
 
     // switch to selected HID server (when different than current server)
     const currentServer = this._eventManager.getCurrentServer();
-    if (currentServer.id !== serverId) {
-      const nextServer = this._eventManager.getServer(serverId);
+    const currentServerId = currentServer.id;
+    
+    if (currentServerId !== nextServerId) {
+      const nextServer = this._eventManager.getServer(nextServerId);
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Server cell ${serverCell.id} release: switching from ${this._eventManager.getServerName(currentServer)} server to ${this._eventManager.getServerName(nextServer)} server...`, btn));
       this.setCurrentServer(nextServer);
     }
