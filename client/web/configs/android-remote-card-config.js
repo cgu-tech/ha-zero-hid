@@ -215,7 +215,10 @@ export const androidRemoteCardConfig = {
   "remote-button-switch": {
     "image": "icon-switch",
     "image-styles": ["circle-button-icon", "standard-grey", "scale-0-5"]
-  }
+  },
+  "remote-button-poweroff-addons": {
+    "image": "icon-counter"
+  },
 };
 
 export const androidRemoteCardStyles = {

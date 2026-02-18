@@ -126,6 +126,13 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateAirmouseMode();
   }
 
+  batchPowerOff(entitiesIds) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("batchPowerOff(entitiesIds):", entitiesIds));
+    if (entitiesIds && entitiesIds.length > 0) {
+      this._eventManager.callMixedDomainService('turn_off', entitiesIds);
+    }
+  }
+
   setConfig(config) {
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
@@ -951,6 +958,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doUpdateAddonsHass() {
+    // Reset Powered ON addons counter
+    this._elements.poweredOnAddons = [];
+
     // Update all addons cells according to bound entities
     for (const addonCell of this.getAddonsCells()) {
 
@@ -961,7 +971,13 @@ class AndroidRemoteCard extends HTMLElement {
       const entityId = this.getAddonCellEntity(addonCellConfig);
       const isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
       this.setSensorClass(addonCell, entityId, isHassEntityOn);
+
+      // Add addons entity id into powered on addons
+      if (isHassEntityOn) this._elements.poweredOnAddons.push(entityId);
     }
+
+    // Update addons button counter
+    this.doUpdatePowerOffAddonsCounter();
   }
   
   setSensorClass(addonCell, entityId, isSensorOn) {
@@ -1054,6 +1070,12 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Reset HID server button element (if any)
     this._elements.serverBtn = null;
+
+    // Reset Power OFF addons button label element (if any)
+    this._elements.powerOffAddonsBtnLabel = null;
+
+    // Reset Power OFF addons button element (if any)
+    this._elements.powerOffAddonsBtn = null;
 
     // Reset clickable elements (if any)
     this._elements.clickables = [];
@@ -1263,6 +1285,12 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContent?.id === "remote-button-air-mouse") {
       const airmouseBtn = cellContent;
       this._elements.airmouseBtn = airmouseBtn;
+    }
+    // Query poweroff addons button
+    if (cellContent?.id === "remote-button-poweroff-addons") {
+      const powerOffAddonsBtn = cellContent;
+      this._elements.powerOffAddonsBtn = powerOffAddonsBtn;
+      this._elements.powerOffAddonsBtnLabel = (powerOffAddonsBtn.children ? Array.from(powerOffAddonsBtn.children) : []).at(0);
     }
   }
 
@@ -1744,7 +1772,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Update buttons overriden with sensors configuration (buttons sensors data + buttons visuals)
     const serverId = this._eventManager.getCurrentServerId();
     const remoteMode = this.getRemoteMode();
-
+    
     // Update clickable cells visuals
     for (const btn of (this.getClickables() ?? [])) {
       const buttonId = btn.id;
@@ -1764,6 +1792,9 @@ class AndroidRemoteCard extends HTMLElement {
       // Update cell state and associated visual
       this.doUpdateCellState(serverId, buttonId, remoteMode, btn);
     }
+
+    // Update addons button counter
+    this.doUpdatePowerOffAddonsCounter();
 
     // Update side panel state
     this.doUpdateSidePanel();
@@ -1830,6 +1861,28 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
+  doUpdatePowerOffAddonsCounter() {
+    // Update powerOffAddonsCounter button (when existing)
+    const btn = this._elements.powerOffAddonsBtn;
+    if (btn) {
+      // Retrieve powerOffAddonsCounter label HTML element
+      const powerOffAddonsLabel = this._elements.powerOffAddonsBtnLabel;
+      
+      // Set updated powerOffAddonsCounter content into label HTML element
+      if (powerOffAddonsLabel) {
+        const poweredOnAddonsCount = this._elements.poweredOnAddons ? this._elements.poweredOnAddons.length : 0;
+        powerOffAddonsLabel.innerHTML = String(powerOffAddonsLabel);
+
+        // Update button visuals to reflect updated state, for visual feedback
+        const hasAddonsPoweredOn = (poweredOnAddonsCount > 0);
+        for (const child of (btn.children ? Array.from(btn.children) : [])) {
+          if (hasAddonsPoweredOn) child.classList.add("sensor-on");
+          if (!hasAddonsPoweredOn) child.classList.remove("sensor-on");
+        }
+      }
+    }
+  }
+
   doUpdateSidePanel() {
     // Expand or collapse side panel
     if (this._sidePanelVisible) {
@@ -1860,13 +1913,14 @@ class AndroidRemoteCard extends HTMLElement {
     const overrideConfigLong = this.getButtonOverrideConfig(serverId, buttonId, remoteMode, this._OVERRIDE_TYPE_LONG_PRESS);
 
     // Retrieve watched entity id (entity and sensor supported)
+    let isHassEntityOn = false;
     const entityId =
       overrideConfigShort?.['entity'] ?? overrideConfigLong?.['entity'] ??
       overrideConfigShort?.['sensor'] ?? overrideConfigLong?.['sensor'];
     if (entityId) {
 
       // Update button _sensorState with up-to-date entity state (on or off)
-      const isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
+      isHassEntityOn = this._eventManager.isHassEntityOn(entityId);
       btn._sensorState = isHassEntityOn ? 'on' : 'off';
 
       // Update button visuals to reflect updated state, for visual feedback
@@ -2425,7 +2479,7 @@ class AndroidRemoteCard extends HTMLElement {
       // Setup repeated override action short while overriden button is pressed
       this.setupOverrideRepeatedTimeout(evt, btn, this._OVERRIDE_TYPE_SHORT_PRESS);
 
-    } else if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
+    } else if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn)) {
 
       // Nothing to do: overriden action will be executed on key release
       if (this.hasButtonOverrideConfigShort(btn)) {
@@ -2433,7 +2487,7 @@ class AndroidRemoteCard extends HTMLElement {
       }
 
       // Triggering override long click timeout
-      if (this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
+      if (this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: server switch or overridden key for ${this.getRemoteMode()} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
         this._overrideLongPressTimeouts.set(evt.pointerId, { 
           "can-run": true,                                   // until proven wrong, long press action can be run
@@ -2471,7 +2525,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to abort press
     const code = btnData.code;
-    if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn)) {
+    if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn)) {
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
       if (this.hasButtonOverrideConfigShort(btn)) {
@@ -2575,6 +2629,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
   isAirmouseButton(btn) {
     return (btn && this._elements.airmouseBtn === btn);
+  }
+  isPowerOffAddonsButton(btn) {
+    return (btn && this._elements.powerOffAddonsBtn === btn);
   }
   getRemoteMode() {
     const mode = this._eventManager.getUserPreferenceRemoteMode();
@@ -2693,6 +2750,14 @@ class AndroidRemoteCard extends HTMLElement {
       const nextAirmouseMode = !currentAirmouseMode;
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): switching airmouse mode from ${currentAirmouseMode} to ${nextAirmouseMode}...`, btn));
       this.setAirmouseEnabled(nextAirmouseMode);
+    } else if (this.isPowerOffAddonsButton(btn) && (!overrideConfig || overrideConfig === this._OVERRIDE_NONE)) {
+      // Addons power off button retrieved
+
+      // Batch power off all powered on addons entities
+      const entitiesIds = this._elements.poweredOnAddons;
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): batch powering off addons entities ${entitiesIds}...`, btn));
+      this.batchPowerOff(entitiesIds);
+      this.doUpdatePowerOffAddonsCounter();
     } else if (overrideConfig === this._OVERRIDE_NONE) {
       // Typed config "none"
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${remoteMode} mode ${pressType} press, nothing to do`, btn));

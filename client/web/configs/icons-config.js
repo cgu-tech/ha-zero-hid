@@ -209,6 +209,12 @@ export const iconsConfig = {
       Loading...
     </div>`
   },
+  "icon-counter": {
+    html:
+    `<div style="color: inherit; font-size: 0.8rem;">
+      0
+    </div>`
+  },
   "icon-air-mouse": {
     html:
     `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44.659782 39.227093">

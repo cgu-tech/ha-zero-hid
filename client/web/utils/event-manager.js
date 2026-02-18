@@ -756,7 +756,22 @@ export class EventManager {
   callComponentService(name, args) {
     this.callService(Globals.COMPONENT_NAME, name, args);
   }
-  
+
+  // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
+  // 
+  // Parameters:
+  //  - name: the service name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  // 
+  // Returns: 
+  //  - void (this is a fire-and-forget HAOS integration call)
+  callMixedDomainService(name, args) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callMixedDomainService(name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, name, args));
+      return;
+    }
+    this.getHass().callService('homeassistant', name, args);
+  }
+
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
   // 
   // Parameters:
