@@ -1871,7 +1871,7 @@ class AndroidRemoteCard extends HTMLElement {
       // Set updated powerOffAddonsCounter content into label HTML element
       if (powerOffAddonsLabel) {
         const poweredOnAddonsCount = this._elements.poweredOnAddons ? this._elements.poweredOnAddons.length : 0;
-        powerOffAddonsLabel.innerHTML = String(powerOffAddonsLabel);
+        powerOffAddonsLabel.innerHTML = String(poweredOnAddonsCount);
 
         // Update button visuals to reflect updated state, for visual feedback
         const hasAddonsPoweredOn = (poweredOnAddonsCount > 0);
