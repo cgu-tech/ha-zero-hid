@@ -217,7 +217,8 @@ export const androidRemoteCardConfig = {
     "image-styles": ["circle-button-icon", "standard-grey", "scale-0-5"]
   },
   "remote-button-poweroff-addons": {
-    "image": "icon-counter"
+    "image": "icon-counter",
+    "image-styles": ["textual"]
   },
 };
 

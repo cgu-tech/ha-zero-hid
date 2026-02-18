@@ -765,6 +765,9 @@ class AndroidRemoteCard extends HTMLElement {
         fill: var(--cell-sensor-on-fg);
         stroke: var(--cell-sensor-on-fg);
       }
+      .textual.sensor-on {
+        color: var(--cell-sensor-on-fg);
+      }
       .circle-button {
         height: 100%;
         width: 100%;  /* maintain aspect ratio */
