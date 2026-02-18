@@ -129,7 +129,9 @@ class AndroidRemoteCard extends HTMLElement {
   batchPowerOff(entitiesIds) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("batchPowerOff(entitiesIds):", entitiesIds));
     if (entitiesIds && entitiesIds.length > 0) {
-      this._eventManager.callMixedDomainService('turn_off', entitiesIds);
+      this._eventManager.callMixedDomainService('turn_off', , {
+        "entity_id": entitiesIds,
+      });
     }
   }
 

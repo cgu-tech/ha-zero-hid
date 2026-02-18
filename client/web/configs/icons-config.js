@@ -211,7 +211,7 @@ export const iconsConfig = {
   },
   "icon-counter": {
     html:
-    `<div style="color: inherit;">
+    `<div>
       0
     </div>`
   },
