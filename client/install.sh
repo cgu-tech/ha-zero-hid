@@ -34,9 +34,15 @@ HA_ZERO_HID_CLIENT_COMPONENT_VERSION_FILE="${HA_ZERO_HID_CLIENT_COMPONENT_DIR}/v
 HA_ZERO_HID_CLIENT_RESOURCES_DIR="${HAOS_RESOURCES_DIR}/${HA_ZERO_HID_CLIENT_RESOURCES_DIR_NAME}"
 HA_ZERO_HID_CLIENT_RESOURCES_REMOTE_CARD_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_DIR}/android-remote-card.js"
 HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR="${HA_ZERO_HID_CLIENT_RESOURCES_DIR}/utils"
+HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR="${HA_ZERO_HID_CLIENT_RESOURCES_DIR}/libs"
 HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/globals.js"
 HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/keycodes.js"
 HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/consumercodes.js"
+
+# External dependencies
+EXTERNAL_DEPENDENCIES='[
+  {"name":"valetudo-map-card", "dir":"lovelace-valetudo-map-card", "url":"https://github.com/Hypfer/lovelace-valetudo-map-card", "branch":"master", "paths":["dist/valetudo-map-card.js"]}
+]'
 
 ask_confirm() {
   local prompt="$1"
@@ -339,6 +345,25 @@ install() {
     echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client web resources..."
     mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
     copy_dir_content "${HA_ZERO_HID_REPO_RESOURCES_DIR}" "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
+
+    # Installing raw client external web dependencies
+    echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client external web dependencies..."
+    echo "${EXTERNAL_DEPENDENCIES}" | jq -c '.[]' | while read -r dependency; do
+        dependency_name=$(echo "$dependency" | jq -r '.name')
+        dependency_dir=${CURRENT_DIR}/$(echo "$dependency" | jq -r '.dir')
+        dependency_url=$(echo "$dependency" | jq -r '.url')
+        dependency_branch=$(echo "$dependency" | jq -r '.branch')
+
+        echo "Cloning external web dependency ${dependency_name} repository at ${dependency_url}, on branch ${dependency_branch}..."
+        git clone -b "${dependency_branch}" "${dependency_url}"
+
+        echo "${dependency}" | jq -r '.paths[]' | while read -r dependency_path; do
+            echo "Installing ${dependency_path} from external web dependency ${dependency_name}..."
+            dependency_filename=$(basename "$dependency_path")
+            mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR}"
+            cp "${dependency_dir}/${dependency_path}" "${HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR}/${dependency_filename}"
+        done
+    done
 
     echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${ZERO_HID_REPO_BRANCH}..."
     git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
