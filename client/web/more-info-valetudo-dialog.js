@@ -155,14 +155,12 @@ class MoreInfoValetudoDialog extends HTMLElement {
       }
 
       #dialog-container {
-        padding: 16px;
         box-sizing: border-box;
       }
 
       .header {
         font-size: 1.2em;
         font-weight: 500;
-        margin-bottom: 16px;
       }
 
       .content {
