@@ -197,42 +197,83 @@ class MoreInfoValetudoDialog extends HTMLElement {
 if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
 
 // Patch HA's more-info-content safely
+
+// Patch HA more-info-content LitElement render
 customElements.whenDefined("more-info-content").then(() => {
   const MoreInfoContent = customElements.get("more-info-content");
-  console.log("customElements.whenDefined(\"more-info-content\"): MoreInfoContent.prototype.__valetudo_patched=",MoreInfoContent.prototype.__valetudo_patched);
 
-  // Idempotent patch: avoid double override
-  if (MoreInfoContent.prototype.__valetudo_patched) return;
-  MoreInfoContent.prototype.__valetudo_patched = true;
+  if (!MoreInfoContent) return;
+
+  // Avoid double patch
+  if (MoreInfoContent.prototype.__valetudo_render_patched) return;
+  MoreInfoContent.prototype.__valetudo_render_patched = true;
 
   const originalRender = MoreInfoContent.prototype.render;
 
   MoreInfoContent.prototype.render = function () {
-    const entityId = this.entityId;
-    console.log("MoreInfoContent.prototype.render entityId=",entityId);
+    try {
+      const entityId = this.entityId; 
 
-    // Only override content for Valetudo vacuums
-    if (
-      entityId &&
-      entityId.startsWith("vacuum.")
-    ) {
-    //if (
-    //  entityId &&
-    //  entityId.startsWith("vacuum.") &&
-    //  this.hass?.states[entityId]?.attributes?.integration === "valetudo"
-    //) {
-      // Use HA built-in html template helper
-      console.log("invoking more-info-valetudo-dialog render");
-      return this.html`
-        <more-info-valetudo-dialog
-          .hass=${this.hass}
-          .entityId=${entityId}>
-        </more-info-valetudo-dialog>
-      `;
+      console.debug("[Valetudo] more-info-content render patch", { entityId });
+
+      if (
+        typeof entityId === "string" &&
+        entityId.startsWith("vacuum.") &&
+        this.hass?.states?.[entityId]?.attributes?.integration === "valetudo"
+      ) {
+        // Render your custom dialog instead of the default Lit template
+        return this.html`
+          <more-info-valetudo-dialog
+            .hass=${this.hass}
+            .entityId=${entityId}>
+          </more-info-valetudo-dialog>
+        `;
+      }
+    } catch (e) {
+      console.error("[Valetudo] patch error", e);
     }
 
-    // Default HA rendering for all other entities
-    console.log("invoking original render");
-    return originalRender.call(this);
+    // Fallback to default render for all other cases
+    return originalRender?.call(this);
   };
 });
+
+// customElements.whenDefined("more-info-content").then(() => {
+//   const MoreInfoContent = customElements.get("more-info-content");
+//   console.log("customElements.whenDefined(\"more-info-content\"): MoreInfoContent.prototype.__valetudo_patched=",MoreInfoContent.prototype.__valetudo_patched);
+// 
+//   // Idempotent patch: avoid double override
+//   if (MoreInfoContent.prototype.__valetudo_patched) return;
+//   MoreInfoContent.prototype.__valetudo_patched = true;
+// 
+//   const originalRender = MoreInfoContent.prototype.render;
+// 
+//   MoreInfoContent.prototype.render = function () {
+//     const entityId = this.entityId;
+//     console.log("MoreInfoContent.prototype.render entityId=",entityId);
+// 
+//     // Only override content for Valetudo vacuums
+//     if (
+//       entityId &&
+//       entityId.startsWith("vacuum.")
+//     ) {
+//     //if (
+//     //  entityId &&
+//     //  entityId.startsWith("vacuum.") &&
+//     //  this.hass?.states[entityId]?.attributes?.integration === "valetudo"
+//     //) {
+//       // Use HA built-in html template helper
+//       console.log("invoking more-info-valetudo-dialog render");
+//       return this.html`
+//         <more-info-valetudo-dialog
+//           .hass=${this.hass}
+//           .entityId=${entityId}>
+//         </more-info-valetudo-dialog>
+//       `;
+//     }
+// 
+//     // Default HA rendering for all other entities
+//     console.log("invoking original render");
+//     return originalRender.call(this);
+//   };
+// });
