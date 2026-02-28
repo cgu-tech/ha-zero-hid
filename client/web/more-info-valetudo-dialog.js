@@ -180,4 +180,4 @@ if (!customElements.get("more-info-valetudo-dialog")) customElements.define("mor
 
 // Register more-info-valetudo-dialog globally for HA
 window.customMoreInfo = window.customMoreInfo || {};
-window.customMoreInfo['vacuum.*'] = 'more-info-valetudo-dialog';
+window.customMoreInfo['vacuum'] = 'more-info-valetudo-dialog';
