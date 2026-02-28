@@ -231,31 +231,42 @@ class MoreInfoValetudoDialog extends HTMLElement {
 // Ensure your dialog class is defined
 if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
 
-// Patch HA more-info-content LitElement render
+// Patch HA state-card-vacuum LitElement render
 customElements.whenDefined("state-card-vacuum").then(() => {
   const StateCardVacuum = customElements.get("state-card-vacuum");
   if (!StateCardVacuum) return;
 
-  if (StateCardVacuum.prototype.__valetudo_patched) return;
-  StateCardVacuum.prototype.__valetudo_patched = true;
+  if (StateCardVacuum.prototype.__valetudo_header_patched) return;
+  StateCardVacuum.prototype.__valetudo_header_patched = true;
+
+  const stateObjDescriptor = Object.getOwnPropertyDescriptor(
+    StateCardVacuum.prototype,
+    "stateObj"
+  );
+
+  Object.defineProperty(StateCardVacuum.prototype, "stateObj", {
+    set(value) {
+      if (stateObjDescriptor?.set) {
+        stateObjDescriptor.set.call(this, value);
+      } else {
+        this.__stateObj = value;
+      }
+
+      if (
+        value?.entity_id?.startsWith("vacuum.") &&
+        value?.attributes?.integration === "valetudo"
+      ) {
+        this.__isValetudo = true;
+      }
+    },
+    get() {
+      return stateObjDescriptor?.get
+        ? stateObjDescriptor.get.call(this)
+        : this.__stateObj;
+    },
+  });
 
   const originalRender = StateCardVacuum.prototype.render;
-  const originalUpdated = StateCardVacuum.prototype.updated;
-
-  // Track when stateObj becomes available
-  StateCardVacuum.prototype.updated = function (changedProps) {
-    if (changedProps.has("stateObj") && this.stateObj) {
-      //this.__isValetudo =
-      //  this.stateObj.entity_id?.startsWith("vacuum.") &&
-      //  this.stateObj.attributes?.integration === "valetudo";
-      this.__isValetudo =
-        this.stateObj.entity_id?.startsWith("vacuum.");
-    }
-
-    if (originalUpdated) {
-      return originalUpdated.call(this, changedProps);
-    }
-  };
 
   StateCardVacuum.prototype.render = function () {
     if (this.__isValetudo) {
@@ -270,6 +281,47 @@ customElements.whenDefined("state-card-vacuum").then(() => {
     return originalRender?.call(this);
   };
 });
+
+
+//// Patch HA more-info-content LitElement render
+//customElements.whenDefined("state-card-vacuum").then(() => {
+//  const StateCardVacuum = customElements.get("state-card-vacuum");
+//  if (!StateCardVacuum) return;
+//
+//  if (StateCardVacuum.prototype.__valetudo_patched) return;
+//  StateCardVacuum.prototype.__valetudo_patched = true;
+//
+//  const originalRender = StateCardVacuum.prototype.render;
+//  const originalUpdated = StateCardVacuum.prototype.updated;
+//
+//  // Track when stateObj becomes available
+//  StateCardVacuum.prototype.updated = function (changedProps) {
+//    if (changedProps.has("stateObj") && this.stateObj) {
+//      //this.__isValetudo =
+//      //  this.stateObj.entity_id?.startsWith("vacuum.") &&
+//      //  this.stateObj.attributes?.integration === "valetudo";
+//      this.__isValetudo =
+//        this.stateObj.entity_id?.startsWith("vacuum.");
+//    }
+//
+//    if (originalUpdated) {
+//      return originalUpdated.call(this, changedProps);
+//    }
+//  };
+//
+//  StateCardVacuum.prototype.render = function () {
+//    if (this.__isValetudo) {
+//      return this.html`
+//        <more-info-valetudo-dialog
+//          .hass=${this.hass}
+//          .entityId=${this.stateObj.entity_id}>
+//        </more-info-valetudo-dialog>
+//      `;
+//    }
+//
+//    return originalRender?.call(this);
+//  };
+//});
 
 // customElements.whenDefined("state-card-vacuum").then(() => {
 //   const StateCardVacuum = customElements.get("state-card-vacuum");
