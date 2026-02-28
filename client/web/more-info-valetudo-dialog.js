@@ -176,7 +176,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   }
 }
 
-if (!customElements.get("more-info-valetudo")) customElements.define("more-info-valetudo", MoreInfoValetudoDialog);
+if (!customElements.get("more-info-vacuum")) customElements.define("more-info-vacuum", MoreInfoValetudoDialog);
 //if (!customElements.get("more-info-vacuum")) {
 //  customElements.define("more-info-vacuum", MoreInfoValetudoDialog);
 //  console.log("First registration of more-info-vacuum");
@@ -185,9 +185,9 @@ if (!customElements.get("more-info-valetudo")) customElements.define("more-info-
 //}
 
 // Register more-info-valetudo-dialog globally for HA
-customElements.whenDefined("home-assistant").then(() => {
-  const moreInfoRegistry = window.customMoreInfo || {};
-  window.customMoreInfo = moreInfoRegistry;
-
-  moreInfoRegistry["valetudo"] = "more-info-valetudo";
-});
+//customElements.whenDefined("home-assistant").then(() => {
+//  const moreInfoRegistry = window.customMoreInfo || {};
+//  window.customMoreInfo = moreInfoRegistry;
+//
+//  moreInfoRegistry["valetudo"] = "more-info-valetudo";
+//});
