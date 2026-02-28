@@ -227,7 +227,8 @@ if (!customElements.get("more-info-valetudo-dialog")) customElements.define("mor
 
 // Patch HA more-info-content LitElement render
 customElements.whenDefined("more-info-content").then(() => {
-  const MoreInfoContent = customElements.get("more-info-content");
+  // const MoreInfoContent = customElements.get("more-info-content");
+  const MoreInfoContent = customElements.get("ha-more-info-info");
   if (!MoreInfoContent) return;
 
   if (MoreInfoContent.prototype.__valetudo_render_patched) return;
@@ -243,8 +244,8 @@ customElements.whenDefined("more-info-content").then(() => {
 
       console.debug("[Valetudo] more-info-content render patch", { entityId, integration });
 
-      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-      // if (entityId && entityId.startsWith("vacuum.")) {
+      // if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+      if (entityId && entityId.startsWith("vacuum.")) {
         return this.html`
           <more-info-valetudo-dialog
             .hass=${this.hass}
