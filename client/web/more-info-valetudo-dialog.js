@@ -191,7 +191,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
     const entityId = this.getEntityIdConfig();
     const vacuum = entityId?.split('.')?.[1] ?? entityId;
     const vacuumMapConfig = { "vacuum": vacuum };
-    
+
     // Set valetudo map card config
     this.getVacuumMap().setConfig(vacuumMapConfig);
   }
@@ -243,8 +243,8 @@ customElements.whenDefined("more-info-content").then(() => {
 
       console.debug("[Valetudo] more-info-content render patch", { entityId, integration });
 
-      //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-      if (entityId && entityId.startsWith("vacuum.")) {
+      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+      // if (entityId && entityId.startsWith("vacuum.")) {
         return this.html`
           <more-info-valetudo-dialog
             .hass=${this.hass}
