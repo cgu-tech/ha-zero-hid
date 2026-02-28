@@ -78,17 +78,24 @@ class MoreInfoValetudoDialog extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
-  getVacuumMapConfig() {
-    // Retrieve full entity id (should be compound of <domain>.<entity_name>)
-    const entityId = this._layoutManager.getFromConfigOrDefaultConfig("entityId");
-
-    // But accept both configuration forms: vacuum.my_vacuum and my_vacuum
-    const vacuum = entityId?.split('.')?.[1] ?? entityId;
-    return { "vacuum": vacuum };
+  getEntityIdConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("entityId");
   }
 
   getVacuumMap() {
     return this._elements.vacuumMap;
+  }
+
+  getVacuumMapConfig() {
+    return this._layoutManager.getTargetConfig(this.getVacuumMap());
+  }
+
+  getVacuumMapDefaultConfig() {
+    return this._layoutManager.getTargetStubConfig(this.getVacuumMap());
+  }
+
+  initVacuumMapDefaultConfig() {
+    return this._layoutManager.setTargetConfig(this.getVacuumMap(), this.getVacuumMapDefaultConfig());
   }
 
   // jobs
@@ -163,11 +170,23 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   doUpdateConfig() {
     // Update valetudo cards configs
-    this.getVacuumMap().setConfig(this.getVacuumMapConfig());
+
+    // Create valetudo map card config from specified config entityId
+    const entityId = this.getEntityIdConfig();
+    const vacuum = entityId?.split('.')?.[1] ?? entityId;
+    const vacuumMapConfig = { "vacuum": vacuum };
+    
+    // Set valetudo map card config
+    this.getVacuumMap().setConfig(vacuumMapConfig);
   }
 
   doUpdateHass() {
     // Update valetudo cards HASS object
+
+    // Ensure valid valetudo map card config
+    if (!this.getVacuumMapConfig()) this.initVacuumMapDefaultConfig();
+
+    // Set valetudo map card HASS object
     this.getVacuumMap().hass = this._hass;
   }
 

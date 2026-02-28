@@ -23,16 +23,28 @@ export class LayoutManager {
     return this._origin._logger;
   }
 
+  getTargetConfig(target) {
+    return target._config;
+  }
+
+  setTargetConfig(target, config) {
+    target._config = config;
+  }
+
   getConfig() {
-    return this._origin._config;
+    return this.getTargetConfig(this._origin);
   }
 
   isDefined(value) {
     return (value !== null && value !== undefined);
   }
 
+  getTargetStubConfig(target) {
+    return target.constructor.getStubConfig();
+  }
+
   getStubConfig() {
-    return this._origin.constructor.getStubConfig();
+    return this.getTargetStubConfig(this._origin);
   }
 
   // Without server versions
