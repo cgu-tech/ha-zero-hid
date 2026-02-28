@@ -62,6 +62,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
     for (const [key, value] of Object.entries(this._config ?? {})) {
       config[key] = value;
     }
+    console.log("createConfig this._entityId, config", this._entityId, config);
     return config;
   }
 
