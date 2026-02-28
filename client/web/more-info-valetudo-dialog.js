@@ -130,10 +130,6 @@ class MoreInfoValetudoDialog extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("entityId");
   }
 
-  getTitleConfig() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("title");
-  }
-
   getVacuumMap() {
     return this._elements.vacuumMap;
   }
@@ -231,10 +227,16 @@ class MoreInfoValetudoDialog extends HTMLElement {
     // the only option is to remove this suffix
     const vacuum = vacuum_robot.endsWith('_robot') ? vacuum_robot.slice(0, -6) : vacuum_robot;
     
-    const title = this.getTitleConfig();
     const vacuumMapConfig = {
-        "vacuum": vacuum, 
-        "title": title
+        "title": this._layoutManager.getFromConfigOrDefaultConfig("title"),
+        "vacuum": vacuum,
+        "show_path": this._layoutManager.getFromConfigOrDefaultConfig("show_path"),
+        "show_status": this._layoutManager.getFromConfigOrDefaultConfig("show_status"),
+        "show_start_button": this._layoutManager.getFromConfigOrDefaultConfig("show_start_button"),
+        "show_pause_button": this._layoutManager.getFromConfigOrDefaultConfig("show_pause_button"),
+        "show_stop_button": this._layoutManager.getFromConfigOrDefaultConfig("show_stop_button"),
+        "show_home_button": this._layoutManager.getFromConfigOrDefaultConfig("show_home_button"),
+        "show_locate_button": this._layoutManager.getFromConfigOrDefaultConfig("show_locate_button")
     };
 
     // Set valetudo map card config
@@ -254,13 +256,20 @@ class MoreInfoValetudoDialog extends HTMLElement {
           haptic: false,
           log_level: "warn",
           log_pushback: false,
-          entityId: "vacuum.valetudo_REPLACEME_robot",
-          title: ""
+          entityId: "vacuum.valetudo_REPLACEME",
+          title: "",
+          show_path: true,
+          show_status: false,
+          show_start_button: false,
+          show_pause_button: false,
+          show_stop_button: false,
+          show_home_button: false,
+          show_locate_button: false
       }
   }
 
   getCardSize() {
-    return 4;
+    return 3;
   }
 }
 
