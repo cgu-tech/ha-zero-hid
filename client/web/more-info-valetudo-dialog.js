@@ -252,10 +252,8 @@ customElements.whenDefined("state-card-vacuum").then(() => {
         this.__stateObj = value;
       }
 
-      if (
-        value?.entity_id?.startsWith("vacuum.") &&
-        value?.attributes?.integration === "valetudo"
-      ) {
+      //if (value?.entity_id?.startsWith("vacuum.") && value?.attributes?.integration === "valetudo") {
+      if (value?.entity_id?.startsWith("vacuum.")) {
         this.__isValetudo = true;
       }
     },
