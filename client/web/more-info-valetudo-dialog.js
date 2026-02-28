@@ -233,60 +233,25 @@ class MoreInfoValetudoDialog extends HTMLElement {
 // Ensure your dialog class is defined
 if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
 
-// Patch HA's ha-more-info-info safely
-customElements.whenDefined("ha-more-info-info").then(() => {
-  const HaMoreInfoInfo = customElements.get("ha-more-info-info");
-  if (!HaMoreInfoInfo) return;
-
-  if (HaMoreInfoInfo.prototype.__valetudo_patched) return;
-  HaMoreInfoInfo.prototype.__valetudo_patched = true;
-
-  const originalRender = HaMoreInfoInfo.prototype.render;
-
-  HaMoreInfoInfo.prototype.render = function () {
-    try {
-      const entityId = this.entityId;
-      const integration = this.hass?.states?.[entityId]?.attributes?.integration;
-
-      console.debug("[Valetudo] ha-more-info-info patch", { entityId, integration });
-
-      //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-      if (entityId && entityId.startsWith("vacuum.")) {
-        return this.html`
-          <more-info-valetudo-dialog
-            .hass=${this.hass}
-            .entityId=${entityId}>
-          </more-info-valetudo-dialog>
-        `;
-      }
-    } catch (e) {
-      console.error("[Valetudo] ha-more-info-info patch error", e);
-    }
-
-    return originalRender?.call(this);
-  };
-});
-
-
-// // Patch HA more-info-content LitElement render
-// customElements.whenDefined("more-info-content").then(() => {
-//   const MoreInfoContent = customElements.get("more-info-content");
-//   if (!MoreInfoContent) return;
+// // Patch HA's ha-more-info-info safely
+// customElements.whenDefined("ha-more-info-info").then(() => {
+//   const HaMoreInfoInfo = customElements.get("ha-more-info-info");
+//   if (!HaMoreInfoInfo) return;
 // 
-//   if (MoreInfoContent.prototype.__valetudo_render_patched) return;
-//   MoreInfoContent.prototype.__valetudo_render_patched = true;
+//   if (HaMoreInfoInfo.prototype.__valetudo_patched) return;
+//   HaMoreInfoInfo.prototype.__valetudo_patched = true;
 // 
-//   const originalRender = MoreInfoContent.prototype.render;
+//   const originalRender = HaMoreInfoInfo.prototype.render;
 // 
-//   MoreInfoContent.prototype.render = function () {
+//   HaMoreInfoInfo.prototype.render = function () {
 //     try {
-//       // <-- use stateObj.entity_id instead of entityId
-//       const entityId = this.stateObj?.entity_id;
-//       const integration = this.stateObj?.attributes?.integration;
+//       const entityId = this.entityId;
+//       const integration = this.hass?.states?.[entityId]?.attributes?.integration;
 // 
-//       console.debug("[Valetudo] more-info-content render patch", { entityId, integration });
+//       console.debug("[Valetudo] ha-more-info-info patch", { entityId, integration });
 // 
-//       if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+//       //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+//       if (entityId && entityId.startsWith("vacuum.")) {
 //         return this.html`
 //           <more-info-valetudo-dialog
 //             .hass=${this.hass}
@@ -295,9 +260,44 @@ customElements.whenDefined("ha-more-info-info").then(() => {
 //         `;
 //       }
 //     } catch (e) {
-//       console.error("[Valetudo] patch error", e);
+//       console.error("[Valetudo] ha-more-info-info patch error", e);
 //     }
 // 
 //     return originalRender?.call(this);
 //   };
 // });
+
+
+// Patch HA more-info-content LitElement render
+customElements.whenDefined("more-info-content").then(() => {
+  const MoreInfoContent = customElements.get("more-info-content");
+  if (!MoreInfoContent) return;
+
+  if (MoreInfoContent.prototype.__valetudo_render_patched) return;
+  MoreInfoContent.prototype.__valetudo_render_patched = true;
+
+  const originalRender = MoreInfoContent.prototype.render;
+
+  MoreInfoContent.prototype.render = function () {
+    try {
+      // <-- use stateObj.entity_id instead of entityId
+      const entityId = this.stateObj?.entity_id;
+      const integration = this.stateObj?.attributes?.integration;
+
+      console.debug("[Valetudo] more-info-content render patch", { entityId, integration });
+
+      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+        return this.html`
+          <more-info-valetudo-dialog
+            .hass=${this.hass}
+            .entityId=${entityId}>
+          </more-info-valetudo-dialog>
+        `;
+      }
+    } catch (e) {
+      console.error("[Valetudo] patch error", e);
+    }
+
+    return originalRender?.call(this);
+  };
+});
