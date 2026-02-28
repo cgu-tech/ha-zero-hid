@@ -209,7 +209,7 @@ customElements.whenDefined("more-info-content").then(() => {
 
   MoreInfoContent.prototype.render = function () {
     const entityId = this.entityId;
-    console.log("MoreInfoContent.prototype.render");
+    console.log("MoreInfoContent.prototype.render entityId=",entityId);
 
     // Only override content for Valetudo vacuums
     if (
