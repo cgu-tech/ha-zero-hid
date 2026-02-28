@@ -5,7 +5,7 @@ import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';
 import { ValetudoMapCard } from './libs/valetudo-map-card.js';
 
-console.info("Loading more-info-valetudo");
+console.info("Loading more-info-valetudo-dialog");
 
 class MoreInfoValetudoDialog extends HTMLElement {
 
@@ -193,18 +193,38 @@ class MoreInfoValetudoDialog extends HTMLElement {
   }
 }
 
-if (!customElements.get("more-info-vacuum")) customElements.define("more-info-vacuum", MoreInfoValetudoDialog);
-//if (!customElements.get("more-info-vacuum")) {
-//  customElements.define("more-info-vacuum", MoreInfoValetudoDialog);
-//  console.log("First registration of more-info-vacuum");
-//} else {
-//  console.log("/!\ more-info-vacuum already registered");
-//}
+// Ensure your dialog class is defined
+if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
 
-// Register more-info-valetudo-dialog globally for HA
-//customElements.whenDefined("home-assistant").then(() => {
-//  const moreInfoRegistry = window.customMoreInfo || {};
-//  window.customMoreInfo = moreInfoRegistry;
-//
-//  moreInfoRegistry["valetudo"] = "more-info-valetudo";
-//});
+// Patch HA's more-info-content safely
+customElements.whenDefined("more-info-content").then(() => {
+  const MoreInfoContent = customElements.get("more-info-content");
+
+  // Idempotent patch: avoid double override
+  if (MoreInfoContent.prototype.__valetudo_patched) return;
+  MoreInfoContent.prototype.__valetudo_patched = true;
+
+  const originalRender = MoreInfoContent.prototype.render;
+
+  MoreInfoContent.prototype.render = function () {
+    const entityId = this.entityId;
+
+    // Only override content for Valetudo vacuums
+    if (
+      entityId &&
+      entityId.startsWith("vacuum.") &&
+      this.hass?.states[entityId]?.attributes?.integration === "valetudo"
+    ) {
+      // Use HA built-in html template helper
+      return this.html`
+        <more-info-valetudo-dialog
+          .hass=${this.hass}
+          .entityId=${entityId}>
+        </more-info-valetudo-dialog>
+      `;
+    }
+
+    // Default HA rendering for all other entities
+    return originalRender.call(this);
+  };
+});
