@@ -216,7 +216,8 @@ customElements.whenDefined("more-info-content").then(() => {
 
       console.debug("[Valetudo] more-info-content render patch", { entityId, integration });
 
-      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+      //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+      if (entityId && entityId.startsWith("vacuum.")) {
         return this.html`
           <more-info-valetudo-dialog
             .hass=${this.hass}
