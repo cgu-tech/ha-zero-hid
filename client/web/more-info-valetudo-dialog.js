@@ -18,6 +18,10 @@ class MoreInfoValetudoDialog extends HTMLElement {
   _layoutManager;
   _resourceManager;
 
+  _entityId;
+  __initializing=false;
+  __initialized=false;
+
   constructor() {
     super();
 
@@ -47,6 +51,63 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this._eventManager.setUserPreferences(preferences);
   }
 
+  setConfig(config) {
+    this._config = config;
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
+    if (this.getLogger().isDebugEnabled()) this.getLogger().doLogOnError(this.doSetConfig.bind(this)); else this.doSetConfig();
+  }
+  doSetConfig() {
+    if (this._tryInitialize()) {
+      this.doCheckConfig();
+      this.doUpdateConfig();
+    }
+  }
+
+  set hass(hass) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
+    this._hass = hass;
+    if (this._tryInitialize()) {
+      this.doUpdateHass();
+    }
+    this._eventManager.hassCallback();
+  }
+
+  set entityId(entityId) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set entityId(entityId):", entityId));
+    this._entityId = entityId;
+    this.__initialized = false;
+    this.__initializing = false;
+    this.setConfig(this.createConfig());
+  }
+
+  _tryInitialize() {
+    if (!this._hass || !this._entityId) return false;
+    if (this.__initialized) return true;
+    if (this.__initializing) return false;
+    this.__initializing = true;
+
+    this.doUpdateVacuumMapConfig();
+    this.doUpdateVacuumMapHass();
+
+    this.__initialized = true;
+    this.__initializing = false;
+    return false;
+  }
+
+  connectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
+    this._eventManager.connectedCallback();
+  }
+
+  disconnectedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
+    this._eventManager.disconnectedCallback();
+  }
+
+  adoptedCallback() {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
+  }
+
   createConfig() {
     const config = {};
 
@@ -64,43 +125,6 @@ class MoreInfoValetudoDialog extends HTMLElement {
     }
     console.log("createConfig this._entityId, config", this._entityId, config);
     return config;
-  }
-
-  setConfig(config) {
-    this._config = config;
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
-    if (this.getLogger().isDebugEnabled()) this.getLogger().doLogOnError(this.doSetConfig.bind(this)); else this.doSetConfig();
-  }
-  doSetConfig() {
-    this.doCheckConfig();
-    this.doUpdateConfig();
-  }
-
-  set hass(hass) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
-    this._hass = hass;
-    this.doUpdateHass();
-    this._eventManager.hassCallback();
-  }
-
-  set entityId(entityId) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set entityId(entityId):", hass));
-    this._entityId = entityId;
-    this.setConfig(this.createConfig());
-  }
-
-  connectedCallback() {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
-    this._eventManager.connectedCallback();
-  }
-
-  disconnectedCallback() {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
-    this._eventManager.disconnectedCallback();
-  }
-
-  adoptedCallback() {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
   getEntityIdConfig() {
@@ -189,7 +213,15 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   doUpdateConfig() {
     // Update valetudo cards configs
+    this.doUpdateVacuumMapConfig();
+  }
 
+  doUpdateHass() {
+    // Update valetudo cards HASS object
+    this.doUpdateVacuumMapHass();
+  }
+
+  doUpdateVacuumMapConfig() {
     // Create valetudo map card config from specified config entityId
     const entityId = this.getEntityIdConfig();
     
@@ -204,13 +236,11 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this.getVacuumMap().setConfig(vacuumMapConfig);
   }
 
-  doUpdateHass() {
-    // Update valetudo cards HASS object
-
+  doUpdateVacuumMapHass() {
     // Ensure valid valetudo map card config
-    console.log("doUpdateHass BEFORE this._entityId, this._config", this._entityId, this._config);
-    if (!this.getVacuumMapConfig()) this.doUpdateConfig();
-    console.log("doUpdateHass AFTER this._entityId, this._config", this._entityId, this._config);
+    console.log("doUpdateVacuumMapHass BEFORE this._entityId, this._config", this._entityId, this._config);
+    if (!this.getVacuumMapConfig()) this.doUpdateVacuumMapConfig();
+    console.log("doUpdateVacuumMapHass AFTER this._entityId, this._config", this._entityId, this._config);
 
     // Set valetudo map card HASS object
     this.getVacuumMap().hass = this._hass;
