@@ -90,14 +90,6 @@ class MoreInfoValetudoDialog extends HTMLElement {
     return this._layoutManager.getTargetConfig(this.getVacuumMap());
   }
 
-  getVacuumMapDefaultConfig() {
-    return this._layoutManager.getTargetStubConfig(this.getVacuumMap());
-  }
-
-  initVacuumMapDefaultConfig() {
-    return this._layoutManager.setTargetConfig(this.getVacuumMap(), this.getVacuumMapDefaultConfig());
-  }
-
   // jobs
   doCheckConfig() {
     this._layoutManager.checkConfiguredLayout();
@@ -184,7 +176,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
     // Update valetudo cards HASS object
 
     // Ensure valid valetudo map card config
-    if (!this.getVacuumMapConfig()) this.initVacuumMapDefaultConfig();
+    if (!this.getVacuumMapConfig()) this.doUpdateConfig();
 
     // Set valetudo map card HASS object
     this.getVacuumMap().hass = this._hass;

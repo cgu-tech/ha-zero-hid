@@ -27,10 +27,6 @@ export class LayoutManager {
     return target._config;
   }
 
-  setTargetConfig(target, config) {
-    target._config = config;
-  }
-
   getConfig() {
     return this.getTargetConfig(this._origin);
   }
