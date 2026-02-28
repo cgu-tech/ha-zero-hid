@@ -76,7 +76,7 @@ apply_patch() {
     local patch="$1"
     local target_dir="$2"
 
-    local action into where what regex replacement mode condition target_file tmp_file
+    local action into where content regex replacement mode condition target_file tmp_file
 
     action=$(echo "$patch" | jq -r '.action')
     into=$(echo "$patch" | jq -r '.into')
@@ -100,21 +100,21 @@ apply_patch() {
 
         append)
             where=$(echo "$patch" | jq -r '.where')
-            what=$(echo "$patch" | jq -r '.what')
+            content=$(echo "$patch" | jq -r '.content')
 
             # idempotency: skip if already present
-            if grep -Fq "$what" "$target_file"; then
+            if grep -Fq "$content" "$target_file"; then
                 echo "Patch already applied, skipping append."
                 return
             fi
 
             case "$where" in
                 after-content)
-                    printf "\n%s\n" "$what" >> "$target_file"
+                    printf "\n%s\n" "$content" >> "$target_file"
                     ;;
                 before-content)
                     tmp_file=$(mktemp)
-                    printf "%s\n\n" "$what" > "$tmp_file"
+                    printf "%s\n\n" "$content" > "$tmp_file"
                     cat "$target_file" >> "$tmp_file"
                     mv "$tmp_file" "$target_file"
                     ;;
