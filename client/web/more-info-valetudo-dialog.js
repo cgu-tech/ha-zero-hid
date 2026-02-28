@@ -201,10 +201,8 @@ if (!customElements.get("more-info-valetudo-dialog")) customElements.define("mor
 // Patch HA more-info-content LitElement render
 customElements.whenDefined("more-info-content").then(() => {
   const MoreInfoContent = customElements.get("more-info-content");
-
   if (!MoreInfoContent) return;
 
-  // Avoid double patch
   if (MoreInfoContent.prototype.__valetudo_render_patched) return;
   MoreInfoContent.prototype.__valetudo_render_patched = true;
 
@@ -212,16 +210,13 @@ customElements.whenDefined("more-info-content").then(() => {
 
   MoreInfoContent.prototype.render = function () {
     try {
-      const entityId = this.entityId; 
+      // <-- use stateObj.entity_id instead of entityId
+      const entityId = this.stateObj?.entity_id;
+      const integration = this.stateObj?.attributes?.integration;
 
-      console.debug("[Valetudo] more-info-content render patch", { entityId });
+      console.debug("[Valetudo] more-info-content render patch", { entityId, integration });
 
-      if (
-        typeof entityId === "string" &&
-        entityId.startsWith("vacuum.") &&
-        this.hass?.states?.[entityId]?.attributes?.integration === "valetudo"
-      ) {
-        // Render your custom dialog instead of the default Lit template
+      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
         return this.html`
           <more-info-valetudo-dialog
             .hass=${this.hass}
@@ -233,7 +228,6 @@ customElements.whenDefined("more-info-content").then(() => {
       console.error("[Valetudo] patch error", e);
     }
 
-    // Fallback to default render for all other cases
     return originalRender?.call(this);
   };
 });
