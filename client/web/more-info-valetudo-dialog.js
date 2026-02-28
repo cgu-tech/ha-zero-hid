@@ -47,6 +47,24 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this._eventManager.setUserPreferences(preferences);
   }
 
+  createConfig() {
+    const config = {};
+
+    // Copy default config values
+    for (const [key, value] of Object.entries(this._layoutManager.getStubConfig() ?? {})) {
+      config[key] = value;
+    }
+
+    // Override config with initialization config
+    config["entityId"] = this._entityId ?? config["entityId"];
+
+    // Override config with user defined config
+    for (const [key, value] of Object.entries(this._config ?? {})) {
+      config[key] = value;
+    }
+    return config;
+  }
+
   setConfig(config) {
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
@@ -67,8 +85,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   set entityId(entityId) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set entityId(entityId):", hass));
     this._entityId = entityId;
-    const config = { "entityId": this._entityId };
-    this.setConfig(config);
+    this.setConfig(this.createConfig());
   }
 
   connectedCallback() {
