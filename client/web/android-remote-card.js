@@ -2267,7 +2267,10 @@ class AndroidRemoteCard extends HTMLElement {
       // Retrieve service parameters
       const entityId = this.getAddonCellEntity(addonCellConfig);
       const domain = entityId?.split('.')?.[0];
-      const service = this._eventManager.isHassEntityOn(entityId) ? 'turn_off' : 'turn_on';
+      const service = 
+        this._eventManager.isHassEntityOn(entityId) ? 
+        this._eventManager.getEntityActionOff(entityId) : 
+        this._eventManager.getEntityActionOn(entityId);
 
       // Call service to switch the entity state
       this._eventManager.callService(domain, service, {

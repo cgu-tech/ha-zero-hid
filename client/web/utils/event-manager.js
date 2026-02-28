@@ -617,7 +617,39 @@ export class EventManager {
   }
 
   isHassEntityOn(entityId) {
-    return entityId && (this.getHassEntity(entityId)?.state === 'on');
+    if (entityId) {
+      const entityState = this.getHassEntity(entityId)?.state;
+      if (entityId.startsWith("vacuum.")) {
+        // Vacuum entity has two special 'on' states (cleaning and returning)
+        return entityState === 'cleaning' || entityState === 'returning';
+      } else {
+        // Any other entity use single standard 'on' state
+        return entityState === 'on';
+      }
+    }
+    return false;
+  }
+
+  getEntityActionOn(entityId) {
+    if (entityId) {
+      if (entityId.startsWith("vacuum.")) {
+        return 'start';
+      } else {
+        return 'turn_on';
+      }
+    }
+    return null;
+  }
+
+  getEntityActionOff(entityId) {
+    if (entityId) {
+      if (entityId.startsWith("vacuum.")) {
+        return 'stop';
+      } else {
+        return 'turn_off';
+      }
+    }
+    return null;
   }
 
   getEntityRgbColor(entityId) {
