@@ -211,7 +211,8 @@ class MoreInfoValetudoDialog extends HTMLElement {
           haptic: false,
           log_level: "debug",
           log_pushback: false,
-          entityId: "vacuum.valetudo_REPLACEME"
+          entityId: "vacuum.valetudo_REPLACEME",
+          title: ""
       }
   }
 
