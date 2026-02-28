@@ -106,6 +106,10 @@ class MoreInfoValetudoDialog extends HTMLElement {
     return this._layoutManager.getFromConfigOrDefaultConfig("entityId");
   }
 
+  getTitleConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("title");
+  }
+
   getVacuumMap() {
     return this._elements.vacuumMap;
   }
@@ -189,8 +193,13 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
     // Create valetudo map card config from specified config entityId
     const entityId = this.getEntityIdConfig();
+    
     const vacuum = entityId?.split('.')?.[1] ?? entityId;
-    const vacuumMapConfig = { "vacuum": vacuum };
+    const title = this.getTitleConfig();
+    const vacuumMapConfig = {
+        "vacuum": vacuum, 
+        "title": title
+    };
 
     // Set valetudo map card config
     this.getVacuumMap().setConfig(vacuumMapConfig);
