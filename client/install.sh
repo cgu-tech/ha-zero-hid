@@ -41,7 +41,15 @@ HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_
 
 # External dependencies
 EXTERNAL_DEPENDENCIES='[
-  {"name":"valetudo-map-card", "dir":"lovelace-valetudo-map-card", "url":"https://github.com/Hypfer/lovelace-valetudo-map-card", "branch":"master", "paths":["dist/valetudo-map-card.js"]}
+  {
+    "name":"valetudo-map-card", 
+    "dir":"lovelace-valetudo-map-card", 
+    "url":"https://github.com/Hypfer/lovelace-valetudo-map-card", 
+    "branch":"master", 
+    "paths": ["dist/valetudo-map-card.js"], 
+    "patches": [
+      { "action":"append", "content":"export const ValetudoMapCard = customElements.get(\"valetudo-map-card\");", "into":"valetudo-map-card.js", "where":"after-content" }
+    ]
 ]'
 
 ask_confirm() {
@@ -56,6 +64,106 @@ ask_confirm() {
       *) echo "Please answer y or n." ;;
     esac
   done
+}
+
+# ==========================================
+# Bash Patch Framework
+# ==========================================
+# $1 = JSON patch object (single patch)
+# $2 = target file directory
+apply_patch() {
+    local patch="$1"
+    local target_dir="$2"
+
+    local action into where what regex replacement mode condition target_file tmp_file
+
+    action=$(echo "$patch" | jq -r '.action')
+    into=$(echo "$patch" | jq -r '.into')
+    target_file="${target_dir}/${into}"
+
+    if [ ! -f "$target_file" ]; then
+        echo "Patch skipped, file not found: $target_file"
+        return
+    fi
+
+    # Optional conditional: skip if a condition selector exists
+    condition=$(echo "$patch" | jq -r '.condition // empty')
+    if [ -n "$condition" ]; then
+        if ! grep -qF "$condition" "$target_file"; then
+            echo "Patch condition not met, skipping: $condition"
+            return
+        fi
+    fi
+
+    case "$action" in
+
+        append)
+            where=$(echo "$patch" | jq -r '.where')
+            what=$(echo "$patch" | jq -r '.what')
+
+            # idempotency: skip if already present
+            if grep -Fq "$what" "$target_file"; then
+                echo "Patch already applied, skipping append."
+                return
+            fi
+
+            case "$where" in
+                after-content)
+                    printf "\n%s\n" "$what" >> "$target_file"
+                    ;;
+                before-content)
+                    tmp_file=$(mktemp)
+                    printf "%s\n\n" "$what" > "$tmp_file"
+                    cat "$target_file" >> "$tmp_file"
+                    mv "$tmp_file" "$target_file"
+                    ;;
+                *)
+                    echo "Unknown append where: $where"
+                    ;;
+            esac
+            ;;
+
+        replace)
+            regex=$(echo "$patch" | jq -r '.regex')
+            replacement=$(echo "$patch" | jq -r '.replacement')
+            mode=$(echo "$patch" | jq -r '.mode // "first"')
+
+            # Escape delimiter safely using | for sed
+            regex_escaped=$(echo "$regex" | sed 's/|/\\|/g')
+            replacement_escaped=$(echo "$replacement" | sed 's/|/\\|/g')
+
+            # Idempotency: skip if replacement already present
+            if grep -qF "$replacement" "$target_file"; then
+                echo "Patch already applied, skipping replace."
+                return
+            fi
+
+            # Support multi-line replacement by using printf
+            tmp_file=$(mktemp)
+
+            case "$mode" in
+                first)
+                    sed -E "0,|${regex_escaped}|{s|${regex_escaped}|${replacement_escaped}|}" "$target_file" > "$tmp_file"
+                    mv "$tmp_file" "$target_file"
+                    ;;
+                all)
+                    sed -E "s|${regex_escaped}|${replacement_escaped}|g" "$target_file" > "$tmp_file"
+                    mv "$tmp_file" "$target_file"
+                    ;;
+                last)
+                    tac "$target_file" | sed -E "0,|${regex_escaped}|{s|${regex_escaped}|${replacement_escaped}|}" | tac > "$tmp_file"
+                    mv "$tmp_file" "$target_file"
+                    ;;
+                *)
+                    echo "Unknown replace mode: $mode"
+                    ;;
+            esac
+            ;;
+
+        *)
+            echo "Unknown patch action: $action"
+            ;;
+    esac
 }
 
 # Clean-up:
@@ -357,12 +465,22 @@ install() {
         echo "Cloning external web dependency ${dependency_name} repository at ${dependency_url}, on branch ${dependency_branch}..."
         git clone -b "${dependency_branch}" "${dependency_url}"
 
+        # Install files for current dependency
         echo "${dependency}" | jq -r '.paths[]' | while read -r dependency_path; do
             echo "Installing ${dependency_path} from external web dependency ${dependency_name}..."
             dependency_filename=$(basename "$dependency_path")
             mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR}"
             cp "${dependency_dir}/${dependency_path}" "${HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR}/${dependency_filename}"
         done
+
+        # Apply patches for current dependency
+        patches_count=$(echo "$dependency" | jq '.patches | length // 0')
+        if [ "$patches_count" -gt 0 ]; then
+            echo "Applying patches for ${dependency_name}..."
+            echo "$dependency" | jq -c '.patches[]' | while read -r patch; do
+                apply_patch "$patch" "$HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR"
+            done
+        fi
     done
 
     echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${ZERO_HID_REPO_BRANCH}..."
