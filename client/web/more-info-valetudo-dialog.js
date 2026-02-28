@@ -123,7 +123,6 @@ class MoreInfoValetudoDialog extends HTMLElement {
     for (const [key, value] of Object.entries(this._config ?? {})) {
       config[key] = value;
     }
-    console.log("createConfig this._entityId, config", this._entityId, config);
     return config;
   }
 
@@ -238,9 +237,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   doUpdateVacuumMapHass() {
     // Ensure valid valetudo map card config
-    console.log("doUpdateVacuumMapHass BEFORE this._entityId, this._config", this._entityId, this._config);
     if (!this.getVacuumMapConfig()) this.doUpdateVacuumMapConfig();
-    console.log("doUpdateVacuumMapHass AFTER this._entityId, this._config", this._entityId, this._config);
 
     // Set valetudo map card HASS object
     this.getVacuumMap().hass = this._hass;
@@ -299,10 +296,7 @@ customElements.whenDefined("state-card-content").then(() => {
       const entityId = this.stateObj?.entity_id;
       const integration = this.stateObj?.attributes?.integration;
 
-      console.debug("[Valetudo] state-card-content render patch", { entityId, integration });
-
-      // if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-      if (entityId && entityId.startsWith("vacuum.")) {
+      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
         return this.html`
           <more-info-valetudo-dialog
             .hass=${this.hass}
@@ -317,198 +311,3 @@ customElements.whenDefined("state-card-content").then(() => {
     return originalRender?.call(this);
   };
 });
-
-
-//// Patch HA state-card-vacuum LitElement render
-//customElements.whenDefined("state-card-vacuum").then(() => {
-//  const StateCardVacuum = customElements.get("state-card-vacuum");
-//  if (!StateCardVacuum) return;
-//
-//  if (StateCardVacuum.prototype.__valetudo_header_patched) return;
-//  StateCardVacuum.prototype.__valetudo_header_patched = true;
-//
-//  const stateObjDescriptor = Object.getOwnPropertyDescriptor(
-//    StateCardVacuum.prototype,
-//    "stateObj"
-//  );
-//
-//  Object.defineProperty(StateCardVacuum.prototype, "stateObj", {
-//    set(value) {
-//      if (stateObjDescriptor?.set) {
-//        stateObjDescriptor.set.call(this, value);
-//      } else {
-//        this.__stateObj = value;
-//      }
-//
-//      //if (value?.entity_id?.startsWith("vacuum.") && value?.attributes?.integration === "valetudo") {
-//      if (value?.entity_id?.startsWith("vacuum.")) {
-//        this.__isValetudo = true;
-//      }
-//    },
-//    get() {
-//      return stateObjDescriptor?.get
-//        ? stateObjDescriptor.get.call(this)
-//        : this.__stateObj;
-//    },
-//  });
-//
-//  const originalRender = StateCardVacuum.prototype.render;
-//
-//  StateCardVacuum.prototype.render = function () {
-//    if (this.__isValetudo) {
-//      return this.html`
-//        <more-info-valetudo-dialog
-//          .hass=${this.hass}
-//          .entityId=${this.stateObj.entity_id}>
-//        </more-info-valetudo-dialog>
-//      `;
-//    }
-//
-//    return originalRender?.call(this);
-//  };
-//});
-
-
-//// Patch HA more-info-content LitElement render
-//customElements.whenDefined("state-card-vacuum").then(() => {
-//  const StateCardVacuum = customElements.get("state-card-vacuum");
-//  if (!StateCardVacuum) return;
-//
-//  if (StateCardVacuum.prototype.__valetudo_patched) return;
-//  StateCardVacuum.prototype.__valetudo_patched = true;
-//
-//  const originalRender = StateCardVacuum.prototype.render;
-//  const originalUpdated = StateCardVacuum.prototype.updated;
-//
-//  // Track when stateObj becomes available
-//  StateCardVacuum.prototype.updated = function (changedProps) {
-//    if (changedProps.has("stateObj") && this.stateObj) {
-//      //this.__isValetudo =
-//      //  this.stateObj.entity_id?.startsWith("vacuum.") &&
-//      //  this.stateObj.attributes?.integration === "valetudo";
-//      this.__isValetudo =
-//        this.stateObj.entity_id?.startsWith("vacuum.");
-//    }
-//
-//    if (originalUpdated) {
-//      return originalUpdated.call(this, changedProps);
-//    }
-//  };
-//
-//  StateCardVacuum.prototype.render = function () {
-//    if (this.__isValetudo) {
-//      return this.html`
-//        <more-info-valetudo-dialog
-//          .hass=${this.hass}
-//          .entityId=${this.stateObj.entity_id}>
-//        </more-info-valetudo-dialog>
-//      `;
-//    }
-//
-//    return originalRender?.call(this);
-//  };
-//});
-
-// customElements.whenDefined("state-card-vacuum").then(() => {
-//   const StateCardVacuum = customElements.get("state-card-vacuum");
-//   if (!StateCardVacuum) return;
-// 
-//   if (StateCardVacuum.prototype.__valetudo_render_patched) return;
-//   StateCardVacuum.prototype.__valetudo_render_patched = true;
-// 
-//   const originalRender = StateCardVacuum.prototype.render;
-// 
-//   StateCardVacuum.prototype.render = function () {
-//     try {
-//       // <-- use stateObj.entity_id instead of entityId
-//       const entityId = this.stateObj?.entity_id;
-//       const integration = this.stateObj?.attributes?.integration;
-// 
-//       console.debug("[Valetudo] state-card-vacuum render patch", { entityId, integration });
-// 
-//       // if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-//       if (entityId && entityId.startsWith("vacuum.")) {
-//         return this.html`
-//           <more-info-valetudo-dialog
-//             .hass=${this.hass}
-//             .entityId=${entityId}>
-//           </more-info-valetudo-dialog>
-//         `;
-//       }
-//     } catch (e) {
-//       console.error("[Valetudo] patch error", e);
-//     }
-// 
-//     return originalRender?.call(this);
-//   };
-// });
-
-
-// // Patch HA's ha-more-info-info safely
-// customElements.whenDefined("ha-more-info-info").then(() => {
-//   const HaMoreInfoInfo = customElements.get("ha-more-info-info");
-//   if (!HaMoreInfoInfo) return;
-// 
-//   if (HaMoreInfoInfo.prototype.__valetudo_patched) return;
-//   HaMoreInfoInfo.prototype.__valetudo_patched = true;
-// 
-//   const originalRender = HaMoreInfoInfo.prototype.render;
-// 
-//   HaMoreInfoInfo.prototype.render = function () {
-//     try {
-//       const entityId = this.entityId;
-//       const integration = this.hass?.states?.[entityId]?.attributes?.integration;
-// 
-//       console.debug("[Valetudo] ha-more-info-info patch", { entityId, integration });
-// 
-//       //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-//       if (entityId && entityId.startsWith("vacuum.")) {
-//         return this.html`
-//           <more-info-valetudo-dialog
-//             .hass=${this.hass}
-//             .entityId=${entityId}>
-//           </more-info-valetudo-dialog>
-//         `;
-//       }
-//     } catch (e) {
-//       console.error("[Valetudo] ha-more-info-info patch error", e);
-//     }
-// 
-//     return originalRender?.call(this);
-//   };
-// });
-
-
-// // Patch HA more-info-content LitElement render
-// customElements.whenDefined("more-info-content").then(() => {
-//   const MoreInfoContent = customElements.get("more-info-content");
-//   if (!MoreInfoContent) return;
-// 
-//   if (MoreInfoContent.prototype.__valetudo_render_patched) return;
-//   MoreInfoContent.prototype.__valetudo_render_patched = true;
-// 
-//   const originalRender = MoreInfoContent.prototype.render;
-// 
-//   MoreInfoContent.prototype.render = function () {
-//     try {
-//       // <-- use stateObj.entity_id instead of entityId
-//       const entityId = this.stateObj?.entity_id;
-//       const integration = this.stateObj?.attributes?.integration;
-// 
-//       console.debug("[Valetudo] more-info-content render patch", { entityId, integration });
-// 
-//       if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-//         return this.html`
-//           <more-info-valetudo-dialog
-//             .hass=${this.hass}
-//             .entityId=${entityId}>
-//           </more-info-valetudo-dialog>
-//         `;
-//       }
-//     } catch (e) {
-//       console.error("[Valetudo] patch error", e);
-//     }
-// 
-//     return originalRender?.call(this);
-//   };
-// });
