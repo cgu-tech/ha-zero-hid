@@ -264,6 +264,21 @@ class MoreInfoValetudoDialog extends HTMLElement {
 // Ensure your dialog class is defined
 if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
 
+function isInsideMoreInfoDialog(el) {
+  let node = el;
+
+  while (node) {
+    if (node.tagName === "HA-MORE-INFO-DIALOG") {
+      return true;
+    }
+
+    const root = node.getRootNode();
+    node = root && root.host;
+  }
+
+  return false;
+}
+
 // Patch HA more-info-content LitElement render
 customElements.whenDefined("state-card-content").then(() => {
   const StateCardContent = customElements.get("state-card-content");
@@ -276,6 +291,10 @@ customElements.whenDefined("state-card-content").then(() => {
 
   StateCardContent.prototype.render = function () {
     try {
+      if (!isInsideMoreInfoDialog(this)) {
+        return originalRender?.call(this);
+      }
+        
       // <-- use stateObj.entity_id instead of entityId
       const entityId = this.stateObj?.entity_id;
       const integration = this.stateObj?.attributes?.integration;
