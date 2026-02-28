@@ -177,6 +177,12 @@ class MoreInfoValetudoDialog extends HTMLElement {
 }
 
 if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
+if (!customElements.get("more-info-vacuum")) {
+  customElements.define("more-info-vacuum", MoreInfoValetudoDialog);
+  console.log("First registration of more-info-vacuum");
+} else {
+  console.log("/!\ more-info-vacuum already registered");
+}
 
 // Register more-info-valetudo-dialog globally for HA
 customElements.whenDefined("home-assistant").then(() => {
