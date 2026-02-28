@@ -182,6 +182,12 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this.getVacuumMap().hass = this._hass;
   }
 
+  static getStubConfig() {
+      return {
+          entityId: "vacuum.valetudo_REPLACEME"
+      }
+  }
+
   getCardSize() {
     return 4;
   }
