@@ -64,6 +64,13 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this._eventManager.hassCallback();
   }
 
+  set entityId(entityId) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set entityId(entityId):", hass));
+    this._entityId = entityId;
+    const config = { "entityId": this._entityId };
+    this.setConfig(config);
+  }
+
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
     this._eventManager.connectedCallback();
@@ -184,6 +191,9 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   static getStubConfig() {
       return {
+          haptic: false,
+          log_level: "debug",
+          log_pushback: false,
           entityId: "vacuum.valetudo_REPLACEME"
       }
   }
