@@ -13,7 +13,8 @@ RESOURCES = [
     "windows-keyboard-card.js",
     "test-card.js",
     "air-mouse-card.js",
-    "microphone-card.js"
+    "microphone-card.js",
+    "more-info-valetudo-dialog.js"
 ]
 
 # This component name
