@@ -226,7 +226,8 @@ if (!customElements.get("more-info-valetudo-dialog")) customElements.define("mor
 // Patch HA's more-info-content safely
 
 // Patch HA more-info-content LitElement render
-customElements.whenDefined("more-info-content").then(() => {
+// customElements.whenDefined("more-info-content").then(() => {
+customElements.whenDefined("ha-more-info-info").then(() => {
   // const MoreInfoContent = customElements.get("more-info-content");
   const MoreInfoContent = customElements.get("ha-more-info-info");
   if (!MoreInfoContent) return;
