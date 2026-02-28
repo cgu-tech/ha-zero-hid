@@ -296,7 +296,8 @@ customElements.whenDefined("state-card-content").then(() => {
       const entityId = this.stateObj?.entity_id;
       const integration = this.stateObj?.attributes?.integration;
 
-      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+      //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+      if (entityId && entityId.startsWith("vacuum.")) {
         return this.html`
           <more-info-valetudo-dialog
             .hass=${this.hass}
