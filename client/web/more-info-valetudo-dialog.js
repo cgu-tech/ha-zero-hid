@@ -5,7 +5,7 @@ import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';
 import { ValetudoMapCard } from './libs/valetudo-map-card.js';
 
-console.info("Loading more-info-valetudo-dialog");
+console.info("Loading more-info-valetudo");
 
 class MoreInfoValetudoDialog extends HTMLElement {
 
@@ -176,18 +176,18 @@ class MoreInfoValetudoDialog extends HTMLElement {
   }
 }
 
-if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
-if (!customElements.get("more-info-vacuum")) {
-  customElements.define("more-info-vacuum", MoreInfoValetudoDialog);
-  console.log("First registration of more-info-vacuum");
-} else {
-  console.log("/!\ more-info-vacuum already registered");
-}
+if (!customElements.get("more-info-valetudo")) customElements.define("more-info-valetudo", MoreInfoValetudoDialog);
+//if (!customElements.get("more-info-vacuum")) {
+//  customElements.define("more-info-vacuum", MoreInfoValetudoDialog);
+//  console.log("First registration of more-info-vacuum");
+//} else {
+//  console.log("/!\ more-info-vacuum already registered");
+//}
 
 // Register more-info-valetudo-dialog globally for HA
 customElements.whenDefined("home-assistant").then(() => {
   const moreInfoRegistry = window.customMoreInfo || {};
   window.customMoreInfo = moreInfoRegistry;
 
-  moreInfoRegistry["vacuum"] = "more-info-valetudo-dialog";
+  moreInfoRegistry["valetudo"] = "more-info-valetudo";
 });
