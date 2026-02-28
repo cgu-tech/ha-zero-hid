@@ -224,7 +224,13 @@ class MoreInfoValetudoDialog extends HTMLElement {
     // Create valetudo map card config from specified config entityId
     const entityId = this.getEntityIdConfig();
     
-    const vacuum = entityId?.split('.')?.[1] ?? entityId;
+    const vacuum_robot = entityId?.split('.')?.[1] ?? entityId ?? '';
+    
+    // HA default referencable entity is the vacuum entity created by valetudo MQTT, 
+    // which by default ends with "_robot" suffix: since we need the valid entity configured by user
+    // the only option is to remove this suffix
+    const vacuum = vacuum_robot.endsWith('_robot') ? vacuum_robot.slice(0, -6) : vacuum_robot;
+    
     const title = this.getTitleConfig();
     const vacuumMapConfig = {
         "vacuum": vacuum, 
@@ -248,7 +254,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
           haptic: false,
           log_level: "warn",
           log_pushback: false,
-          entityId: "vacuum.valetudo_REPLACEME",
+          entityId: "vacuum.valetudo_REPLACEME_robot",
           title: ""
       }
   }
