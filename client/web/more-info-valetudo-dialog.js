@@ -208,7 +208,9 @@ class MoreInfoValetudoDialog extends HTMLElement {
     // Update valetudo cards HASS object
 
     // Ensure valid valetudo map card config
+    console.log("doUpdateHass BEFORE this._entityId, this._config", this._entityId, this._config);
     if (!this.getVacuumMapConfig()) this.doUpdateConfig();
+    console.log("doUpdateHass AFTER this._entityId, this._config", this._entityId, this._config);
 
     // Set valetudo map card HASS object
     this.getVacuumMap().hass = this._hass;
