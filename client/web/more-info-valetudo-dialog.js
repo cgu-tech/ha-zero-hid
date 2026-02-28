@@ -199,6 +199,7 @@ if (!customElements.get("more-info-valetudo-dialog")) customElements.define("mor
 // Patch HA's more-info-content safely
 customElements.whenDefined("more-info-content").then(() => {
   const MoreInfoContent = customElements.get("more-info-content");
+  console.log("customElements.whenDefined(\"more-info-content\"): MoreInfoContent.prototype.__valetudo_patched=",MoreInfoContent.prototype.__valetudo_patched);
 
   // Idempotent patch: avoid double override
   if (MoreInfoContent.prototype.__valetudo_patched) return;
@@ -208,6 +209,7 @@ customElements.whenDefined("more-info-content").then(() => {
 
   MoreInfoContent.prototype.render = function () {
     const entityId = this.entityId;
+    console.log("MoreInfoContent.prototype.render");
 
     // Only override content for Valetudo vacuums
     if (
@@ -220,6 +222,7 @@ customElements.whenDefined("more-info-content").then(() => {
     //  this.hass?.states[entityId]?.attributes?.integration === "valetudo"
     //) {
       // Use HA built-in html template helper
+      console.log("invoking more-info-valetudo-dialog render");
       return this.html`
         <more-info-valetudo-dialog
           .hass=${this.hass}
@@ -229,6 +232,7 @@ customElements.whenDefined("more-info-content").then(() => {
     }
 
     // Default HA rendering for all other entities
+    console.log("invoking original render");
     return originalRender.call(this);
   };
 });
