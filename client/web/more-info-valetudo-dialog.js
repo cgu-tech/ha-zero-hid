@@ -246,7 +246,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   static getStubConfig() {
       return {
           haptic: false,
-          log_level: "debug",
+          log_level: "warn",
           log_pushback: false,
           entityId: "vacuum.valetudo_REPLACEME",
           title: ""
