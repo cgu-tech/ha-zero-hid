@@ -212,9 +212,13 @@ customElements.whenDefined("more-info-content").then(() => {
     // Only override content for Valetudo vacuums
     if (
       entityId &&
-      entityId.startsWith("vacuum.") &&
-      this.hass?.states[entityId]?.attributes?.integration === "valetudo"
+      entityId.startsWith("vacuum.")
     ) {
+    //if (
+    //  entityId &&
+    //  entityId.startsWith("vacuum.") &&
+    //  this.hass?.states[entityId]?.attributes?.integration === "valetudo"
+    //) {
       // Use HA built-in html template helper
       return this.html`
         <more-info-valetudo-dialog
