@@ -236,35 +236,74 @@ customElements.whenDefined("state-card-vacuum").then(() => {
   const StateCardVacuum = customElements.get("state-card-vacuum");
   if (!StateCardVacuum) return;
 
-  if (StateCardVacuum.prototype.__valetudo_render_patched) return;
-  StateCardVacuum.prototype.__valetudo_render_patched = true;
+  if (StateCardVacuum.prototype.__valetudo_patched) return;
+  StateCardVacuum.prototype.__valetudo_patched = true;
 
   const originalRender = StateCardVacuum.prototype.render;
+  const originalUpdated = StateCardVacuum.prototype.updated;
+
+  // Track when stateObj becomes available
+  StateCardVacuum.prototype.updated = function (changedProps) {
+    if (changedProps.has("stateObj") && this.stateObj) {
+      //this.__isValetudo =
+      //  this.stateObj.entity_id?.startsWith("vacuum.") &&
+      //  this.stateObj.attributes?.integration === "valetudo";
+      this.__isValetudo =
+        this.stateObj.entity_id?.startsWith("vacuum.");
+    }
+
+    if (originalUpdated) {
+      return originalUpdated.call(this, changedProps);
+    }
+  };
 
   StateCardVacuum.prototype.render = function () {
-    try {
-      // <-- use stateObj.entity_id instead of entityId
-      const entityId = this.stateObj?.entity_id;
-      const integration = this.stateObj?.attributes?.integration;
-
-      console.debug("[Valetudo] state-card-vacuum render patch", { entityId, integration });
-
-      // if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-      if (entityId && entityId.startsWith("vacuum.")) {
-        return this.html`
-          <more-info-valetudo-dialog
-            .hass=${this.hass}
-            .entityId=${entityId}>
-          </more-info-valetudo-dialog>
-        `;
-      }
-    } catch (e) {
-      console.error("[Valetudo] patch error", e);
+    if (this.__isValetudo) {
+      return this.html`
+        <more-info-valetudo-dialog
+          .hass=${this.hass}
+          .entityId=${this.stateObj.entity_id}>
+        </more-info-valetudo-dialog>
+      `;
     }
 
     return originalRender?.call(this);
   };
 });
+
+// customElements.whenDefined("state-card-vacuum").then(() => {
+//   const StateCardVacuum = customElements.get("state-card-vacuum");
+//   if (!StateCardVacuum) return;
+// 
+//   if (StateCardVacuum.prototype.__valetudo_render_patched) return;
+//   StateCardVacuum.prototype.__valetudo_render_patched = true;
+// 
+//   const originalRender = StateCardVacuum.prototype.render;
+// 
+//   StateCardVacuum.prototype.render = function () {
+//     try {
+//       // <-- use stateObj.entity_id instead of entityId
+//       const entityId = this.stateObj?.entity_id;
+//       const integration = this.stateObj?.attributes?.integration;
+// 
+//       console.debug("[Valetudo] state-card-vacuum render patch", { entityId, integration });
+// 
+//       // if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+//       if (entityId && entityId.startsWith("vacuum.")) {
+//         return this.html`
+//           <more-info-valetudo-dialog
+//             .hass=${this.hass}
+//             .entityId=${entityId}>
+//           </more-info-valetudo-dialog>
+//         `;
+//       }
+//     } catch (e) {
+//       console.error("[Valetudo] patch error", e);
+//     }
+// 
+//     return originalRender?.call(this);
+//   };
+// });
 
 
 // // Patch HA's ha-more-info-info safely
