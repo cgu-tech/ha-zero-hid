@@ -195,14 +195,25 @@ cleanup() {
     echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} component files (${HA_ZERO_HID_CLIENT_COMPONENT_DIR})..."
     rm -rf "${HA_ZERO_HID_CLIENT_COMPONENT_DIR}" >/dev/null 2>&1 || true
 
-    # Cleaning existing web resources when existing
+    # Cleaning up web resources when existing
     echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} web resources files (${HA_ZERO_HID_CLIENT_RESOURCES_DIR})..."
     rm -rf "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}" >/dev/null 2>&1 || true
+
+    # Cleaning up external web resources dependencies raw client external web dependencies
+    echo "${EXTERNAL_DEPENDENCIES}" | jq -c '.[]' | while read -r dependency; do
+        dependency_name=$(echo "$dependency" | jq -r '.name')
+        dependency_dir=${CURRENT_DIR}/$(echo "$dependency" | jq -r '.dir')
+        dependency_url=$(echo "$dependency" | jq -r '.url')
+        dependency_branch=$(echo "$dependency" | jq -r '.branch')
+
+        echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} external web dependency ${dependency_name} files (${dependency_dir})..."
+        rm -rf "${dependency_dir}" >/dev/null 2>&1 || true
+    done
 
     # Cleaning up component dependencies
     echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} zero-hid dependency (${ZERO_HID_REPO_DIR})..."
     rm -rf "${ZERO_HID_REPO_DIR}" >/dev/null 2>&1 || true
-    
+
     # Restoring files to keep
     if [ "${should_delete_config}" == "true" ]; then
       echo "All files deleted"
@@ -456,7 +467,6 @@ install() {
     copy_dir_content "${HA_ZERO_HID_REPO_RESOURCES_DIR}" "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}"
 
     # Installing raw client external web dependencies
-    echo "Installing ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} client external web dependencies..."
     echo "${EXTERNAL_DEPENDENCIES}" | jq -c '.[]' | while read -r dependency; do
         dependency_name=$(echo "$dependency" | jq -r '.name')
         dependency_dir=${CURRENT_DIR}/$(echo "$dependency" | jq -r '.dir')
@@ -468,7 +478,7 @@ install() {
 
         # Install files for current dependency
         echo "${dependency}" | jq -r '.paths[]' | while read -r dependency_path; do
-            echo "Installing ${dependency_path} from external web dependency ${dependency_name}..."
+            echo "Installing external web dependency ${dependency_name} file ${dependency_path}..."
             dependency_filename=$(basename "$dependency_path")
             mkdir -p "${HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR}"
             cp "${dependency_dir}/${dependency_path}" "${HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR}/${dependency_filename}"
@@ -477,7 +487,7 @@ install() {
         # Apply patches for current dependency
         patches_count=$(echo "$dependency" | jq '.patches | length // 0')
         if [ "$patches_count" -gt 0 ]; then
-            echo "Applying patches for ${dependency_name}..."
+            echo "Patching external web dependency ${dependency_name} files..."
             echo "$dependency" | jq -c '.patches[]' | while read -r patch; do
                 apply_patch "$patch" "$HA_ZERO_HID_CLIENT_RESOURCES_LIBS_DIR"
             done
