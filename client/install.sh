@@ -50,6 +50,7 @@ EXTERNAL_DEPENDENCIES='[
     "patches": [
       { "action":"append", "content":"export const ValetudoMapCard = customElements.get(\"valetudo-map-card\");", "into":"valetudo-map-card.js", "where":"after-content" }
     ]
+  }
 ]'
 
 ask_confirm() {
