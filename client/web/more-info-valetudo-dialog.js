@@ -269,7 +269,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   }
 
   getCardSize() {
-    return 3;
+    return 2;
   }
 }
 
