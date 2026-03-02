@@ -61,6 +61,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
       this.doCheckConfig();
       this.doUpdateConfig();
     }
+    this.setupIframe();
   }
 
   set hass(hass) {
@@ -69,9 +70,13 @@ class MoreInfoValetudoDialog extends HTMLElement {
     if (this._tryInitialize()) {
       this.doUpdateHass();
     }
+    this.setupIframe();
     this._eventManager.hassCallback();
+  }
+  
+  setupIframe() {
     if (!this._hass || !this.config) return;
-    
+    if (this._elements.card.iframeCard) return;
     const iframeCard = document.createElement('hui-iframe-card');    
     iframeCard.setConfig({
       url: 'https://192.168.0.60:8443',
