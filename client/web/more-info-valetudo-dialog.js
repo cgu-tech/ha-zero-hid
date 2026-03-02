@@ -75,7 +75,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   }
   
   setupIframe() {
-    if (!this._hass || !this.config) return;
+    if (!this._hass) return;
     if (this._elements.card.iframeCard) return;
     const iframeCard = document.createElement('hui-iframe-card');    
     iframeCard.setConfig({
