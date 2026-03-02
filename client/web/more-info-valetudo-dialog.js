@@ -156,9 +156,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this._elements.card.innerHTML = `
       <div id="dialog-container">
         <div class="content">
-          <hui-iframe-card
-            .url= 'https://192.168.0.60:8443'
-            .aspect_ratio: '50%'>
+          <hui-iframe-card>
           </hui-iframe-card>
         </div>
       </div>
