@@ -70,6 +70,14 @@ class MoreInfoValetudoDialog extends HTMLElement {
       this.doUpdateHass();
     }
     this._eventManager.hassCallback();
+    if (!this._hass || !this.config) return;
+    this._elements.iframeCard.setConfig({
+      url: 'https://192.168.0.60:8443',
+      aspect_ratio: '50%',
+    });
+
+    // set hass so it can render
+    this._elements.iframeCard.hass = this._hass;
   }
 
   set entityId(entityId) {
@@ -192,6 +200,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   doQueryElements() {
     const card = this._elements.card;
+    this._elements.iframeCard = card.querySelector("hui-iframe-card");
     //this._elements.title = card.querySelector(".title");
     //this._elements.content = card.querySelector(".content");
     //this._elements.vacuumMap = card.querySelector("valetudo-map-card");
