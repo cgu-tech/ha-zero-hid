@@ -77,15 +77,37 @@ class MoreInfoValetudoDialog extends HTMLElement {
   setupIframe() {
     if (!this._hass) return;
     if (this._elements.card.iframeCard) return;
-    const iframeCard = document.createElement('hui-iframe-card');    
-    iframeCard.setConfig({
-      url: 'https://192.168.0.60:8443',
-      aspect_ratio: '50%',
-    });
 
-    // set hass so it can render
-    iframeCard.hass = this._hass;
-    this._elements.card.appendChild(iframeCard);
+    // Load card helpers via Promise
+    window.loadCardHelpers().then((helpers) => {
+      if (this._elements.card.iframeCard) return;
+    
+      // Create the iframe card properly
+      helpers.createCardElement({
+        type: 'iframe',
+        url: 'https://192.168.0.60:8443',
+        aspect_ratio: '50%',
+      }).then((iframeCard) => {
+        iframeCard.hass = this._hass;
+    
+        this._elements.card.appendChild(iframeCard);
+        this._elements.card.iframeCard = iframeCard;
+      });
+    });
+    
+    //customElements.whenDefined('hui-iframe-card')
+    //  .then(() => {
+    //    if (this._elements.card.iframeCard) return;
+    //    const iframeCard = document.createElement('hui-iframe-card');    
+    //    iframeCard.setConfig({
+    //      url: 'https://192.168.0.60:8443',
+    //      aspect_ratio: '50%',
+    //    });
+    //    
+    //    // set hass so it can render
+    //    iframeCard.hass = this._hass;
+    //    this._elements.card.appendChild(iframeCard);
+    //  });
   }
 
   set entityId(entityId) {
