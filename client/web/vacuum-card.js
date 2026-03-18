@@ -3,11 +3,10 @@ import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';
-import { ValetudoMapCard } from './libs/valetudo-map-card.js';
 
-console.info("Loading more-info-valetudo-dialog");
+console.info("Loading vacuum-card");
 
-class MoreInfoValetudoDialog extends HTMLElement {
+class VacuumCard extends HTMLElement {
 
   // private properties
   _config;
@@ -25,7 +24,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   constructor() {
     super();
 
-    this._logger = new Logger(this, "more-info-valetudo-dialog.js");
+    this._logger = new Logger(this, "vacuum-card.js");
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, {});
     this._resourceManager = new ResourceManager(this, import.meta.url);
@@ -274,56 +273,4 @@ class MoreInfoValetudoDialog extends HTMLElement {
 }
 
 // Ensure your dialog class is defined
-if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
-
-function isInsideMoreInfoDialog(el) {
-  let node = el;
-
-  while (node) {
-    if (node.tagName === "HA-MORE-INFO-DIALOG") {
-      return true;
-    }
-
-    const root = node.getRootNode();
-    node = root && root.host;
-  }
-
-  return false;
-}
-
-// Patch HA more-info-content LitElement render
-customElements.whenDefined("state-card-content").then(() => {
-  const StateCardContent = customElements.get("state-card-content");
-  if (!StateCardContent) return;
-
-  if (StateCardContent.prototype.__valetudo_render_patched) return;
-  StateCardContent.prototype.__valetudo_render_patched = true;
-
-  const originalRender = StateCardContent.prototype.render;
-
-  StateCardContent.prototype.render = function () {
-    try {
-      if (!isInsideMoreInfoDialog(this)) {
-        return originalRender?.call(this);
-      }
-        
-      // <-- use stateObj.entity_id instead of entityId
-      const entityId = this.stateObj?.entity_id;
-      const integration = this.stateObj?.attributes?.integration;
-
-      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-      //if (entityId && entityId.startsWith("vacuum.")) {
-        return this.html`
-          <more-info-valetudo-dialog
-            .hass=${this.hass}
-            .entityId=${entityId}>
-          </more-info-valetudo-dialog>
-        `;
-      }
-    } catch (e) {
-      console.error("[Valetudo] patch error", e);
-    }
-
-    return originalRender?.call(this);
-  };
-});
+if (!customElements.get("vacuum-card")) customElements.define("vacuum-card", VacuumCard);
