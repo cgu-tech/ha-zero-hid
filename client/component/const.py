@@ -14,7 +14,7 @@ RESOURCES = [
     "test-card.js",
     "air-mouse-card.js",
     "microphone-card.js",
-    "vacuum-card.js"
+    "vacuum-card.js",
     "more-info-valetudo-dialog.js"
 ]
 
