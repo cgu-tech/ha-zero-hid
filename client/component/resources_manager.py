@@ -81,6 +81,26 @@ async def get_resources_versions(hass: HomeAssistant, read_from_file: bool) -> R
     resources_versions.reference_value = reference_value
     return resources_versions
 
+def get_lovelace_mode(lovelace: LovelaceData) -> str:
+    # HA <= 2025
+    if hasattr(lovelace, "mode"):
+        return lovelace.mode
+
+    # HA >= 2026 (preferred path)
+    dashboards = getattr(lovelace, "dashboards", None)
+    if dashboards:
+        dashboard = dashboards.get(None)
+        if dashboard:
+            mode = getattr(dashboard, "mode", None)
+            if mode:
+                return mode
+
+    # Fallback heuristic (less reliable)
+    if hasattr(lovelace, "resources"):
+        return "storage"
+
+    raise RuntimeError("Unsupported HA change: cannot determine Lovelace mode")
+
 async def synchronize_resources(hass: HomeAssistant, use_version_file: bool, force_sync: bool) -> ResourcesVersions | None:
     _LOGGER.debug(f"Synchronizing resources (use_version_file={use_version_file})...")
 
@@ -93,9 +113,10 @@ async def synchronize_resources(hass: HomeAssistant, use_version_file: bool, for
 
         # Retrieve Lovelace object with frontend resources
         lovelace: LovelaceData = hass.data.get("lovelace")
-        _LOGGER.debug(f"Lovelace mode set to \"{lovelace.mode}\"")
+        lovelace_mode: str = get_lovelace_mode(lovelace)
+        _LOGGER.debug(f"Lovelace mode set to \"{lovelace_mode}\"")
 
-        if lovelace.mode == "storage":
+        if lovelace_mode == "storage":
             if force_sync or (use_version_file and not resources_versions.are_equal):
                 
                 if force_sync:
