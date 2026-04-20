@@ -910,7 +910,7 @@ export class EventManager {
   //  - actionConfig: the <config> section for the tap action to trigger
   //  - payload: optional payload to set
   triggerHaosMoreInfoAction(source, entityId, payload = null) {
-    this.setTriggerHaosMoreInfoActionPayload(payload);
+    this.setSideLoadedPayload("MoreInfoDialogPayload", payload);
     this.triggerHaosEvent(source, "hass-more-info", {
       "entityId": entityId 
     },
@@ -920,28 +920,35 @@ export class EventManager {
     });
   }
 
-  // Sets payload for triggerHaosMoreInfoAction
-  //
-  // Parameters:
-  //  - payload: the triggerHaosMoreInfoAction payload to set
-  setTriggerHaosMoreInfoActionPayload(payload) {
-    if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`setTriggerHaosMoreInfoActionPayload(payload): undefined hass. Unable to set the triggerHaosMoreInfoAction payload (called too early before HA hass init or HA unresponsive)`, payload));
-      return;
-    }
-    this.getHass()["__triggerHaosMoreInfoActionPayload"] = payload;
+  // Gets payload for triggerHaosMoreInfoAction
+  getHaosMoreInfoActionPayload() {
+    return this.getSideLoadedPayload("MoreInfoDialogPayload");
   }
 
-  // Gets payload for triggerHaosMoreInfoAction
+  // Sets a sideloaded payload value (to load an entity config from more-info dialog for example)
   //
   // Parameters:
-  //  - payload: the triggerHaosMoreInfoAction payload to set
-  getTriggerHaosMoreInfoActionPayload() {
+  //  - payloadName : unique name to identify the sideloaded payload accross all sideloaded payload
+  //  - payload: the payload to side-load
+  setSideLoadedPayload(payloadName, payload) {
     if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`getTriggerHaosMoreInfoActionPayload(): undefined hass. Unable to get the triggerHaosMoreInfoAction payload (called too early before HA hass init or HA unresponsive)`));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`setSideLoadedPayload(payloadName, payload): undefined hass. Unable to set the  side-loaded payload (called too early before HA hass init or HA unresponsive)`, payloadName, payload));
       return;
     }
-    return this.getHass()["__triggerHaosMoreInfoActionPayload"];
+    if (!this.getHass()["__ha_zero_hid"]) this.getHass()["__ha_zero_hid"] = {};
+    this.getHass()["__ha_zero_hid"][payloadName] = payload;
+  }
+
+  // Gets sideloaded payload value
+  //
+  // Parameters:
+  //  - payloadName: name of side-loaded payload to get
+  getSideLoadedPayload(payloadName) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`getSideLoadedPayload(payloadName): undefined hass. Unable to get the side-loaded payload (called too early before HA hass init or HA unresponsive)`, payloadName));
+      return;
+    }
+    return this.getHass()["__ha_zero_hid"]?.[payloadName];
   }
 
   addBlurListener(target, callback, options = null) { return this.addBlurListenerToContainer(this._defaultContainerName, target, callback, options ); }
