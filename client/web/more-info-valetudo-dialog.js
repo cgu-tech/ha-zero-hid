@@ -291,28 +291,25 @@ function isInsideMoreInfoDialog(el) {
   return false;
 }
 
-// Patch HA more-info-content LitElement render
-customElements.whenDefined("state-card-content").then(() => {
-  const StateCardContent = customElements.get("state-card-content");
-  if (!StateCardContent) return;
+// Patch HA's ha-more-info-info safely
+customElements.whenDefined("ha-more-info-info").then(() => {
+  const HaMoreInfoInfo = customElements.get("ha-more-info-info");
+  if (!HaMoreInfoInfo) return;
 
-  if (StateCardContent.prototype.__valetudo_render_patched) return;
-  StateCardContent.prototype.__valetudo_render_patched = true;
+  if (HaMoreInfoInfo.prototype.__valetudo_patched) return;
+  HaMoreInfoInfo.prototype.__valetudo_patched = true;
 
-  const originalRender = StateCardContent.prototype.render;
+  const originalRender = HaMoreInfoInfo.prototype.render;
 
-  StateCardContent.prototype.render = function () {
+  HaMoreInfoInfo.prototype.render = function () {
     try {
-      if (!isInsideMoreInfoDialog(this)) {
-        return originalRender?.call(this);
-      }
-        
-      // <-- use stateObj.entity_id instead of entityId
-      const entityId = this.stateObj?.entity_id;
-      const integration = this.stateObj?.attributes?.integration;
+      const entityId = this.entityId;
+      const integration = this.hass?.states?.[entityId]?.attributes?.integration;
 
-      if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-      //if (entityId && entityId.startsWith("vacuum.")) {
+      console.debug("[Valetudo] ha-more-info-info patch", { entityId, integration });
+
+      //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
+      if (entityId && entityId.startsWith("vacuum.")) {
         return this.html`
           <more-info-valetudo-dialog
             .hass=${this.hass}
@@ -321,7 +318,7 @@ customElements.whenDefined("state-card-content").then(() => {
         `;
       }
     } catch (e) {
-      console.error("[Valetudo] patch error", e);
+      console.error("[Valetudo] ha-more-info-info patch error", e);
     }
 
     return originalRender?.call(this);
