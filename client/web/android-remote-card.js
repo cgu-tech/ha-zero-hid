@@ -443,6 +443,9 @@ class AndroidRemoteCard extends HTMLElement {
   getAddonCellEntity(addonCellConfig) {
     return this.getAddonCellConfigOrDefault(addonCellConfig, "entity");
   }
+  getAddonCellEntityConfig(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "entity_config");
+  }
 
   // Per cell config helper
   getAddonCellConfigOrDefault(addonCellConfig, property) {
@@ -2318,8 +2321,12 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Checks whether cell configured entity is ON (when entity is configured and exists into HA)
     const entityId = this.getAddonCellEntity(addonCellConfig);
+
+    // Retrieve entity config when defined
+    const entityConfig = this.getAddonCellEntityConfig(addonCellConfig);
+
     // const haEntity = document.querySelector("home-assistant");
-    this._eventManager.triggerHaosMoreInfoAction(addonCell, entityId);
+    this._eventManager.triggerHaosMoreInfoAction(addonCell, entityId, entityConfig);
   }
 
   doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {
@@ -2417,6 +2424,7 @@ class AndroidRemoteCard extends HTMLElement {
         cell_label_font_scale: '0.8em',
         cell_image_gap: '0.8em 0.8em 0em 0.8em',
         cell_icon_gap: '0.2em 0.2em 0em 0em',
+        cell_entity_config: null,
         cells: {}
       },
       animated_background: {}

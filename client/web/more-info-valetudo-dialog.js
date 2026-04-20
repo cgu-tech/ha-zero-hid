@@ -110,6 +110,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   createConfig() {
     const config = {};
+    const entityConfig = this._hass ? this._eventManager.getTriggerHaosMoreInfoActionPayload() : null;
 
     // Copy default config values
     for (const [key, value] of Object.entries(this._layoutManager.getStubConfig() ?? {})) {

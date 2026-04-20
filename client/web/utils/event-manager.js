@@ -908,7 +908,9 @@ export class EventManager {
   // Parameters:
   //  - source: the HTML element that originated the event (might be any HTML element from the front js)
   //  - actionConfig: the <config> section for the tap action to trigger
-  triggerHaosMoreInfoAction(source, entityId) {
+  //  - payload: optional payload to set
+  triggerHaosMoreInfoAction(source, entityId, payload = null) {
+    this.setTriggerHaosMoreInfoActionPayload(payload);
     this.triggerHaosEvent(source, "hass-more-info", {
       "entityId": entityId 
     },
@@ -916,6 +918,30 @@ export class EventManager {
       "bubbles": true,
       "composed": true,
     });
+  }
+
+  // Sets payload for triggerHaosMoreInfoAction
+  //
+  // Parameters:
+  //  - payload: the triggerHaosMoreInfoAction payload to set
+  setTriggerHaosMoreInfoActionPayload(payload) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`setTriggerHaosMoreInfoActionPayload(payload): undefined hass. Unable to set the triggerHaosMoreInfoAction payload (called too early before HA hass init or HA unresponsive)`, payload));
+      return;
+    }
+    this.getHass()["__triggerHaosMoreInfoActionPayload"] = payload;
+  }
+
+  // Gets payload for triggerHaosMoreInfoAction
+  //
+  // Parameters:
+  //  - payload: the triggerHaosMoreInfoAction payload to set
+  getTriggerHaosMoreInfoActionPayload() {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`getTriggerHaosMoreInfoActionPayload(): undefined hass. Unable to get the triggerHaosMoreInfoAction payload (called too early before HA hass init or HA unresponsive)`));
+      return;
+    }
+    return this.getHass()["__triggerHaosMoreInfoActionPayload"];
   }
 
   addBlurListener(target, callback, options = null) { return this.addBlurListenerToContainer(this._defaultContainerName, target, callback, options ); }
