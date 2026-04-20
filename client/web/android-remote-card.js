@@ -29,7 +29,7 @@ class AndroidRemoteCard extends HTMLElement {
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedClickableData = new Set(['code']);
-  _allowedAddonCellData = new Set(['name', 'action', 'entity']);
+  _allowedAddonCellData = new Set(['name', 'action', 'entity', 'entity_config']);
   _allowedServerCellData = new Set(['name', 'server_id', 'server_name']);
   _visuallyOverridableConfigKeys = ['image_remote_button', 'image_url', 'image_styles'];
   _cellButtonFg = '#bfbfbf';
