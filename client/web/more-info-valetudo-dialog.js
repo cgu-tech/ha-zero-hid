@@ -123,6 +123,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
       :host {
         --card-border-radius: 10px;
         --base-font-size: 1rem; /* base scaling unit */
+        --ha-card-border-width: 0px;
         display: block;
         box-sizing: border-box;
         max-width: 100%;
