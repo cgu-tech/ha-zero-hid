@@ -290,7 +290,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
   moreInfoDialog.prototype.render = function () {
     try {
       const entityId = this.entityId;
-      const config = Globals.getSideLoadedPayload(this._hass, "more-info-config");
+      const config = Globals.getSideLoadedPayload(this.hass, "more-info-config");
 
       console.debug("[Valetudo] ha-more-info-info patch", { entityId, config });
 
