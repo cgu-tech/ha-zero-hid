@@ -51,7 +51,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   // Injectable property
   set config(config) {
-    this.setConfig(value);
+    this.setConfig(config);
   }
 
   setConfig(config) {
