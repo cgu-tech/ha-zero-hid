@@ -111,7 +111,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
           <span class="title"></span>
         </div>
         <div class="content">
-          <valetudo-map-card></valetudo-map-card>
+          <xiaomi-vacuum-map-card></xiaomi-vacuum-map-card>
         </div>
       </div>
     `;
@@ -160,7 +160,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
     const card = this._elements.card;
     this._elements.title = card.querySelector(".title");
     this._elements.content = card.querySelector(".content");
-    this._elements.vacuumMap = card.querySelector("valetudo-map-card");
+    this._elements.vacuumMap = card.querySelector("xiaomi-vacuum-map-card");
   }
 
   doListen() {
@@ -181,18 +181,6 @@ class MoreInfoValetudoDialog extends HTMLElement {
   static getStubConfig() {
       return {
           vacuum_map: {
-              haptic: false,
-              log_level: "warn",
-              log_pushback: false,
-              entityId: "vacuum.valetudo_REPLACEME",
-              title: "",
-              show_path: true,
-              show_status: false,
-              show_start_button: false,
-              show_pause_button: false,
-              show_stop_button: false,
-              show_home_button: false,
-              show_locate_button: false
           }
       }
   }
