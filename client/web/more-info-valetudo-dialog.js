@@ -49,6 +49,11 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this._eventManager.setUserPreferences(preferences);
   }
 
+  // Injectable property
+  set config(config) {
+    this.setConfig(value);
+  }
+
   setConfig(config) {
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
