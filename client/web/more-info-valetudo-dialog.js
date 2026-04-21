@@ -19,8 +19,6 @@ class MoreInfoValetudoDialog extends HTMLElement {
   _resourceManager;
 
   _entityId;
-  __initializing=false;
-  __initialized=false;
 
   constructor() {
     super();
@@ -57,41 +55,20 @@ class MoreInfoValetudoDialog extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) this.getLogger().doLogOnError(this.doSetConfig.bind(this)); else this.doSetConfig();
   }
   doSetConfig() {
-    if (this._tryInitialize()) {
-      this.doCheckConfig();
-      this.doUpdateConfig();
-    }
+    this.doCheckConfig();
+    this.doUpdateConfig();
   }
 
   set hass(hass) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set hass(hass):", hass));
     this._hass = hass;
-    if (this._tryInitialize()) {
-      this.doUpdateHass();
-    }
+    this.doUpdateHass();
     this._eventManager.hassCallback();
   }
 
   set entityId(entityId) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set entityId(entityId):", entityId));
     this._entityId = entityId;
-    this.__initialized = false;
-    this.__initializing = false;
-    this.setConfig(this.createConfig());
-  }
-
-  _tryInitialize() {
-    if (!this._hass || !this._entityId) return false;
-    if (this.__initialized) return true;
-    if (this.__initializing) return false;
-    this.__initializing = true;
-
-    this.doUpdateVacuumMapConfig();
-    this.doUpdateVacuumMapHass();
-
-    this.__initialized = true;
-    this.__initializing = false;
-    return false;
   }
 
   connectedCallback() {
@@ -108,35 +85,12 @@ class MoreInfoValetudoDialog extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
-  createConfig() {
-    const config = {};
-    const entityConfig = this._hass ? this._eventManager.getTriggerHaosMoreInfoActionPayload() : null;
-
-    // Copy default config values
-    for (const [key, value] of Object.entries(this._layoutManager.getStubConfig() ?? {})) {
-      config[key] = value;
-    }
-
-    // Override config with initialization config
-    config["entityId"] = this._entityId ?? config["entityId"];
-
-    // Override config with user defined config
-    for (const [key, value] of Object.entries(this._config ?? {})) {
-      config[key] = value;
-    }
-    return config;
-  }
-
-  getEntityIdConfig() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("entityId");
+  getVacuumMapConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("vacuum_map");
   }
 
   getVacuumMap() {
     return this._elements.vacuumMap;
-  }
-
-  getVacuumMapConfig() {
-    return this._layoutManager.getTargetConfig(this.getVacuumMap());
   }
 
   // jobs
@@ -207,70 +161,38 @@ class MoreInfoValetudoDialog extends HTMLElement {
     // Nothing to do here: events are listened per sub-element
   }
 
-  doUpdateConfig() {
-    // Update valetudo cards configs
-    this.doUpdateVacuumMapConfig();
-  }
-
   doUpdateHass() {
-    // Update valetudo cards HASS object
-    this.doUpdateVacuumMapHass();
-  }
-
-  doUpdateVacuumMapConfig() {
-    // Create valetudo map card config from specified config entityId
-    const entityId = this.getEntityIdConfig();
-    
-    const vacuum_robot = entityId?.split('.')?.[1] ?? entityId ?? '';
-    
-    // HA default referencable entity is the vacuum entity created by valetudo MQTT, 
-    // which by default ends with "_robot" suffix: since we need the valid entity configured by user
-    // the only option is to remove this suffix
-    const vacuum = vacuum_robot.endsWith('_robot') ? vacuum_robot.slice(0, -6) : vacuum_robot;
-    
-    const vacuumMapConfig = {
-        "title": this._layoutManager.getFromConfigOrDefaultConfig("title"),
-        "vacuum": vacuum,
-        "show_path": this._layoutManager.getFromConfigOrDefaultConfig("show_path"),
-        "show_status": this._layoutManager.getFromConfigOrDefaultConfig("show_status"),
-        "show_start_button": this._layoutManager.getFromConfigOrDefaultConfig("show_start_button"),
-        "show_pause_button": this._layoutManager.getFromConfigOrDefaultConfig("show_pause_button"),
-        "show_stop_button": this._layoutManager.getFromConfigOrDefaultConfig("show_stop_button"),
-        "show_home_button": this._layoutManager.getFromConfigOrDefaultConfig("show_home_button"),
-        "show_locate_button": this._layoutManager.getFromConfigOrDefaultConfig("show_locate_button")
-    };
-
-    // Set valetudo map card config
-    this.getVacuumMap().setConfig(vacuumMapConfig);
-  }
-
-  doUpdateVacuumMapHass() {
-    // Ensure valid valetudo map card config
-    if (!this.getVacuumMapConfig()) this.doUpdateVacuumMapConfig();
-
     // Set valetudo map card HASS object
     this.getVacuumMap().hass = this._hass;
   }
 
+  doUpdateConfig() {
+    // Update valetudo cards configs
+    const vacuumMapConfig = this.getVacuumMapConfig();
+    this.getVacuumMap().setConfig(vacuumMapConfig);
+  }
+
   static getStubConfig() {
       return {
-          haptic: false,
-          log_level: "warn",
-          log_pushback: false,
-          entityId: "vacuum.valetudo_REPLACEME",
-          title: "",
-          show_path: true,
-          show_status: false,
-          show_start_button: false,
-          show_pause_button: false,
-          show_stop_button: false,
-          show_home_button: false,
-          show_locate_button: false
+          vacuum_map: {
+              haptic: false,
+              log_level: "warn",
+              log_pushback: false,
+              entityId: "vacuum.valetudo_REPLACEME",
+              title: "",
+              show_path: true,
+              show_status: false,
+              show_start_button: false,
+              show_pause_button: false,
+              show_stop_button: false,
+              show_home_button: false,
+              show_locate_button: false
+          }
       }
   }
 
   getCardSize() {
-    return 2;
+    return 4;
   }
 }
 
@@ -290,7 +212,8 @@ customElements.whenDefined("ha-more-info-info").then(() => {
   moreInfoDialog.prototype.render = function () {
     try {
       const entityId = this.entityId;
-      const config = Globals.getSideLoadedPayload(this.hass, "more-info-config");
+      const vacuumMapConfig = Globals.getSideLoadedPayload(this.hass, "more-info-config");
+      const moreInfoConfig = { vacuum_map: vacuumMapConfig };
 
       console.debug("[Valetudo] ha-more-info-info patch", { entityId, config });
 
@@ -298,7 +221,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
       if (entityId && entityId.startsWith("vacuum.")) {
         return this.html`
           <more-info-valetudo-dialog
-            .config=${this.config}
+            .config=${moreInfoConfig}
             .hass=${this.hass}
             .entityId=${entityId}>
           </more-info-valetudo-dialog>
