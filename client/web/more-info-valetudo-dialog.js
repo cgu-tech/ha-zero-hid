@@ -55,6 +55,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   }
 
   setConfig(config) {
+    if (this._config) return; // debounce
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
     if (this.getLogger().isDebugEnabled()) this.getLogger().doLogOnError(this.doSetConfig.bind(this)); else this.doSetConfig();
