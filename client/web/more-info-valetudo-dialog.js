@@ -55,7 +55,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   }
 
   setConfig(config) {
-    if (this._config) return; // debounce
+    if (this.deepEqual(this._config, config)) return; // debounce same config
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
     if (this.getLogger().isDebugEnabled()) this.getLogger().doLogOnError(this.doSetConfig.bind(this)); else this.doSetConfig();
@@ -188,6 +188,39 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   getCardSize() {
     return 4;
+  }
+  
+  deepEqual(a, b) {
+    // Same reference or primitive equality
+    if (a === b) return true;
+  
+    // Handle null / non-objects
+    if (typeof a !== "object" || a === null ||
+        typeof b !== "object" || b === null) {
+      return false;
+    }
+  
+    // Arrays check
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+  
+    // Keys length
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+  
+    if (keysA.length !== keysB.length) return false;
+  
+    // Check every key
+    for (const key of keysA) {
+      if (!Object.prototype.hasOwnProperty.call(b, key)) {
+        return false;
+      }
+  
+      if (!this.deepEqual(a[key], b[key])) {
+        return false;
+      }
+    }
+  
+    return true;
   }
 }
 
