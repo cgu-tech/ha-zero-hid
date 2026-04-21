@@ -220,7 +220,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
       const vacuumMapConfig = Globals.getSideLoadedPayload(this.hass, "more-info-config");
       const moreInfoConfig = { vacuum_map: vacuumMapConfig };
 
-      console.debug("[Valetudo] ha-more-info-info patch", { entityId, config });
+      console.debug("[Valetudo] ha-more-info-info patch", { entityId, moreInfoConfig });
 
       //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
       if (entityId && entityId.startsWith("vacuum.")) {
