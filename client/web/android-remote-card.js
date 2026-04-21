@@ -2319,14 +2319,15 @@ class AndroidRemoteCard extends HTMLElement {
     // Retrieve addon cell config
     const addonCellConfig = this._layoutManager.getElementData(addonCell);
 
-    // Checks whether cell configured entity is ON (when entity is configured and exists into HA)
+    // Retrieve entityId and config when defined
     const entityId = this.getAddonCellEntity(addonCellConfig);
-
-    // Retrieve entity config when defined
     const entityConfig = this.getAddonCellEntityConfig(addonCellConfig);
 
-    // const haEntity = document.querySelector("home-assistant");
-    this._eventManager.triggerHaosMoreInfoAction(addonCell, entityId, entityConfig);
+    // Sideload the entity config for the future Dialog popup
+    Globals.setSideLoadedPayload(this._hass, "more-info-config", entityConfig);
+
+    // Trigger the more-info Dialog popup
+    this._eventManager.triggerHaosMoreInfoDialog(addonCell, entityId);
   }
 
   doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {

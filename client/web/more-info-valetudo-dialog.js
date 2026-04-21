@@ -277,42 +277,28 @@ class MoreInfoValetudoDialog extends HTMLElement {
 // Ensure your dialog class is defined
 if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
 
-function isInsideMoreInfoDialog(el) {
-  let node = el;
-
-  while (node) {
-    if (node.tagName === "HA-MORE-INFO-DIALOG") {
-      return true;
-    }
-
-    const root = node.getRootNode();
-    node = root && root.host;
-  }
-
-  return false;
-}
-
 // Patch HA's ha-more-info-info safely
 customElements.whenDefined("ha-more-info-info").then(() => {
-  const HaMoreInfoInfo = customElements.get("ha-more-info-info");
-  if (!HaMoreInfoInfo) return;
+  const moreInfoDialog = customElements.get("ha-more-info-info");
+  if (!moreInfoDialog) return;
 
-  if (HaMoreInfoInfo.prototype.__valetudo_patched) return;
-  HaMoreInfoInfo.prototype.__valetudo_patched = true;
+  if (moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY]) return;
+  moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY] = true;
 
-  const originalRender = HaMoreInfoInfo.prototype.render;
+  const originalRender = moreInfoDialog.prototype.render;
 
-  HaMoreInfoInfo.prototype.render = function () {
+  moreInfoDialog.prototype.render = function () {
     try {
       const entityId = this.entityId;
-      const integration = this.hass?.states?.[entityId]?.attributes?.integration;
+      const config = Globals.getSideLoadedPayload(this._hass, "more-info-config");
 
-      console.debug("[Valetudo] ha-more-info-info patch", { entityId, integration });
+      console.debug("[Valetudo] ha-more-info-info patch", { entityId, config });
 
       //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
       if (entityId && entityId.startsWith("vacuum.")) {
         return this.html`
           <more-info-valetudo-dialog
+            .config=${this.config}
             .hass=${this.hass}
             .entityId=${entityId}>
           </more-info-valetudo-dialog>
