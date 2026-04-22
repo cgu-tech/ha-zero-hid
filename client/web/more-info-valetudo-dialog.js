@@ -108,9 +108,6 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this._elements.card = document.createElement("ha-card");
     this._elements.card.innerHTML = `
       <div id="dialog-container">
-        <div class="header">
-          <span class="title"></span>
-        </div>
         <div class="content">
           <xiaomi-vacuum-map-card></xiaomi-vacuum-map-card>
         </div>
@@ -137,7 +134,9 @@ class MoreInfoValetudoDialog extends HTMLElement {
       }
 
       #dialog-container {
-        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
       }
 
       .header {
@@ -146,8 +145,9 @@ class MoreInfoValetudoDialog extends HTMLElement {
       }
 
       .content {
-        width: 100%;
-        height: 100%;
+        flex: 1 1 auto;
+        overflow-y: auto;
+        min-height: 0; /* critical for flexbox scrolling */
       }
     `;
   }
