@@ -288,10 +288,10 @@ customElements.whenDefined("ha-more-info-info").then(() => {
           }
           if (!applied) console.debug("[Valetudo] ha-adaptive-dialog patch NOT applied");
           
-          let node = el;
+          node = el;
         
           // Walk up through shadow boundaries safely
-          let applied = false;
+          applied = false;
           while (node) {
             if (node.tagName === "HA-BOTTOM-SHEET") {
               node.preventScrimClose = true;
