@@ -277,7 +277,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
               node.preventScrimClose = true;
               node.requestUpdate?.(); // ensure HA reacts
               applied = true;
-              console.debug("[Valetudo] preventScrimClose applied");
+              console.debug("[Valetudo] ha-adaptive-dialog patch applied");
               break;
             }
         
@@ -286,7 +286,27 @@ customElements.whenDefined("ha-more-info-info").then(() => {
               node.host ||
               (node.getRootNode && node.getRootNode().host);
           }
-          if (!applied) console.debug("[Valetudo] preventScrimClose NOT applied");
+          if (!applied) console.debug("[Valetudo] ha-adaptive-dialog patch NOT applied");
+          
+          let node = el;
+        
+          // Walk up through shadow boundaries safely
+          let applied = false;
+          while (node) {
+            if (node.tagName === "HA-BOTTOM-SHEET") {
+              node.preventScrimClose = true;
+              node.requestUpdate?.(); // ensure HA reacts
+              applied = true;
+              console.debug("[Valetudo] ha-bottom-sheet patch applied");
+              break;
+            }
+        
+            node =
+              node.parentNode ||
+              node.host ||
+              (node.getRootNode && node.getRootNode().host);
+          }
+          if (!applied) console.debug("[Valetudo] ha-bottom-sheet patch NOT applied");
         });
         
         return result;
