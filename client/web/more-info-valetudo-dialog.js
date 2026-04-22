@@ -133,21 +133,22 @@ class MoreInfoValetudoDialog extends HTMLElement {
         height: 100%;
       }
 
-      .body,
-      .content.ha-scrollbar {
+      .body {
         height: 100%;
-        overflow: hidden;
+        min-height: 0;
       }
 
       #dialog-container {
         display: flex;
         flex-direction: column;
         height: 100%;
+        min-height: 0;
       }
 
       .header {
         font-size: 1.2em;
         font-weight: 500;
+        flex: 0 0 auto;
       }
 
       .content {
