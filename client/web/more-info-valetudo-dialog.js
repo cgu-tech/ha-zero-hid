@@ -271,10 +271,12 @@ customElements.whenDefined("ha-more-info-info").then(() => {
           let node = el;
         
           // Walk up through shadow boundaries safely
+          let applied = false;
           while (node) {
             if (node.tagName === "HA-ADAPTIVE-DIALOG") {
               node.preventScrimClose = true;
               node.requestUpdate?.(); // ensure HA reacts
+              applied = true;
               console.debug("[Valetudo] preventScrimClose applied");
               break;
             }
@@ -284,7 +286,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
               node.host ||
               (node.getRootNode && node.getRootNode().host);
           }
-          console.debug("[Valetudo] preventScrimClose NOT applied");
+          if (!applied) console.debug("[Valetudo] preventScrimClose NOT applied");
         });
         
         return result;
