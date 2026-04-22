@@ -254,13 +254,40 @@ customElements.whenDefined("ha-more-info-info").then(() => {
 
       //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
       if (entityId && entityId.startsWith("vacuum.")) {
-        return this.html`
+        const result = this.html`
           <more-info-valetudo-dialog
             .config=${moreInfoConfig}
             .hass=${this.hass}
             .entityId=${entityId}>
           </more-info-valetudo-dialog>
         `;
+        
+        // run AFTER DOM is updated: 
+        // patch parent ha-adaptive-dialog to prevent swipe-down gesture
+        this.updateComplete?.then(() => {
+          const el = this.renderRoot?.querySelector("more-info-valetudo-dialog");
+          if (!el) return;
+        
+          let node = el;
+        
+          // Walk up through shadow boundaries safely
+          while (node) {
+            if (node.tagName === "HA-ADAPTIVE-DIALOG") {
+              node.preventScrimClose = true;
+              node.requestUpdate?.(); // ensure HA reacts
+              console.debug("[Valetudo] preventScrimClose applied");
+              break;
+            }
+        
+            node =
+              node.parentNode ||
+              node.host ||
+              (node.getRootNode && node.getRootNode().host);
+          }
+          console.debug("[Valetudo] preventScrimClose NOT applied");
+        });
+        
+        return result;
       }
     } catch (e) {
       console.error("[Valetudo] ha-more-info-info patch error", e);
