@@ -126,7 +126,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
         flex-direction: column;
         max-width: 100%;
         background: var(--card-background-color);
-        border-radius: var(--card-border-radius);
+        border-radius: 0 0 var(--card-border-radius) var(--card-border-radius);
         overflow: visible;
         font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-size: var(--base-font-size);
