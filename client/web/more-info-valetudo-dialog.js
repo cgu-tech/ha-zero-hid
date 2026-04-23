@@ -120,41 +120,37 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this._elements.style.textContent = `
       :host {
         --card-border-radius: 10px;
-        --base-font-size: 1rem; /* base scaling unit */
+        --base-font-size: 1rem;
         --ha-card-border-width: 0px;
-        display: block;
-        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
         max-width: 100%;
         background: var(--card-background-color);
         border-radius: var(--card-border-radius);
-        overflow: hidden; /* prevent overflow outside card */
+        overflow: visible;
         font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-size: var(--base-font-size);
-        height: 100%;
       }
-
-      .body {
+  
+      ha-card {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
         height: 100%;
         min-height: 0;
       }
-
+  
       #dialog-container {
         display: flex;
         flex-direction: column;
-        height: 100%;
+        flex: 1 1 auto;
         min-height: 0;
       }
-
-      .header {
-        font-size: 1.2em;
-        font-weight: 500;
-        flex: 0 0 auto;
-      }
-
+  
       .content {
         flex: 1 1 auto;
-        overflow-y: auto;
-        min-height: 0; /* critical for flexbox scrolling */
+        overflow: visible;
+        min-height: 0;
       }
     `;
   }
