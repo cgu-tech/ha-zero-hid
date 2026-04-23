@@ -234,6 +234,36 @@ class MoreInfoValetudoDialog extends HTMLElement {
 // Ensure your dialog class is defined
 if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
 
+function patchAncestors(startNode, patches) {
+  let node = startNode;
+  const applied = new Set();
+
+  while (node) {
+    for (const { tag, fn } of patches) {
+      if (!applied.has(tag) && node.tagName?.toLowerCase() === tag.toLowerCase()) {
+        fn(node);
+        node.requestUpdate?.();
+        console.debug(`[Valetudo] ${tag} patch applied`);
+        applied.add(tag);
+      }
+    }
+
+    if (applied.size === patches.length) break;
+
+    node =
+      node.parentNode ||
+      node.host ||
+      (node.getRootNode && node.getRootNode().host);
+  }
+
+  // log missing ones
+  for (const { tag } of patches) {
+    if (!applied.has(tag)) {
+      console.debug(`[Valetudo] ${tag} patch NOT applied`);
+    }
+  }
+}
+
 // Patch HA's ha-more-info-info safely
 customElements.whenDefined("ha-more-info-info").then(() => {
   const moreInfoDialog = customElements.get("ha-more-info-info");
@@ -247,13 +277,13 @@ customElements.whenDefined("ha-more-info-info").then(() => {
   moreInfoDialog.prototype.render = function () {
     try {
       const entityId = this.entityId;
-      const vacuumMapConfig = Globals.getSideLoadedPayload(this.hass, "more-info-config");
-      const moreInfoConfig = { vacuum_map: vacuumMapConfig };
-
-      console.debug("[Valetudo] ha-more-info-info patch", { entityId, moreInfoConfig });
+      const entityConfig = Globals.getSideLoadedPayload(this.hass, "more-info-config");
+      const moreInfoConfig = { vacuum_map: entityConfig };
 
       //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
       if (entityId && entityId.startsWith("vacuum.")) {
+        console.debug("[Valetudo] ha-more-info-info patch", { entityId, moreInfoConfig });
+
         const result = this.html`
           <more-info-valetudo-dialog
             .config=${moreInfoConfig}
@@ -268,49 +298,21 @@ customElements.whenDefined("ha-more-info-info").then(() => {
           const el = this.renderRoot?.querySelector("more-info-valetudo-dialog");
           if (!el) return;
         
-          let node = el;
-        
-          // Walk up through shadow boundaries safely
-          let applied = false;
-          while (node) {
-            if (node.tagName === "HA-ADAPTIVE-DIALOG") {
-              node.preventScrimClose = true;
-              node.requestUpdate?.(); // ensure HA reacts
-              applied = true;
-              console.debug("[Valetudo] ha-adaptive-dialog patch applied");
-              break;
+          patchAncestors(el, [
+            {
+              tag: "ha-adaptive-dialog",
+              fn: (n) => { n.preventScrimClose = true; }
+            },
+            {
+              tag: "ha-bottom-sheet",
+              fn: (n) => { n.preventScrimClose = true; }
             }
-        
-            node =
-              node.parentNode ||
-              node.host ||
-              (node.getRootNode && node.getRootNode().host);
-          }
-          if (!applied) console.debug("[Valetudo] ha-adaptive-dialog patch NOT applied");
-          
-          node = el;
-        
-          // Walk up through shadow boundaries safely
-          applied = false;
-          while (node) {
-            if (node.tagName === "HA-BOTTOM-SHEET") {
-              node.preventScrimClose = true;
-              node.requestUpdate?.(); // ensure HA reacts
-              applied = true;
-              console.debug("[Valetudo] ha-bottom-sheet patch applied");
-              break;
-            }
-        
-            node =
-              node.parentNode ||
-              node.host ||
-              (node.getRootNode && node.getRootNode().host);
-          }
-          if (!applied) console.debug("[Valetudo] ha-bottom-sheet patch NOT applied");
+          ]);
         });
         
         return result;
       }
+      
     } catch (e) {
       console.error("[Valetudo] ha-more-info-info patch error", e);
     }
