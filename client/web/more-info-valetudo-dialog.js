@@ -253,7 +253,7 @@ function patchAncestors(startNode, patches) {
     node =
       node.parentNode ||
       node.host ||
-      (node.getRootNode && node.getRootNode().host);
+      node.getRootNode?.().host;
   }
 
   // log missing ones
@@ -262,6 +262,19 @@ function patchAncestors(startNode, patches) {
       console.debug(`[Valetudo] ${tag} patch NOT applied`);
     }
   }
+}
+
+function findClosestAncestor(startNode, ancestorTag) {
+  let node = startNode;
+  const targetAncestorTag = ancestorTag.toLowerCase();
+  while (node) {
+    if (node.tagName?.toLowerCase() === targetAncestorTag) return node;
+    node =
+      node.parentNode ||
+      node.host ||
+      node.getRootNode?.().host;
+  }
+  return null;
 }
 
 // Patch HA's ha-more-info-dialog to safely capture hass-more-info source
@@ -300,7 +313,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
   const originalRender = moreInfoInfo.prototype.render;
   moreInfoInfo.prototype.render = function () {
     try {
-      const dialog = this.closest("ha-more-info-dialog");
+      const dialog = findClosestAncestor("ha-more-info-dialog");
       const ctx = dialog?.__valetudoContext;
       
       const entityId = this.entityId;
