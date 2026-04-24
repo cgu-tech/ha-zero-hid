@@ -268,8 +268,8 @@ function patchAncestors(startNode, patches) {
 customElements.whenDefined("ha-more-info-dialog").then(() => {
   const moreInfoDialog = customElements.get("ha-more-info-dialog");
 
-  if (!moreInfoDialog || moreInfoDialog.prototype.[Globals.COMPONENT_PATCH_KEY]) return;
-  moreInfoDialog.prototype.[Globals.COMPONENT_PATCH_KEY] = true;
+  if (!moreInfoDialog || moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY]) return;
+  moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY] = true;
 
   const originalConnected = moreInfoDialog.prototype.connectedCallback;
   moreInfoDialog.prototype.connectedCallback = function () {
