@@ -278,15 +278,14 @@ customElements.whenDefined("ha-more-info-info").then(() => {
     try {
       const entityId = this.entityId;
       const entityConfig = Globals.getSideLoadedPayload(this.hass, "more-info-config");
-      const moreInfoConfig = { vacuum_map: entityConfig };
 
       //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
       if (entityId && entityId.startsWith("vacuum.")) {
-        console.debug("[Valetudo] ha-more-info-info patch", { entityId, moreInfoConfig });
+        console.debug("[Valetudo] ha-more-info-info patch", { entityId, entityConfig });
 
         const result = this.html`
           <more-info-valetudo-dialog
-            .config=${moreInfoConfig}
+            .config=${entityConfig}
             .hass=${this.hass}
             .entityId=${entityId}>
           </more-info-valetudo-dialog>
