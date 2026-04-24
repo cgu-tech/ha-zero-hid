@@ -49,13 +49,14 @@ class MoreInfoValetudoDialog extends HTMLElement {
     this._eventManager.setUserPreferences(preferences);
   }
 
-  // Injectable property
+  // Injectable reactive property
   set config(config) {
     this.setConfig(config);
   }
 
   setConfig(config) {
     if (this.deepEqual(this._config, config)) return; // debounce same config
+    if (this._config?.type !== config?.type) this.updateContent(config?.type); // Update content when needed
     this._config = config;
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("set setConfig(config):", config));
     if (this.getLogger().isDebugEnabled()) this.getLogger().doLogOnError(this.doSetConfig.bind(this)); else this.doSetConfig();
@@ -91,12 +92,25 @@ class MoreInfoValetudoDialog extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
-  getVacuumMapConfig() {
-    return this._layoutManager.getFromConfigOrDefaultConfig("vacuum_map");
+  updateContent(contentType) {    
+    // Remove previous content element (when existing)
+    this.getContent()?.remove?.();
+
+    // Determine new content element
+    const newContentType = contentType ?? "span"; // Default to span when empty content-type
+    const newContent = newContentType.includes(":") ? newContentType.split(":")[1] : newContentType;
+
+    // Create new content element
+    this._elements.content = document.createElement(newContent);
+    this.getWrapper().appendChild(this.getContent());
+  }
+  
+  getWrapper() {
+    return this._elements.wrapper;
   }
 
-  getVacuumMap() {
-    return this._elements.vacuumMap;
+  getContent() {
+    return this._elements.content;
   }
 
   // jobs
@@ -107,9 +121,8 @@ class MoreInfoValetudoDialog extends HTMLElement {
   doCard() {
     this._elements.card = document.createElement("ha-card");
     this._elements.card.innerHTML = `
-      <div id="dialog-container">
-        <div class="content">
-          <xiaomi-vacuum-map-card></xiaomi-vacuum-map-card>
+      <div id="main-container">
+        <div class="wrapper">
         </div>
       </div>
     `;
@@ -131,7 +144,6 @@ class MoreInfoValetudoDialog extends HTMLElement {
         font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-size: var(--base-font-size);
       }
-  
       ha-card {
         display: flex;
         flex-direction: column;
@@ -139,15 +151,13 @@ class MoreInfoValetudoDialog extends HTMLElement {
         height: 100%;
         min-height: 0;
       }
-  
-      #dialog-container {
+      #main-container {
         display: flex;
         flex-direction: column;
         flex: 1 1 auto;
         min-height: 0;
       }
-  
-      .content {
+      .wrapper {
         flex: 1 1 auto;
         overflow: visible;
         min-height: 0;
@@ -162,9 +172,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   doQueryElements() {
     const card = this._elements.card;
-    this._elements.title = card.querySelector(".title");
-    this._elements.content = card.querySelector(".content");
-    this._elements.vacuumMap = card.querySelector("xiaomi-vacuum-map-card");
+    this._elements.wrapper = card.querySelector(".wrapper");
   }
 
   doListen() {
@@ -172,21 +180,17 @@ class MoreInfoValetudoDialog extends HTMLElement {
   }
 
   doUpdateHass() {
-    // Set valetudo map card HASS object
-    this.getVacuumMap().hass = this._hass;
+    // Update content hass
+    if (this.getContent()) this.getContent().hass = this._hass;
   }
 
   doUpdateConfig() {
-    // Update valetudo cards configs
-    const vacuumMapConfig = this.getVacuumMapConfig();
-    this.getVacuumMap().setConfig(vacuumMapConfig);
+    // Update content config
+    this.getContent()?.setConfig?.(this._config);
   }
 
   static getStubConfig() {
-      return {
-          vacuum_map: {
-          }
-      }
+      return {}
   }
 
   getCardSize() {
