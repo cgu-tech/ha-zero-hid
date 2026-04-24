@@ -293,6 +293,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
         
         // run AFTER DOM is updated: 
         // patch parent ha-adaptive-dialog to prevent swipe-down gesture
+        // that interfer with touch events like scroll or zoom and pan on mobile
         this.updateComplete?.then(() => {
           const el = this.renderRoot?.querySelector("more-info-valetudo-dialog");
           if (!el) return;
