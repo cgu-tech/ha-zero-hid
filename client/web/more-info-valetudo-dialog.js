@@ -277,31 +277,48 @@ function findClosestAncestor(startNode, ancestorTag) {
   return null;
 }
 
-// Patch HA's ha-more-info-dialog to safely capture hass-more-info source
-customElements.whenDefined("ha-more-info-dialog").then(() => {
-  const moreInfoDialog = customElements.get("ha-more-info-dialog");
+function installMoreInfoContextCapture() {
+  if (window.__valetudo_moreinfo_installed) return;
+  window.__valetudo_moreinfo_installed = true;
 
-  if (!moreInfoDialog || moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY]) return;
-  moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY] = true;
+  document.addEventListener("hass-more-info", (e) => {
+    const dialog = document.querySelector("ha-more-info-dialog");
 
-  const originalConnected = moreInfoDialog.prototype.connectedCallback;
-  moreInfoDialog.prototype.connectedCallback = function () {
-    // prevent multiple listener registration on reused instances
-    if (!this.__valetudoListenerAttached) {
-      this.__valetudoListenerAttached = true;
-
-      this.addEventListener("hass-more-info", (e) => {
-        this.__valetudoContext = {
-          source: e.composedPath?.()[0],
-          detail: e.detail ?? {},
-          consumed: false,
-        };
-      });
+    if (dialog) {
+      dialog.__valetudoContext = {
+        source: e.composedPath?.()[0],
+        detail: e.detail,
+        consumed: false,
+      };
     }
+  });
+}
 
-    originalConnected?.call(this);
-  };
-});
+//// Patch HA's ha-more-info-dialog to safely capture hass-more-info source
+//customElements.whenDefined("ha-more-info-dialog").then(() => {
+//  const moreInfoDialog = customElements.get("ha-more-info-dialog");
+//
+//  if (!moreInfoDialog || moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY]) return;
+//  moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY] = true;
+//
+//  const originalConnected = moreInfoDialog.prototype.connectedCallback;
+//  moreInfoDialog.prototype.connectedCallback = function () {
+//    // prevent multiple listener registration on reused instances
+//    if (!this.__valetudoListenerAttached) {
+//      this.__valetudoListenerAttached = true;
+//
+//      this.addEventListener("hass-more-info", (e) => {
+//        this.__valetudoContext = {
+//          source: e.composedPath?.()[0],
+//          detail: e.detail ?? {},
+//          consumed: false,
+//        };
+//      });
+//    }
+//
+//    originalConnected?.call(this);
+//  };
+//});
 
 // Patch HA's ha-more-info-info to safely override with custom render when required
 customElements.whenDefined("ha-more-info-info").then(() => {
@@ -369,3 +386,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
     return originalRender?.call(this);
   };
 });
+
+(() => {
+  installMoreInfoContextCapture();
+})();
