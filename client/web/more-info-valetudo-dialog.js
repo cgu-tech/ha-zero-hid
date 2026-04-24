@@ -313,7 +313,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
   const originalRender = moreInfoInfo.prototype.render;
   moreInfoInfo.prototype.render = function () {
     try {
-      const dialog = findClosestAncestor("ha-more-info-dialog");
+      const dialog = findClosestAncestor(this, "ha-more-info-dialog");
       const ctx = dialog?.__valetudoContext;
       
       const entityId = this.entityId;
