@@ -264,23 +264,52 @@ function patchAncestors(startNode, patches) {
   }
 }
 
-// Patch HA's ha-more-info-info safely
+// Patch HA's ha-more-info-dialog to safely capture hass-more-info source
+customElements.whenDefined("ha-more-info-dialog").then(() => {
+  const moreInfoDialog = customElements.get("ha-more-info-dialog");
+
+  if (!moreInfoDialog || moreInfoDialog.prototype.[Globals.COMPONENT_PATCH_KEY]) return;
+  moreInfoDialog.prototype.[Globals.COMPONENT_PATCH_KEY] = true;
+
+  const originalConnected = moreInfoDialog.prototype.connectedCallback;
+  moreInfoDialog.prototype.connectedCallback = function () {
+    // prevent multiple listener registration on reused instances
+    if (!this.__valetudoListenerAttached) {
+      this.__valetudoListenerAttached = true;
+
+      this.addEventListener("hass-more-info", (e) => {
+        this.__valetudoContext = {
+          source: e.composedPath?.()[0],
+          detail: e.detail ?? {},
+          consumed: false,
+        };
+      });
+    }
+
+    originalConnected?.call(this);
+  };
+});
+
+// Patch HA's ha-more-info-info to safely override with custom render when required
 customElements.whenDefined("ha-more-info-info").then(() => {
-  const moreInfoDialog = customElements.get("ha-more-info-info");
-  if (!moreInfoDialog) return;
+  const moreInfoInfo = customElements.get("ha-more-info-info");
 
-  if (moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY]) return;
-  moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY] = true;
+  if (!moreInfoInfo || moreInfoInfo.prototype[Globals.COMPONENT_PATCH_KEY]) return;
+  moreInfoInfo.prototype[Globals.COMPONENT_PATCH_KEY] = true;
 
-  const originalRender = moreInfoDialog.prototype.render;
-
-  moreInfoDialog.prototype.render = function () {
+  const originalRender = moreInfoInfo.prototype.render;
+  moreInfoInfo.prototype.render = function () {
     try {
+      const dialog = this.closest("ha-more-info-dialog");
+      const ctx = dialog?.__valetudoContext;
+      
       const entityId = this.entityId;
       const entityConfig = Globals.getSideLoadedPayload(this.hass, "more-info-config");
 
-      //if (entityId && entityId.startsWith("vacuum.") && integration === "valetudo") {
-      if (entityId && entityId.startsWith("vacuum.")) {
+      if (ctx && !ctx.consumed && entityId && ctx.detail?.customDialogCapable) {
+        // mark as consumed immediately (prevents reuse in same tick)
+        ctx.consumed = true;
+
         console.debug("[Valetudo] ha-more-info-info patch", { entityId, entityConfig });
 
         const result = this.html`
@@ -290,7 +319,14 @@ customElements.whenDefined("ha-more-info-info").then(() => {
             .entityId=${entityId}>
           </more-info-valetudo-dialog>
         `;
-        
+
+        // hybrid cleanup: safe delayed reset
+        queueMicrotask(() => {
+          if (dialog?.__valetudoContext) {
+            dialog.__valetudoContext = null;
+          }
+        });
+
         // run AFTER DOM is updated: 
         // patch parent ha-adaptive-dialog to prevent swipe-down gesture
         // that interfer with touch events like scroll or zoom and pan on mobile
