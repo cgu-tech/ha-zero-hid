@@ -15,7 +15,7 @@ RESOURCES = [
     "air-mouse-card.js",
     "microphone-card.js",
     "vacuum-card.js",
-    "more-info-valetudo-dialog.js"
+    "more-info-custom-dialog.js"
 ]
 
 # This component name

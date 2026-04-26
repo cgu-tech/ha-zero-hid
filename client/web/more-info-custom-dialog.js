@@ -3,11 +3,10 @@ import { Logger } from './utils/logger.js';
 import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';
-import { ValetudoMapCard } from './libs/valetudo-map-card.js';
 
-console.info("Loading more-info-valetudo-dialog");
+console.info("Loading more-info-custom-dialog");
 
-class MoreInfoValetudoDialog extends HTMLElement {
+class MoreInfoCustomDialog extends HTMLElement {
 
   // private properties
   _config;
@@ -23,7 +22,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
   constructor() {
     super();
 
-    this._logger = new Logger(this, "more-info-valetudo-dialog.js");
+    this._logger = new Logger(this, "more-info-custom-dialog.js");
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, {});
     this._resourceManager = new ResourceManager(this, import.meta.url);
@@ -238,7 +237,7 @@ class MoreInfoValetudoDialog extends HTMLElement {
 }
 
 // Ensure your dialog class is defined
-if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
+if (!customElements.get("more-info-custom-dialog")) customElements.define("more-info-custom-dialog", MoreInfoCustomDialog);
 
 // Watchdogs to avoid re-patching redundantly already patched functions
 const watchdogMoreInfoEvent = `${Globals.COMPONENT_PATCH_KEY}_hass-more-info`;
@@ -256,7 +255,7 @@ const _componentConfig = _component["_config"]
   || (_component["_config"] = {});
 
 const _componentLogger = _component["_logger"]
-  || (_component["_logger"] = new Logger(_component, "more-info-valetudo-dialog.js"));
+  || (_component["_logger"] = new Logger(_component, "more-info-custom-dialog.js"));
 
 const _componentContextes = _component["_contextes"]
   || (_component["_contextes"] = new Map());
@@ -343,11 +342,11 @@ customElements.whenDefined("ha-more-info-info").then(() => {
         if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): rendering custom dialog for entity ${entityId}`, customDialog));
 
         const result = this.html`
-          <more-info-valetudo-dialog
+          <more-info-custom-dialog
             .config=${customDialog}
             .hass=${this.hass}
             .entityId=${entityId}>
-          </more-info-valetudo-dialog>
+          </more-info-custom-dialog>
         `;
 
         // Handle disabling "swipe to close" behavior when required
@@ -364,7 +363,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
             if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): disabling swipe-to-close gesture on dialog`));
             
             // Retrieve child dialog element
-            const dialogCommonChild = this.renderRoot?.querySelector("more-info-valetudo-dialog");
+            const dialogCommonChild = this.renderRoot?.querySelector("more-info-custom-dialog");
             if (!dialogCommonChild) return;
 
             // Walk-up into DOM ancestors and patch first ancestor of both types (when available)
