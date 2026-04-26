@@ -520,7 +520,7 @@ install() {
                 if [[ "${dependency_type//[[:space:]]/}" == "resource" ]]; then
                     dependency_dir_path="${HAOS_RESOURCES_DIR}/${dependency_dir}"
                 elif [[ "${dependency_type//[[:space:]]/}" == "integration" ]]; then
-                    dependency_dir_path="${HAOS_CUSTOM_COMPONENTS_DIR}}/${dependency_dir//-/_}"
+                    dependency_dir_path="${HAOS_CUSTOM_COMPONENTS_DIR}/${dependency_dir//-/_}"
                 else
                     echo "Unknown ${dependency_name} dependency type ${dependency_type} (skipping)"
                     continue
