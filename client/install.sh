@@ -588,6 +588,7 @@ install() {
     ' "${HA_ZERO_HID_CLIENT_CONFIG_FILE}")
 
     # Convert resources JSON to resources Python-style syntax using jq only
+    echo "all_resources: ${all_resources}"
     all_resources_py=$(echo "${all_resources}" | jq -r '
       map(
         if has("domain") then
