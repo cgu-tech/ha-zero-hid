@@ -272,6 +272,7 @@ function patchAncestors(patchName, startNode, patches) {
   const applied = new Set();
 
   while (node) {
+    if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): testing node ${node.tagName}...`, node, patchName, startNode, patches));
     for (const { tag, fn } of patches) {
       if (!applied.has(tag) && node.tagName?.toLowerCase() === tag.toLowerCase()) {
         fn(node);
