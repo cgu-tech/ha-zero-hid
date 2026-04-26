@@ -356,7 +356,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
         // custom rendered elements (like scroll, pan, zoom)
         const swipeToClose = !!(customDialog["swipe_to_close"]);
         if (!swipeToClose) {
-          if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): scheduling updateComplete hook for entity ${entityId}`, entityConfig));
+          if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): scheduling updateComplete hook for entity ${entityId}`, customDialog));
             
           // Hook after Dialog DOM initialization
           this.updateComplete?.then(() => {
@@ -385,7 +385,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
       }
       
     } catch (err) {
-      if (_componentLogger.isErrorEnabled()) console.error(..._componentLogger.error(`moreInfoInfo.prototype.render(): error while rendering custom dialog for entity ${entityId}`, entityConfig, err));
+      if (_componentLogger.isErrorEnabled()) console.error(..._componentLogger.error(`moreInfoInfo.prototype.render(): error while rendering custom dialog for entity ${entityId}`, customDialog, err));
     }
 
     // Standard dialog render
