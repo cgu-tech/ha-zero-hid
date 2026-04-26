@@ -218,7 +218,7 @@ cleanup() {
 
     # Cleaning up external web resources dependencies raw client external web dependencies
     echo "EXT 0"
-    echo "${EXTERNAL_DEPENDENCIES}" | jq -c '.[]' | while read -r dependency; do
+    while read -r dependency; do
         dependency_name="$(echo "$dependency" | jq -r '.name')"
         dependency_url="$(echo "$dependency" | jq -r '.url')"
         dependency_dir="${HAOS_RESOURCES_DIR}/$(echo "$dependency" | jq -r '.dir')"
@@ -226,7 +226,7 @@ cleanup() {
 
         echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} external web dependency ${dependency_name} files (${dependency_dir})..."
         rm -rf "${dependency_dir}" >/dev/null 2>&1 || true
-    done
+    done < <(echo "$EXTERNAL_DEPENDENCIES" | jq -c '.[]')
 
     # Cleaning up component dependencies
     echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} zero-hid dependency (${ZERO_HID_REPO_DIR})..."
@@ -488,15 +488,12 @@ install() {
     all_resources=$(echo "${HA_ZERO_HID_CLIENT_RESOURCES}")
 
     # Installing raw client external web dependencies
-    echo "${EXTERNAL_DEPENDENCIES}" | jq -c '.[]' | while read -r dependency; do
+    while read -r dependency; do
         dependency_name="$(echo "$dependency" | jq -r '.name')"
         dependency_url="$(echo "$dependency" | jq -r '.url')"
         dependency_dir="${HAOS_RESOURCES_DIR}/$(echo "$dependency" | jq -r '.dir')"
         dependency_file="$(echo "$dependency" | jq -r '.file')"
 
-        #echo "Cloning external web dependency ${dependency_name} repository at ${dependency_url}, on branch ${dependency_branch}..."
-        #git clone -b "${dependency_branch}" "${dependency_url}"
-        
         dependency_tmp_path=$(mktemp /tmp/hazerohid_dep.XXXXXX)
         echo "Downloading ${dependency_name} dependency file ${dependency_file} from ${dependency_url} to ${dependency_tmp_path}..."
         if curl -fL -o "${dependency_tmp_path}" "${dependency_url}"; then
@@ -524,7 +521,7 @@ install() {
         fi
         echo "Cleaning ${dependency_tmp_path}..."
         rm -rf "${dependency_tmp_path}" >/dev/null 2>&1 || true
-    done
+    done < <(echo "${EXTERNAL_DEPENDENCIES}" | jq -c '.[]')
 
     echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${HA_ZERO_HID_REPO_BRANCH}..."
     git clone -b "${HA_ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
