@@ -5,6 +5,7 @@ CURRENT_DIR="$(pwd)"
 ZERO_HID_REPO_BRANCH="${1:-main}"
 ENABLE_AUTO_MODE="${2:-}"
 ENABLE_DEV_MODE="${3:-}"
+HA_ZERO_HID_REPO_BRANCH="${4:-main}"
 
 # Configurations
 HAOS_CONFIG_DIR="/config"
@@ -528,8 +529,8 @@ install() {
         rm -rf "${dependency_tmp_path}" >/dev/null 2>&1 || true
     done
 
-    echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${ZERO_HID_REPO_BRANCH}..."
-    git clone -b "${ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
+    echo "Cloning zero-hid repository at ${ZERO_HID_REPO_URL}, on branch ${HA_ZERO_HID_REPO_BRANCH}..."
+    git clone -b "${HA_ZERO_HID_REPO_BRANCH}" "${ZERO_HID_REPO_URL}"
 
     echo "Installing web keyboard codes mapping at ${HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE}..."
     extract_keycodes_to_js_class "${ZERO_HID_REPO_DIR}/zero_hid/hid/keycodes.py" "${HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE}" "KeyCodes"
