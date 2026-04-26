@@ -328,19 +328,12 @@ function patchAncestorsComposed(patchName, startNode, patches) {
         fn(n);
         n.requestUpdate?.();
 
-        if (_componentLogger.isDebugEnabled()) {
-          console.debug(
-            _componentLogger.debug(
-              `[${patchName}] applied on ${tag}`,
-              n
-            )
-          );
-        }
+        if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): ${patchName} applied on ${tag}`, patchName, startNode, patches));
 
         applied.add(tag);
         remaining.delete(tag);
-      } catch (e) {
-        console.warn(`[${patchName}] patch failed on ${tag}`, e);
+      } catch (err) {
+        if (_componentLogger.isErrorEnabled()) console.error(..._componentLogger.error(`patchAncestors(patchName, startNode, patches): error while patchin ${patchName}`, patchName, startNode, patches, err));
       }
     }
   };
@@ -362,13 +355,7 @@ function patchAncestorsComposed(patchName, startNode, patches) {
   };
 
   while (node && applied.size < patches.length && depth++ < 100) {
-    if (_componentLogger.isDebugEnabled()) {
-      console.debug(
-        `[${patchName}] visiting:`,
-        node.tagName || node.nodeName,
-        node
-      );
-    }
+    if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): visiting ${node.tagName || node.nodeName}...`, patchName, startNode, patches));
 
     visit(node);
     node = next(node);
@@ -377,12 +364,7 @@ function patchAncestorsComposed(patchName, startNode, patches) {
   // final report
   for (const { tag } of patches) {
     if (!applied.has(tag.toLowerCase())) {
-      if (_componentLogger.isDebugEnabled()) {
-        console.debug(
-          `[${patchName}] NOT applied on ${tag}`,
-          startNode
-        );
-      }
+      if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): ${patchName} NOT applied on ${tag}`, patchName, startNode, patches));
     }
   }
 }
