@@ -243,11 +243,11 @@ const _componentsStore = window[Globals.COMPONENT_PATCH_KEY]
   || (window[Globals.COMPONENT_PATCH_KEY] = {});
 
 // Retrieve shared global custom dialog component elements
-const _component = componentsStore["more-info-custom-dialog"]
-  || (componentsStore["more-info-custom-dialog"] = {});
+const _component = _componentsStore["more-info-custom-dialog"]
+  || (_componentsStore["more-info-custom-dialog"] = {});
 
-const _componentConfig = componentsStore["_config"]
-  || (componentsStore["_config"] = {});
+const _componentConfig = _componentsStore["_config"]
+  || (_componentsStore["_config"] = {});
 
 const _componentLogger = _component["_logger"]
   || (_component["_logger"] = new Logger(_component, "more-info-valetudo-dialog.js"));
