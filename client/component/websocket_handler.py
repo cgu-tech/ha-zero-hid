@@ -140,7 +140,13 @@ class WebSocketClient:
             }
 
             # Try to connect to remote websockets server
-            self.websocket = await websockets.connect(self.url, ssl=ssl_context, extra_headers=extra_headers)
+            try:
+                # HA 2026+ websockets >= 10
+                self.websocket = await websockets.connect(self.url, ssl=ssl_context, additional_headers=extra_headers)
+            except TypeError:
+                # HA 2025+ websockets < 9
+                self.websocket = await websockets.connect(self.url, ssl=ssl_context, extra_headers=extra_headers)
+
             _LOGGER.info("WebSocket connection established.")
         except Exception as e:
             _LOGGER.error(f"Failed to connect to WebSocket: {e}")
