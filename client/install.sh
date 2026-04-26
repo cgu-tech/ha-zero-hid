@@ -59,13 +59,13 @@ EXTERNAL_DEPENDENCIES='[
     "name":"Valetudo Map Card",
     "url":"https://raw.githubusercontent.com/Hypfer/lovelace-valetudo-map-card/v2023.04.0/dist/valetudo-map-card.js",
     "dir":"valetudo", 
-    "file":"valetudo-map-card.js",
+    "file":"valetudo-map-card.js"
   },
   {
     "name":"Xiamoi Vacuum Map Card",
     "url":"https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card/releases/download/v2.3.2/xiaomi-vacuum-map-card.js",
     "dir":"xiaomi-vacuum", 
-    "file":"xiaomi-vacuum-map-card.js",
+    "file":"xiaomi-vacuum-map-card.js"
   }
 ]'
 
