@@ -246,8 +246,8 @@ const _componentsStore = window[Globals.COMPONENT_PATCH_KEY]
 const _component = _componentsStore["more-info-custom-dialog"]
   || (_componentsStore["more-info-custom-dialog"] = {});
 
-const _componentConfig = _componentsStore["_config"]
-  || (_componentsStore["_config"] = {});
+const _componentConfig = _component["_config"]
+  || (_component["_config"] = {});
 
 const _componentLogger = _component["_logger"]
   || (_component["_logger"] = new Logger(_component, "more-info-valetudo-dialog.js"));
