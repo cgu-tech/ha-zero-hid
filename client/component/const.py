@@ -5,17 +5,17 @@ RESOURCES_DOMAIN = "<ha_resources_domain>"
 RESOURCES_URL_BASE = f"/local/{RESOURCES_DOMAIN}"
 RESOURCES_VERSION = "<ha_resources_version>"
 RESOURCES = [
-    "android-keyboard-card.js",
-    "android-remote-card.js",
-    "arrowpad-card.js",
-    "carrousel-card.js",
-    "trackpad-card.js",
-    "windows-keyboard-card.js",
-    "test-card.js",
-    "air-mouse-card.js",
-    "microphone-card.js",
-    "vacuum-card.js",
-    "more-info-custom-dialog.js"
+    {"file": "android-keyboard-card.js"},
+    {"file": "android-remote-card.js"},
+    {"file": "arrowpad-card.js"},
+    {"file": "carrousel-card.js"},
+    {"file": "trackpad-card.js"},
+    {"file": "windows-keyboard-card.js"},
+    {"file": "test-card.js"},
+    {"file": "air-mouse-card.js"},
+    {"file": "microphone-card.js"},
+    {"file": "vacuum-card.js"},
+    {"file": "more-info-custom-dialog.js"}
 ]
 
 # This component name

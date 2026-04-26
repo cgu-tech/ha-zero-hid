@@ -39,6 +39,20 @@ HA_ZERO_HID_CLIENT_RESOURCES_GLOBALS_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_
 HA_ZERO_HID_CLIENT_RESOURCES_KEYCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/keycodes.js"
 HA_ZERO_HID_CLIENT_RESOURCES_CONSUMERCODES_FILE="${HA_ZERO_HID_CLIENT_RESOURCES_UTILS_DIR}/consumercodes.js"
 
+HA_ZERO_HID_CLIENT_RESOURCES='[
+  "android-keyboard-card.js",
+  "android-remote-card.js",
+  "arrowpad-card.js",
+  "carrousel-card.js",
+  "trackpad-card.js",
+  "windows-keyboard-card.js",
+  "test-card.js",
+  "air-mouse-card.js",
+  "microphone-card.js",
+  "vacuum-card.js",
+  "more-info-custom-dialog.js"
+]'
+
 # External dependencies
 EXTERNAL_DEPENDENCIES='[
   {
