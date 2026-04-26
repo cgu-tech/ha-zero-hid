@@ -393,6 +393,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
   };
   
   // Path ha-more-info-info.updated(changedProps)
+  /*
   if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`customElements.whenDefined("ha-more-info-info").then(): patching ha-more-info-info.updated(changedProps)`));
   const originalUpdated = moreInfoInfo.prototype.updated;
   moreInfoInfo.prototype.updated = function (changedProps) {
@@ -421,6 +422,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
     if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.updated(changedProps): calling native updated(changedProps) for entity ${entityId}`, changedProps));
     originalUpdated?.call(this, changedProps);
   };
+  */
 });
 
 (() => {
