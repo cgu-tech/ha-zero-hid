@@ -91,6 +91,10 @@ class MoreInfoValetudoDialog extends HTMLElement {
   adoptedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
+  
+  getContentConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("config");
+  }
 
   updateContent(contentType) {    
     // Remove previous content element (when existing)
@@ -186,11 +190,13 @@ class MoreInfoValetudoDialog extends HTMLElement {
 
   doUpdateConfig() {
     // Update content config
-    this.getContent()?.setConfig?.(this._config);
+    this.getContent()?.setConfig?.(this.getContentConfig());
   }
 
   static getStubConfig() {
-      return {}
+      return {
+        config: {}
+      }
   }
 
   getCardSize() {
@@ -334,12 +340,11 @@ customElements.whenDefined("ha-more-info-info").then(() => {
       // Custom dialog render
       const customDialog = eventCtx?.detail?.["customDialog"];
       if (customDialog) {
-        const entityConfig = customDialog["entityConfig"] ?? {};
-        if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): rendering custom dialog for entity ${entityId}`, entityConfig));
+        if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): rendering custom dialog for entity ${entityId}`, customDialog));
 
         const result = this.html`
           <more-info-valetudo-dialog
-            .config=${entityConfig}
+            .config=${customDialog}
             .hass=${this.hass}
             .entityId=${entityId}>
           </more-info-valetudo-dialog>
@@ -350,7 +355,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
         //
         // This is particularly usefull to prevent this default behavior to mess with other gestures inside 
         // custom rendered elements (like scroll, pan, zoom)
-        const swipeToClose = !!(customDialog["swipeToClose"]);
+        const swipeToClose = !!(customDialog["swipe_to_close"]);
         if (!swipeToClose) {
           if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): scheduling updateComplete hook for entity ${entityId}`, entityConfig));
             
