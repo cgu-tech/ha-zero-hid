@@ -315,7 +315,7 @@ function setupComponentContextes() {
         detail: e.detail,
         ts: Date.now()
       }
-    });
+    );
   });
 }
 
