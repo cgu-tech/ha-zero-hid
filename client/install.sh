@@ -515,7 +515,7 @@ install() {
                 mv "${dependency_tmp_path}" "${dependency_dir}/${dependency_file}"
                 
                 # Append external resource into all managed resources
-                all_resources=$(echo "${resources_py}" | jq \
+                all_resources=$(echo "${all_resources}" | jq \
                     --arg file "${dependency_file}" \
                     --arg domain "${dependency_dir}" \
                     '. += [{"file": $file, "domain": $domain}]')
