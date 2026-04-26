@@ -234,6 +234,37 @@ class MoreInfoValetudoDialog extends HTMLElement {
 // Ensure your dialog class is defined
 if (!customElements.get("more-info-valetudo-dialog")) customElements.define("more-info-valetudo-dialog", MoreInfoValetudoDialog);
 
+// Watchdogs to avoid re-patching redundantly already patched functions
+const watchdogMoreInfoEvent = `${Globals.COMPONENT_PATCH_KEY}_hass-more-info`;
+const watchdogMoreInfoInfoDialog = `${Globals.COMPONENT_PATCH_KEY}_ha-more-info-info`;
+
+// Retrieve shared global component store
+const _componentsStore = window[Globals.COMPONENT_PATCH_KEY]
+  || (window[Globals.COMPONENT_PATCH_KEY] = {});
+
+// Retrieve shared global custom dialog component elements
+const _component = componentsStore["more-info-custom-dialog"]
+  || (componentsStore["more-info-custom-dialog"] = {});
+
+const _componentConfig = componentsStore["_config"]
+  || (componentsStore["_config"] = {});
+
+const _componentLogger = _component["_logger"]
+  || (_component["_logger"] = new Logger(_component, "more-info-valetudo-dialog.js"));
+
+const _componentContextes = _component["_contextes"]
+  || (_component["_contextes"] = new Map());
+
+// Setup shared global configs
+_componentConfig["log_level"] = "trace";
+
+/*************/
+/*  HELPERS  */
+/*************/
+
+// Starting from "startNode", walk-up into DOM ancestors nodes then :
+//  - when patch element "tag" matches current ancestor tag
+//  - apply patch function "fn" and tries to update lit element calling "requestUpdate"
 function patchAncestors(startNode, patches) {
   let node = startNode;
   const applied = new Set();
@@ -243,7 +274,7 @@ function patchAncestors(startNode, patches) {
       if (!applied.has(tag) && node.tagName?.toLowerCase() === tag.toLowerCase()) {
         fn(node);
         node.requestUpdate?.();
-        console.debug(`[Valetudo] ${tag} patch applied`);
+        if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(startNode, patches): patch applied for ${tag}`, startNode, patches));
         applied.add(tag);
       }
     }
@@ -259,88 +290,55 @@ function patchAncestors(startNode, patches) {
   // log missing ones
   for (const { tag } of patches) {
     if (!applied.has(tag)) {
-      console.debug(`[Valetudo] ${tag} patch NOT applied`);
+      if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(startNode, patches): patch NOT applied for ${tag}`, startNode, patches));
     }
   }
 }
 
-function findClosestAncestor(startNode, ancestorTag) {
-  let node = startNode;
-  const targetAncestorTag = ancestorTag.toLowerCase();
-  while (node) {
-    if (node.tagName?.toLowerCase() === targetAncestorTag) return node;
-    node =
-      node.parentNode ||
-      node.host ||
-      node.getRootNode?.().host;
-  }
-  return null;
-}
 
-function installMoreInfoContextCapture() {
-  if (window.__valetudo_moreinfo_installed) return;
-  window.__valetudo_moreinfo_installed = true;
+/*************/
+/*  PATCHES  */
+/*************/
 
+// Store custom dialog contextes as soon as they arrive 
+function setupComponentContextes() {
+  if (window[watchdogMoreInfoEvent]) return;
+  window[watchdogMoreInfoEvent] = true;
+
+  // Hook to hass-more-info Event
   document.addEventListener("hass-more-info", (e) => {
-    const dialog = document.querySelector("ha-more-info-dialog");
 
-    if (dialog) {
-      dialog.__valetudoContext = {
+    // Update custom dialog store with event and entity context
+    _componentContextes.set(
+      e.detail.entityId, {
         source: e.composedPath?.()[0],
         detail: e.detail,
-        consumed: false,
-      };
-    }
+        ts: Date.now()
+      }
+    });
   });
 }
 
-//// Patch HA's ha-more-info-dialog to safely capture hass-more-info source
-//customElements.whenDefined("ha-more-info-dialog").then(() => {
-//  const moreInfoDialog = customElements.get("ha-more-info-dialog");
-//
-//  if (!moreInfoDialog || moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY]) return;
-//  moreInfoDialog.prototype[Globals.COMPONENT_PATCH_KEY] = true;
-//
-//  const originalConnected = moreInfoDialog.prototype.connectedCallback;
-//  moreInfoDialog.prototype.connectedCallback = function () {
-//    // prevent multiple listener registration on reused instances
-//    if (!this.__valetudoListenerAttached) {
-//      this.__valetudoListenerAttached = true;
-//
-//      this.addEventListener("hass-more-info", (e) => {
-//        this.__valetudoContext = {
-//          source: e.composedPath?.()[0],
-//          detail: e.detail ?? {},
-//          consumed: false,
-//        };
-//      });
-//    }
-//
-//    originalConnected?.call(this);
-//  };
-//});
-
-// Patch HA's ha-more-info-info to safely override with custom render when required
+// Patch ha-more-info-info Dialog
 customElements.whenDefined("ha-more-info-info").then(() => {
   const moreInfoInfo = customElements.get("ha-more-info-info");
+  if (!moreInfoInfo || moreInfoInfo.prototype[watchdogMoreInfoInfoDialog]) return;
+  moreInfoInfo.prototype[watchdogMoreInfoInfoDialog] = true;
 
-  if (!moreInfoInfo || moreInfoInfo.prototype[Globals.COMPONENT_PATCH_KEY]) return;
-  moreInfoInfo.prototype[Globals.COMPONENT_PATCH_KEY] = true;
-
+  // Path ha-more-info-info.render()
+  if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`customElements.whenDefined("ha-more-info-info").then(): patching ha-more-info-info.render()`));
   const originalRender = moreInfoInfo.prototype.render;
   moreInfoInfo.prototype.render = function () {
+    const entityId = this.entityId;
     try {
-      const dialog = findClosestAncestor(this, "ha-more-info-dialog");
-      const ctx = dialog?.__valetudoContext;
+      // Retrieve dialog invocation context
+      const eventCtx = _componentContextes.get(this.entityId);
       
-      const entityId = this.entityId;
-      const entityConfig = Globals.getSideLoadedPayload(this.hass, "more-info-config");
-
-      if (ctx && !ctx.consumed && entityId && ctx.detail?.customDialogCapable) {
-        // mark as consumed immediately (prevents reuse in same tick)
-        ctx.consumed = true;
-
-        console.debug("[Valetudo] ha-more-info-info patch", { entityId, entityConfig });
+      // Custom dialog render
+      const customDialog = eventCtx?.detail?.["customDialog"];
+      if (customDialog) {
+        const entityConfig = eventCtx?.detail?.["entityConfig"];
+        if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): rendering custom dialog for entity ${entityId}`, entityConfig));
 
         const result = this.html`
           <more-info-valetudo-dialog
@@ -350,43 +348,78 @@ customElements.whenDefined("ha-more-info-info").then(() => {
           </more-info-valetudo-dialog>
         `;
 
-        // hybrid cleanup: safe delayed reset
-        queueMicrotask(() => {
-          if (dialog?.__valetudoContext) {
-            dialog.__valetudoContext = null;
-          }
-        });
+        // Handle disabling "swipe to close" behavior when required
+        // enabled by default in HA 2026 mobile version of the HA Dialog ("ha-bottom-sheet" adaptive dialog)
+        //
+        // This is particularly usefull to prevent this default behavior to mess with other gestures inside 
+        // custom rendered elements (like scroll, pan, zoom)
+        const swipeToClose = !!(customDialog?.["swipeToClose"]);
+        if (!swipeToClose) {
+            
+          // Hook after Dialog DOM initialization
+          this.updateComplete?.then(() => {
+            
+            // Retrieve child dialog element
+            const dialogCommonChild = this.renderRoot?.querySelector("more-info-valetudo-dialog");
+            if (!dialogCommonChild) return;
 
-        // run AFTER DOM is updated: 
-        // patch parent ha-adaptive-dialog to prevent swipe-down gesture
-        // that interfer with touch events like scroll or zoom and pan on mobile
-        this.updateComplete?.then(() => {
-          const el = this.renderRoot?.querySelector("more-info-valetudo-dialog");
-          if (!el) return;
-        
-          patchAncestors(el, [
-            {
-              tag: "ha-adaptive-dialog",
-              fn: (n) => { n.preventScrimClose = true; }
-            },
-            {
-              tag: "ha-bottom-sheet",
-              fn: (n) => { n.preventScrimClose = true; }
-            }
-          ]);
-        });
-        
+            // Walk-up into DOM ancestors and patch first ancestor of both types (when available)
+            // Note: "preventScrimClose" is reverse "swipeToClose"
+            patchAncestors(dialogCommonChild, [
+              {
+                tag: "ha-adaptive-dialog",
+                fn: (dialogElt) => { dialogElt.preventScrimClose = false; }
+              },
+              {
+                tag: "ha-bottom-sheet",
+                fn: (dialogElt) => { dialogElt.preventScrimClose = false; }
+              }
+            ]);
+          });
+        }
         return result;
       }
       
-    } catch (e) {
-      console.error("[Valetudo] ha-more-info-info patch error", e);
+    } catch (err) {
+      if (_componentLogger.isErrorEnabled()) console.error(..._componentLogger.error(`moreInfoInfo.prototype.render(): error while rendering custom dialog for entity ${entityId}`, entityConfig, err));
     }
 
+    // Standard dialog render
+    if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): calling native render() for entity ${entityId}`, entityConfig));
     return originalRender?.call(this);
+  };
+  
+  // Path ha-more-info-info.updated(changedProps)
+  if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`customElements.whenDefined("ha-more-info-info").then(): patching ha-more-info-info.updated(changedProps)`));
+  const originalUpdated = moreInfoInfo.prototype.updated;
+  moreInfoInfo.prototype.updated = function (changedProps) {
+    const entityId = this.entityId;
+    try {
+      // detect entity change
+      if (changedProps.has("entityId")) {
+        const prevEntityId = changedProps.get("entityId");
+        const currentEntityId = this.entityId;
+
+        // cleanup previous context
+        if (prevEntityId && prevEntityId !== currentEntityId) {
+          _componentContextes.delete(prevEntityId);
+        }
+
+        // Cleanup when closing dialog
+        if (!currentEntityId && prevEntityId) {
+          _componentContextes.delete(prevEntityId);
+        }
+      }
+    } catch (e) {
+      if (_componentLogger.isErrorEnabled()) console.error(..._componentLogger.error(`moreInfoInfo.prototype.updated(changedProps): error while updating custom dialog for entity ${entityId}`, changedProps, err));
+    }
+
+    // Standard dialog updated
+    if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.updated(changedProps): calling native updated(changedProps) for entity ${entityId}`, changedProps));
+    originalUpdated?.call(this, changedProps);
   };
 });
 
 (() => {
-  installMoreInfoContextCapture();
+  setupComponentContextes();
 })();
