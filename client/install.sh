@@ -217,15 +217,15 @@ cleanup() {
     rm -rf "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}" >/dev/null 2>&1 || true
 
     # Cleaning up external web resources dependencies raw client external web dependencies
-    echo "EXT 0"
     while read -r dependency; do
         dependency_name="$(echo "$dependency" | jq -r '.name')"
         dependency_url="$(echo "$dependency" | jq -r '.url')"
-        dependency_dir="${HAOS_RESOURCES_DIR}/$(echo "$dependency" | jq -r '.dir')"
+        dependency_dir="$(echo "$dependency" | jq -r '.dir')"
         dependency_file="$(echo "$dependency" | jq -r '.file')"
+        dependency_dir_path="${HAOS_RESOURCES_DIR}/${dependency_dir}"
 
-        echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} external web dependency ${dependency_name} files (${dependency_dir})..."
-        rm -rf "${dependency_dir}" >/dev/null 2>&1 || true
+        echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} external web dependency ${dependency_name} files (${dependency_dir_path})..."
+        rm -rf "${dependency_dir_path}" >/dev/null 2>&1 || true
     done < <(echo "$EXTERNAL_DEPENDENCIES" | jq -c '.[]')
 
     # Cleaning up component dependencies
@@ -491,8 +491,9 @@ install() {
     while read -r dependency; do
         dependency_name="$(echo "$dependency" | jq -r '.name')"
         dependency_url="$(echo "$dependency" | jq -r '.url')"
-        dependency_dir="${HAOS_RESOURCES_DIR}/$(echo "$dependency" | jq -r '.dir')"
+        dependency_dir="$(echo "$dependency" | jq -r '.dir')"
         dependency_file="$(echo "$dependency" | jq -r '.file')"
+        dependency_dir_path="${HAOS_RESOURCES_DIR}/${dependency_dir}"
 
         dependency_tmp_path=$(mktemp /tmp/hazerohid_dep.XXXXXX)
         echo "Downloading ${dependency_name} dependency file ${dependency_file} from ${dependency_url} to ${dependency_tmp_path}..."
@@ -503,8 +504,8 @@ install() {
                 
                 # Install file into target directory
                 echo "Installing ${dependency_name} dependency file ${dependency_file} to ${dependency_dir}..."
-                mkdir -p "${dependency_dir}"
-                mv "${dependency_tmp_path}" "${dependency_dir}/${dependency_file}"
+                mkdir -p "${dependency_dir_path}"
+                mv "${dependency_tmp_path}" "${dependency_dir_path}/${dependency_file}"
                 
                 # Append external resource into all managed resources
                 echo "Adding dependency file ${dependency_file} with domain ${dependency_dir} into resources..."
@@ -512,7 +513,6 @@ install() {
                     --arg file "${dependency_file}" \
                     --arg domain "${dependency_dir}" \
                     '. += [{"file": $file, "domain": $domain}]')
-                echo "all_resources: ${all_resources}"
             else
                 echo "Download failed: file is empty"
             fi
@@ -585,7 +585,6 @@ install() {
     ' "${HA_ZERO_HID_CLIENT_CONFIG_FILE}")
 
     # Convert resources JSON to resources Python-style syntax using jq only
-    echo "all_resources: ${all_resources}"
     all_resources_py=$(echo "${all_resources}" | jq -r '
       map(
         if has("domain") then
