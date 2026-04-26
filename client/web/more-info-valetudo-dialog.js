@@ -388,12 +388,11 @@ customElements.whenDefined("ha-more-info-info").then(() => {
     }
 
     // Standard dialog render
-    if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): calling native render() for entity ${entityId}`, entityConfig));
+    if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): calling native render() for entity ${entityId}`));
     return originalRender?.call(this);
   };
   
   // Path ha-more-info-info.updated(changedProps)
-  /*
   if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`customElements.whenDefined("ha-more-info-info").then(): patching ha-more-info-info.updated(changedProps)`));
   const originalUpdated = moreInfoInfo.prototype.updated;
   moreInfoInfo.prototype.updated = function (changedProps) {
@@ -406,11 +405,13 @@ customElements.whenDefined("ha-more-info-info").then(() => {
 
         // cleanup previous context
         if (prevEntityId && prevEntityId !== currentEntityId) {
+          if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.updated(changedProps): entity changed, cleaning previous entity context (prevEntityId: ${prevEntityId}, currentEntityId: ${currentEntityId})`, changedProps));
           _componentContextes.delete(prevEntityId);
         }
 
         // Cleanup when closing dialog
         if (!currentEntityId && prevEntityId) {
+          if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.updated(changedProps): dialog closed, cleaning previous entity context (prevEntityId: ${prevEntityId})`, changedProps));
           _componentContextes.delete(prevEntityId);
         }
       }
@@ -422,7 +423,6 @@ customElements.whenDefined("ha-more-info-info").then(() => {
     if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.updated(changedProps): calling native updated(changedProps) for entity ${entityId}`, changedProps));
     originalUpdated?.call(this, changedProps);
   };
-  */
 });
 
 (() => {
