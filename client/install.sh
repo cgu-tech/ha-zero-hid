@@ -216,16 +216,17 @@ cleanup() {
     rm -rf "${HA_ZERO_HID_CLIENT_RESOURCES_DIR}" >/dev/null 2>&1 || true
 
     # Cleaning up external web resources dependencies raw client external web dependencies
+    echo "EXT 0"
     echo "${EXTERNAL_DEPENDENCIES}" | jq -c '.[]' | while read -r dependency; do
         echo "EXT 1"
         dependency_name="$(echo "$dependency" | jq -r '.name')"
-        echo "EXT 2"
+        echo "EXT 2 ($dependency_name)"
         dependency_url="$(echo "$dependency" | jq -r '.url')"
-        echo "EXT 3"
+        echo "EXT 3 ($dependency_url)"
         dependency_dir="${HAOS_RESOURCES_DIR}/$(echo "$dependency" | jq -r '.dir')"
-        echo "EXT 4"
+        echo "EXT 4 ($dependency_dir)"
         dependency_file="$(echo "$dependency" | jq -r '.file')"
-        echo "EXT 5"
+        echo "EXT 5 ($dependency_file)"
 
         echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} external web dependency ${dependency_name} files (${dependency_dir})..."
         rm -rf "${dependency_dir}" >/dev/null 2>&1 || true
