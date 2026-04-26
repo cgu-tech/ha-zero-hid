@@ -29,7 +29,7 @@ class AndroidRemoteCard extends HTMLElement {
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedClickableData = new Set(['code']);
-  _allowedAddonCellData = new Set(['name', 'action', 'entity']);
+  _allowedAddonCellData = new Set(['name', 'action', 'entity', 'custom_dialog']);
   _allowedServerCellData = new Set(['name', 'server_id', 'server_name']);
   _visuallyOverridableConfigKeys = ['image_remote_button', 'image_url', 'image_styles'];
   _cellButtonFg = '#bfbfbf';
@@ -442,6 +442,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
   getAddonCellEntity(addonCellConfig) {
     return this.getAddonCellConfigOrDefault(addonCellConfig, "entity");
+  }
+  getAddonCellCustomDialog(addonCellConfig) {
+    return this.getAddonCellConfigOrDefault(addonCellConfig, "custom_dialog");
   }
 
   // Per cell config helper
@@ -2316,10 +2319,12 @@ class AndroidRemoteCard extends HTMLElement {
     // Retrieve addon cell config
     const addonCellConfig = this._layoutManager.getElementData(addonCell);
 
-    // Checks whether cell configured entity is ON (when entity is configured and exists into HA)
+    // Retrieve entityId and config when defined
     const entityId = this.getAddonCellEntity(addonCellConfig);
-    // const haEntity = document.querySelector("home-assistant");
-    this._eventManager.triggerHaosMoreInfoAction(addonCell, entityId);
+    const customDialog = this.getAddonCellCustomDialog(addonCellConfig);
+
+    // Trigger the more-info Dialog popup
+    this._eventManager.triggerHaosMoreInfoDialog(addonCell, entityId, customDialog);
   }
 
   doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {
@@ -2417,6 +2422,7 @@ class AndroidRemoteCard extends HTMLElement {
         cell_label_font_scale: '0.8em',
         cell_image_gap: '0.8em 0.8em 0em 0.8em',
         cell_icon_gap: '0.2em 0.2em 0em 0em',
+        cell_custom_dialog: null,
         cells: {}
       },
       animated_background: {}

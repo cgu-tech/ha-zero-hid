@@ -902,15 +902,15 @@ export class EventManager {
     });
   }
 
-  // Trigger a tap action into HAOS, target
-  // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
+  // Trigger an HAOS more-info dialog for the target entityId
   // 
   // Parameters:
   //  - source: the HTML element that originated the event (might be any HTML element from the front js)
   //  - actionConfig: the <config> section for the tap action to trigger
-  triggerHaosMoreInfoAction(source, entityId) {
+  triggerHaosMoreInfoDialog(source, entityId, customDialog = null) {
     this.triggerHaosEvent(source, "hass-more-info", {
-      "entityId": entityId 
+      "entityId": entityId,
+      "customDialog": customDialog ?? undefined,
     },
     {
       "bubbles": true,

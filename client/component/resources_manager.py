@@ -5,10 +5,10 @@ import logging
 import os
 import time
 
+from .const import RESOURCES_VERSION, COMPONENT_VERSION_FILE, DOMAIN, RESOURCES_DOMAIN, RESOURCES, RESOURCES_LAST_SYNC_TIME, RESOURCES_SYNC_INTERVAL
 from homeassistant.core import HomeAssistant
 from homeassistant.components.lovelace import LovelaceData
-
-from .const import RESOURCES_VERSION, COMPONENT_VERSION_FILE, DOMAIN, RESOURCES_URL_BASE, RESOURCES, RESOURCES_LAST_SYNC_TIME, RESOURCES_SYNC_INTERVAL
+from typing import Dict, List
 
 _LOGGER = logging.getLogger(__name__)
 _LOCK = asyncio.Lock()  # Prevent race conditions
@@ -20,6 +20,15 @@ class ResourcesVersions:
         self.module_value: str | None = None
         self.reference_source: str | None = None
         self.reference_value: str | None = None
+
+def getResourceUrlBase(resource: Dict[str]) -> str:
+    return f"/local/{resource.get("domain", RESOURCES_DOMAIN)}"
+
+def getResourcesUrlBases() -> List[str]:
+    return sorted({
+        getResourceUrlBase(resource)
+        for resource in RESOURCES
+    })
 
 async def set_resources_versions(hass: HomeAssistant, write_to_file: bool, resources_versions: ResourcesVersions | None) -> None:
     global RESOURCES_VERSION
@@ -81,6 +90,26 @@ async def get_resources_versions(hass: HomeAssistant, read_from_file: bool) -> R
     resources_versions.reference_value = reference_value
     return resources_versions
 
+def get_lovelace_mode(lovelace: LovelaceData) -> str:
+    # HA <= 2025
+    if hasattr(lovelace, "mode"):
+        return lovelace.mode
+
+    # HA >= 2026 (preferred path)
+    dashboards = getattr(lovelace, "dashboards", None)
+    if dashboards:
+        dashboard = dashboards.get(None)
+        if dashboard:
+            mode = getattr(dashboard, "mode", None)
+            if mode:
+                return mode
+
+    # Fallback heuristic (less reliable)
+    if hasattr(lovelace, "resources"):
+        return "storage"
+
+    raise RuntimeError("Unsupported HA change: cannot determine Lovelace mode")
+
 async def synchronize_resources(hass: HomeAssistant, use_version_file: bool, force_sync: bool) -> ResourcesVersions | None:
     _LOGGER.debug(f"Synchronizing resources (use_version_file={use_version_file})...")
 
@@ -93,13 +122,16 @@ async def synchronize_resources(hass: HomeAssistant, use_version_file: bool, for
 
         # Retrieve Lovelace object with frontend resources
         lovelace: LovelaceData = hass.data.get("lovelace")
-        _LOGGER.debug(f"Lovelace mode set to \"{lovelace.mode}\"")
+        lovelace_mode: str = get_lovelace_mode(lovelace)
+        _LOGGER.debug(f"Lovelace mode set to \"{lovelace_mode}\"")
 
-        if lovelace.mode == "storage":
+        # Retrieve declarable resources URL basestring
+        resources_url_bases: list[str] = getResourcesUrlBases()
+        if lovelace_mode == "storage":
             if force_sync or (use_version_file and not resources_versions.are_equal):
                 
                 if force_sync:
-                    # Forced synchonization to avoid infinite loop in case of DEV MODE misuse 
+                    # Forced synchronization to avoid infinite loop in case of DEV MODE misuse 
                     # (ie. install in DEV MODE and instant reboot without going first on Lovelace dashboard to trigger resources registration)
                     _LOGGER.debug(f"Registering Lovelace resources for {DOMAIN} component...")
                 else:
@@ -123,12 +155,18 @@ async def synchronize_resources(hass: HomeAssistant, use_version_file: bool, for
                 existing_resources = {
                     resource["url"]: resource["id"]
                     for resource in lovelace.resources.async_items()
-                    if resource["url"].startswith(RESOURCES_URL_BASE)
+                    if any(
+                        resource["url"].startswith(base)
+                        for base in resources_url_bases
+                    )
                 }
 
                 # Create up-to-date resources URLs for this component
                 _LOGGER.debug(f"Retrieving up-to-date {DOMAIN} component resources...")
-                uptodate_resources_urls = {f"{RESOURCES_URL_BASE}/{resource}?v={resources_versions.reference_value}" for resource in RESOURCES}
+                uptodate_resources_urls = {
+                    f"{getResourceUrlBase(resource)}/{resource['file']}?v={resources_versions.reference_value}" 
+                    for resource in RESOURCES
+                }
 
                 # Remove existing outdated Lovelace resources
                 for url, id in existing_resources.items():
@@ -153,7 +191,7 @@ async def synchronize_resources(hass: HomeAssistant, use_version_file: bool, for
             else:
                 _LOGGER.debug(f"Custom Lovelace resources already synced for custom component {DOMAIN}")
         else:
-            _LOGGER.warning(f"Lovelace mode is not \"storage\": manually declare those resources {RESOURCES} using base URL {RESOURCES_URL_BASE}")
+            _LOGGER.warning(f"Lovelace mode is not \"storage\": manually declare those resources {RESOURCES} using base URL(s) {resources_url_bases}")
 
     return resources_versions
 

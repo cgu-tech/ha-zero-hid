@@ -4,19 +4,7 @@ RESOURCES_SYNC_INTERVAL = 5
 RESOURCES_DOMAIN = "<ha_resources_domain>"
 RESOURCES_URL_BASE = f"/local/{RESOURCES_DOMAIN}"
 RESOURCES_VERSION = "<ha_resources_version>"
-RESOURCES = [
-    "android-keyboard-card.js",
-    "android-remote-card.js",
-    "arrowpad-card.js",
-    "carrousel-card.js",
-    "trackpad-card.js",
-    "windows-keyboard-card.js",
-    "test-card.js",
-    "air-mouse-card.js",
-    "microphone-card.js",
-    "vacuum-card.js"
-    "more-info-valetudo-dialog.js"
-]
+RESOURCES = <ha_resources>
 
 # This component name
 DOMAIN = "<ha_component_name>"
