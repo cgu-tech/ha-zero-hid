@@ -539,12 +539,14 @@ install() {
                     mv "${dependency_tmp_path}" "${dependency_dir_path}/${dependency_file}"
                 fi
                 
-                # Append external resource into all managed resources
-                echo "Adding dependency file ${dependency_file} with domain ${dependency_dir} into resources..."
-                all_resources=$(echo "${all_resources}" | jq \
-                    --arg file "${dependency_file}" \
-                    --arg domain "${dependency_dir}" \
-                    '. += [{"file": $file, "domain": $domain}]')
+                if [[ "${dependency_type//[[:space:]]/}" == "resource" ]]; then
+                    # Append external resource into all managed resources
+                    echo "Adding dependency file ${dependency_file} with domain ${dependency_dir} into resources..."
+                    all_resources=$(echo "${all_resources}" | jq \
+                        --arg file "${dependency_file}" \
+                        --arg domain "${dependency_dir}" \
+                        '. += [{"file": $file, "domain": $domain}]')
+                fi
             else
                 echo "Download failed: file is empty"
             fi
