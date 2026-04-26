@@ -255,9 +255,6 @@ const _componentLogger = _component["_logger"]
 const _componentContextes = _component["_contextes"]
   || (_component["_contextes"] = new Map());
 
-// Setup shared global configs
-_componentConfig["log_level"] = "trace";
-
 /*************/
 /*  HELPERS  */
 /*************/
