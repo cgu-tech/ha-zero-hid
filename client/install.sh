@@ -60,13 +60,23 @@ EXTERNAL_DEPENDENCIES='[
     "name":"Valetudo Map Card",
     "url":"https://raw.githubusercontent.com/Hypfer/lovelace-valetudo-map-card/v2023.04.0/dist/valetudo-map-card.js",
     "dir":"valetudo", 
-    "file":"valetudo-map-card.js"
+    "file":"valetudo-map-card.js",
+    "type":"resource"
   },
   {
-    "name":"Xiamoi Vacuum Map Card",
+    "name":"Xiaomi Vacuum Map Card",
     "url":"https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card/releases/download/v2.3.2/xiaomi-vacuum-map-card.js",
     "dir":"xiaomi-vacuum", 
-    "file":"xiaomi-vacuum-map-card.js"
+    "file":"xiaomi-vacuum-map-card.js",
+    "type":"resource"
+  },
+  {
+    "name":"MQTT Vacuum Camera Integration",
+    "url":"https://github.com/sca075/mqtt_vacuum_camera/releases/download/2026.4.0/mqtt_vacuum_camera.zip",
+    "dir":"mqtt_vacuum_camera", 
+    "file":"mqtt_vacuum_camera.zip",
+    "mode": "zip",
+    "type":"integration"
   }
 ]'
 
@@ -222,10 +232,12 @@ cleanup() {
         dependency_url="$(echo "$dependency" | jq -r '.url')"
         dependency_dir="$(echo "$dependency" | jq -r '.dir')"
         dependency_file="$(echo "$dependency" | jq -r '.file')"
-        dependency_dir_path="${HAOS_RESOURCES_DIR}/${dependency_dir}"
 
-        echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} external web dependency ${dependency_name} files (${dependency_dir_path})..."
-        rm -rf "${dependency_dir_path}" >/dev/null 2>&1 || true
+        echo "Cleaning ${HA_ZERO_HID_CLIENT_COMPONENT_NAME} external web dependency ${dependency_name} files..."
+        dependency_resource_dir_path="${HAOS_RESOURCES_DIR}/${dependency_dir}"
+        dependency_component_dir_path="${HAOS_CUSTOM_COMPONENTS_DIR}/${dependency_dir//-/_}"
+        echo "Removing ${dependency_resource_dir_path}..." && rm -rf "${dependency_resource_dir_path}" >/dev/null 2>&1 || true
+        echo "Removing ${dependency_component_dir_path}..." && rm -rf "${dependency_component_dir_path}" >/dev/null 2>&1 || true
     done < <(echo "$EXTERNAL_DEPENDENCIES" | jq -c '.[]')
 
     # Cleaning up component dependencies
@@ -493,8 +505,9 @@ install() {
         dependency_url="$(echo "$dependency" | jq -r '.url')"
         dependency_dir="$(echo "$dependency" | jq -r '.dir')"
         dependency_file="$(echo "$dependency" | jq -r '.file')"
-        dependency_dir_path="${HAOS_RESOURCES_DIR}/${dependency_dir}"
-
+        dependency_type="$(echo "$dependency" | jq -r '.type')"
+        dependency_mode="$(echo "$dependency" | jq -r '.mode')"
+        
         dependency_tmp_path=$(mktemp /tmp/hazerohid_dep.XXXXXX)
         echo "Downloading ${dependency_name} dependency file ${dependency_file} from ${dependency_url} to ${dependency_tmp_path}..."
         if curl -fL -o "${dependency_tmp_path}" "${dependency_url}"; then
@@ -502,10 +515,29 @@ install() {
             if [ -s "${dependency_tmp_path}" ]; then
                 echo "Download OK"
                 
-                # Install file into target directory
-                echo "Installing ${dependency_name} dependency file ${dependency_file} to ${dependency_dir}..."
+                # Create installation directory
+                dependency_dir_path="${HAOS_RESOURCES_DIR}/${dependency_dir}"
+                if [[ "${dependency_type//[[:space:]]/}" == "resource" ]]; then
+                    dependency_dir_path="${HAOS_RESOURCES_DIR}/${dependency_dir}"
+                elif [[ "${dependency_type//[[:space:]]/}" == "integration" ]]; then
+                    dependency_dir_path="${HAOS_CUSTOM_COMPONENTS_DIR}}/${dependency_dir//-/_}"
+                else
+                    echo "Unknown ${dependency_name} dependency type ${dependency_type} (skipping)"
+                    continue
+                fi
+                echo "Creating ${dependency_name} dependency installation directory ${dependency_dir_path}..."
                 mkdir -p "${dependency_dir_path}"
-                mv "${dependency_tmp_path}" "${dependency_dir_path}/${dependency_file}"
+                
+                # Install file into installation directory
+                if [[ "${dependency_mode//[[:space:]]/}" == "zip" ]]; then
+                    # Zip mode requires unzip from temporary zip file to installation directory
+                    echo "Installing ${dependency_name} by unzipping ${dependency_tmp_path} into ${dependency_dir_path}"
+                    unzip "${dependency_tmp_path}" -d "${dependency_dir_path}"
+                else
+                    # Default simple file requires move from temporary simple file to installation directory
+                    echo "Installing ${dependency_name} by moving ${dependency_tmp_path} into ${dependency_dir_path}"
+                    mv "${dependency_tmp_path}" "${dependency_dir_path}/${dependency_file}"
+                fi
                 
                 # Append external resource into all managed resources
                 echo "Adding dependency file ${dependency_file} with domain ${dependency_dir} into resources..."
