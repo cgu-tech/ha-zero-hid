@@ -264,6 +264,112 @@ const _componentContextes = _component["_contextes"]
 /*  HELPERS  */
 /*************/
 
+// Composed-tree debugger walker (DevTools-like)
+// This version logs exactly what we would see in the flattened DOM view
+function debugComposedPath(startNode, maxDepth = 50) {
+  const path = [];
+  let node = startNode;
+  let depth = 0;
+
+  while (node && depth++ < maxDepth) {
+    const info = {
+      node,
+      tag: node.tagName || node.nodeName,
+      isShadowRoot: node instanceof ShadowRoot,
+      host: node.getRootNode?.()?.host || null,
+      assignedSlot: node.assignedSlot || null,
+    };
+
+    path.push(info);
+
+    node =
+      node.assignedSlot ||
+      node.parentElement ||
+      node.getRootNode?.().host ||
+      null;
+  }
+
+  console.table(
+    path.map(p => ({
+      tag: p.tag,
+      shadow: p.isShadowRoot,
+      host: p.host?.tagName || null,
+      slot: p.assignedSlot?.tagName || null,
+    }))
+  );
+
+  return path;
+}
+
+// Fully composed patchAncestors (correct + debugger-grade)
+//
+// This is our final version that:
+// - walks like DevTools composed tree
+// - crosses Shadow DOM correctly
+// - sees ha-bottom-sheet reliably
+// - logs structure when debugging
+// - behaves like event dispatch path resolution
+function patchAncestorsComposed(patchName, startNode, patches) {
+  const applied = new Set();
+  const remaining = new Map(patches.map(p => [p.tag.toLowerCase(), p.fn]));
+
+  let node = startNode;
+  let depth = 0;
+
+  const visit = (n) => {
+    if (!n || !(n instanceof Element)) return;
+
+    const tag = n.tagName?.toLowerCase();
+
+    if (tag && remaining.has(tag) && !applied.has(tag)) {
+      const fn = remaining.get(tag);
+
+      try {
+        fn(n);
+        n.requestUpdate?.();
+
+        if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): ${patchName} applied on ${tag}`, patchName, startNode, patches));
+
+        applied.add(tag);
+        remaining.delete(tag);
+      } catch (err) {
+        if (_componentLogger.isErrorEnabled()) console.error(..._componentLogger.error(`patchAncestors(patchName, startNode, patches): error while patchin ${patchName}`, patchName, startNode, patches, err));
+      }
+    }
+  };
+
+  const next = (n) => {
+    if (!n) return null;
+
+    // SLOT FLATTENING (critical for HA)
+    if (n.assignedSlot) return n.assignedSlot;
+
+    // normal DOM
+    if (n.parentElement) return n.parentElement;
+
+    // shadow DOM boundary crossing
+    const root = n.getRootNode?.();
+    if (root?.host) return root.host;
+
+    return null;
+  };
+
+  while (node && applied.size < patches.length && depth++ < 100) {
+    if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): visiting ${node.tagName || node.nodeName}...`, patchName, startNode, patches));
+
+    visit(node);
+    node = next(node);
+  }
+
+  // final report
+  for (const { tag } of patches) {
+    if (!applied.has(tag.toLowerCase())) {
+      if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): ${patchName} NOT applied on ${tag}`, patchName, startNode, patches));
+    }
+  }
+}
+
+
 // Starting from "startNode", walk-up into DOM ancestors nodes then :
 //  - when patch element "tag" matches current ancestor tag
 //  - apply patch function "fn" and tries to update lit element calling "requestUpdate"
@@ -272,6 +378,7 @@ function patchAncestors(patchName, startNode, patches) {
   const applied = new Set();
 
   while (node) {
+    if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): testing node ${node.tagName}...`, node, patchName, startNode, patches));
     for (const { tag, fn } of patches) {
       if (!applied.has(tag) && node.tagName?.toLowerCase() === tag.toLowerCase()) {
         fn(node);
@@ -356,7 +463,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
         // custom rendered elements (like scroll, pan, zoom)
         const swipeToClose = !!(customDialog["swipe_to_close"]);
         if (!swipeToClose) {
-          if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): scheduling updateComplete hook for entity ${entityId}`, entityConfig));
+          if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): scheduling updateComplete hook for entity ${entityId}`, customDialog));
             
           // Hook after Dialog DOM initialization
           this.updateComplete?.then(() => {
@@ -368,7 +475,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
 
             // Walk-up into DOM ancestors and patch first ancestor of both types (when available)
             // Note: "preventScrimClose" is reverse "swipeToClose"
-            patchAncestors("disable swipe-to-close", dialogCommonChild,[
+            patchAncestorsComposed("disable swipe-to-close", dialogCommonChild,[
               {
                 tag: "ha-adaptive-dialog",
                 fn: (dialogElt) => { dialogElt.preventScrimClose = false; }
@@ -385,7 +492,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
       }
       
     } catch (err) {
-      if (_componentLogger.isErrorEnabled()) console.error(..._componentLogger.error(`moreInfoInfo.prototype.render(): error while rendering custom dialog for entity ${entityId}`, entityConfig, err));
+      if (_componentLogger.isErrorEnabled()) console.error(..._componentLogger.error(`moreInfoInfo.prototype.render(): error while rendering custom dialog for entity ${entityId}`, customDialog, err));
     }
 
     // Standard dialog render
