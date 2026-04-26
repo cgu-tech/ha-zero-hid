@@ -265,7 +265,7 @@ _componentConfig["log_level"] = "trace";
 // Starting from "startNode", walk-up into DOM ancestors nodes then :
 //  - when patch element "tag" matches current ancestor tag
 //  - apply patch function "fn" and tries to update lit element calling "requestUpdate"
-function patchAncestors(startNode, patches) {
+function patchAncestors(patchName, startNode, patches) {
   let node = startNode;
   const applied = new Set();
 
@@ -274,7 +274,7 @@ function patchAncestors(startNode, patches) {
       if (!applied.has(tag) && node.tagName?.toLowerCase() === tag.toLowerCase()) {
         fn(node);
         node.requestUpdate?.();
-        if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(startNode, patches): patch applied for ${tag}`, startNode, patches));
+        if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): ${patchName} applied on ${tag}`, patchName, startNode, patches));
         applied.add(tag);
       }
     }
@@ -290,7 +290,7 @@ function patchAncestors(startNode, patches) {
   // log missing ones
   for (const { tag } of patches) {
     if (!applied.has(tag)) {
-      if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(startNode, patches): patch NOT applied for ${tag}`, startNode, patches));
+      if (_componentLogger.isDebugEnabled()) console.debug(..._componentLogger.debug(`patchAncestors(patchName, startNode, patches): ${patchName} NOT applied on ${tag}`, patchName, startNode, patches));
     }
   }
 }
@@ -306,13 +306,13 @@ function setupComponentContextes() {
   window[watchdogMoreInfoEvent] = true;
 
   // Hook to hass-more-info Event
-  document.addEventListener("hass-more-info", (e) => {
+  document.addEventListener("hass-more-info", (evt) => {
 
     // Update custom dialog store with event and entity context
     _componentContextes.set(
-      e.detail.entityId, {
-        source: e.composedPath?.()[0],
-        detail: e.detail,
+      evt.detail.entityId, {
+        source: evt.composedPath?.()[0],
+        detail: evt.detail,
         ts: Date.now()
       }
     );
@@ -337,7 +337,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
       // Custom dialog render
       const customDialog = eventCtx?.detail?.["customDialog"];
       if (customDialog) {
-        const entityConfig = eventCtx?.detail?.["entityConfig"];
+        const entityConfig = customDialog["entityConfig"] ?? {};
         if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): rendering custom dialog for entity ${entityId}`, entityConfig));
 
         const result = this.html`
@@ -353,11 +353,13 @@ customElements.whenDefined("ha-more-info-info").then(() => {
         //
         // This is particularly usefull to prevent this default behavior to mess with other gestures inside 
         // custom rendered elements (like scroll, pan, zoom)
-        const swipeToClose = !!(customDialog?.["swipeToClose"]);
+        const swipeToClose = !!(customDialog["swipeToClose"]);
         if (!swipeToClose) {
+          if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): scheduling updateComplete hook for entity ${entityId}`, entityConfig));
             
           // Hook after Dialog DOM initialization
           this.updateComplete?.then(() => {
+            if (_componentLogger.isTraceEnabled()) console.debug(..._componentLogger.trace(`moreInfoInfo.prototype.render(): disabling swipe-to-close gesture on dialog`));
             
             // Retrieve child dialog element
             const dialogCommonChild = this.renderRoot?.querySelector("more-info-valetudo-dialog");
@@ -365,7 +367,7 @@ customElements.whenDefined("ha-more-info-info").then(() => {
 
             // Walk-up into DOM ancestors and patch first ancestor of both types (when available)
             // Note: "preventScrimClose" is reverse "swipeToClose"
-            patchAncestors(dialogCommonChild, [
+            patchAncestors("disable swipe-to-close", dialogCommonChild,[
               {
                 tag: "ha-adaptive-dialog",
                 fn: (dialogElt) => { dialogElt.preventScrimClose = false; }
@@ -374,7 +376,8 @@ customElements.whenDefined("ha-more-info-info").then(() => {
                 tag: "ha-bottom-sheet",
                 fn: (dialogElt) => { dialogElt.preventScrimClose = false; }
               }
-            ]);
+            ]
+            );
           });
         }
         return result;

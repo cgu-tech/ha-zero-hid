@@ -2323,11 +2323,14 @@ class AndroidRemoteCard extends HTMLElement {
     const entityId = this.getAddonCellEntity(addonCellConfig);
     const entityConfig = this.getAddonCellEntityConfig(addonCellConfig);
 
-    // Sideload the entity config for the future Dialog popup
-    Globals.setSideLoadedPayload(this._hass, "more-info-config", entityConfig);
+    // Create custom dialog when entity config is defined
+    const customDialog = entityConfig ? {
+      "swipeToClose": false,
+      "entityConfig": entityConfig
+    } : null;
 
     // Trigger the more-info Dialog popup
-    this._eventManager.triggerHaosMoreInfoDialog(addonCell, entityId);
+    this._eventManager.triggerHaosMoreInfoDialog(addonCell, entityId, customDialog);
   }
 
   doAddonCellContent(addonCellConfig, defaultAddonCellConfig) {
