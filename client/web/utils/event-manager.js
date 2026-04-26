@@ -909,8 +909,8 @@ export class EventManager {
   //  - actionConfig: the <config> section for the tap action to trigger
   triggerHaosMoreInfoDialog(source, entityId, customDialog = null) {
     this.triggerHaosEvent(source, "hass-more-info", {
-      "entityId": entityId
-      "customDialog": customDialog ?? undefined
+      "entityId": entityId,
+      "customDialog": customDialog ?? undefined,
     },
     {
       "bubbles": true,

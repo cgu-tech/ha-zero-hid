@@ -2326,7 +2326,7 @@ class AndroidRemoteCard extends HTMLElement {
     // Create custom dialog when entity config is defined
     const customDialog = entityConfig ? {
       "swipeToClose": false,
-      "entityConfig": entityConfig
+      "entityConfig": entityConfig,
     } : null;
 
     // Trigger the more-info Dialog popup
