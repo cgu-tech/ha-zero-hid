@@ -478,11 +478,11 @@ customElements.whenDefined("ha-more-info-info").then(() => {
             patchAncestorsComposed("disable swipe-to-close", dialogCommonChild,[
               {
                 tag: "ha-adaptive-dialog",
-                fn: (dialogElt) => { dialogElt.preventScrimClose = false; }
+                fn: (dialogElt) => { dialogElt.preventScrimClose = true; }
               },
               {
                 tag: "ha-bottom-sheet",
-                fn: (dialogElt) => { dialogElt.preventScrimClose = false; }
+                fn: (dialogElt) => { dialogElt.preventScrimClose = true; }
               }
             ]
             );
