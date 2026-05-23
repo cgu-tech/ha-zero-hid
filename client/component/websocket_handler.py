@@ -63,7 +63,13 @@ class WebSocketClient:
     # Sync keyboard request: [0x50], expects json response
     async def sync_keyboard(self) -> dict:
         response = await self.send(b'\x50', wait_response=True)
-        data = json.loads(response)
+
+        data: dict = {}
+        if response is None:
+            _LOGGER.warning(f"Cannot sync keyboard")
+        else:
+            data = json.loads(response)
+
         return {
             "modifiers": data.get("modifiers", []),
             "keys": data.get("keys", []),
@@ -95,41 +101,51 @@ class WebSocketClient:
     async def send(self, cmd: bytes, wait_response: bool = False) -> bytes | None:
         """Send a command with safe (re)connection."""
         async with self._lock:
-            try:
-                if not self.websocket:
-                    _LOGGER.warning("WebSocket not connected. Reconnecting...")
-                    await self.connect()
+            return await self._unsafe_send(cmd, wait_response)
 
-                await self.websocket.send(cmd)
-                if wait_response:
-                    response = await self.websocket.recv()
-                    return response
-            except ConnectionClosedOK as e:
-                _LOGGER.warning(f"WebSocket closed cleanly: {e}. Reconnecting...")
-                await self.recover_and_retry(cmd)
-            except Exception as e:
-                _LOGGER.error(f"Unexpected WebSocket error: {e}")
+    async def _unsafe_send(self, cmd: bytes, wait_response: bool = False, retries: int = 1) -> bytes | None:
+        """Try to establish websocket connection first then send message."""
+        try:
+            # Try to open websocket connection
+            await self.connect()
+
+            # Websocket connection failed: fail safe
+            if not self.is_connected():
+                _LOGGER.error("WebSocket reconnect failed")
+                return None
+
+            # Websocket connection succeed: send message and wait for response (if/when needed)
+            await self.websocket.send(cmd)
+            if wait_response:
+                return await self.websocket.recv()
+
+            _LOGGER.debug("Message sent")
+            return None
+
+        except (ConnectionClosedOK, ConnectionClosedError) as wsCloseEx:
+            if retries > 0:
+                _LOGGER.warning(f"WebSocket closed: {wsCloseEx}. {retries} {'retry' if retries == 1 else 'retries'} remaining...")
+                await self.disconnect()
+                return await self._unsafe_send(cmd, wait_response, retries - 1)
+            else:
+                _LOGGER.warning(f"WebSocket closed: {wsCloseEx}. No retry remaining: aborting...")
                 await self.disconnect()
 
-    async def recover_and_retry(self, cmd: bytes) -> None:
-        """Handle recovery logic and retry sending a command."""
-        await self.disconnect()
-        await asyncio.sleep(1)  # Optional backoff
-        await self.connect()
-        if self.websocket and not self.websocket.closed:
-            try:
-                await self.websocket.send(cmd)
-                _LOGGER.info("Retried command successfully.")
-            except Exception as e:
-                _LOGGER.error(f"Retry failed: {e}")
+        except Exception as ex:
+            _LOGGER.error(f"Unexpected send error: {ex}")
+            await self.disconnect()
+
+        _LOGGER.warning("Message not sent")
+        return None
 
     async def connect(self) -> None:
         """Establish a new WebSocket connection safely."""
-        if self.websocket and not self.websocket.closed:
-            _LOGGER.debug("WebSocket already connected.")
+        if self.is_connected():
+            _LOGGER.debug("WebSocket already connected")
             return
 
         try:
+            _LOGGER.info("WebSocket connection in progress...")
             ssl_context = client_context()
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE  # Accept self-signed certs (insecure but OK for testing)
@@ -147,18 +163,27 @@ class WebSocketClient:
                 # HA 2025+ websockets < 9
                 self.websocket = await websockets.connect(self.url, ssl=ssl_context, extra_headers=extra_headers)
 
-            _LOGGER.info("WebSocket connection established.")
-        except Exception as e:
-            _LOGGER.error(f"Failed to connect to WebSocket: {e}")
-            self.websocket = None
+            _LOGGER.info("WebSocket connection established")
+        except Exception as ex:
+            await self.disconnect()
+            raise RuntimeError(f"WebSocket connection failed: {ex}")
 
     async def disconnect(self) -> None:
-        """Cleanly close WebSocket connection."""
+        """ Tries to close WebSocket connection"""
         if self.websocket:
             try:
                 await self.websocket.close()
-                _LOGGER.info("WebSocket connection closed.")
-            except Exception as e:
-                _LOGGER.warning(f"Error while closing WebSocket: {e}")
+            except Exception as ex:
+                _LOGGER.warning(f"Swallowed error while closing websocket connection: {ex}")
             finally:
                 self.websocket = None
+                _LOGGER.info("WebSocket connection closed")
+
+    def is_connected(self) -> bool:
+        try:
+            return (
+                self.websocket is not None
+                and not getattr(self.websocket, "closed", False)
+            )
+        except Exception:
+            return False
