@@ -147,7 +147,7 @@ async def handle_client(websocket) -> None:
 async def handle_message(message) -> None:
     if isinstance(message, str):
         logger.warning("Expected binary message, received text.")
-        continue
+        return # Skip bad message
 
     cmd = message[0]
     if logger.getEffectiveLevel() == logging.DEBUG:
@@ -219,7 +219,7 @@ async def handle_message(message) -> None:
         expected_length = 2 + count * 2  # 2 header bytes + 2 bytes per item
         if len(message) < expected_length:
             logger.warning("Malformed conpress command length: expected %d, got %d", expected_length, len(message))
-            return
+            return # Skip bad message
 
         cons = list(struct.unpack(f"<{count}H", message[2:2 + count * 2]))
         logger.debug("Conpress: %s", cons)
