@@ -1,6 +1,7 @@
 [Unit]
 Description=HA zero-hid websockets server
-After=network.target
+Requires=usb_gadget.service
+After=network.target usb_gadget.service
 
 [Service]
 Type=simple
