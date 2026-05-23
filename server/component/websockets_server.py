@@ -7,7 +7,6 @@ import logging
 import logging.config
 import ssl
 import struct
-import subprocess
 
 from typing import Set
 from websockets.server import Request
@@ -25,8 +24,6 @@ AUTHORIZED_IPS: Set[str] = set(ip.strip() for ip in "<websocket_authorized_clien
 SERVER_HOST = "0.0.0.0"
 SERVER_PORT = <websocket_server_port>
 SERVER_SECRET = "<websocket_server_secret>"
-
-USB_SERVICE = "usb_gadget.service"
 
 # SSL Context
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -135,11 +132,7 @@ async def handle_client(websocket) -> None:
             except WriteError as hidEx:
                 logger.error(f"HID write failed (likely USB gadget reset): {hidEx}")
 
-                # trigger systemd restart
-                #logger.warning(f"Restarting USB gadget service: {USB_SERVICE}")
-                #subprocess.run(["systemctl", "restart", USB_SERVICE])
-
-                # TODO: send USB error to feedback to client similarly to this:
+                # TODO: send feedback to client similarly to this:
                 # await websocket.send(json.dumps(response_data).encode('utf-8'))
     except websockets.ConnectionClosed:
         logger.info("Client disconnected")
