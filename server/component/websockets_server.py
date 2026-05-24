@@ -128,7 +128,7 @@ async def handle_client(websocket) -> None:
     try:
         async for message in websocket:
             try:
-                await handle_message(message)
+                await handle_message(websocket, message)
             except WriteError as hidEx:
                 logger.error(f"HID write failed (likely USB gadget reset): {hidEx}")
 
@@ -137,14 +137,14 @@ async def handle_client(websocket) -> None:
     except websockets.ConnectionClosed:
         logger.info("Client disconnected")
 
-async def handle_message(message) -> None:
+async def handle_message(websocket, message, id: int | None = None) -> None:
     if isinstance(message, str):
-        logger.warning("Expected binary message, received text.")
+        logger.warning("Expected binary message, received text")
         return # Skip bad message
 
     cmd = message[0]
     if logger.getEffectiveLevel() == logging.DEBUG:
-        logger.debug("Received binary command: 0x%02X", cmd)
+        logger.debug("Received binary command: 0x%02X (%s)", cmd, "no_id" if id is None else f"id={id}")
         logger.debug("Raw bytes: %s", " ".join(f"0x{b:02X}" for b in message))
 
     if cmd == 0x01 and len(message) == 3:  # scroll
@@ -227,11 +227,9 @@ async def handle_message(message) -> None:
             "capslock": keyboard_state["capslock"],
             "scrolllock": keyboard_state["scrolllock"],
         }
-        await websocket.send(json.dumps(response_data).encode('utf-8'))
-        if logger.getEffectiveLevel() == logging.DEBUG:
-            logger.debug("Sync response: %s", response_data)
+        await send_response(websocket, response_data, id)
 
-    elif cmd == 0x60 :  # audio:start
+    elif cmd == 0x60:  # audio:start
         logger.debug("Audio start requested")
         microphone.start_audio()
 
@@ -258,14 +256,53 @@ async def handle_message(message) -> None:
             if logger.getEffectiveLevel() == logging.DEBUG:
                 logger.debug("Audio buffer (large): %s", length)
 
-    elif cmd == 0x70 :  # audio:stop
+    elif cmd == 0x70:  # audio:stop
         logger.debug("Audio stop requested")
         # microphone.stop_audio()
         with open("/home/ha_zero_hid/output.wav", "wb") as f:
             f.write(create_wav_file())
 
+    elif cmd == 0xF0 and len(message) >= 2:  # id with message
+        id_length = message[1] # 1 byte
+        id_format = unsigned_int_format(id_length)
+        if id_format is None:
+            logger.warning("Malformed id with message command")
+            return # Skip bad message
+
+        # Unpack id + message data
+        _, __, id = struct.unpack(f"<BB{id_format}", message)
+        data = message[2 + id_length:]
+
+        # Handle unpacked message data + id
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            logger.debug("Handling message associated to id: %s", id)
+        await handle_message(websocket, data, id)
+
     else:
         logger.warning("Unknown or malformed command: 0x%02X", cmd)
+
+def unsigned_int_format(length: int) -> str | None:
+    if length == 1:
+        return "B"
+    elif length == 2:
+        return "H"
+    elif length == 4:
+        return "I"
+    elif length == 8:
+        return "Q"
+    else:
+        logger.warning("Unsupported length: expected length to be one of [1, 2, 4, 8], got %d", length)
+        return None
+
+async def send_response(websocket, data, id: int | None = None) -> None:
+    response = {
+        "type": "response",
+        "id": id,
+        "data": data,
+    }
+    if logger.getEffectiveLevel() == logging.DEBUG:
+        logger.debug("Sending response: %s", response)
+    await websocket.send(json.dumps(response).encode('utf-8'))
 
 async def main():
     stop_event = asyncio.Event()

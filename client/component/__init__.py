@@ -235,7 +235,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     ws_servers = {}
     for server in WEBSOCKET_SERVERS:
         server_connection = f"{server['protocol']}://{server['host']}:{server['port']}"
-        ws_client = WebSocketClient(server_connection, server["secret"])
+        ws_client = WebSocketClient(server_connection, server["secret"], None)
         ws_servers[server["id"]] = {
             "name": server["name"],
             "ws_client": ws_client,
