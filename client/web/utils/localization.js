@@ -35,9 +35,14 @@ export class Localization {
   }
 
   localize(key) {
-    return this._translationsByLanguages.get(this.getLang())?.values?.[key]
-        || this._translationsByLanguages.get(this.getDefaultLang())?.values?.[key]
+    return this.tryGetLocalized(this._translationsByLanguages.get(this.getLang())?.values, key)
+        || this.tryGetLocalized(this._translationsByLanguages.get(this.getDefaultLang())?.values, key)
         || key;
+  }
+
+  tryGetLocalized(values, key) {
+    if (!values) return null;
+    return key.split(".").reduce((acc, keyPart) => acc?.[keyPart], values);
   }
 
   static getTranslationsByLanguages(translations) {
