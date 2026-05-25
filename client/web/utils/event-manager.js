@@ -942,7 +942,7 @@ export class EventManager {
     const detail = {
       "message": message ?? "",
     };
-    title ? detail["title"] = title;
+    if (title) detail["title"] = title;
     this.triggerHaosEvent(source, "hass-notification",
       detail,
       {
