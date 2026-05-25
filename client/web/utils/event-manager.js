@@ -894,6 +894,18 @@ export class EventManager {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`triggerHaosEvent(source, type, detail, options): undefined hass. Unable to execute the HAOS event (called too early before HA hass init or HA unresponsive)`, source, type, detail, options));
       return;
     }
+    this.triggerHaosUnsafeEvent(source, type, detail, options);
+  }
+
+  // Trigger an event without checking if HAOS is alive.
+  // This is typically used to make HAOS trigger an action in reaction to the dispatched event.
+  // 
+  // Parameters:
+  //  - source: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - type: the event type (knwon types: "hass-action")
+  //  - detail: the event configuration (knwon configurations: { config: <ui_action_object_retrieved_from_yaml_config>, action: "tap", })
+  //  - options: optional object for options (known options: do not specify)
+  triggerHaosUnsafeEvent(source, type, detail, options) {
     const event = new CustomEvent(type, {
       bubbles: options?.bubbles ?? true,
       cancelable: Boolean(options?.cancelable),

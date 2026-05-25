@@ -22,7 +22,8 @@ export class Localization {
   }
 
   getHass() {
-    return this._origin._hass;
+    // Aggressively tries to retrieve HASS because we depend on it for dynamic lang retrieval
+    return this._origin._hass || document.querySelector("home-assistant")?.hass;
   }
 
   getDefaultLang() {
@@ -30,7 +31,7 @@ export class Localization {
   }
 
   getLang() {
-    return this.getHass().language || this.getLang();
+    return this.getHass()?.language || this.getDefaultLang();
   }
 
   localize(key) {
