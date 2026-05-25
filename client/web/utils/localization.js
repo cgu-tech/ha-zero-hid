@@ -34,8 +34,8 @@ export class Localization {
   }
 
   localize(key) {
-    return this._translationsByLanguages.get(this.getLang())?.[key]
-        || this._translationsByLanguages.get(this.getDefaultLang())?.[key]
+    return this._translationsByLanguages.get(this.getLang())?.values?.[key]
+        || this._translationsByLanguages.get(this.getDefaultLang())?.values?.[key]
         || key;
   }
 

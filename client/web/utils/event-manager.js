@@ -1,5 +1,6 @@
 import { Globals } from './globals.js';
 import { Logger } from './logger.js';
+import { Localization } from './localization.js';
 
 // Define EventManager helper class
 export class EventManager {
@@ -117,6 +118,7 @@ export class EventManager {
   _globalContainerName = '__window';
   
   _origin;
+  _localization;
   _eventsMap = new Map();
   _reversedEventsMap = new Map();
   _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
@@ -131,6 +133,7 @@ export class EventManager {
 
   constructor(origin) {
     this._origin = origin;
+    this._localization = new Localization(this);
 
     // Mapping for "managed" event names with their "real" event names counterparts 
     // that might be supported by device - or not (by preference order)
@@ -801,7 +804,7 @@ export class EventManager {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callMixedDomainService(name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, name, args));
       return;
     }
-    this.getHass().callService('homeassistant', name, args);
+    this.callService('homeassistant', name, args);
   }
 
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
@@ -813,11 +816,22 @@ export class EventManager {
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
   callService(domain, name, args) {
-    if (!this.getHass()) {
+    const hass = this.getHass(); // Needed for closure
+    if (!hass) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, domain, name, args));
       return;
     }
-    this.getHass().callService(domain, name, args);
+    hass.callService(domain, name, args).catch((err) => {
+      if (!hass.connection.connected) {
+          // HA host unreachable (websocket disconnected)
+          this.triggerHaosToast(
+            this.getHaosEventDefaultSource(),
+            this._localization.localize("error.ha.connection_lost.message"),
+            this._localization.localize("error.ha.connection_lost.title")
+          );
+      }
+      throw err;
+    });
   }
 
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
@@ -831,7 +845,7 @@ export class EventManager {
   //   - on command success: ".then((response) => {...})"
   //   - on command error: ".catch((err) => {...})"
   callComponentCommandWithServerId(name, args) {
-    this.callComponentCommand(name, this.injectServerId(args));
+    return this.callComponentCommand(name, this.injectServerId(args));
   }
 
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
@@ -875,15 +889,15 @@ export class EventManager {
   //  - type: the event type (knwon types: "hass-action")
   //  - detail: the event configuration (knwon configurations: { config: <ui_action_object_retrieved_from_yaml_config>, action: "tap", })
   //  - options: optional object for options (known options: do not specify)
-  triggerHaosEvent(source, type, detail, options = {}) {
+  triggerHaosEvent(source, type, detail, options) {
     if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`triggerHaosEvent(source, type, detail, options = {}): undefined hass. Unable to execute the HAOS event (called too early before HA hass init or HA unresponsive)`, source, type, detail, options));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`triggerHaosEvent(source, type, detail, options): undefined hass. Unable to execute the HAOS event (called too early before HA hass init or HA unresponsive)`, source, type, detail, options));
       return;
     }
     const event = new CustomEvent(type, {
-      bubbles: options.bubbles ?? true,
-      cancelable: Boolean(options.cancelable),
-      composed: options.composed ?? true,
+      bubbles: options?.bubbles ?? true,
+      cancelable: Boolean(options?.cancelable),
+      composed: options?.composed ?? true,
       detail,
     });
     source.dispatchEvent(event);
@@ -916,6 +930,30 @@ export class EventManager {
       "bubbles": true,
       "composed": true,
     });
+  }
+
+  // Trigger an HAOS toast displayed as temporary notification to user
+  // 
+  // Parameters:
+  //  - source: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - message: the mandatory toast message
+  //  - title: the optionnal toast title
+  triggerHaosToast(source, message, title = null) {
+    const detail = {
+      "message": message ?? "",
+    };
+    title ? detail["title"] = title;
+    this.triggerHaosEvent(source, "hass-notification",
+      detail,
+      {
+        "bubbles": true,
+        "composed": true,
+      }
+    );
+  }
+
+  getHaosEventDefaultSource() {
+    return document.querySelector("home-assistant");
   }
 
   addBlurListener(target, callback, options = null) { return this.addBlurListenerToContainer(this._defaultContainerName, target, callback, options ); }
