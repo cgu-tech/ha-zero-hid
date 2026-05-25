@@ -1,5 +1,6 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
+import { Localization } from './utils/localization.js';
 import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';
@@ -56,6 +57,7 @@ class AndroidRemoteCard extends HTMLElement {
   _hass;
   _elements = {};
   _logger;
+  _localization;
   _eventManager;
   _layoutManager;
   _resourceManager;
@@ -79,6 +81,7 @@ class AndroidRemoteCard extends HTMLElement {
     super();
 
     this._logger = new Logger(this, "android-remote-card.js");
+    this._localization = new Localization(this);
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, layoutsRemote);
     this._resourceManager = new ResourceManager(this, import.meta.url);

@@ -1,21 +1,19 @@
 import { Globals } from './globals.js';
 import { Logger } from './logger.js';
-import * as translations from './translations/index.js';
+import * as translations from '../translations/index.js';
 
 export class Localization {
 
   // private init required constants
   static _DEFAULT_LANG = "en";  
 
-  _importMetaUrl;
   _origin;
   _translationsByLanguages;
 
   // Usage:
   // const localization = new Localization(this, import.meta.url);
-  constructor(origin, importMetaUrl) {
+  constructor(origin) {
     this._origin = origin;
-    this._importMetaUrl = importMetaUrl;
     this._translationsByLanguages = this.constructor.getTranslationsByLanguages(translations);
   }
 
