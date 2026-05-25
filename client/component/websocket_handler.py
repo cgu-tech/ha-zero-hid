@@ -108,7 +108,7 @@ class WebSocketClient:
                 # Check message type
                 message_type = message.get("type", None)
 
-                # Sollicited message (response to a request): trigger response future resolution
+                # Solicited message (response to a request): trigger response future resolution
                 if message_type == "response":
                     message_id = message.get("id", None)
                     pending_response = None
