@@ -2819,14 +2819,28 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   appendCode(code) {
+    let backend = null;
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
-        this.appendKeyCode(code);
+        backend = this.appendKeyCode(code);
       } else if (this.isConsumer(code)) {
-        this.appendConsumerCode(code);
+        backend = this.appendConsumerCode(code);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
+    }
+    if (backend) {
+      const hass = this.getHass();
+      backend.catch((err) => {
+        if (!hass.connection.connected) {
+            // HA host unreachable (websocket disconnected)
+            this._eventManager.triggerHaosToast(
+              this._eventManager.getHaosEventDefaultSource(),
+              this._localization.localize("error.ha.connection_lost.message")
+            );
+        }
+        throw err;
+      });
     }
   }
 
@@ -2842,7 +2856,7 @@ class AndroidRemoteCard extends HTMLElement {
         this._pressedKeys.add(intCode);
       }
     }
-    this.sendKeyboardUpdate();
+    return this.sendKeyboardUpdate();
   }
 
   appendConsumerCode(code) {
@@ -2851,7 +2865,7 @@ class AndroidRemoteCard extends HTMLElement {
       const intCode = this._consumercodes[code];
       this._pressedConsumers.add(intCode);
     }
-    this.sendConsumerUpdate();
+    return this.sendConsumerUpdate();
   }
 
   removeCode(code) {
@@ -2904,7 +2918,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendKeyboardUpdate() {
-    this._eventManager.callComponentServiceWithServerId("keypress", {
+    return this._eventManager.callComponentServiceWithServerId("keypress", {
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
     });
@@ -2912,7 +2926,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate() {
-    this._eventManager.callComponentServiceWithServerId("conpress", {
+    return this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
     });
   }

@@ -605,7 +605,7 @@ export class EventManager {
 
       // Execute configured override entity service
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn, overrideConfig) + overrideAction: Executing override entity service ${domain}.${service} on ${btn.id}:`, entityId));
-      this.callService(domain, service, {
+      return this.callService(domain, service, {
         "entity_id": entityId,
       });
     }
@@ -756,7 +756,7 @@ export class EventManager {
     }
 
     // Start loading preferences asynchronously
-    this.callComponentService(userPrefsService, userPreferences);
+    return this.callComponentService(userPrefsService, userPreferences);
   }
 
   // Injects current server id into args["si"] (inject null into the field when not available)
@@ -778,7 +778,7 @@ export class EventManager {
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
   callComponentServiceWithServerId(name, args) {
-    this.callComponentService(name, this.injectServerId(args));
+    return this.callComponentService(name, this.injectServerId(args));
   }
 
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
@@ -789,7 +789,7 @@ export class EventManager {
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
   callComponentService(name, args) {
-    this.callService(Globals.COMPONENT_NAME, name, args);
+    return this.callService(Globals.COMPONENT_NAME, name, args);
   }
 
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
@@ -804,7 +804,7 @@ export class EventManager {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callMixedDomainService(name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, name, args));
       return;
     }
-    this.callService('homeassistant', name, args);
+    return this.callService('homeassistant', name, args);
   }
 
   // Call a service from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
@@ -817,21 +817,11 @@ export class EventManager {
   //  - void (this is a fire-and-forget HAOS integration call)
   callService(domain, name, args) {
     const hass = this.getHass(); // Needed for closure
-    if (!hass) {
+    if (!this.getHass()) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, domain, name, args));
       return;
     }
-    hass.callService(domain, name, args).catch((err) => {
-      if (!hass.connection.connected) {
-          // HA host unreachable (websocket disconnected)
-          this.triggerHaosToast(
-            this.getHaosEventDefaultSource(),
-            this._localization.localize("error.ha.connection_lost.message"),
-            this._localization.localize("error.ha.connection_lost.title")
-          );
-      }
-      throw err;
-    });
+    return this.getHass().callService(domain, name, args);
   }
 
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
@@ -950,13 +940,29 @@ export class EventManager {
   //  - source: the HTML element that originated the event (might be any HTML element from the front js)
   //  - message: the mandatory toast message
   //  - title: the optionnal toast title
-  triggerHaosToast(source, message, title = null) {
+  triggerHaosToast(source, message, action = null) {
     const detail = {
       "message": message ?? "",
     };
-    if (title) detail["title"] = title;
+    if (action) detail["action"] = action;
     this.triggerHaosEvent(source, "hass-notification",
       detail,
+      {
+        "bubbles": true,
+        "composed": true,
+      }
+    );
+  }
+
+  // Trigger an HAOS toast displayed as temporary notification to user
+  // 
+  // Parameters:
+  //  - source: the HTML element that originated the event (might be any HTML element from the front js)
+  //  - message: the mandatory toast message
+  //  - title: the optionnal toast title
+  triggerHaosNotificationsPanel(source) {
+    this.triggerHaosEvent(source, "hass-show-notifications",
+      undefined,
       {
         "bubbles": true,
         "composed": true,
