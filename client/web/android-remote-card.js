@@ -2830,12 +2830,12 @@ class AndroidRemoteCard extends HTMLElement {
       }
     }
     if (backend) {
-      const hass = this.getHass();
+      const hass = this.getHass() || this._eventManager.getForcedHass();
       backend.catch((err) => {
         if (!hass.connection.connected) {
             // HA host unreachable (websocket disconnected)
             this._eventManager.triggerHaosToast(
-              this._eventManager.getHaosEventDefaultSource(),
+              this._eventManager.getHaElement(),
               this._localization.localize("error.ha.connection_lost.message")
             );
         }
