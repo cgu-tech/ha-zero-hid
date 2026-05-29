@@ -2819,14 +2819,24 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   appendCode(code) {
+    let backend = null;
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
-        this.appendKeyCode(code);
+        backend = this.appendKeyCode(code);
       } else if (this.isConsumer(code)) {
-        this.appendConsumerCode(code);
+        backend = this.appendConsumerCode(code);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
+    }
+    if (backend) {
+      const hass = this._hass || this._eventManager.getForcedHass();
+      backend.catch((err) => {
+        if (!hass.connection.connected) {
+          // HA host unreachable (websocket disconnected)
+          // Silently ignore error: notification will be displayed on release
+        }
+      });
     }
   }
 
