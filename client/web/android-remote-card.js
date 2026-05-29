@@ -2819,27 +2819,14 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   appendCode(code) {
-    let backend = null;
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
-        backend = this.appendKeyCode(code);
+        this.appendKeyCode(code);
       } else if (this.isConsumer(code)) {
-        backend = this.appendConsumerCode(code);
+        this.appendConsumerCode(code);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
-    }
-    if (backend) {
-      const hass = this._hass || this._eventManager.getForcedHass();
-      backend.catch((err) => {
-        if (!hass.connection.connected) {
-            // HA host unreachable (websocket disconnected)
-            this._eventManager.triggerHaosToast(
-              this._eventManager.getHaElement(),
-              this._localization.localize("error.ha.connection_lost.message")
-            );
-        }
-      });
     }
   }
 
@@ -2868,14 +2855,27 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   removeCode(code) {
+    let backend = null;
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
-        this.removeKeyCode(code);
+        backend = this.removeKeyCode(code);
       } else if (this.isConsumer(code)) {
-        this.removeConsumerCode(code);
+        backend = this.removeConsumerCode(code);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
+    }
+    if (backend) {
+      const hass = this._hass || this._eventManager.getForcedHass();
+      backend.catch((err) => {
+        if (!hass.connection.connected) {
+            // HA host unreachable (websocket disconnected)
+            this._eventManager.triggerHaosToast(
+              this._eventManager.getHaElement(),
+              this._localization.localize("error.ha.connection_lost.message")
+            );
+        }
+      });
     }
   }
 

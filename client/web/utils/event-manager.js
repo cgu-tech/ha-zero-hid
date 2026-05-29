@@ -818,7 +818,7 @@ export class EventManager {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, domain, name, args));
       return;
     }
-    return this.getHass().callService(domain, name, args);
+    return this.getHass().callService(domain, name, args, undefined, true);
   }
 
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
