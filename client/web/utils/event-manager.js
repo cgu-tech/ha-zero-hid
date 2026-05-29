@@ -921,9 +921,10 @@ export class EventManager {
   //  - source: the HTML element that originated the event (might be any HTML element from the front js)
   //  - message: the mandatory toast message
   //  - title: the optionnal toast title
-  triggerHaosToast(source, message, action = null) {
+  triggerHaosToast(source, message, duration, action = null) {
     const detail = {
       "message": message ?? "",
+      "duration": duration ?? 3000,
     };
     if (action) detail["action"] = action;
     this.triggerHaosEvent(source, "hass-notification",
