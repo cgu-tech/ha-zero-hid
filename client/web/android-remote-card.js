@@ -2930,14 +2930,14 @@ class AndroidRemoteCard extends HTMLElement {
     return this._eventManager.callComponentServiceWithServerId("keypress", {
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
-    });
+    }, false);
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
   sendConsumerUpdate() {
     return this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
-    });
+    }, false);
   }
 
 }
