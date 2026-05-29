@@ -2839,7 +2839,6 @@ class AndroidRemoteCard extends HTMLElement {
               this._localization.localize("error.ha.connection_lost.message")
             );
         }
-        throw err;
       });
     }
   }
