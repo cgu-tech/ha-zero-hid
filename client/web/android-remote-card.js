@@ -2901,7 +2901,7 @@ class AndroidRemoteCard extends HTMLElement {
         this._pressedKeys.delete(intCode);
       }
     }
-    this.sendKeyboardUpdate();
+    return this.sendKeyboardUpdate();
   }
 
   removeConsumerCode(code) {
@@ -2910,7 +2910,7 @@ class AndroidRemoteCard extends HTMLElement {
       const intCode = this._consumercodes[code];
       this._pressedConsumers.delete(intCode);
     }
-    this.sendConsumerUpdate();
+    return this.sendConsumerUpdate();
   }
 
   isKey(code) {
