@@ -49,7 +49,7 @@ class WebSocketClient:
 
                     return await self.unsafe_send(message, wait_response)
                 except Exception as ex:
-                    _LOGGER.exception("Send failed (%s out of %s)", retry + 1, retries)
+                    _LOGGER.debug("Send failed (%s out of %s)", retry + 1, retries)
                     await self.disconnect()
                     await self.stop_receive()
                     await self.fail_pending_responses(ex)

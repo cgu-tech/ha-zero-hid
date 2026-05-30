@@ -7,8 +7,10 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.components.websocket_api.connection import ActiveConnection
 from homeassistant.components.websocket_api import websocket_command, async_response, async_register_command
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
+
 
 from typing import Set, TypedDict, List, Any, Optional
 
@@ -408,8 +410,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_keypress(modifiers, keys)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_keypress: {e}")
+        except OSError as ex:
+            _LOGGER.exception("Websocket error: errno=%s, strerror=%s", ex.errno, ex.strerror)
+            raise HomeAssistantError(f"Failed to send keypress: {ex}") from ex
+        except Exception as ex:
+            _LOGGER.exception(f"Unhandled error in handle_keypress: {ex}")
 
     """Handle pressing/releasing consumer keyboard keys."""
     @callback
