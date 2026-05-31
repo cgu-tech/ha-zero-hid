@@ -5,7 +5,6 @@ import { Logger } from './logger.js';
 export class HassEventManager {
 
   _origin;
-  _isManaged = false; // indicates whether or not this event manager origin card is managed by another card (and transitively whether or not some events managements should be delegated to the manager card of the origin card)
   _hassEventsCallbacks = new Map(); // event -> Set(fn)
   _managedCallbacks = new Map();
   _unsubscriptions = new Map();     // event -> unsubscribe fn
@@ -18,19 +17,15 @@ export class HassEventManager {
   }
 
   getLogger() {
-    return this._origin?._logger;
+    return this._origin?.getLogger();
   }
 
   getHass() {
-    return this._origin?._hass;
-  }
-
-  setManaged(managed) {
-    this._isManaged = managed;
+    return this._origin?.getHass() || this._origin?.getForcedHass();
   }
 
   isManaged() {
-    return this._isManaged;
+    return this._origin?.isManaged();
   }
 
   hassCallback() {
@@ -125,9 +120,14 @@ export class HassEventManager {
     this._inflightSubscriptions.set(eventName, true);
 
     try {
-      const managedCallback = this.getManagedCallback(eventName);
-      const unsubscribe = await this.hass.connection.subscribeEvents(managedCallback, eventName);
-      this._unsubscriptions.set(eventName, unsubscribe);
+      const hass = this.getHass();
+      if (hass) {
+        const managedCallback = this.getManagedCallback(eventName);
+        const unsubscribe = await hass.connection.subscribeEvents(managedCallback, eventName);
+        this._unsubscriptions.set(eventName, unsubscribe);
+      } else {
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("subscribeHassEvents(eventName): event not attached to hass buss (hass is undefined)", eventName));
+      }
     } finally {
       this._inflightSubscriptions.delete(eventName);
     }
