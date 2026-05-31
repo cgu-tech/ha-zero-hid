@@ -151,7 +151,7 @@ class WebSocketClient:
                     _LOGGER.exception("Unexpected error while failing pending")
             self._pending_responses.clear()
 
-    async def connect(self) -> None:
+    async def connect(self, timeout=0.5) -> None:
         _LOGGER.info("WebSocket connection in progress...")
         ssl_context = client_context()
         ssl_context.check_hostname = False
@@ -165,10 +165,10 @@ class WebSocketClient:
         # Try to connect to remote websockets server
         try:
             # HA 2026+ websockets >= 10
-            self.websocket = await websockets.connect(self.url, ssl=ssl_context, additional_headers=extra_headers)
+            self.websocket = await websockets.connect(self.url, ssl=ssl_context, additional_headers=extra_headers, open_timeout=timeout)
         except TypeError:
-            # HA 2025+ websockets < 9
-            self.websocket = await websockets.connect(self.url, ssl=ssl_context, extra_headers=extra_headers)
+            # HA <2026 websockets < 9
+            self.websocket = await asyncio.wait_for(websockets.connect(self.url, ssl=ssl_context, extra_headers=extra_headers), timeout=timeout)
         _LOGGER.info("WebSocket connection established")
 
     async def start_receive(self) -> None:
