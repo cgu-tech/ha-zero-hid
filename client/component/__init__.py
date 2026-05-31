@@ -418,8 +418,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     "category": "error",
                     "message": "Target computer is unreachable",
                     "errno": 113,
-                    "modifiers", modifiers,
-                    "keys": keys,
+                    "modifiers", f"{modifiers}",
+                    "keys": f"{keys}",
                 },
             )
             raise HomeAssistantError(f"Failed to send keypress: {ex}") from ex
