@@ -16,7 +16,7 @@ from typing import Set, TypedDict, List, Any, Optional
 
 from .resources_manager import ResourcesVersions, synchronize_resources, synchronize_resources_heuristically
 from .websocket_handler import WebSocketClient
-from .const import DOMAIN, MIN_RANGE, MAX_RANGE, WEBSOCKET_SERVERS
+from .const import DOMAIN, MIN_RANGE, MAX_RANGE, WEBSOCKET_SERVERS, HASS_EVENT_TRACE, HASS_EVENT_DEBUG, HASS_EVENT_INFO, HASS_EVENT_WARN, HASS_EVENT_ERROR, HASS_EVENT_CRITICAL, HASS_CODE_ERROR_PI_UNREACHABLE, HASS_CODE_ERROR_UNEXPECTED, HASS_CODE_ERROR_USB_UNREACHABLE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -189,6 +189,18 @@ def get_user_authorized_servers(hass: HomeAssistant, user_id: str) -> List[Any]:
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
     return servers
+
+def send_hass_event(hass: HomeAssistant, type: int, code: int) -> None
+    hass.bus.async_fire(
+        "hazerohid",
+        {
+            "msg_type": type,
+            "msg_code": code
+        },
+    )
+
+def send_hass_error(hass: HomeAssistant, code: int) -> None
+    send_hass_event(hass, HASS_EVENT_ERROR, code)
 
 @websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
 @async_response
@@ -412,17 +424,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
         except OSError as ex:
             _LOGGER.exception("Websocket error: errno=%s, strerror=%s", ex.errno, ex.strerror)
-            hass.bus.async_fire(
-                "hazerohid",
-                {
-                    "category": "error",
-                    "message": "Target computer is unreachable",
-                    "errno": 113,
-                    "modifiers": modifiers,
-                    "keys": keys,
-                },
-            )
-            raise HomeAssistantError(f"Failed to send keypress: {ex}") from ex
+            if not modifiers and keys:
+                send_hass_error(hass, HASS_CODE_ERROR_PI_UNREACHABLE)
         except Exception as ex:
             _LOGGER.exception(f"Unhandled error in handle_keypress: {ex}")
 
@@ -443,6 +446,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_conpress(cons)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_conpress(cons): {cons}")
+        except OSError as ex:
+            _LOGGER.exception("Websocket error: errno=%s, strerror=%s", ex.errno, ex.strerror)
+            if not cons:
+                send_hass_error(hass, HASS_CODE_ERROR_PI_UNREACHABLE)
         except Exception as e:
             _LOGGER.exception(f"Unhandled error in handle_conpress: {e}")
 
