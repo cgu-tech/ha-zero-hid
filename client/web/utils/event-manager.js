@@ -1,5 +1,6 @@
 import { Globals } from './globals.js';
 import { Logger } from './logger.js';
+import { HassEventManager } from './hass-event-manager.js';
 
 // Define EventManager helper class
 export class EventManager {
@@ -115,8 +116,9 @@ export class EventManager {
   _listenerKeys = ['target', 'callback', 'options', 'eventName', 'managedCallback'];
   _defaultContainerName = 'default';
   _globalContainerName = '__window';
-  
+
   _origin;
+  _hassEventManager;
   _eventsMap = new Map();
   _reversedEventsMap = new Map();
   _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
@@ -131,6 +133,7 @@ export class EventManager {
 
   constructor(origin) {
     this._origin = origin;
+    this._hassEventManager = new HassEventManager(this);
 
     // Mapping for "managed" event names with their "real" event names counterparts 
     // that might be supported by device - or not (by preference order)
@@ -151,7 +154,7 @@ export class EventManager {
     this._eventsMap.set("EVT_VISIBILITY_CHANGE",  ["visibilitychange"]);
     this._eventsMap.set("EVT_DEVICE_ORIENTATION", ["deviceorientation"]);
     this._eventsMap.set("EVT_DEVICE_MOTION",      ["devicemotion"]);
-    
+    this._eventsMap.set("EVT_HASS_BUS",           ["hassbus"]);
 
     // Reversed mapping for each "real" event names with its "managed" event name counterpart
     // ex: "pointerdown" --> "EVT_POINTER_DOWN"
@@ -329,16 +332,19 @@ export class EventManager {
   hassCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback()"));
     this.loadPreferences();
+    this._hassEventManager.hassCallback();
   }
 
   connectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
     this.addGlobalListeners();
+    this._hassEventManager.connectedCallback();
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
     this.removeGlobalListeners();
+    this._hassEventManager.disconnectedCallback();
   }
 
   onGlobalWindowPointerUp(evt) {
@@ -367,7 +373,7 @@ export class EventManager {
       this.hideAllPopins(evt);
     }
   }
-  
+
   leaveAllButtons(evt) {
     for (const btn of this._buttons) {
       this.activateButtonNextState(btn, this.constructor._BUTTON_TRIGGER_POINTER_LEAVE, evt);
@@ -978,6 +984,7 @@ export class EventManager {
   addVisibilityChangeListener(target, callback, options = null) { return this.addVisibilityChangeListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addDeviceOrientationListener(target, callback, options = null) { return this.addDeviceOrientationListenerToContainer(this._defaultContainerName, target, callback, options ); }
   addDeviceMotionListener(target, callback, options = null) { return this.addDeviceMotionListenerToContainer(this._defaultContainerName, target, callback, options ); }
+  addHassBusEventListener(target, callback, options = null) { return this.addHassBusEventListenerToContainer(this._defaultContainerName, target, callback, options ); }
 
   addBlurListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_BLUR" ); }
   addErrorListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_ERROR" ); }
@@ -996,6 +1003,7 @@ export class EventManager {
   addVisibilityChangeListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_VISIBILITY_CHANGE" ); }
   addDeviceOrientationListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_DEVICE_ORIENTATION" ); }
   addDeviceMotionListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_DEVICE_MOTION" ); }
+  addHassBusEventListenerToContainer(containerName, target, callback, options = null) { return this.addAvailableEventListener(containerName, target, callback, options, "EVT_HASS_BUS" ); }
 
   // Add the available event listener using 
   // - supported event first (when available) 
@@ -1013,7 +1021,10 @@ export class EventManager {
     const managedCallback = this.onManagedCallback.bind(this, target, callback);
     const listener = this.registerListener(this.createListener(target, callback, options, eventName, managedCallback), containerName);
     
-    if (this.isTargetListenable(target)) {
+    if (this.isBoundToHassBusEvent(eventName)) {
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding Hass bus event listener ${target}`));
+      this._hassEventManager.addHassEventListener(target, managedCallback);
+    } else if (this.isTargetListenable(target)) {
       if (options) {
         if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Adding event listener ${eventName} on target with options:`, target, options));
         target.addEventListener(eventName, managedCallback, options);
@@ -1072,7 +1083,7 @@ export class EventManager {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug('onManagedTouchCallback(target, callback, evt):', target, callback, evt));
 
     // Decides whether or not to delegate according to managedEventName
-    if (this.isBoundToManagedEvent(evt, "EVT_POINTER_MOVE") && this.isPointerCapturedByTarget(evt, target) && !this.isPointerHoveringTarget(evt, target)) {
+    if (this.isEventBoundToManagedEvent(evt, "EVT_POINTER_MOVE") && this.isPointerCapturedByTarget(evt, target) && !this.isPointerHoveringTarget(evt, target)) {
       if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Managed EVT_POINTER_MOVE (real: ${evt.type}): releasing pointer capture and suppressing real event (cause: event target captures a pointer hovering another target)`));
       this.releasePointerFromTarget(evt, target);
       return false; // Prevent delegation to unmanaged callback
@@ -1080,10 +1091,18 @@ export class EventManager {
     return true;
   }
 
-  isBoundToManagedEvent(evt, managedEventName) {
-    return this._reversedEventsMap.get(evt.type) === managedEventName;
+  isEventBoundToManagedEvent(evt, managedEventName) {
+    return this.isBoundToManagedEvent(evt.type);
   }
-  
+
+  isBoundToHassBusEvent(eventName) {
+    return this.isBoundToManagedEvent(eventName, "EVT_HASS_BUS");
+  }
+
+  isBoundToManagedEvent(eventName, managedEventName) {
+    return this._reversedEventsMap.get(eventName) === managedEventName;
+  }
+
   isPointerEvent(evt) {
     return !!evt.pointerId;
   }
@@ -1141,7 +1160,10 @@ export class EventManager {
       const managedCallback = listener["managedCallback"];
       const options = listener["options"];
       
-      if (this.isTargetListenable(target)) {
+      if (this.isBoundToHassBusEvent(eventName)) {
+        if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Removing Hass bus event listener ${target}`));
+        this._hassEventManager.removeHassEventListener(target, managedCallback);
+      } else if (this.isTargetListenable(target)) {
         if (options) {
           if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(`Removing event listener ${eventName} on target with options:`, target, options));
           target.removeEventListener(eventName, managedCallback, options);
@@ -1296,6 +1318,6 @@ export class EventManager {
   }
 
   isEventSupported(target, eventName) {
-    return (typeof target[`on${eventName}`] === "function" || `on${eventName}` in target);
+    return this.isBoundToHassBusEvent(eventName) || (typeof target[`on${eventName}`] === "function" || `on${eventName}` in target);
   }
 }
