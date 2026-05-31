@@ -56,7 +56,7 @@ class WebSocketClient:
                     if retry == last_retry:
                         raise
 
-    async def unsafe_send(self, message: bytes, wait_response: bool = False, timeout: int = 5) -> Any:
+    async def unsafe_send(self, message: bytes, wait_response: bool = False, timeout: float = 0.5) -> Any:
         message_id: int | None = None
         response_data: Any = None
         try:
