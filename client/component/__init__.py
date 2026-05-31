@@ -412,6 +412,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
         except OSError as ex:
             _LOGGER.exception("Websocket error: errno=%s, strerror=%s", ex.errno, ex.strerror)
+            hass.bus.async_fire(
+                "hazerohid",
+                {
+                    "category": "error",
+                    "message": "Target computer is unreachable",
+                    "errno": 113,
+                },
+            )
             raise HomeAssistantError(f"Failed to send keypress: {ex}") from ex
         except Exception as ex:
             _LOGGER.exception(f"Unhandled error in handle_keypress: {ex}")
