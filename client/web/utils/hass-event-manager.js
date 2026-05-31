@@ -21,7 +21,7 @@ export class HassEventManager {
   }
 
   getHass() {
-    return this._origin?.getHass() || this._origin?.getForcedHass();
+    return this._origin?.getHass();
   }
 
   isManaged() {
