@@ -133,7 +133,7 @@ export class EventManager {
 
   constructor(origin) {
     this._origin = origin;
-    this._hassEventManager = new HassEventManager(this);
+    this._hassEventManager = new HassEventManager(origin);
 
     // Mapping for "managed" event names with their "real" event names counterparts 
     // that might be supported by device - or not (by preference order)
