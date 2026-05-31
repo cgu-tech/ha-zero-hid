@@ -2832,9 +2832,22 @@ class AndroidRemoteCard extends HTMLElement {
     if (backend) {
       const hass = this._hass || this._eventManager.getForcedHass();
       backend.catch((err) => {
+        let errorKey = null;
+        const piNetworkError = this.extractErrno(err?.message);
         if (!hass.connection.connected) {
           // HA host unreachable (websocket disconnected)
           // Silently ignore error: notification will be displayed on release
+        } else if (piNetworkError) {
+          // HA host unreachable (websocket disconnected)
+          switch (piNetworkError) {
+            case 113:
+              console.log("Host unreachable");
+              break;
+          
+            case 111:
+              console.log("Connection refused");
+              break;
+          }
         }
       });
     }
@@ -2878,12 +2891,19 @@ class AndroidRemoteCard extends HTMLElement {
     if (backend) {
       const hass = this._hass || this._eventManager.getForcedHass();
       backend.catch((err) => {
+          
+        // Check for error and associate a notification message when needed
+        let errorKey = null;
         if (!hass.connection.connected) {
-            // HA host unreachable (websocket disconnected)
-            this._eventManager.triggerHaosToast(
-              this._eventManager.getHaElement(),
-              this._localization.localize("error.ha.connection_lost.message")
-            );
+            errorKey = "error.ha.connection_lost.message";
+        }
+        
+        // Dispatch UI notification
+        if (errorKey) {
+          this._eventManager.triggerHaosToast(
+            this._eventManager.getHaElement(),
+            this._localization.localize(errorKey)
+          );
         }
       });
     }
@@ -2938,6 +2958,11 @@ class AndroidRemoteCard extends HTMLElement {
     return this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
     }, false);
+  }
+
+  extractErrno(message) {
+    const match = message?.match(/\[Errno (\d+)\]/i);
+    return match ? Number(match[1]) : null;
   }
 
 }
