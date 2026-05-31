@@ -147,8 +147,8 @@ export class HassEventManager {
     const callbacks = this._hassEventsCallbacks.get(eventName);
     if (!callbacks) return;
 
-    const managedEvt = new Event(eventName);
-    managedEvt.type = "hassbus";
+    const managedEvt = new Event("hassbus");
+    managedEvt.name = eventName;
     managedEvt.detail = evt;
     for (const callback of callbacks) {
       try {
