@@ -218,16 +218,16 @@ def handle_exception(hass: HomeAssistant, hint: str, ex: Exception, should_notif
     else:
         _LOGGER.exception("hint, should_notify, ex: %s, %s, %s", hint, should_notify, ex)
 
-    # When required, send error notification through HASS events bus
-    if should_notify:
-        if isinstance(ex, HaZeroHidException):
-            hzhEx = ex
-        elif isinstance(ex, OSError):
-            hzhEx = HaZeroHidException(err = ex.errno, message = str(ex))
-        else:
-            hzhEx = HaZeroHidException(message = str(ex))
+        # When required, send error notification through HASS events bus
+        if should_notify:
+            if isinstance(ex, HaZeroHidException):
+                hzhEx = ex
+            elif isinstance(ex, OSError):
+                hzhEx = HaZeroHidException(err = ex.errno, message = str(ex))
+            else:
+                hzhEx = HaZeroHidException(message = str(ex))
 
-        send_hass_error_from_exception(hass, hzhEx)
+            send_hass_error_from_exception(hass, hzhEx)
 
 @websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
 @async_response
