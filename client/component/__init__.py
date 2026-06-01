@@ -210,7 +210,7 @@ def send_hass_error_from_code(hass: HomeAssistant, code: int, extra: int | None)
 def send_hass_error_from_exception(hass: HomeAssistant, hzhEx: HaZeroHidException) -> None:
     send_hass_error_from_code(hass, hzhEx.code, hzhEx.err)
 
-def handle_exception(hass: HomeAssistant, str: hint, ex: Exception, should_notify: bool = False) -> None:
+def handle_exception(hass: HomeAssistant, hint: str, ex: Exception, should_notify: bool = False) -> None:
     # Always log exception first
     _LOGGER.exception("hint, should_notify, ex: %s, %s, %s", hint, should_notify, ex)
 
