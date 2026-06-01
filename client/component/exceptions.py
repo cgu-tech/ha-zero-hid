@@ -1,4 +1,4 @@
-from errors import ErrorSource, ErrorCode, translate_errno
+from .errors import ErrorSource, ErrorCode, translate_errno
 
 class HaZeroHidException(Exception):
     def __init__(self, source: ErrorSource, err: int | None, message: str | None = None):

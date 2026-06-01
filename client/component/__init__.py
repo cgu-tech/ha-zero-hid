@@ -5,8 +5,6 @@ import logging
 import time
 import voluptuous as vol
 
-from errors import ErrorSource, ErrorCode
-from event_types import EventType
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.components.websocket_api.connection import ActiveConnection
 from homeassistant.components.websocket_api import websocket_command, async_response, async_register_command
@@ -17,9 +15,12 @@ from homeassistant.helpers.typing import ConfigType
 
 from typing import Set, TypedDict, List, Any, Optional
 
+from .const import DOMAIN, MIN_RANGE, MAX_RANGE, WEBSOCKET_SERVERS
+from .errors import ErrorSource, ErrorCode
+from .event_types import EventType
+from .exceptions import HaZeroHidException
 from .resources_manager import ResourcesVersions, synchronize_resources, synchronize_resources_heuristically
 from .websocket_handler import WebSocketClient
-from .const import DOMAIN, MIN_RANGE, MAX_RANGE, WEBSOCKET_SERVERS
 
 _LOGGER = logging.getLogger(__name__)
 
