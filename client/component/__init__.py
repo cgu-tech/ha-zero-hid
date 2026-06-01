@@ -190,7 +190,7 @@ def get_user_authorized_servers(hass: HomeAssistant, user_id: str) -> List[Any]:
                 _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
     return servers
 
-def send_hass_event(hass: HomeAssistant, type: int, code: int) -> None
+def send_hass_event(hass: HomeAssistant, type: int, code: int) -> None:
     hass.bus.async_fire(
         "hazerohid",
         {
@@ -199,7 +199,7 @@ def send_hass_event(hass: HomeAssistant, type: int, code: int) -> None
         },
     )
 
-def send_hass_error(hass: HomeAssistant, code: int) -> None
+def send_hass_error(hass: HomeAssistant, code: int) -> None:
     send_hass_event(hass, HASS_EVENT_ERROR, code)
 
 @websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
