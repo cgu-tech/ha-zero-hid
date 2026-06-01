@@ -48,7 +48,7 @@ class WebSocketClient:
 
             # time spent waiting for lock (in ms)
             wait_ms = (acquired_ns - start_ns) / 1_000_000
-            logger.warning(f"acquired_ns={acquired_ns}, start_ns={start_ns}, wait_ms={wait_ms}")
+            _LOGGER.warning(f"acquired_ns={acquired_ns}, start_ns={start_ns}, wait_ms={wait_ms}")
             if wait_ms > SEND_TIMEOUT:
                 raise HaZeroHidException(message = f"Send dropped: waited {wait_ms:.2f}ms for lock", skippable = True)
 
