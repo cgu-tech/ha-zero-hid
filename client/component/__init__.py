@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import errno
 import logging
 import time
 import voluptuous as vol
 
+from errors import ErrorSource, ErrorCode
+from event_types import EventType
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.components.websocket_api.connection import ActiveConnection
 from homeassistant.components.websocket_api import websocket_command, async_response, async_register_command
@@ -16,7 +19,7 @@ from typing import Set, TypedDict, List, Any, Optional
 
 from .resources_manager import ResourcesVersions, synchronize_resources, synchronize_resources_heuristically
 from .websocket_handler import WebSocketClient
-from .const import DOMAIN, MIN_RANGE, MAX_RANGE, WEBSOCKET_SERVERS, HASS_EVENT_TRACE, HASS_EVENT_DEBUG, HASS_EVENT_INFO, HASS_EVENT_WARN, HASS_EVENT_ERROR, HASS_EVENT_CRITICAL, HASS_CODE_ERROR_PI_UNREACHABLE, HASS_CODE_ERROR_UNEXPECTED, HASS_CODE_ERROR_USB_UNREACHABLE
+from .const import DOMAIN, MIN_RANGE, MAX_RANGE, WEBSOCKET_SERVERS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -190,17 +193,37 @@ def get_user_authorized_servers(hass: HomeAssistant, user_id: str) -> List[Any]:
                 _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
     return servers
 
-def send_hass_event(hass: HomeAssistant, type: int, code: int) -> None:
+def send_hass_event(hass: HomeAssistant, type: int, code: int, extra: int | None) -> None:
     hass.bus.async_fire(
         "hazerohid",
         {
-            "msg_type": type,
-            "msg_code": code
+            "evt_type": type,
+            "evt_code": code,
+            "evt_extra": extra,
         },
     )
 
-def send_hass_error(hass: HomeAssistant, code: int) -> None:
-    send_hass_event(hass, HASS_EVENT_ERROR, code)
+def send_hass_error_from_code(hass: HomeAssistant, code: int, extra: int | None) -> None:
+    send_hass_event(hass, EventType.ERROR, code, extra)
+
+def send_hass_error_from_exception(hass: HomeAssistant, hzhEx: HaZeroHidException) -> None:
+    send_hass_error_from_code(hass, hzhEx.code, hzhEx.err)
+
+def handle_exception(hass: HomeAssistant, str: hint, ex: Exception, should_notify: bool = False) -> None:
+    # Always log exception first
+    _LOGGER.exception("hint, should_notify, ex: %s, %s, %s", hint, should_notify, ex)
+
+    # When required, send error notification through HASS events bus
+    if should_notify:
+        hzhEx = None
+        if isinstance(ex, HaZeroHidException):
+            hzhEx = ex
+        elif isinstance(ex, OSError):
+            hzhEx = HaZeroHidException(ErrorSource.INTEGRATION, ex.errno)
+        else:
+            hzhEx = HaZeroHidException(ErrorSource.INTEGRATION, None, str(ex))
+
+        send_hass_error_from_exception(hass, cast(HaZeroHidException, hzhEx))
 
 @websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
 @async_response
@@ -230,9 +253,9 @@ async def websocket_sync_keyboard(hass: HomeAssistant, connection: ActiveConnect
             "syncCapslock": bool(sync_state.get("capslock", False)),
             "syncScrolllock": bool(sync_state.get("scrolllock", False)),
         })
-    except Exception as e:
-        _LOGGER.exception("Error in sync_keyboard")
-        connection.send_error(msg["id"], "sync_failed", str(e))
+    except Exception as ex:
+        handle_exception(hass, "Error in sync_keyboard", ex)
+        connection.send_error(msg["id"], "sync_failed", str(ex))
 
 @websocket_command({vol.Required("type"): DOMAIN + "/sync_resources"})
 @async_response
@@ -240,9 +263,9 @@ async def websocket_sync_resources(hass: HomeAssistant, connection: ActiveConnec
     try:
         resources_versions: ResourcesVersions | None = await synchronize_resources_heuristically(hass)
         connection.send_result(msg["id"], {"resourcesVersion": resources_versions.reference_value})
-    except Exception as e:
-        _LOGGER.exception("Error in resources_version")
-        connection.send_error(msg["id"], "resources_version_failed", str(e))
+    except Exception as ex:
+        handle_exception(hass, "Error in resources_version", ex)
+        connection.send_error(msg["id"], "resources_version_failed", str(ex))
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websockets servers configs and clients."""
@@ -257,6 +280,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         }
         if _LOGGER.getEffectiveLevel() == logging.DEBUG:
             _LOGGER.debug(f"Discovered server {server_connection}")
+
     hass.data[DOMAIN] = {
         "ws_servers": ws_servers,
         "users_prefs": {},
@@ -298,8 +322,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_scroll(x, y)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_scroll(x, y): {x},{y}")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_scroll: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_scroll", ex, True)
 
     """Handle moving mouse cursor."""
     @callback
@@ -320,8 +344,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_move(x, y)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_move(x, y): {x},{y}")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_move: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_move", ex, True)
 
     """Handle pressing left mouse button."""
     @callback
@@ -335,8 +359,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             await ws_client.send_clickleft()
             _LOGGER.debug("ws_client.send_clickleft")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_clickleft: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_clickleft", ex)
 
     """Handle pressing middle mouse button."""
     @callback
@@ -350,8 +374,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             await ws_client.send_clickmiddle()
             _LOGGER.debug("ws_client.send_clickmiddle")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_clickmiddle: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_clickmiddle", ex)
 
     """Handle pressing right mouse button."""
     @callback
@@ -365,8 +389,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             await ws_client.send_clickright()
             _LOGGER.debug("ws_client.send_clickright")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_clickright: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_clickright", ex)
 
     """Handle releasing all mouse buttons."""
     @callback
@@ -380,8 +404,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             await ws_client.send_clickrelease()
             _LOGGER.debug("ws_client.send_clickrelease")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_clickrelease: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_clickrelease", ex, True)
 
     """Handle taping keyboard chars."""
     @callback
@@ -400,8 +424,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_chartap(chars)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_chartap(chars): {chars}")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_chartap: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_chartap", ex, True)
 
     """Handle pressing/releasing keyboard keys."""
     @callback
@@ -422,12 +446,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_keypress(modifiers, keys)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_keypress(modifiers, keys): {modifiers},{keys}")
-        except OSError as ex:
-            _LOGGER.exception("Websocket error: errno=%s, strerror=%s", ex.errno, ex.strerror)
-            if not modifiers and keys:
-                send_hass_error(hass, HASS_CODE_ERROR_PI_UNREACHABLE)
         except Exception as ex:
-            _LOGGER.exception(f"Unhandled error in handle_keypress: {ex}")
+            should_notify=(not modifiers and not keys)
+            handle_exception(hass, "Unhandled error in handle_keypress", ex, should_notify)
 
     """Handle pressing/releasing consumer keyboard keys."""
     @callback
@@ -446,12 +467,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_conpress(cons)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.send_conpress(cons): {cons}")
-        except OSError as ex:
-            _LOGGER.exception("Websocket error: errno=%s, strerror=%s", ex.errno, ex.strerror)
-            if not cons:
-                send_hass_error(hass, HASS_CODE_ERROR_PI_UNREACHABLE)
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_conpress: {e}")
+        except Exception as ex:
+            should_notify=(not cons)
+            handle_exception(hass, "Unhandled error in handle_conpress", ex, should_notify)
 
     """Handle start streaming audio."""
     @callback
@@ -466,8 +484,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_audiostart()
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug("ws_client.send_audiostart()")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_audio_start: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_audio_start", ex, True)
 
     """Handle streaming audio."""
     @callback
@@ -486,8 +504,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_audio(buf)
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug(f"ws_client.handle_audio(buf): {buf}")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_audio: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_audio", ex)
 
     """Handle stop streaming audio."""
     @callback
@@ -502,8 +520,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await ws_client.send_audiostop()
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 _LOGGER.debug("ws_client.send_audiostop()")
-        except Exception as e:
-            _LOGGER.exception(f"Unhandled error in handle_audio_stop: {e}")
+        except Exception as ex:
+            handle_exception(hass, "Unhandled error in handle_audio_stop", ex, True)
 
     """Handle logging to home assistant backend."""
     @callback
