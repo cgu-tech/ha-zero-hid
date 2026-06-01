@@ -11,10 +11,10 @@ class ErrorCode(IntEnum):
     HID_UNKNOWN_ERROR = 3
     INTEGRATION_ERROR = 4
 
-def translate_errno(cls, source: ErrorSource, err: int | None) -> ErrorCode:
+def translate_errno(source: ErrorSource, err: int | None) -> ErrorCode:
     if source is ErrorSource.HID:
         if not err:
-            return cls.HID_UNKNOWN_ERROR
+            return ErrorCode.HID_UNKNOWN_ERROR
         
         if err in {
             errno.EADDRINUSE,
@@ -32,17 +32,17 @@ def translate_errno(cls, source: ErrorSource, err: int | None) -> ErrorCode:
             errno.EALREADY,
             errno.EINPROGRESS,
         }:
-            return cls.HID_NETWORK_ERROR
+            return ErrorCode.HID_NETWORK_ERROR
 
         if err in {
             errno.EPIPE,
             errno.ESHUTDOWN,
         }:
-            return cls.HID_USB_ERROR
+            return ErrorCode.HID_USB_ERROR
 
-        return cls.HID_UNKNOWN_ERROR
+        return ErrorCode.HID_UNKNOWN_ERROR
 
     if source is ErrorSource.INTEGRATION:
-        return cls.INTEGRATION_ERROR
+        return ErrorCode.INTEGRATION_ERROR
 
     raise ValueError(f"Unsupported source: {source}")
