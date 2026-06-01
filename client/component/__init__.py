@@ -13,7 +13,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 
-from typing import Set, TypedDict, List, Any, Optional
+from typing import Set, TypedDict, List, Any, Optional, cast
 
 from .const import DOMAIN, MIN_RANGE, MAX_RANGE, WEBSOCKET_SERVERS
 from .errors import ErrorSource, ErrorCode
@@ -216,15 +216,14 @@ def handle_exception(hass: HomeAssistant, hint: str, ex: Exception, should_notif
 
     # When required, send error notification through HASS events bus
     if should_notify:
-        hzhEx = None
         if isinstance(ex, HaZeroHidException):
-            hzhEx = ex
+            hzhEx = cast(HaZeroHidException, ex)
         elif isinstance(ex, OSError):
             hzhEx = HaZeroHidException(ErrorSource.INTEGRATION, ex.errno)
         else:
             hzhEx = HaZeroHidException(ErrorSource.INTEGRATION, None, str(ex))
 
-        send_hass_error_from_exception(hass, cast(HaZeroHidException, hzhEx))
+        send_hass_error_from_exception(hass, HaZeroHidException)
 
 @websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
 @async_response
