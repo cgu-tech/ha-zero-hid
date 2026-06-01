@@ -212,16 +212,20 @@ def send_hass_error_from_exception(hass: HomeAssistant, hzhEx: HaZeroHidExceptio
 
 def handle_exception(hass: HomeAssistant, hint: str, ex: Exception, should_notify: bool = False) -> None:
     # Always log exception first
-    _LOGGER.exception("hint, should_notify, ex: %s, %s, %s", hint, should_notify, ex)
+    if isinstance(ex, HaZeroHidException) and ex.skippable:
+        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
+            _LOGGER.debug(str(ex))
+    else:
+        _LOGGER.exception("hint, should_notify, ex: %s, %s, %s", hint, should_notify, ex)
 
     # When required, send error notification through HASS events bus
     if should_notify:
         if isinstance(ex, HaZeroHidException):
             hzhEx = ex
         elif isinstance(ex, OSError):
-            hzhEx = HaZeroHidException(ErrorSource.INTEGRATION, ex.errno)
+            hzhEx = HaZeroHidException(err = ex.errno, message = str(ex))
         else:
-            hzhEx = HaZeroHidException(ErrorSource.INTEGRATION, None, str(ex))
+            hzhEx = HaZeroHidException(message = str(ex))
 
         send_hass_error_from_exception(hass, hzhEx)
 

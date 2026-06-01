@@ -4,6 +4,7 @@ import logging
 import ssl
 import struct
 import sys
+import time
 import websockets
 
 from collections.abc import Awaitable, Callable
@@ -11,10 +12,14 @@ from homeassistant.util.ssl import client_context
 from typing import Any
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
+from .exceptions import HaZeroHidException
+
 _LOGGER = logging.getLogger(__name__)
 
 ReceiveCallback = Callable[[dict[str, Any]], Awaitable[None]]
 MAX_ID = sys.maxsize
+
+SEND_TIMEOUT = 2000
 
 class WebSocketClient:
     def __init__(self, url: str, secret: str, on_receive: ReceiveCallback) -> None:
@@ -37,7 +42,15 @@ class WebSocketClient:
         self._current_message_id = 0
 
     async def send(self, message: bytes, wait_response: bool = False) -> Any:
+        start_ns = time.monotonic_ns()
         async with self._lock:
+            acquired_ns = time.monotonic_ns()
+
+            # time spent waiting for lock (in ms)
+            wait_ms = (acquired_ns - start_ns) / 1_000_000
+            if wait_ms > SEND_TIMEOUT:
+                raise HaZeroHidException(message = f"Send dropped: waited {wait_ms:.2f}ms for lock", skippable = True)
+
             # First fail: retry, second fail: raise
             retries = 2
             last_retry = retries - 1
