@@ -223,9 +223,9 @@ def handle_exception(hass: HomeAssistant, hint: str, ex: Exception, should_notif
             if isinstance(ex, HaZeroHidException):
                 hzhEx = ex
             elif isinstance(ex, OSError):
-                hzhEx = HaZeroHidException(err = ex.errno, message = str(ex))
+                hzhEx = HaZeroHidException(ErrorSource.HID_NETWORK, err = ex.errno, message = str(ex))
             else:
-                hzhEx = HaZeroHidException(message = str(ex))
+                hzhEx = HaZeroHidException(ErrorSource.HID_NETWORK, message = str(ex))
 
             send_hass_error_from_exception(hass, hzhEx)
 
@@ -273,17 +273,32 @@ async def websocket_sync_resources(hass: HomeAssistant, connection: ActiveConnec
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the websockets servers configs and clients."""
+
+    async def ws_client_on_receive(message: dict) -> None:
+        _LOGGER.debug("WS message received: %s", message)
+
+        # Check message type
+        message_type = message.get("type", None)
+        if message_type == "error":
+            _LOGGER.warn("Received error message from HID server: %s", message)
+            message_data = message.get("data", {})
+            message_err = message.get("err", None)
+            if message_err:
+                hzhEx = HaZeroHidException(ErrorSource.HID_USB, err = message_err, message = str(ex))
+                send_hass_error_from_exception(hass, hzhEx)
+        else:
+            _LOGGER.warn("Received unhandled message type %s from HID server", message_type)
+
     ws_servers = {}
     for server in WEBSOCKET_SERVERS:
         server_connection = f"{server['protocol']}://{server['host']}:{server['port']}"
-        ws_client = WebSocketClient(server_connection, server["secret"], None)
+        ws_client = WebSocketClient(server_connection, server["secret"], ws_client_on_receive)
         ws_servers[server["id"]] = {
             "name": server["name"],
             "ws_client": ws_client,
             "authorized_users": set(authorized_user.strip() for authorized_user in server["authorized_users"].split(","))
         }
-        if _LOGGER.getEffectiveLevel() == logging.DEBUG:
-            _LOGGER.debug(f"Discovered server {server_connection}")
+        _LOGGER.debug("Discovered server %s", server_connection)
 
     hass.data[DOMAIN] = {
         "ws_servers": ws_servers,

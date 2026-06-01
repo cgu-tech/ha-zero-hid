@@ -2,43 +2,38 @@ from enum import IntEnum
 import errno
 
 class ErrorSource(IntEnum):
-    HID = 1
-    INTEGRATION = 2
+    HID_NETWORK = 1
+    HID_USB     = 2
+    INTEGRATION = 3
 
 class ErrorCode(IntEnum):
-    HID_NETWORK_ERROR = 1
-    HID_USB_ERROR     = 2
-    HID_UNKNOWN_ERROR = 3
-    INTEGRATION_ERROR = 4
+    HID_NETWORK_ERROR   = 1
+    HID_USB_CABLE_ERROR = 2
+    HID_USB_HID_ERROR   = 3
+    HID_UNKNOWN_ERROR   = 4
+    INTEGRATION_ERROR   = 5
 
 def translate_errno(source: ErrorSource, err: int | None) -> ErrorCode:
-    if source is ErrorSource.HID:
+    if source is ErrorSource.HID_NETWORK:
+        return ErrorCode.HID_NETWORK_ERROR
+
+    if source is ErrorSource.HID_USB:
         if not err:
             return ErrorCode.HID_UNKNOWN_ERROR
-        
+
         if err in {
-            errno.EADDRINUSE,
-            errno.EADDRNOTAVAIL,
-            errno.ENETDOWN,
-            errno.ENETUNREACH,
-            errno.ECONNABORTED,
-            errno.ECONNRESET,
-            errno.ENOBUFS,
-            errno.EISCONN,
-            errno.ENOTCONN,
-            errno.ETIMEDOUT,
-            errno.ECONNREFUSED,
-            errno.EHOSTUNREACH,
+            errno.EAGAIN,
             errno.EALREADY,
+            errno.EWOULDBLOCK,
             errno.EINPROGRESS,
         }:
-            return ErrorCode.HID_NETWORK_ERROR
+            return ErrorCode.HID_USB_CABLE_ERROR
 
         if err in {
             errno.EPIPE,
             errno.ESHUTDOWN,
         }:
-            return ErrorCode.HID_USB_ERROR
+            return ErrorCode.HID_USB_HID_ERROR
 
         return ErrorCode.HID_UNKNOWN_ERROR
 

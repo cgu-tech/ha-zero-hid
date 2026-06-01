@@ -8,6 +8,7 @@ import logging.config
 import ssl
 import struct
 
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from typing import Set
 from websockets.server import Request
 from zero_hid import Device, Mouse, Microphone, Keyboard, KeyCodes, Consumer, ConsumerCodes
@@ -130,10 +131,17 @@ async def handle_client(websocket) -> None:
             try:
                 await handle_message(websocket, message)
             except WriteError as hidEx:
-                logger.error(f"HID write failed (likely USB gadget reset): {hidEx}")
-
-                # TODO: send feedback to client similarly to this:
-                # await websocket.send(json.dumps(response_data).encode('utf-8'))
+                logger.exception(f"HID write failed: {hidEx}")
+                try:
+                    error_data: dict = {}
+                    cause = ex.__cause__
+                    if isinstance(cause, FuturesTimeoutError):
+                        error_data["err"] = errno.EWOULDBLOCK
+                    elif isinstance(cause, OSError):
+                        error_data["err"] = cause.errno
+                    await send_error(websocket, error_data, id)
+                except Exception as sendEx:
+                    logger.exception(f"Could not send HID write error back to client: {sendEx}")
     except websockets.ConnectionClosed:
         logger.info("Client disconnected")
 
@@ -295,14 +303,20 @@ def unsigned_int_format(length: int) -> str | None:
         return None
 
 async def send_response(websocket, data, id: int | None = None) -> None:
-    response = {
-        "type": "response",
+    await send_back(websocket, "response", data, id = id)
+
+async def send_error(websocket, data, id: int | None = None) -> None:
+    await send_back(websocket, "error", data, id = id)
+
+async def send_back(websocket, type: str, data, id: int | None = None) -> None:
+    payload = {
+        "type": type,
         "id": id,
         "data": data,
     }
     if logger.getEffectiveLevel() == logging.DEBUG:
-        logger.debug("Sending response: %s", response)
-    await websocket.send(json.dumps(response).encode('utf-8'))
+        logger.debug("Sending %s: %s", type, payload)
+    await websocket.send(json.dumps(payload).encode('utf-8'))
 
 async def main():
     stop_event = asyncio.Event()

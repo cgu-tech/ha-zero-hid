@@ -12,6 +12,7 @@ from homeassistant.util.ssl import client_context
 from typing import Any
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
+from .errors import ErrorSource
 from .exceptions import HaZeroHidException
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class WebSocketClient:
             wait_ms = (acquired_ns - start_ns) / 1_000_000
             _LOGGER.debug("acquired_ns=%s, start_ns=%s, wait_ms=%s", acquired_ns, start_ns, wait_ms)
             if wait_ms > SEND_TIMEOUT:
-                raise HaZeroHidException(message = f"Send dropped: waited {wait_ms:.2f}ms for lock", skippable = True)
+                raise HaZeroHidException(ErrorSource.INTEGRATION, skippable = True)
 
             # First fail: retry, second fail: raise
             retries = 2
@@ -144,7 +145,7 @@ class WebSocketClient:
                     _LOGGER.exception("Unsolicited message receive callback failed: %s", ex)
 
         except asyncio.CancelledError:
-            _LOGGER.debug("Receive task cancelled")
+            _LOGGER.debug("Receive task loop cancelled")
             raise
 
         except (ConnectionClosedOK, ConnectionClosedError) as closeEx:
