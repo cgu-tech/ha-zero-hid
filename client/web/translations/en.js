@@ -4,26 +4,32 @@ export const enTranslation = {
     "error": {
       "ha": {
         "connection_lost": {
-          "title": "Home Assistant - connection lost",
-          "message": "See notifications",
+          "message": "Home Assistant connection lost",
           "details": "Restart this app or refresh browser window, check network, reboot HA host device"
         }
       },
-      "rpi": {
+      "integration": {
+        "unknown": {
+          "message": "Ha-Zero-Hid Integration unknown error",
+          "details": "See Home Assistant logs"
+        }
+      },
+      "hid": {
         "connection_lost": {
-          "title": "Raspberry PI - connection lost",
-          "message": "See notifications",
+          "message": "Raspberry PI connection lost",
           "details": "Check network, reboot PI host"
         },
-        "usb_failed": {
-          "title": "Raspberry PI - USB error",
-          "message": "See notifications",
+        "usb_cable_disconnected": {
+          "message": "Raspberry PI USB disconnected cable",
           "details": "Reconnect USB cable, reboot device attached to Raspberry PI, reboot Raspberry PI"
-        }, 
+        },
+        "usb_hid_failed": {
+          "message": "Raspberry PI USB HID error",
+          "details": "Reconnect USB cable, reboot device attached to Raspberry PI, reboot Raspberry PI"
+        },
         "unknown": {
-          "title": "Raspberry PI - unknown error",
-          "message": "See notifications",
-          "details": "Check Home Assistant logs"
+          "message": "Raspberry PI unknown error",
+          "details": "See Home Assistant logs"
         }
       }
     }

@@ -1134,7 +1134,7 @@ export class AndroidKeyboardCard extends HTMLElement {
     } else {
       // Non-special and not virtual key clicked (popin only has normal keys)
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Popin key ${btn.id} release: sending char ${charToSend}...`));
-      this.sendKeyboardChar(charToSend);
+      this.sendKeyboardChar(charToSend, true);
     }
 
     // Update cells labels and visuals (when needed)
@@ -1342,7 +1342,7 @@ export class AndroidKeyboardCard extends HTMLElement {
         this._pressedKeys.add(intCode);
       }
     }
-    this.sendKeyboardUpdate();
+    this.sendKeyboardUpdate(true);
   }
 
   appendConsumerCode(code) {
@@ -1351,7 +1351,7 @@ export class AndroidKeyboardCard extends HTMLElement {
       const intCode = this._consumercodes[code];
       this._pressedConsumers.add(intCode);
     }
-    this.sendConsumerUpdate();
+    this.sendConsumerUpdate(true);
   }
 
   removeCode(code) {
@@ -1408,27 +1408,27 @@ export class AndroidKeyboardCard extends HTMLElement {
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
-  sendKeyboardUpdate() {
+  sendKeyboardUpdate(notifyOnError = false) {
     this._eventManager.callComponentServiceWithServerId("keypress", {
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
-    });
+    }, notifyOnError);
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
-  sendConsumerUpdate() {
+  sendConsumerUpdate(notifyOnError = false) {
     this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
-    });
+    }, notifyOnError);
   }
 
   // Send clicked char symbols to HID keyboard 
   // and let it handle the right key-press combination using current kb layout
-  sendKeyboardChar(charToSend) {
+  sendKeyboardChar(charToSend, notifyOnError = false) {
     if (charToSend) {
       this._eventManager.callComponentServiceWithServerId("chartap", {
         sendChars: charToSend,
-      });
+      }, notifyOnError);
     }
   }
 }

@@ -1165,7 +1165,7 @@ export class TrackpadCard extends HTMLElement {
   }
 
   sendMouseClickLeft() {
-    this.sendMouse("clickleft", {});
+    this.sendMouse("clickleft", {}, true);
   }
 
   sendMouseClickRelease() {
@@ -1173,15 +1173,15 @@ export class TrackpadCard extends HTMLElement {
   }
 
   sendMouseMove(dx, dy) {
-    this.sendMouse("move", { "x": dx, "y": dy, });
+    this.sendMouse("move", { "x": dx, "y": dy, }, true);
   }
 
   sendMouseScroll(dx, dy) {
-    this.sendMouse("scroll", { "x": dx, "y": dy, });
+    this.sendMouse("scroll", { "x": dx, "y": dy, }, true);
   }
 
-  sendMouse(serviceName, serviceArgs) {
-    this._eventManager.callComponentServiceWithServerId(serviceName, serviceArgs);
+  sendMouse(serviceName, serviceArgs, notifyOnError = false) {
+    this._eventManager.callComponentServiceWithServerId(serviceName, serviceArgs, notifyOnError);
   }
 
   getTrackpadMode() {

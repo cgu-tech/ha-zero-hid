@@ -11,6 +11,7 @@ export class HassEventManager {
   _inflightSubscriptions = new Map(); // For subscribing state tracking
   _runner = Promise.resolve(); // serialization gate
   _connected = false;
+  _isManaged = false; // indicates whether or not this event manager origin card is managed by another card (and transitively whether or not some events managements should be delegated to the manager card of the origin card)
 
   constructor(origin) {
     this._origin = origin;
@@ -24,8 +25,14 @@ export class HassEventManager {
     return this._origin?.getHass();
   }
 
+  setManaged(managed) {
+    const managedUpdated = !((!!this._isManaged) === (!!managed));
+    this._isManaged = managed;
+    if (managedUpdated) this.updateListeners();
+  }
+
   isManaged() {
-    return this._origin?.isManaged();
+    return this._isManaged;
   }
 
   hassCallback() {
@@ -43,12 +50,16 @@ export class HassEventManager {
     this.onDisconnectHassListeners();
   }
 
-  onUpdateHassListeners() {
+  updateListeners() {
     this.scheduleNext(async () => {
       await this.disconnectHassListeners();
       if (this._connected)
         await this.connectHassListeners();
     });
+  }
+
+  onUpdateHassListeners() {
+    this.updateListeners();
   }
 
   onConnectHassListeners() {
@@ -114,6 +125,8 @@ export class HassEventManager {
   }
 
   async subscribeHassEvents(eventName) {
+    if (this.isManaged()) return; // Fail fast when managed (to avoid subscribing event multiple times)
+    if (!this._connected) return; // Fail fast when not connected (to avoid subscribing event when disconnected)
     if (this._unsubscriptions.has(eventName)) return;
 
     if (this._inflightSubscriptions?.has(eventName)) return;
@@ -144,6 +157,7 @@ export class HassEventManager {
   }
 
   onHassEventManagedCallback(eventName, evt) {
+    if (this.isManaged()) return; // Fail fast when managed (to avoid raising event multiple times)
     const callbacks = this._hassEventsCallbacks.get(eventName);
     if (!callbacks) return;
 

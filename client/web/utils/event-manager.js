@@ -117,6 +117,8 @@ export class EventManager {
   _listenerKeys = ['target', 'callback', 'options', 'eventName', 'managedCallback'];
   _defaultContainerName = 'default';
   _globalContainerName = '__window';
+  _integrationContainerName = '__integration';
+  _integrationEventName = 'hazerohid';
 
   _origin;
   _localization;
@@ -126,6 +128,7 @@ export class EventManager {
   _preferedEventsNames = new Map(); // Cache for prefered discovered listeners (lookup speedup)
   _containers = new Map(); // Registrered listeners for cleanup
   _globalListeners = new Map(); // Callback with global scopes (document, window) for buttons management
+  _integrationListeners = new Map(); // Callback with global scope for ha-zero-hid integration management
   _buttons = new Set(); // Managed buttons
   _popins = new Set(); // Managed popins
   _arePreferencesLoading = false; // Session user preferences loading in progress lock
@@ -178,6 +181,7 @@ export class EventManager {
 
   setManaged(managed) {
     this._isManaged = managed;
+    this._hassEventManager.setManaged(managed);
   }
 
   isManaged() {
@@ -331,6 +335,19 @@ export class EventManager {
       this._globalListeners.clear();
     }
   }
+  
+  addIntegrationListeners() {
+    if (this._integrationListeners.size === 0) {
+      this._integrationListeners.set("integrationEvent", this.addHassBusEventListenerToContainer(this._integrationContainerName, this._integrationEventName, this.onIntegrationEvent.bind(this)));
+    }
+  }
+
+  removeIntegrationListeners() {
+    if (this._integrationListeners) {
+      this.removeListener(this._integrationListeners.get("integrationEvent"));
+      this._integrationListeners.clear();
+    }
+  }
 
   hassCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("hassCallback()"));
@@ -342,12 +359,14 @@ export class EventManager {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("connectedCallback()"));
     this.addGlobalListeners();
     this._hassEventManager.connectedCallback();
+    this.addIntegrationListeners();
   }
 
   disconnectedCallback() {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("disconnectedCallback()"));
     this.removeGlobalListeners();
     this._hassEventManager.disconnectedCallback();
+    this.removeIntegrationListeners();
   }
 
   onGlobalWindowPointerUp(evt) {
@@ -376,6 +395,68 @@ export class EventManager {
       this.hideAllPopins(evt);
     }
   }
+
+  onIntegrationEvent(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onIntegrationEvent(evt) + isConnected", evt, this._origin?.isConnected));
+
+    // Retrieve event data
+    const data = evt?.detail?.data;
+    if (!data) return;
+    const evtType = data["evt_type"];
+    const evtCode = data["evt_code"];
+    const evtExtra = data["evt_extra"];
+
+    // Retrieve meaningful event level
+    const evtLevel = {
+      trace: (evtType === 1),
+      debug: (evtType === 2),
+      info: (evtType === 3),
+      warn: (evtType === 4),
+      error: (evtType === 5 || evtType === 6)
+    };
+
+    // Log event message
+    const fullMessage = "callService(evt): event received (evtType, evtCode, evtExtra):";
+    if (evtLevel.trace) {
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(fullMessage, evtType, evtCode, evtExtra));
+    } else if (evtLevel.debug) {
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(fullMessage, evtType, evtCode, evtExtra));
+    } else if (evtLevel.info) {
+      if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info(fullMessage, evtType, evtCode, evtExtra));
+    } else if (evtLevel.warn) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(fullMessage, evtType, evtCode, evtExtra));
+    } else if (evtLevel.error) {
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(fullMessage, evtType, evtCode, evtExtra));
+    }
+
+    // Check for error and associate a notification message when needed
+    if (evtLevel.error) {
+      
+      // Retrieve meaningful event error type
+      const evtErrorType = {
+        hidNetwork: (evtCode === 1),
+        usbCable: (evtCode === 2),
+        usbHid: (evtCode === 3),
+        hidUnknown: (evtCode === 4),
+        integrationUnknown: (evtCode === 5)
+      };
+
+      // Retrieve associated error message
+      let message = null;
+      if (evtErrorType.hidNetwork) errorMessage = this._localization.localize("error.hid.connection_lost.message");
+      if (evtErrorType.usbCable) errorMessage = this._localization.localize("error.hid.usb_cable_disconnected.message");
+      if (evtErrorType.usbHid) errorMessage = this._localization.localize("error.hid.usb_hid_failed.message");
+      if (evtErrorType.hidUnknown) errorMessage = this._localization.localize("error.hid.unknown.message");
+      if (evtErrorType.integrationUnknown) errorMessage = this._localization.localize("error.integration.unkown.message");
+
+      // Dispatch UI message
+      if (message) {
+        this.triggerHaosToast(this.getHaElement(), message);
+      }
+    }
+  }
+  
+  
 
   leaveAllButtons(evt) {
     for (const btn of this._buttons) {

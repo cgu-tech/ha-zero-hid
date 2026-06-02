@@ -1124,9 +1124,6 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Setup three-states-toggle foldables
     this.setupFoldable();
-
-    // Setup Hass bus events
-    this._eventManager.addHassBusEventListenerToContainer("layoutContainer", "hazerohid", this.onIntegrationEvent.bind(this));
   }
 
   doRow(rowConfig) {
@@ -2919,15 +2916,6 @@ class AndroidRemoteCard extends HTMLElement {
     return this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
     }, notifyOnError);
-  }
-
-  onIntegrationEvent(evt) {
-    if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("onIntegrationEvent(evt)", evt));
-  }
-
-  extractErrno(message) {
-    const match = message?.match(/\[Errno (\d+)\]/i);
-    return match ? Number(match[1]) : null;
   }
 
 }
