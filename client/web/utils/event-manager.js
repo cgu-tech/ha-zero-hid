@@ -830,6 +830,7 @@ export class EventManager {
     const promise = hass.callService(domain, name, args);
     if (notifyOnError) {
       promise.catch((err) => {
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args, notifyOnError): error:`, domain, name, args, notifyOnError, err));
 
         // Check for error and associate a notification message when needed
         let message = null;
@@ -841,7 +842,10 @@ export class EventManager {
         if (message) {
           this.triggerHaosToast(this.getHaElement(), message);
         }
-        throw err; // rethrow original error
+      });
+    } else {
+      promise.catch((err) => {
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args, notifyOnError): error:`, domain, name, args, notifyOnError, err));
       });
     }
     return promise;
