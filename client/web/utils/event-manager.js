@@ -834,13 +834,14 @@ export class EventManager {
 
       // Check for error and associate a notification message when needed
       if (notifyOnError) {
+        let message = null;
 
         // Check HA disconnected error
         if (!hass.connection.connected) {
           message = this._localization.localize("error.ha.connection_lost.message");
         }
 
-        // Dispatch UI notification
+        // Dispatch UI message
         if (message) {
           this.triggerHaosToast(this.getHaElement(), message);
         }
