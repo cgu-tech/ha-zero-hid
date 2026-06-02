@@ -18,12 +18,12 @@ export class Localization {
   }
 
   getLogger() {
-    return this._origin._logger;
+    return this._origin?.getLogger();
   }
 
   getHass() {
     // Aggressively tries to retrieve HASS because we depend on it for dynamic lang retrieval
-    return this._origin._hass || document.querySelector("home-assistant")?.hass;
+    return this._origin?.getHass() || document.querySelector("home-assistant")?.hass;
   }
 
   getDefaultLang() {

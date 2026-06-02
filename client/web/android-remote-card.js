@@ -57,7 +57,6 @@ class AndroidRemoteCard extends HTMLElement {
   _hass;
   _elements = {};
   _logger;
-  _localization;
   _eventManager;
   _layoutManager;
   _resourceManager;
@@ -81,7 +80,6 @@ class AndroidRemoteCard extends HTMLElement {
     super();
 
     this._logger = new Logger(this, "android-remote-card.js");
-    this._localization = new Localization(this);
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, layoutsRemote);
     this._resourceManager = new ResourceManager(this, import.meta.url);

@@ -118,6 +118,7 @@ export class EventManager {
   _globalContainerName = '__window';
 
   _origin;
+  _localization;
   _hassEventManager;
   _eventsMap = new Map();
   _reversedEventsMap = new Map();
@@ -133,6 +134,7 @@ export class EventManager {
 
   constructor(origin) {
     this._origin = origin;
+    this._localization = new Localization(this);
     this._hassEventManager = new HassEventManager(this);
 
     // Mapping for "managed" event names with their "real" event names counterparts 
@@ -166,11 +168,11 @@ export class EventManager {
   }
 
   getLogger() {
-    return this._origin?._logger;
+    return this._origin?.getLogger();
   }
 
   getHass() {
-    return this._origin?._hass;
+    return this._origin?.getHass();
   }
 
   setManaged(managed) {
