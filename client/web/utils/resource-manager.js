@@ -14,11 +14,11 @@ export class ResourceManager {
   }
 
   getLogger() {
-    return this._origin._logger;
+    return this._origin?.getLogger();
   }
 
   getHass() {
-    return this._origin._hass;
+    return this._origin?.getHass();
   }
 
   forceRefresh() {

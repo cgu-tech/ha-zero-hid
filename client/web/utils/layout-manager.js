@@ -20,7 +20,11 @@ export class LayoutManager {
   }
 
   getLogger() {
-    return this._origin._logger;
+    return this._origin?.getLogger();
+  }
+
+  getHass() {
+    return this._origin?.getHass();
   }
 
   getTargetConfig(target) {

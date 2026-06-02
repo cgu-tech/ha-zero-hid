@@ -29,7 +29,7 @@ export class Logger {
   }
 
   getHass() {
-    return this._origin?._hass;
+    return this._origin?.getHass();
   }
 
   getGuid() {

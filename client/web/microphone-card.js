@@ -44,6 +44,10 @@ export class MicrophoneCard extends HTMLElement {
     return this._logger;
   }
 
+  getHass() {
+    return this._hass;
+  }
+
   setManaged(managed) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setManaged(managed):", managed));
     this._eventManager.setManaged(managed);
