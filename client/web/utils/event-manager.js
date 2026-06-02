@@ -443,11 +443,11 @@ export class EventManager {
 
       // Retrieve associated error message
       let message = null;
-      if (evtErrorType.hidNetwork) errorMessage = this._localization.localize("error.hid.connection_lost.message");
-      if (evtErrorType.usbCable) errorMessage = this._localization.localize("error.hid.usb_cable_disconnected.message");
-      if (evtErrorType.usbHid) errorMessage = this._localization.localize("error.hid.usb_hid_failed.message");
-      if (evtErrorType.hidUnknown) errorMessage = this._localization.localize("error.hid.unknown.message");
-      if (evtErrorType.integrationUnknown) errorMessage = this._localization.localize("error.integration.unkown.message");
+      if (evtErrorType.hidNetwork) message = this._localization.localize("error.hid.connection_lost.message");
+      if (evtErrorType.usbCable) message = this._localization.localize("error.hid.usb_cable_disconnected.message");
+      if (evtErrorType.usbHid) message = this._localization.localize("error.hid.usb_hid_failed.message");
+      if (evtErrorType.hidUnknown) message = this._localization.localize("error.hid.unknown.message");
+      if (evtErrorType.integrationUnknown) message = this._localization.localize("error.integration.unkown.message");
 
       // Dispatch UI message
       if (message) {

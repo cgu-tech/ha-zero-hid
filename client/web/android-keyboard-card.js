@@ -1306,7 +1306,7 @@ export class AndroidKeyboardCard extends HTMLElement {
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: standard key detected, sending char ${charToSend}`));
-        this.sendKeyboardChar(charToSend);
+        this.sendKeyboardChar(charToSend, true);
       if (this.activateNextStatus(code)) this.doUpdateCells();
     }
     
