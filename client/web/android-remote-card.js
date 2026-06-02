@@ -1,6 +1,5 @@
 import { Globals } from './utils/globals.js';
 import { Logger } from './utils/logger.js';
-import { Localization } from './utils/localization.js';
 import { EventManager } from './utils/event-manager.js';
 import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';

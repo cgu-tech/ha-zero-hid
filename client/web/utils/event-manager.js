@@ -1,5 +1,6 @@
 import { Globals } from './globals.js';
 import { Logger } from './logger.js';
+import { Localization } from './utils/localization.js';
 import { HassEventManager } from './hass-event-manager.js';
 
 // Define EventManager helper class
