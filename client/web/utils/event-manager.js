@@ -827,7 +827,7 @@ export class EventManager {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args, notifyOnError): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, domain, name, args, notifyOnError));
       return;
     }
-    const promise = hass.callService(domain, name, args);
+    const promise = hass.callService(domain, name, args, undefined, notifyOnError);
     if (notifyOnError) {
       promise.catch((err) => {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args, notifyOnError): error:`, domain, name, args, notifyOnError, err));
