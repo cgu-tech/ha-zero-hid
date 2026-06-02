@@ -2822,37 +2822,14 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   appendCode(code) {
-    let backend = null;
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
-        backend = this.appendKeyCode(code);
+        this.appendKeyCode(code);
       } else if (this.isConsumer(code)) {
-        backend = this.appendConsumerCode(code);
+        this.appendConsumerCode(code);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
-    }
-    if (backend) {
-      const hass = this._hass || this._eventManager.getForcedHass();
-      backend.catch((err) => {
-        let errorKey = null;
-        const piNetworkError = this.extractErrno(err?.message);
-        if (!hass.connection.connected) {
-          // HA host unreachable (websocket disconnected)
-          // Silently ignore error: notification will be displayed on release
-        } else if (piNetworkError) {
-          // HA host unreachable (websocket disconnected)
-          switch (piNetworkError) {
-            case 113:
-              console.log("Host unreachable");
-              break;
-          
-            case 111:
-              console.log("Connection refused");
-              break;
-          }
-        }
-      });
     }
   }
 
@@ -2868,7 +2845,7 @@ class AndroidRemoteCard extends HTMLElement {
         this._pressedKeys.add(intCode);
       }
     }
-    return this.sendKeyboardUpdate();
+    this.sendKeyboardUpdate(true);
   }
 
   appendConsumerCode(code) {
@@ -2877,38 +2854,18 @@ class AndroidRemoteCard extends HTMLElement {
       const intCode = this._consumercodes[code];
       this._pressedConsumers.add(intCode);
     }
-    return this.sendConsumerUpdate();
+    this.sendConsumerUpdate(true);
   }
 
   removeCode(code) {
-    let backend = null;
     if (code) {
       if (this.isKey(code) || this.isModifier(code)) {
-        backend = this.removeKeyCode(code);
+        this.removeKeyCode(code);
       } else if (this.isConsumer(code)) {
-        backend = this.removeConsumerCode(code);
+         this.removeConsumerCode(code);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("Unknown code type:", code));
       }
-    }
-    if (backend) {
-      const hass = this._hass || this._eventManager.getForcedHass();
-      backend.catch((err) => {
-          
-        // Check for error and associate a notification message when needed
-        let errorKey = null;
-        if (!hass.connection.connected) {
-            errorKey = "error.ha.connection_lost.message";
-        }
-        
-        // Dispatch UI notification
-        if (errorKey) {
-          this._eventManager.triggerHaosToast(
-            this._eventManager.getHaElement(),
-            this._localization.localize(errorKey)
-          );
-        }
-      });
     }
   }
 
@@ -2924,7 +2881,7 @@ class AndroidRemoteCard extends HTMLElement {
         this._pressedKeys.delete(intCode);
       }
     }
-    return this.sendKeyboardUpdate();
+    this.sendKeyboardUpdate();
   }
 
   removeConsumerCode(code) {
@@ -2933,7 +2890,7 @@ class AndroidRemoteCard extends HTMLElement {
       const intCode = this._consumercodes[code];
       this._pressedConsumers.delete(intCode);
     }
-    return this.sendConsumerUpdate();
+    this.sendConsumerUpdate();
   }
 
   isKey(code) {
@@ -2949,18 +2906,18 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
-  sendKeyboardUpdate() {
+  sendKeyboardUpdate(notifyOnError = false) {
     return this._eventManager.callComponentServiceWithServerId("keypress", {
       sendModifiers: Array.from(this._pressedModifiers),
       sendKeys: Array.from(this._pressedKeys),
-    }, false);
+    }, notifyOnError);
   }
 
   // Send all current pressed modifiers and keys to HID keyboard
-  sendConsumerUpdate() {
+  sendConsumerUpdate(notifyOnError = false) {
     return this._eventManager.callComponentServiceWithServerId("conpress", {
       sendCons: Array.from(this._pressedConsumers),
-    }, false);
+    }, notifyOnError);
   }
 
   onIntegrationEvent(evt) {

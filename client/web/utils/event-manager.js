@@ -780,7 +780,7 @@ export class EventManager {
   // 
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
-  callComponentServiceWithServerId(name, args, notifyOnError = true) {
+  callComponentServiceWithServerId(name, args, notifyOnError = false) {
     return this.callComponentService(name, this.injectServerId(args), notifyOnError);
   }
 
@@ -791,7 +791,7 @@ export class EventManager {
   // 
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
-  callComponentService(name, args, notifyOnError = true) {
+  callComponentService(name, args, notifyOnError = false) {
     return this.callService(Globals.COMPONENT_NAME, name, args, notifyOnError);
   }
 
@@ -802,7 +802,7 @@ export class EventManager {
   // 
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
-  callMixedDomainService(name, args, notifyOnError = true) {
+  callMixedDomainService(name, args, notifyOnError = false) {
     if (!this.getHass()) {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callMixedDomainService(name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, name, args));
       return;
@@ -818,13 +818,30 @@ export class EventManager {
   // 
   // Returns: 
   //  - void (this is a fire-and-forget HAOS integration call)
-  callService(domain, name, args, notifyOnError = true) {
+  callService(domain, name, args, notifyOnError = false) {
     const hass = this.getHass(); // Needed for closure
-    if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, domain, name, args));
+    if (!hass) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args, notifyOnError): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, domain, name, args, notifyOnError));
       return;
     }
-    return this.getHass().callService(domain, name, args, undefined, notifyOnError);
+    const promise = hass.callService(domain, name, args);
+    if (notifyOnError) {
+      promise.catch((err) => {
+
+        // Check for error and associate a notification message when needed
+        let message = null;
+        if (!hass.connection.connected) {
+          message = this._localization.localize("error.ha.connection_lost.message");
+        }
+
+        // Dispatch UI notification
+        if (message) {
+          this._eventManager.triggerHaosToast(this._eventManager.getHaElement(), message);
+        }
+        throw err; // rethrow original error
+      });
+    }
+    return promise;
   }
 
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
