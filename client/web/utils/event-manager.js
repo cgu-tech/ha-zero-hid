@@ -839,7 +839,7 @@ export class EventManager {
 
         // Dispatch UI notification
         if (message) {
-          this._eventManager.triggerHaosToast(this._eventManager.getHaElement(), message);
+          this.triggerHaosToast(this.getHaElement(), message);
         }
         throw err; // rethrow original error
       });
