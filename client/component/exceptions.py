@@ -13,5 +13,6 @@ class HaZeroHidException(Exception):
         return (
             f"source={self.source} | "
             f"err={self.err} | "
-            f"code={self.code.name}"
+            f"code={self.code.name} | "
+            f"skippable={self.skippable}"
         )
