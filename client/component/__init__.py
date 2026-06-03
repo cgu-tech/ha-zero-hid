@@ -282,7 +282,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         if message_type == "error":
             _LOGGER.warn("Received error message from HID server: %s", message)
             message_data = message.get("data", {})
-            message_err = message.get("err", None)
+            message_err = message_data.get("err", None)
             if message_err:
                 hzhEx = HaZeroHidException(ErrorSource.HID_USB, err = message_err, message = str(ex))
                 send_hass_error_from_exception(hass, hzhEx)

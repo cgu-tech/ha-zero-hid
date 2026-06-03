@@ -135,7 +135,9 @@ async def handle_client(websocket) -> None:
                 try:
                     error_data: dict = {}
                     cause = hidEx.__cause__
-                    if isinstance(cause, FuturesTimeoutError):
+                    if isinstance(cause, ValueError) and "closed file" in str(cause):
+                        error_data["err"] = errno.ENODEV
+                    elif isinstance(cause, FuturesTimeoutError):
                         error_data["err"] = errno.EWOULDBLOCK
                     elif isinstance(cause, OSError):
                         error_data["err"] = cause.errno

@@ -416,7 +416,7 @@ export class EventManager {
     };
 
     // Log event message
-    const fullMessage = "callService(evt): event received (evtType, evtCode, evtExtra):";
+    const fullMessage = "onIntegrationEvent(evt): event received (evtType, evtCode, evtExtra):";
     if (evtLevel.trace) {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(fullMessage, evtType, evtCode, evtExtra));
     } else if (evtLevel.debug) {

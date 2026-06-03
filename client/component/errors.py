@@ -26,6 +26,7 @@ def translate_errno(source: ErrorSource, err: int | None) -> ErrorCode:
             errno.EALREADY,
             errno.EWOULDBLOCK,
             errno.EINPROGRESS,
+            errno.ENODEV,
         }:
             return ErrorCode.HID_USB_CABLE_ERROR
 
