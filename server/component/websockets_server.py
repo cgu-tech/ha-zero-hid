@@ -139,7 +139,7 @@ async def handle_client(websocket) -> None:
                         error_data["err"] = errno.EWOULDBLOCK
                     elif isinstance(cause, OSError):
                         error_data["err"] = cause.errno
-                    await send_error(websocket, error_data, id)
+                    await send_error(websocket, error_data)
                 except Exception as sendEx:
                     logger.exception(f"Could not send HID write error back to client: {sendEx}")
     except websockets.ConnectionClosed:
