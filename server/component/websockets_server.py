@@ -134,7 +134,7 @@ async def handle_client(websocket) -> None:
                 logger.exception(f"HID write failed: {hidEx}")
                 try:
                     error_data: dict = {}
-                    cause = ex.__cause__
+                    cause = hidEx.__cause__
                     if isinstance(cause, FuturesTimeoutError):
                         error_data["err"] = errno.EWOULDBLOCK
                     elif isinstance(cause, OSError):
