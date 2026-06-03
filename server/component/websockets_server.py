@@ -1,4 +1,5 @@
 import asyncio
+import errno
 import signal
 import websockets
 import http
