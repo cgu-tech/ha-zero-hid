@@ -118,7 +118,7 @@ export class EventManager {
   _defaultContainerName = 'default';
   _globalContainerName = '__window';
   _integrationContainerName = '__integration';
-  _integrationEventName = 'hazerohid';
+  _integrationEventName = 'ha_zero_hid';
 
   _origin;
   _localization;

@@ -124,7 +124,7 @@ export class HassEventManager {
     return this._runner;
   }
 
-  async subscribeHassEvents(eventName) {
+  async subscribeHassAdminEvents(eventName) {
     if (this.isManaged()) return; // Fail fast when managed (to avoid subscribing event multiple times)
     if (!this._connected) return; // Fail fast when not connected (to avoid subscribing event when disconnected)
     if (this._unsubscriptions.has(eventName)) return;
@@ -137,6 +137,28 @@ export class HassEventManager {
       if (hass) {
         const managedCallback = this.getManagedCallback(eventName);
         const unsubscribe = await hass.connection.subscribeEvents(managedCallback, eventName);
+        this._unsubscriptions.set(eventName, unsubscribe);
+      } else {
+        if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("subscribeHassAdminEvents(eventName): event not attached to hass buss (hass is undefined)", eventName));
+      }
+    } finally {
+      this._inflightSubscriptions.delete(eventName);
+    }
+  }
+
+  async subscribeHassEvents(eventName) {
+    if (this.isManaged()) return; // Fail fast when managed (to avoid subscribing event multiple times)
+    if (!this._connected) return; // Fail fast when not connected (to avoid subscribing event when disconnected)
+    if (this._unsubscriptions.has(eventName)) return;
+
+    if (this._inflightSubscriptions?.has(eventName)) return;
+    this._inflightSubscriptions.set(eventName, true);
+
+    try {
+      const hass = this.getHass();
+      if (hass) {
+        const managedCallback = this.getManagedCallback(eventName);
+        const unsubscribe = await hass.connection.subscribeMessage(managedCallback, {type: `${eventName}/subscribe_events`});
         this._unsubscriptions.set(eventName, unsubscribe);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("subscribeHassEvents(eventName): event not attached to hass buss (hass is undefined)", eventName));

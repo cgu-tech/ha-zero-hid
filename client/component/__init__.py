@@ -7,7 +7,7 @@ import voluptuous as vol
 
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.components.websocket_api.connection import ActiveConnection
-from homeassistant.components.websocket_api import websocket_command, async_response, async_register_command
+from homeassistant.components.websocket_api import websocket_api, websocket_command, async_response, async_register_command
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
@@ -23,6 +23,8 @@ from .resources_manager import ResourcesVersions, synchronize_resources, synchro
 from .websocket_handler import WebSocketClient
 
 _LOGGER = logging.getLogger(__name__)
+
+WS_SUBSCRIBERS: dict[ActiveConnection, int] = {}
 
 class WSServerInfo(TypedDict):
     ws_client: WebSocketClient
@@ -194,6 +196,30 @@ def get_user_authorized_servers(hass: HomeAssistant, user_id: str) -> List[Any]:
                 _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
     return servers
 
+def send_ws_event(type: int, code: int, extra: int | None) -> None:
+    payload = {
+        "evt_type": type,
+        "evt_code": code,
+        "evt_extra": extra,
+    }
+
+    for connection, subscription_id in list(WS_SUBSCRIBERS.items()):
+        try:
+            connection.send_message(
+                websocket_api.event_message(
+                    subscription_id,
+                    payload,
+                )
+            )
+        except Exception:
+            _LOGGER.exception("Failed to send websocket event")
+
+def send_ws_error_from_code(code: int, extra: int | None) -> None:
+    send_ws_event(EventType.ERROR, code, extra)
+
+def send_ws_error_from_exception(hzhEx: HaZeroHidException) -> None:
+    send_ws_error_from_code(hzhEx.code, hzhEx.err)
+
 def send_hass_event(hass: HomeAssistant, type: int, code: int, extra: int | None) -> None:
     hass.bus.async_fire(
         "hazerohid",
@@ -227,7 +253,24 @@ def handle_exception(hass: HomeAssistant, hint: str, ex: Exception, should_notif
             else:
                 hzhEx = HaZeroHidException(ErrorSource.HID_NETWORK, message = str(ex))
 
-            send_hass_error_from_exception(hass, hzhEx)
+            #send_hass_error_from_exception(hass, hzhEx)
+            send_ws_error_from_exception(hzhEx)
+
+@websocket_command({vol.Required("type"): DOMAIN + "/subscribe_events"})
+@async_response
+async def websocket_subscribe_events(hass: HomeAssistant, connection: ActiveConnection, msg):
+    user_id = get_user_id_from_command(connection)
+    authorized = is_user_authorized_from_command(info, connection)
+    if not authorized:
+        return
+
+    WS_SUBSCRIBERS[connection] = msg["id"]
+
+    def unsubscribe():
+        WS_SUBSCRIBERS.pop(connection, None)
+
+    connection.subscriptions[msg["id"]] = unsubscribe
+    connection.send_result(msg["id"])
 
 @websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
 @async_response
@@ -588,6 +631,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(DOMAIN, "log", handle_log, schema=LOG_SERVICE_SCHEMA)
 
     # Register WebSocket command
+    async_register_command(hass, websocket_subscribe_events)
     async_register_command(hass, websocket_get_prefs)
     async_register_command(hass, websocket_sync_keyboard)
     async_register_command(hass, websocket_sync_resources)
