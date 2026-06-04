@@ -159,7 +159,13 @@ export class HassEventManager {
       if (hass) {
         const managedCallback = this.getManagedCallback(eventName);
         const unsubPromise = await hass.connection.subscribeMessage(managedCallback, {type: `${eventName}/subscribe_events`});
+        console.log("[subscribeMessage] unsubPromise (raw):", unsubPromise);
+        console.log("[subscribeMessage] typeof unsubPromise:", typeof unsubPromise);
+        console.log("[subscribeMessage] is Promise:", unsubPromise instanceof Promise);
         const unsubscribe = await unsubPromise;
+        console.log("[subscribeMessage] unsubscribe (resolved):", unsubscribe);
+        console.log("[subscribeMessage] typeof unsubscribe:", typeof unsubscribe);
+        console.log("[subscribeMessage] keys:", unsubscribe && Object.keys(unsubscribe));
         this._unsubscriptions.set(eventName, unsubscribe);
       } else {
         if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn("subscribeHassEvents(eventName): event not attached to hass buss (hass is undefined)", eventName));
