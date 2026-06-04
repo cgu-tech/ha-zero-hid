@@ -6,8 +6,9 @@ import time
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.components import websocket_api
 from homeassistant.components.websocket_api.connection import ActiveConnection
-from homeassistant.components.websocket_api import websocket_api, websocket_command, async_response, async_register_command
+from homeassistant.components.websocket_api import websocket_command, async_response, async_register_command
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
