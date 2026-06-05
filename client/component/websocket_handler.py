@@ -23,7 +23,8 @@ MAX_ID = sys.maxsize
 SEND_TIMEOUT = 2000
 
 class WebSocketClient:
-    def __init__(self, url: str, secret: str, on_receive: ReceiveCallback) -> None:
+    def __init__(self, identifier: str, url: str, secret: str, on_receive: ReceiveCallback) -> None:
+        self.identifier = identifier
         self.url = url
         self.websocket = None
         self.secret = secret
@@ -51,7 +52,7 @@ class WebSocketClient:
             wait_ms = (acquired_ns - start_ns) / 1_000_000
             _LOGGER.debug("acquired_ns=%s, start_ns=%s, wait_ms=%s", acquired_ns, start_ns, wait_ms)
             if wait_ms > SEND_TIMEOUT:
-                raise HaZeroHidException(ErrorSource.INTEGRATION, skippable = True)
+                raise HaZeroHidException(ErrorSource.INTEGRATION, skippable = True, server_id = self.server_id)
 
             # First fail: retry, second fail: raise
             retries = 2
