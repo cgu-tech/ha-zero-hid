@@ -400,11 +400,18 @@ export class EventManager {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onIntegrationEvent(evt) + isConnected", evt, this._origin?.isConnected));
 
     // Retrieve event data
-    const data = evt?.detail?.data;
+    const data = evt?.detail;
     if (!data) return;
     const evtType = data["evt_type"];
     const evtCode = data["evt_code"];
     const evtExtra = data["evt_extra"];
+    const evtServerId = data["evt_si"];
+
+    // Abort when event:
+    // - not a broadcasting event
+    // - not for current server
+    if (evtServerId && evtServerId !=== this._eventManager.getCurrentServerId())
+        return;
 
     // Retrieve meaningful event level
     const evtLevel = {
@@ -416,17 +423,17 @@ export class EventManager {
     };
 
     // Log event message
-    const fullMessage = "onIntegrationEvent(evt): event received (evtType, evtCode, evtExtra):";
+    const fullMessage = "onIntegrationEvent(evt): event received (evtType, evtCode, evtExtra, evtServerId):";
     if (evtLevel.trace) {
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(fullMessage, evtType, evtCode, evtExtra));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(fullMessage, evtType, evtCode, evtExtra, evtServerId));
     } else if (evtLevel.debug) {
-      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(fullMessage, evtType, evtCode, evtExtra));
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(fullMessage, evtType, evtCode, evtExtra, evtServerId, evtServerId));
     } else if (evtLevel.info) {
-      if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info(fullMessage, evtType, evtCode, evtExtra));
+      if (this.getLogger().isInfoEnabled()) console.info(...this.getLogger().info(fullMessage, evtType, evtCode, evtExtra, evtServerId));
     } else if (evtLevel.warn) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(fullMessage, evtType, evtCode, evtExtra));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(fullMessage, evtType, evtCode, evtExtra, evtServerId));
     } else if (evtLevel.error) {
-      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(fullMessage, evtType, evtCode, evtExtra));
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(fullMessage, evtType, evtCode, evtExtra, evtServerId));
     }
 
     // Check for error and associate a notification message when needed
