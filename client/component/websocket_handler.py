@@ -23,8 +23,8 @@ MAX_ID = sys.maxsize
 SEND_TIMEOUT = 2000
 
 class WebSocketClient:
-    def __init__(self, identifier: str, url: str, secret: str, on_receive: ReceiveCallback) -> None:
-        self.identifier = identifier
+    def __init__(self, server_id: str, url: str, secret: str, on_receive: ReceiveCallback) -> None:
+        self.server_id = server_id
         self.url = url
         self.websocket = None
         self.secret = secret
@@ -138,6 +138,7 @@ class WebSocketClient:
                 # Unsolicited message (external event): trigger receive callback
                 try:
                     if self.on_receive:
+                        message["si"] = self.server_id
                         await self.on_receive(message)
                 except asyncio.CancelledError:
                     _LOGGER.debug("Receive task cancelled")

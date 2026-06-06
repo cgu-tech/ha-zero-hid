@@ -275,8 +275,8 @@ async def handle_exception(hass: HomeAssistant, info: WSServerInfo, hint: str, e
             server_id = None
             if info:
                 ws_client = get_ws_client(info)
-                server_id = ws_client.identifier
-            
+                server_id = ws_client.server_id
+
             if isinstance(ex, HaZeroHidException):
                 hzhEx = ex
             elif isinstance(ex, OSError):
@@ -284,7 +284,6 @@ async def handle_exception(hass: HomeAssistant, info: WSServerInfo, hint: str, e
             else:
                 hzhEx = HaZeroHidException(ErrorSource.HID_NETWORK, message = str(ex), server_id = server_id)
 
-            #send_hass_error_from_exception(hass, hzhEx)
             await send_ws_error_from_exception(hass, hzhEx)
 
 @websocket_command({vol.Required("type"): DOMAIN + "/subscribe_events"})
@@ -370,8 +369,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             message_data = message.get("data", {})
             message_err = message_data.get("err", None)
             if message_err:
-                hzhEx = HaZeroHidException(ErrorSource.HID_USB, err = message_err)
-                send_hass_error_from_exception(hass, hzhEx)
+                message_server_id = message.get("si", None)
+                hzhEx = HaZeroHidException(ErrorSource.HID_USB, err = message_err, server_id = message_server_id)
+                await send_ws_error_from_exception(hass, hzhEx)
         else:
             _LOGGER.warn("Received unhandled message type %s from HID server", message_type)
 
