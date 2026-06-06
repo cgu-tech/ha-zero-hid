@@ -200,18 +200,21 @@ def get_user_authorized_servers(hass: HomeAssistant, user_id: str) -> List[Any]:
 
 async def send_ws_event(hass: HomeAssistant, type: int, code: int, extra: int | None, server_id: str | None) -> None:
     payload = {
-        "evt_si": server_id,
         "evt_type": type,
         "evt_code": code,
         "evt_extra": extra,
+        "evt_si": server_id,
     }
+    _LOGGER.warn("send_ws_event(hass: HomeAssistant, type: int = %s, code: int = %s, extra: int | None = %s, server_id: str | None = %s)", type, code, extra, server_id)
 
     subscriptions = {}
     async with WS_SUBSCRIPTIONS_LOCK:
         for connection, request_id in WS_SUBSCRIPTIONS.items():
+            _LOGGER.warn("Cloning (connection=%s, request_id=%s)", connection, request_id)
             subscriptions[connection] = request_id
 
     for connection, request_id in subscriptions.items():
+        _LOGGER.warn("Checking authorization... (connection=%s, request_id=%s)", connection, request_id)
         authorized = False
 
         # Message is not from a specific server: 
@@ -225,6 +228,7 @@ async def send_ws_event(hass: HomeAssistant, type: int, code: int, extra: int | 
             authorized = is_user_authorized_from_command(info, connection)
 
         # Reject unauthorized user
+        _LOGGER.warn("Authorized=%s (connection=%s, request_id=%s)", authorized, connection, request_id)
         if not authorized:
             continue
 
