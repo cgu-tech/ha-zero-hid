@@ -205,16 +205,16 @@ async def send_ws_event(hass: HomeAssistant, type: int, code: int, extra: int | 
         "evt_extra": extra,
         "evt_si": server_id,
     }
-    _LOGGER.warn("send_ws_event(hass: HomeAssistant, type: int = %s, code: int = %s, extra: int | None = %s, server_id: str | None = %s)", type, code, extra, server_id)
+    _LOGGER.debug("send_ws_event(hass: HomeAssistant, type: int = %s, code: int = %s, extra: int | None = %s, server_id: str | None = %s)", type, code, extra, server_id)
 
     subscriptions = {}
     async with WS_SUBSCRIPTIONS_LOCK:
         for connection, request_id in WS_SUBSCRIPTIONS.items():
-            _LOGGER.warn("Cloning (connection=%s, request_id=%s)", connection, request_id)
+            _LOGGER.debug("Cloning (connection=%s, request_id=%s)", connection, request_id)
             subscriptions[connection] = request_id
 
     for connection, request_id in subscriptions.items():
-        _LOGGER.warn("Checking authorization... (connection=%s, request_id=%s)", connection, request_id)
+        _LOGGER.debug("Checking authorization... (connection=%s, request_id=%s)", connection, request_id)
         authorized = False
 
         # Message is not from a specific server: 
@@ -228,7 +228,7 @@ async def send_ws_event(hass: HomeAssistant, type: int, code: int, extra: int | 
             authorized = is_user_authorized_from_command(info, connection)
 
         # Reject unauthorized user
-        _LOGGER.warn("Authorized=%s (connection=%s, request_id=%s)", authorized, connection, request_id)
+        _LOGGER.debug("Authorized=%s (connection=%s, request_id=%s)", authorized, connection, request_id)
         if not authorized:
             continue
 
@@ -292,13 +292,23 @@ async def handle_exception(hass: HomeAssistant, info: WSServerInfo, hint: str, e
 async def websocket_subscribe_events(hass: HomeAssistant, connection: ActiveConnection, msg):
     request_id = msg["id"]
     async with WS_SUBSCRIPTIONS_LOCK:
-        #if connection not in WS_SUBSCRIPTIONS:
+        WS_SUBSCRIPTIONS[connection] = request_id
+
+        # remove previous HA subscription if it exists
+        old_request_id = WS_SUBSCRIPTIONS.get(connection)
+        if old_request_id and old_request_id in connection.subscriptions:
+            unsubscribe = connection.subscriptions.pop(old_request_id, None)
+            if unsubscribe:
+                unsubscribe() # important: triggers HA cleanup
+
+        # register new request_id
         WS_SUBSCRIPTIONS[connection] = request_id
 
         def unsubscribe():
             async def async_unsubscribe():
                 async with WS_SUBSCRIPTIONS_LOCK:
-                    WS_SUBSCRIPTIONS.pop(connection, None)
+                    if WS_SUBSCRIPTIONS.get(connection) == request_id:
+                        WS_SUBSCRIPTIONS.pop(connection, None)
             hass.async_create_task(async_unsubscribe())
 
         connection.subscriptions[request_id] = unsubscribe
