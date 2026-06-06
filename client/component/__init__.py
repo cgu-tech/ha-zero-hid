@@ -37,7 +37,7 @@ class UserPrefs(TypedDict):
     remote_mode: str
     airmouse_mode: str
 
-WS_SUBSCRIPTIONS: dict[ActiveConnection, dict[str, int]] = {}
+WS_SUBSCRIPTIONS: dict[ActiveConnection, int] = {}
 WS_SUBSCRIPTIONS_LOCK = asyncio.Lock()
 
 # Use empty_config_schema because the component does not have any config options
@@ -208,28 +208,33 @@ async def send_ws_event(hass: HomeAssistant, type: int, code: int, extra: int | 
 
     subscriptions = {}
     async with WS_SUBSCRIPTIONS_LOCK:
-        for connection, servers_subscription in WS_SUBSCRIPTIONS.items():
-            subscriptions[connection] = servers_subscription.copy()
+        for connection, request_id in WS_SUBSCRIPTIONS.items():
+            subscriptions[connection] = request_id
 
-    for connection, servers_subscription in subscriptions.items():
-        for subscription_server_id, request_id in servers_subscription.items():
-            authorized = False
-    
-            if server_id is None:
-                authorized = True
-    
-            elif subscription_server_id == server_id:
-                info: WSServerInfo = get_ws_server_info_by_id(hass, subscription_server_id)
-                authorized = is_user_authorized_from_command(info, connection)
-    
-            if not authorized:
-                continue
-    
-            try:
-                message = websocket_api.event_message(request_id, payload)
-                connection.send_message(message)
-            except Exception:
-                _LOGGER.exception("Failed to send websocket event")
+    for connection, request_id in subscriptions.items():
+        authorized = False
+
+        # Message is not from a specific server: 
+        # subscribed user always authorized to receive this braodcast message
+        if server_id is None:
+            authorized = True
+        else:
+            # Message is from a specific server: 
+            # autorize subscribed user only when server permits him
+            info: WSServerInfo = get_ws_server_info_by_id(hass, server_id)
+            authorized = is_user_authorized_from_command(info, connection)
+
+        # Reject unauthorized user
+        if not authorized:
+            continue
+
+        # Dispatch message for authorized user
+        try:
+            message = websocket_api.event_message(request_id, payload)
+            connection.send_message(message)
+        except Exception:
+            _LOGGER.exception("Failed to send websocket event")
+
 
 async def send_ws_error_from_code(hass: HomeAssistant, code: int, extra: int | None, server_id: str | None) -> None:
     await send_ws_event(hass, EventType.ERROR, code, extra, server_id)
@@ -278,39 +283,18 @@ async def handle_exception(hass: HomeAssistant, info: WSServerInfo, hint: str, e
             #send_hass_error_from_exception(hass, hzhEx)
             await send_ws_error_from_exception(hass, hzhEx)
 
-@websocket_command({
-    vol.Required("type"): DOMAIN + "/subscribe_events",
-    vol.Required("si"): cv.string,
-})
+@websocket_command({vol.Required("type"): DOMAIN + "/subscribe_events"})
 @async_response
 async def websocket_subscribe_events(hass: HomeAssistant, connection: ActiveConnection, msg):
-    server_id = msg["si"]
-    if not server_id:
-        return
-
-    info: WSServerInfo = get_ws_server_info_by_id(hass, server_id)
-    authorized = is_user_authorized_from_command(info, connection)
-    if not authorized:
-        return
-
+    request_id = msg["id"]
     async with WS_SUBSCRIPTIONS_LOCK:
         if connection not in WS_SUBSCRIPTIONS:
-            WS_SUBSCRIPTIONS[connection] = {}
-
-        request_id = msg["id"]
-        connection_subscriptions = WS_SUBSCRIPTIONS.setdefault(connection, {})
-
-        if server_id not in connection_subscriptions:
-            connection_subscriptions[server_id] = request_id
+            WS_SUBSCRIPTIONS[connection] = request_id
 
             def unsubscribe():
                 async def async_unsubscribe():
                     async with WS_SUBSCRIPTIONS_LOCK:
-                        if connection_subscriptions:
-                            connection_subscriptions.pop(server_id, None)
-
-                            if not connection_subscriptions:
-                                WS_SUBSCRIPTIONS.pop(connection, None)
+                        WS_SUBSCRIPTIONS.pop(connection, None)
                 hass.async_create_task(async_unsubscribe())
 
             connection.subscriptions[request_id] = unsubscribe
