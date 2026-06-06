@@ -410,7 +410,7 @@ export class EventManager {
     // Abort when event:
     // - not a broadcasting event
     // - not for current server
-    if (evtServerId && evtServerId !=== this._eventManager.getCurrentServerId())
+    if (evtServerId && evtServerId !== this._eventManager.getCurrentServerId())
         return;
 
     // Retrieve meaningful event level
