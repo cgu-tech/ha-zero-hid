@@ -292,16 +292,16 @@ async def handle_exception(hass: HomeAssistant, info: WSServerInfo, hint: str, e
 async def websocket_subscribe_events(hass: HomeAssistant, connection: ActiveConnection, msg):
     request_id = msg["id"]
     async with WS_SUBSCRIPTIONS_LOCK:
-        if connection not in WS_SUBSCRIPTIONS:
-            WS_SUBSCRIPTIONS[connection] = request_id
+        #if connection not in WS_SUBSCRIPTIONS:
+        WS_SUBSCRIPTIONS[connection] = request_id
 
-            def unsubscribe():
-                async def async_unsubscribe():
-                    async with WS_SUBSCRIPTIONS_LOCK:
-                        WS_SUBSCRIPTIONS.pop(connection, None)
-                hass.async_create_task(async_unsubscribe())
+        def unsubscribe():
+            async def async_unsubscribe():
+                async with WS_SUBSCRIPTIONS_LOCK:
+                    WS_SUBSCRIPTIONS.pop(connection, None)
+            hass.async_create_task(async_unsubscribe())
 
-            connection.subscriptions[request_id] = unsubscribe
+        connection.subscriptions[request_id] = unsubscribe
 
     connection.send_result(request_id)
 
