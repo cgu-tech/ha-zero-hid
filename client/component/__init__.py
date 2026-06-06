@@ -121,7 +121,7 @@ def get_user_prefs(hass: HomeAssistant, user_id: str) -> UserPrefs:
         "airmouse_mode": "",
     })
 
-def get_ws_server_infos(hass: HomeAssistant) -> List[Any]:
+def get_ws_server_infos(hass: HomeAssistant) -> dict[str, WSServerInfo]:
     return hass.data[DOMAIN]["ws_servers"]
 
 def get_ws_server_info_by_id(hass: HomeAssistant, server_id: str) -> WSServerInfo:
@@ -198,7 +198,7 @@ def get_user_authorized_servers(hass: HomeAssistant, user_id: str) -> List[Any]:
                 _LOGGER.debug(f"Server {server_id} is not authorized for user ({user_id})")
     return servers
 
-def send_ws_event(hass: HomeAssistant, type: int, code: int, extra: int | None, server_id: str | None) -> None:
+async def send_ws_event(hass: HomeAssistant, type: int, code: int, extra: int | None, server_id: str | None) -> None:
     payload = {
         "evt_si": server_id,
         "evt_type": type,
@@ -206,28 +206,36 @@ def send_ws_event(hass: HomeAssistant, type: int, code: int, extra: int | None, 
         "evt_extra": extra,
     }
 
+    subscriptions = {}
     async with WS_SUBSCRIPTIONS_LOCK:
         for connection, servers_subscription in WS_SUBSCRIPTIONS.items():
-            for subscription_server_id, subscription_id in WS_SUBSCRIPTIONS.items():
-                authorized = not server_id
-                if server_id:
-                    info: WSServerInfo = get_ws_server_info_by_id(hass, subscription_server_id)
-                    authorized = is_user_authorized_from_command(info, connection)
+            subscriptions[connection] = servers_subscription.copy()
 
-                if not authorized:
-                    continue
+    for connection, servers_subscription in subscriptions.items():
+        for subscription_server_id, request_id in servers_subscription.items():
+            authorized = False
+    
+            if server_id is None:
+                authorized = True
+    
+            elif subscription_server_id == server_id:
+                info: WSServerInfo = get_ws_server_info_by_id(hass, subscription_server_id)
+                authorized = is_user_authorized_from_command(info, connection)
+    
+            if not authorized:
+                continue
+    
+            try:
+                message = websocket_api.event_message(request_id, payload)
+                connection.send_message(message)
+            except Exception:
+                _LOGGER.exception("Failed to send websocket event")
 
-                try:
-                    message = websocket_api.event_message(subscription_id, payload)
-                    connection.send_message(message)
-                except Exception:
-                    _LOGGER.exception("Failed to send websocket event")
+async def send_ws_error_from_code(hass: HomeAssistant, code: int, extra: int | None, server_id: str | None) -> None:
+    await send_ws_event(hass, EventType.ERROR, code, extra, server_id)
 
-def send_ws_error_from_code(hass: HomeAssistant, code: int, extra: int | None, server_id: str | None) -> None:
-    send_ws_event(hass, EventType.ERROR, code, extra, server_id)
-
-def send_ws_error_from_exception(hass: HomeAssistant, hzhEx: HaZeroHidException) -> None:
-    send_ws_error_from_code(hass, hzhEx.code, hzhEx.err, hzhEx.server_id)
+async def send_ws_error_from_exception(hass: HomeAssistant, hzhEx: HaZeroHidException) -> None:
+    await send_ws_error_from_code(hass, hzhEx.code, hzhEx.err, hzhEx.server_id)
 
 def send_hass_event(hass: HomeAssistant, type: int, code: int, extra: int | None) -> None:
     hass.bus.async_fire(
@@ -245,7 +253,7 @@ def send_hass_error_from_code(hass: HomeAssistant, code: int, extra: int | None)
 def send_hass_error_from_exception(hass: HomeAssistant, hzhEx: HaZeroHidException) -> None:
     send_hass_error_from_code(hass, hzhEx.code, hzhEx.err)
 
-def handle_exception(hass: HomeAssistant, info: WSServerInfo, hint: str, ex: Exception, should_notify: bool = False) -> None:
+async def handle_exception(hass: HomeAssistant, info: WSServerInfo, hint: str, ex: Exception, should_notify: bool = False) -> None:
     # Always log exception first
     if isinstance(ex, HaZeroHidException) and ex.skippable:
         if _LOGGER.getEffectiveLevel() == logging.DEBUG:
@@ -268,31 +276,46 @@ def handle_exception(hass: HomeAssistant, info: WSServerInfo, hint: str, ex: Exc
                 hzhEx = HaZeroHidException(ErrorSource.HID_NETWORK, message = str(ex), server_id = server_id)
 
             #send_hass_error_from_exception(hass, hzhEx)
-            send_ws_error_from_exception(hass, hzhEx)
+            await send_ws_error_from_exception(hass, hzhEx)
 
-@websocket_command({vol.Required("type"): DOMAIN + "/subscribe_events"})
+@websocket_command({
+    vol.Required("type"): DOMAIN + "/subscribe_events",
+    vol.Required("si"): cv.string,
+})
 @async_response
 async def websocket_subscribe_events(hass: HomeAssistant, connection: ActiveConnection, msg):
     server_id = msg["si"]
     if not server_id:
         return
 
+    info: WSServerInfo = get_ws_server_info_by_id(hass, server_id)
+    authorized = is_user_authorized_from_command(info, connection)
+    if not authorized:
+        return
+
     async with WS_SUBSCRIPTIONS_LOCK:
         if connection not in WS_SUBSCRIPTIONS:
             WS_SUBSCRIPTIONS[connection] = {}
 
-        subscription_id = msg["id"]
-        CONNECTION_SUBSCRIPTIONS = WS_SUBSCRIPTIONS[connection]
-        if server_id not in CONNECTION_SUBSCRIPTIONS:
-            CONNECTION_SUBSCRIPTIONS[server_id] = subscription_id
+        request_id = msg["id"]
+        connection_subscriptions = WS_SUBSCRIPTIONS.setdefault(connection, {})
+
+        if server_id not in connection_subscriptions:
+            connection_subscriptions[server_id] = request_id
 
             def unsubscribe():
-                async with WS_SUBSCRIPTIONS_LOCK:
-                    WS_SUBSCRIPTIONS.pop(connection, None)
+                async def async_unsubscribe():
+                    async with WS_SUBSCRIPTIONS_LOCK:
+                        if connection_subscriptions:
+                            connection_subscriptions.pop(server_id, None)
 
-            connection.subscriptions[subscription_id] = unsubscribe
+                            if not connection_subscriptions:
+                                WS_SUBSCRIPTIONS.pop(connection, None)
+                hass.async_create_task(async_unsubscribe())
 
-    connection.send_result(subscription_id)
+            connection.subscriptions[request_id] = unsubscribe
+
+    connection.send_result(request_id)
 
 @websocket_command({vol.Required("type"): DOMAIN + "/get_prefs"})
 @async_response
@@ -383,8 +406,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 user_prefs_check = hass.data[DOMAIN]["users_prefs"][user_id]
-                _LOGGER.debug(f"Received preferences for user {user_id}: server_id={call.data.get("server_id")},remote_mode={call.data.get("remote_mode")},airmouse_mode={call.data.get("airmouse_mode")}")
-                _LOGGER.debug(f"Set preferences for user {user_id}: server_id={user_prefs_check["server_id"]},remote_mode={user_prefs_check["remote_mode"]},airmouse_mode={user_prefs_check["airmouse_mode"]}")
+                _LOGGER.debug(f"Received preferences for user {user_id}: server_id={call.data.get('server_id')},remote_mode={call.data.get('remote_mode')},airmouse_mode={call.data.get('airmouse_mode')}")
+                _LOGGER.debug(f"Set preferences for user {user_id}: server_id={user_prefs_check['server_id']},remote_mode={user_prefs_check['remote_mode']},airmouse_mode={user_prefs_check['airmouse_mode']}")
         else:
             _LOGGER.exception(f"Unauthenticated user tried to set preferences into session")
 
