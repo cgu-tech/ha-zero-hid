@@ -10,6 +10,7 @@ export class TrackpadCard extends HTMLElement {
 
   // private init required constants
   static _LAYOUTS;
+  static _ACTIONS;
 
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
@@ -27,6 +28,12 @@ export class TrackpadCard extends HTMLElement {
       { "Name": 'buttons-left-middle-right', "buttons": [ {"button": "left"  , "event": "clickleft"  }, {"button": "middle", "event": "clickmiddle"}, {"button": "right", "event": "clickright"} ] },
       { "Name": 'buttons-right-middle-left', "buttons": [ {"button": "left"  , "event": "clickright" }, {"button": "middle", "event": "clickmiddle"}, {"button": "right", "event": "clickleft" } ] }
     ];
+    this._ACTIONS = [
+      { "Name": 'left-click'            , "events": ["clickleft"              ] },
+      { "Name": 'middle-click'          , "events": ["clickmiddle"            ] },
+      { "Name": 'right-click'           , "events": ["clickright"             ] },
+      { "Name": 'double-left-click'     , "events": ["clickleft", "clickleft" ] }
+    ];
   }
 
   // private constants
@@ -42,6 +49,7 @@ export class TrackpadCard extends HTMLElement {
   _eventManager;
   _layoutManager;
   _resourceManager;
+  _actionsByNames;
 
   _scrollPointers = new Map();
   _isScrollModeOn = false;
@@ -60,6 +68,7 @@ export class TrackpadCard extends HTMLElement {
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, this.constructor._LAYOUTS);
     this._resourceManager = new ResourceManager(this, import.meta.url);
+    this._actionsByNames = this.constructor.getActionsByNames(this.constructor._ACTIONS);
 
     this.doCard();
     this.doStyle();
@@ -119,7 +128,30 @@ export class TrackpadCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
-  // Trackpad short click/log click detection (with move debouncing)
+  getAction(actionName) {
+    return this._actionsByNames.get(actionName);
+  }
+
+  hasAction(actionName) {
+    return this._actionsByNames.has(layoutName);
+  }
+
+  getActionFromConfig(configName) {
+    let actionName = this._layoutManager.getFromConfigOrDefaultConfig(configName);
+    if (!this.hasAction(actionName)) {
+      actionName = this._layoutManager.getFromDefaultConfig(configName);
+    }
+    return {
+      "Name": actionName,
+      "events": this.getAction(actionName)
+    };
+  }
+
+  getActionLongClick() {
+    return this.getActionFromConfig("action_long_click");
+  }
+
+  // Trackpad short click/long click detection (with move debouncing)
   getTriggerMoveHorizontalDelta() {
     return this._layoutManager.getFromConfigOrDefaultConfig("trigger_move_horizontal_delta");
   }
@@ -576,7 +608,7 @@ export class TrackpadCard extends HTMLElement {
       if (duration < this.getTriggerLongClickDelay()) {
         // Short click
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Trackpad short click of ${duration}ms detected for evt:`, evt));
-        this.handleSinglePointerLeftClick(evt);
+        this.handleClicks(["clickleft"]);
       } else {
         // Too long click
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Trackpad debounced too-long click of ${duration}ms detected for evt:`, evt));
@@ -973,6 +1005,7 @@ export class TrackpadCard extends HTMLElement {
       haptic: true,
       log_level: "warn",
       log_pushback: false,
+      action_long_click: "right-click",
       trigger_move_horizontal_delta: 2,
       trigger_move_vertical_delta: 2,
       trigger_long_click_delay: 500,
@@ -1060,7 +1093,8 @@ export class TrackpadCard extends HTMLElement {
         const duration = this._eventManager.getElapsedTime(clickEntry["event"], evt);
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Trackpad long-click of ${duration}ms detected for evt:`, evt));
 
-        this.handleSinglePointerLeftDblClick(evt);
+        // Execute long click action
+        this.handleLongClick(evt);
       }
     }, this.getTriggerLongClickDelay()); // long-press duration
   }
@@ -1071,19 +1105,26 @@ export class TrackpadCard extends HTMLElement {
     return clickEntry;
   }
 
-  handleSinglePointerLeftClick(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerLeftClick(evt):", evt));
-    this.sendMouseClickLeft();
-    this.sendMouseClickRelease();
-    this._layoutManager.hapticFeedback();
+  handleLongClick(evt) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleLongClick(evt):", evt));
+
+    // Retrieve long action to execute
+    const action = this.getActionLongClick();
+
+    // Execute action events
+    this.handleClicks(action.events);
   }
 
-  handleSinglePointerLeftDblClick(evt) {
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleSinglePointerLeftDblClick(evt):", evt));
-    this.sendMouseClickLeft();
-    this.sendMouseClickRelease();
-    this.sendMouseClickLeft();
-    this.sendMouseClickRelease();
+  handleClicks(events) {
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("handleClicks(events):", events));
+
+    // Execute all click events, each event separated of the next one by a click release
+    for (const actionEvent of events) {
+      this.sendMouse(actionEvent, {}, true);
+      this.sendMouseClickRelease();
+    }
+
+    // Send user haptic feedback
     this._layoutManager.hapticFeedbackLong();
   }
 
@@ -1164,10 +1205,6 @@ export class TrackpadCard extends HTMLElement {
     return clickEntry;
   }
 
-  sendMouseClickLeft() {
-    this.sendMouse("clickleft", {}, true);
-  }
-
   sendMouseClickRelease() {
     this.sendMouse("clickrelease", {});
   }
@@ -1237,6 +1274,14 @@ export class TrackpadCard extends HTMLElement {
 
   setScrollZoneData(scrollZone, defaultConfig, overrideConfig) {
     this._layoutManager.setElementData(scrollZone, defaultConfig, overrideConfig, (key, value, source) => this._allowedScrollZoneData.has(key));
+  }
+
+  static getActionsByNames(actions) {
+    const actionsByNames = new Map();
+    for (const action of Object.values(actions || {})) {
+      actionsByNames.set(action.Name, action);
+    }
+    return actionsByNames;
   }
 
 }
