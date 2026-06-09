@@ -141,9 +141,10 @@ export class TrackpadCard extends HTMLElement {
     if (!this.hasAction(actionName)) {
       actionName = this._layoutManager.getFromDefaultConfig(configName);
     }
+    const action = this.getAction(actionName);
     return {
-      "Name": actionName,
-      "events": this.getAction(actionName)
+      "Name": action?.["Name"],
+      "events": Array.from(action?.["events"])
     };
   }
 
