@@ -133,7 +133,7 @@ export class TrackpadCard extends HTMLElement {
   }
 
   hasAction(actionName) {
-    return this._actionsByNames.has(layoutName);
+    return this._actionsByNames.has(actionName);
   }
 
   getActionFromConfig(configName) {
