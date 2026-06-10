@@ -239,10 +239,6 @@ export class TestCard extends HTMLElement {
     return this.getTrackpadCurrentState()?.[this.constructor._TRACKPAD_NEXTS].find(next => next[this.constructor._TRACKPAD_TRIGGER] === trigger);
   }
 
-  activateTrackpadNextStateFromEvent(trigger, evt) {
-    return this.activateTrackpadNextState(trigger, evt);
-  }
-
   activateTrackpadNextState(trigger, evt) {
     const nextState = this.getTrackpadNextState(trigger);
     if (nextState) {
@@ -262,8 +258,8 @@ export class TestCard extends HTMLElement {
 
         const actionSetTimeout = action[this.constructor._ACTION_SETTIMEOUT];
         if (actionSetTimeout) {
-          if (actionName === this.constructor._TRACKPAD_ACTION_ADD) this.addTrackpadTimeout(...actionSetTimeout);
-          if (actionName === this.constructor._TRACKPAD_ACTION_REMOVE) this.removeTrackpadTimeout(...actionSetTimeout);
+          if (actionName === this.constructor._TRACKPAD_ACTION_ADD) this.addTrackpadTimeout(evt, ...actionSetTimeout);
+          if (actionName === this.constructor._TRACKPAD_ACTION_REMOVE) this.removeTrackpadTimeout(evt, ...actionSetTimeout);
         }
       }
 
@@ -287,34 +283,43 @@ export class TestCard extends HTMLElement {
     return listeners;
   }
 
-  addTrackpadTimeout(trackpadTimeout, evt) {
-    const timeoutId = evt.pointerId;
-    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.addTimeout(this._trackpadShortTimeouts, timeoutId, this._trackpadShortDelay, callback);
-    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.addTimeout(this._trackpadLongTimeouts, timeoutId, this._trackpadLongDelay, callback);
+  onTrackpadShortTimeout(evt) {
+    this.activateTrackpadNextState(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED, evt);
   }
 
-  removeTrackpadTimeout(trackpadTimeout, evt) {
+  onTrackpadLongTimeout(evt) {
+    this.activateTrackpadNextState(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, evt);
+  }
+
+  addTrackpadTimeout(evt, trackpadTimeout) {
+    const timeoutId = evt.pointerId;
+    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.addTimeout(this._trackpadShortTimeouts, timeoutId, this._trackpadShortDelay, this.onTrackpadShortTimeout.bind(this), evt);
+    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.addTimeout(this._trackpadLongTimeouts, timeoutId, this._trackpadLongDelay, this.onTrackpadLongTimeout.bind(this), evt);
+  }
+
+  removeTrackpadTimeout(evt, trackpadTimeout) {
     const timeoutId = evt.pointerId;
     if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.removeTimeout(this._trackpadShortTimeouts, timeoutId);
     if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.removeTimeout(this._trackpadLongTimeouts, timeoutId);
   }
 
-  addTimeout(timeouts, timeoutId, delay, callback) {
+  addTimeout(timeouts, timeoutId, delay, callback, evt) {
     timeouts.set(timeoutId, {
       "was-ran": false,                                  // true when action was executed
-      "timeout": this.createTimeout(timeouts, timeoutId, delay, callback)   // when it expires, triggers the associated inner callback to run the action
+      "timeout": this.createTimeout(timeouts, timeoutId, delay, callback, evt)   // when it expires, triggers the associated inner callback to run the action
     });
   }
 
-  createTimeout(timeouts, timeoutId, delay, callback) {
+  createTimeout(timeouts, timeoutId, delay, callback, evt) {
     return setTimeout(() => {
       const timeoutEntry = this.timeouts.get(timeoutId);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addTimeout(timeouts, timeoutId, delay, callback) + timeoutEntry:`, timeouts, timeoutId, delay, callback, timeoutEntry));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addTimeout(timeouts, timeoutId, delay, callback, evt) + timeoutEntry:`, timeouts, timeoutId, delay, callback, evt, timeoutEntry));
 
       // When no entry: trackpad state changed before timeout (released, moved, ...)
       if (timeoutEntry && !timeoutEntry["was-ran"]) {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addTimeout(timeouts, timeoutId, delay, callback) + timeoutEntry: executing callback...`, timeouts, timeoutId, delay, callback, timeoutEntry));
-        if (callback) callback();
+        timeoutEntry["was-ran"] = true;
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addTimeout(timeouts, timeoutId, delay, callback, evt) + timeoutEntry: executing callback...`, timeouts, timeoutId, delay, callback, evt, timeoutEntry));
+        if (callback) callback(evt);
       }
     }, delay); // timeout duration
   }
