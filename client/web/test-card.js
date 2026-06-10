@@ -10,10 +10,112 @@ console.info("Loading test-card");
 
 export class TestCard extends HTMLElement {
 
+  // private init required constants
+  static _TRACKPAD_STATUS_MAP;
+
+  static _TRACKPAD_INIT = '1';                  // "init"
+  static _TRACKPAD_STATES = '2';                // "states"
+
+  static _TRACKPAD_ACTIONS = '1';               // "actions"
+  static _TRACKPAD_NEXTS = '2';                 // "nexts"
+
+  static _TRACKPAD_ACTION_ADD = '1';
+  static _TRACKPAD_ACTION_REMOVE = '2';
+
+  static _TRACKPAD_STATE = '1';                 // "state"
+  static _TRACKPAD_TRIGGER = '2';               // "trigger"
+  static _TRACKPAD_CALLBACK = '3';              // "callback"
+
+  static _TRACKPAD_ACTION = '1';                // "action"
+  static _ACTION_CLASSLIST = '2';               // "class_list"
+  static _ACTION_SETTIMEOUT = '3';              // "setTimeout"
+
+  static _TRACKPAD_STATE_INACTIVE = '1';
+  static _TRACKPAD_STATE_MOVE = '2';
+  static _TRACKPAD_STATE_PRESS_LONG = '3';
+  static _TRACKPAD_STATE_TIMEOUT_SHORT = '4';
+  static _TRACKPAD_STATE_TIMEOUT_LONG = '5';
+
+  static _TRACKPAD_CALLBACK_TIMEOUT_SHORT  = '1';
+  static _TRACKPAD_CALLBACK_TIMEOUT_LONG   = '2';
+  static _TRACKPAD_CALLBACK_CLICK_SHORT    = '3';
+  static _TRACKPAD_CALLBACK_PRESS_LONG     = '4';
+  static _TRACKPAD_CALLBACK_MOVE_START     = '5';
+  static _TRACKPAD_CALLBACK_MOVE           = '6';
+  static _TRACKPAD_CALLBACK_MOVE_STOP      = '7';
+  static _TRACKPAD_CALLBACK_RELEASE_LONG   = '8';
+
+  static _TRACKPAD_TIMEOUT_SHORT = '1';
+  static _TRACKPAD_TIMEOUT_LONG = '2';
+
+  static _TRACKPAD_TRIGGER_POINTER_DOWN = '1';
+  static _TRACKPAD_TRIGGER_POINTER_MOVE = '2';
+  static _TRACKPAD_TRIGGER_POINTER_UP = '3';
+  static _TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED = '4';
+  static _TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED = '5';
+
+  // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
+  static {
+    this._TRACKPAD_STATUS_MAP = {
+      [this._TRACKPAD_INIT]: { [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_INACTIVE },
+      [this._TRACKPAD_STATES]: {
+        [this._TRACKPAD_STATE_INACTIVE]: {
+          [this._TRACKPAD_ACTIONS]: [
+            { [this._TRACKPAD_ACTION]: this._TRACKPAD_ACTION_REMOVE, [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
+          ],
+          [this._TRACKPAD_NEXTS]: [ 
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_DOWN, [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_TIMEOUT_SHORT,  [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_SHORT }
+          ]
+        },
+        [this._TRACKPAD_STATE_TIMEOUT_SHORT]: {
+          [this._TRACKPAD_ACTIONS]: [
+            { [this._TRACKPAD_ACTION]: this._TRACKPAD_ACTION_ADD,    [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] }
+          ],
+          [this._TRACKPAD_NEXTS]: [ 
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED, [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_TIMEOUT_LONG,  [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_LONG }, 
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE,  [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_MOVE, [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START },
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP,  [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_INACTIVE, [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT }
+          ]
+        },
+        [this._TRACKPAD_STATE_TIMEOUT_LONG]: {
+          [this._TRACKPAD_ACTIONS]: [
+            { [this._TRACKPAD_ACTION]: this._TRACKPAD_ACTION_REMOVE, [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] },
+            { [this._TRACKPAD_ACTION]: this._TRACKPAD_ACTION_ADD,    [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG] }
+          ],
+          [this._TRACKPAD_NEXTS]: [ 
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_PRESS_LONG,  [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_PRESS_LONG }, 
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE,  [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_MOVE, [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START },
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP, [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_INACTIVE,  [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT }
+          ]
+        },
+        [this._TRACKPAD_STATE_MOVE]: {
+          [this._TRACKPAD_ACTIONS]: [
+            { [this._TRACKPAD_ACTION]: this._TRACKPAD_ACTION_REMOVE, [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
+          ],
+          [this._TRACKPAD_NEXTS]: [ 
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE, [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_MOVE,  [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_MOVE }, 
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP,  [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_INACTIVE, [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_STOP }
+          ]
+        },
+        [this._TRACKPAD_STATE_PRESS_LONG]: {
+          [this._TRACKPAD_ACTIONS]: [
+            { [this._TRACKPAD_ACTION]: this._TRACKPAD_ACTION_REMOVE, [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG] }
+          ],
+          [this._TRACKPAD_NEXTS]: [ 
+            { [this._TRACKPAD_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP, [this._TRACKPAD_STATE]: this._TRACKPAD_STATE_INACTIVE,  [this._TRACKPAD_CALLBACK]: this._TRACKPAD_CALLBACK_RELEASE_LONG }
+          ]
+        }
+      }
+    };
+  }
+
   // private constants
   _keycodes = new KeyCodes().getMapping();
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedCellData = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
+  
+  _trackpadShortDelay = 150;
+  _trackpadLongDelay = 250;
 
   // private properties
   _config;
@@ -23,6 +125,9 @@ export class TestCard extends HTMLElement {
   _eventManager;
   _layoutManager;
   _resourceManager;
+
+  _trackpadShortTimeouts = new Map();
+  _trackpadLongTimeouts = new Map();
 
   constructor() {
     super();
@@ -92,6 +197,134 @@ export class TestCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
+  setTrackpadState(state) {
+    this._trackpadState = state;
+  }
+  
+  getTrackpadState() {
+    return this._trackpadState;
+  }
+
+  setTrackpadCallbacks(callbacks) {
+    this._trackpadCallbacks = callbacks;
+  }
+
+  getTrackpadCallbacks() {
+    return this._trackpadCallbacks;
+  }
+
+  // [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_SHORT]: 
+  // [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG ]: 
+  // [this.constructor._TRACKPAD_CALLBACK_CLICK_SHORT  ]: 
+  // [this.constructor._TRACKPAD_CALLBACK_PRESS_LONG   ]: 
+  // [this.constructor._TRACKPAD_CALLBACK_MOVE_START   ]: 
+  // [this.constructor._TRACKPAD_CALLBACK_MOVE         ]: 
+  // [this.constructor._TRACKPAD_CALLBACK_MOVE_STOP    ]: 
+  // [this.constructor._TRACKPAD_CALLBACK_RELEASE_LONG ]: 
+  initTrackpadState(callbacks) {
+    this.setTrackpadState(this.constructor._TRACKPAD_STATUS_MAP[this.constructor._TRACKPAD_INIT][this.constructor._TRACKPAD_STATE]);
+    this.setTrackpadCallbacks(callbacks);
+  }
+
+
+  getTrackpadCurrentState() {
+    return this.constructor._TRACKPAD_STATUS_MAP[this.constructor._TRACKPAD_STATES][this.getTrackpadState()];
+  }
+
+  getTrackpadCurrentActions() {
+    return this.getTrackpadCurrentState()?.[this.constructor._TRACKPAD_ACTIONS];
+  }
+
+  getTrackpadNextState(trigger) {
+    return this.getTrackpadCurrentState()?.[this.constructor._TRACKPAD_NEXTS].find(next => next[this.constructor._TRACKPAD_TRIGGER] === trigger);
+  }
+
+  activateTrackpadNextStateFromEvent(trigger, evt) {
+    return this.activateTrackpadNextState(trigger, evt);
+  }
+
+  activateTrackpadNextState(trigger, evt) {
+    const nextState = this.getTrackpadNextState(trigger);
+    if (nextState) {
+
+      // Change trackpad to next state
+      this.setTrackpadState(nextState[this.constructor._TRACKPAD_STATE]);
+
+      // Update button classes
+      for (const action of (this.getTrackpadCurrentActions() ?? [])) {
+        const actionName = action[this.constructor._TRACKPAD_ACTION];
+
+        const actionClassList = action[this.constructor._ACTION_CLASSLIST];
+        if (actionClassList) {
+          if (actionName === this.constructor._TRACKPAD_ACTION_ADD) this.classList.add(...actionClassList);
+          if (actionName === this.constructor._TRACKPAD_ACTION_REMOVE) this.classList.remove(...actionClassList);
+        }
+
+        const actionSetTimeout = action[this.constructor._ACTION_SETTIMEOUT];
+        if (actionSetTimeout) {
+          if (actionName === this.constructor._TRACKPAD_ACTION_ADD) this.addTrackpadTimeout(...actionSetTimeout);
+          if (actionName === this.constructor._TRACKPAD_ACTION_REMOVE) this.removeTrackpadTimeout(...actionSetTimeout);
+        }
+      }
+
+      // Execute associated callback (when present)
+      const callback = this.getTrackpadCallbacks()?.[nextState[this.constructor._TRACKPAD_CALLBACK]];
+      if (callback) callback(evt);
+    }
+    return !!nextState;
+  }
+
+  addTrackpadListeners(containerName, callbacks, options = null) {
+    this.initTrackpadState(callbacks);
+
+    const listeners = [];
+    const target = this;
+    listeners.push(this._eventManager.addPointerEnterListenerToContainer(containerName, target, this.onButtonPointerEnter.bind(this), options));
+    listeners.push(this._eventManager.addPointerLeaveListenerToContainer(containerName, target, this.onButtonPointerLeave.bind(this), options));
+    listeners.push(this._eventManager.addPointerCancelListenerToContainer(containerName, target, this.onButtonPointerCancel.bind(this), options));
+    listeners.push(this._eventManager.addPointerDownListenerToContainer(containerName, target, this.onButtonPointerDown.bind(this), options));
+    listeners.push(this._eventManager.addPointerUpListenerToContainer(containerName, target, this.onButtonPointerUp.bind(this), options));
+    return listeners;
+  }
+
+  addTrackpadTimeout(trackpadTimeout, evt) {
+    const timeoutId = evt.pointerId;
+    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.addTimeout(this._trackpadShortTimeouts, timeoutId, this._trackpadShortDelay, callback);
+    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.addTimeout(this._trackpadLongTimeouts, timeoutId, this._trackpadLongDelay, callback);
+  }
+
+  removeTrackpadTimeout(trackpadTimeout, evt) {
+    const timeoutId = evt.pointerId;
+    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.removeTimeout(this._trackpadShortTimeouts, timeoutId);
+    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.removeTimeout(this._trackpadLongTimeouts, timeoutId);
+  }
+
+  addTimeout(timeouts, timeoutId, delay, callback) {
+    timeouts.set(timeoutId, {
+      "was-ran": false,                                  // true when action was executed
+      "timeout": this.createTimeout(timeouts, timeoutId, delay, callback)   // when it expires, triggers the associated inner callback to run the action
+    });
+  }
+
+  createTimeout(timeouts, timeoutId, delay, callback) {
+    return setTimeout(() => {
+      const timeoutEntry = this.timeouts.get(timeoutId);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addTimeout(timeouts, timeoutId, delay, callback) + timeoutEntry:`, timeouts, timeoutId, delay, callback, timeoutEntry));
+
+      // When no entry: trackpad state changed before timeout (released, moved, ...)
+      if (timeoutEntry && !timeoutEntry["was-ran"]) {
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addTimeout(timeouts, timeoutId, delay, callback) + timeoutEntry: executing callback...`, timeouts, timeoutId, delay, callback, timeoutEntry));
+        if (callback) callback();
+      }
+    }, delay); // timeout duration
+  }
+
+  removeTimeout(timeouts, timeoutId) {
+    const timeout = timeouts.get(timeoutId)?.["timeout"];
+    if (timeout) clearTimeout(timeout);
+    timeouts.delete(timeoutId);
+  }
+
   // jobs
   doCheckConfig() {
     // Do your checks here
@@ -138,11 +371,11 @@ export class TestCard extends HTMLElement {
         transition: background 0.3s ease, transform 0.1s ease;
       }
 
-      .test-button.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
+      .test-button.${this._eventManager.constructor._TRACKPAD_CLASS_HOVER} {
         background: #888;
       }
 
-      .test-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
+      .test-button.${this._eventManager.constructor._TRACKPAD_CLASS_PRESSED} {
         background: #BBB;
         transform: scale(0.95);
       }
@@ -192,11 +425,11 @@ export class TestCard extends HTMLElement {
   doListen() {
     this._eventManager.addButtonListeners("buttons", this._elements.testButton, 
       {
-        [this._eventManager.constructor._BUTTON_CALLBACK_HOVER]: this.onTestButtonHover.bind(this),
-        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_HOVER]: this.onTestButtonAbortHover.bind(this),
-        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onTestButtonPress.bind(this),
-        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onTestButtonAbortPress.bind(this),
-        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onTestButtonRelease.bind(this)
+        [this._eventManager.constructor._TRACKPAD_CALLBACK_TIMEOUT_SHORT]: this.onTestButtonHover.bind(this),
+        [this._eventManager.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG]: this.onTestButtonAbortHover.bind(this),
+        [this._eventManager.constructor._TRACKPAD_CALLBACK_PRESS]: this.onTestButtonPress.bind(this),
+        [this._eventManager.constructor._TRACKPAD_CALLBACK_ABORT_PRESS]: this.onTestButtonAbortPress.bind(this),
+        [this._eventManager.constructor._TRACKPAD_CALLBACK_RELEASE]: this.onTestButtonRelease.bind(this)
       }
     );
 
