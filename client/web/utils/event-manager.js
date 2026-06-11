@@ -13,25 +13,28 @@ export class EventManager {
   static _BUTTON_INIT = '1';                  // "init"
   static _BUTTON_STATES = '2';                // "states"
 
-  static _BUTTON_STATE_NORMAL = '1';          // "normal"
-  static _BUTTON_STATE_HOVER = '2';           // "hover"
-  static _BUTTON_STATE_PRESSED = '3';         // "pressed"
-
   static _BUTTON_ACTIONS = '1';               // "actions"
   static _BUTTON_NEXTS = '2';                 // "nexts"
+
+  static _BUTTON_ACTION_ADD = '1';            // "add"
+  static _BUTTON_ACTION_REMOVE = '2';         // "remove"
 
   static _BUTTON_STATE = '1';                 // "state"
   static _BUTTON_TRIGGER = '2';               // "trigger"
   static _BUTTON_CALLBACK = '3';              // "callback"
+
+  static _BUTTON_ACTION = '1';                // "action"
+  static _ACTION_CLASSLIST = '2';             // "class_list"
+
+  static _BUTTON_STATE_NORMAL = '1';          // "normal"
+  static _BUTTON_STATE_HOVER = '2';           // "hover"
+  static _BUTTON_STATE_PRESSED = '3';         // "pressed"
 
   static _BUTTON_CALLBACK_HOVER = '1';        // "BTN_HOVER"
   static _BUTTON_CALLBACK_ABORT_HOVER = '2';  // "BTN_ABORT_HOVER"
   static _BUTTON_CALLBACK_PRESS = '3';        // "BTN_PRESS"
   static _BUTTON_CALLBACK_ABORT_PRESS = '4';  // "BTN_ABORT_PRESS"
   static _BUTTON_CALLBACK_RELEASE = '5';      // "BTN_RELEASE"
-
-  static _BUTTON_ACTION = '1';                // "action"
-  static _ACTION_CLASSLIST = '2';             // "class_list"
 
   static _BUTTON_CLASS_HOVER = "active";
   static _BUTTON_CLASS_PRESSED = "press";
@@ -40,9 +43,6 @@ export class EventManager {
   static _BUTTON_TRIGGER_POINTER_LEAVE = '2'; // "BTN_POINTER_LEAVE"
   static _BUTTON_TRIGGER_POINTER_DOWN = '3';  // "BTN_POINTER_DOWN"
   static _BUTTON_TRIGGER_POINTER_UP = '4';    // "BTN_POINTER_UP"
-
-  static _BUTTON_ACTION_ADD = '1';            // "add"
-  static _BUTTON_ACTION_REMOVE = '2';         // "remove"
 
 
   static _POPIN_STATUS_MAP;
@@ -462,8 +462,6 @@ export class EventManager {
       }
     }
   }
-  
-  
 
   leaveAllButtons(evt) {
     for (const btn of this._buttons) {
@@ -541,7 +539,6 @@ export class EventManager {
     this._buttons.add(btn);
   }
 
-
   getButtonCurrentState(btn) {
     return this.constructor._BUTTON_STATUS_MAP[this.constructor._BUTTON_STATES][this.getButtonState(btn)];
   }
@@ -570,8 +567,10 @@ export class EventManager {
         for (const action of (this.getButtonCurrentActions(btn) ?? [])) {
           const actionName = action[this.constructor._BUTTON_ACTION];
           const actionClassList = action[this.constructor._ACTION_CLASSLIST];
-          if (actionName === this.constructor._BUTTON_ACTION_ADD) btn.classList.add(...actionClassList);
-          if (actionName === this.constructor._BUTTON_ACTION_REMOVE) btn.classList.remove(...actionClassList);
+          if (actionClassList) {
+            if (actionName === this.constructor._BUTTON_ACTION_ADD) btn.classList.add(...actionClassList);
+            if (actionName === this.constructor._BUTTON_ACTION_REMOVE) btn.classList.remove(...actionClassList);
+          }
         }
 
         // Execute associated callback (when present)

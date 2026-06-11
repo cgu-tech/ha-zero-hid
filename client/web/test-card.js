@@ -126,6 +126,7 @@ export class TestCard extends HTMLElement {
   _layoutManager;
   _resourceManager;
 
+  _trackpads = new Set(); // Managed trackpads
   _trackpadShortTimeouts = new Map();
   _trackpadLongTimeouts = new Map();
 
@@ -197,77 +198,87 @@ export class TestCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("adoptedCallback()"));
   }
 
-  setTrackpadState(state) {
-    this._trackpadState = state;
-  }
-  
-  getTrackpadState() {
-    return this._trackpadState;
+  setTrackpadData(trkp, data) {
+    if (trkp) trkp._mngTrkpDt = data;
   }
 
-  setTrackpadCallbacks(callbacks) {
-    this._trackpadCallbacks = callbacks;
+  getTrackpadData(trkp) {
+    return trkp?._mngTrkpDt;
   }
 
-  getTrackpadCallbacks() {
-    return this._trackpadCallbacks;
+  setTrackpadState(trkp, state) {
+    if (trkp) this.getTrackpadData(trkp).state = state;
   }
 
-  // [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_SHORT]: 
-  // [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG ]: 
-  // [this.constructor._TRACKPAD_CALLBACK_CLICK_SHORT  ]: 
-  // [this.constructor._TRACKPAD_CALLBACK_PRESS_LONG   ]: 
-  // [this.constructor._TRACKPAD_CALLBACK_MOVE_START   ]: 
-  // [this.constructor._TRACKPAD_CALLBACK_MOVE         ]: 
-  // [this.constructor._TRACKPAD_CALLBACK_MOVE_STOP    ]: 
-  // [this.constructor._TRACKPAD_CALLBACK_RELEASE_LONG ]: 
-  initTrackpadState(callbacks) {
-    this.setTrackpadState(this.constructor._TRACKPAD_STATUS_MAP[this.constructor._TRACKPAD_INIT][this.constructor._TRACKPAD_STATE]);
-    this.setTrackpadCallbacks(callbacks);
+  getTrackpadState(trkp) {
+    return this.getTrackpadData(trkp)?.state;
   }
 
-
-  getTrackpadCurrentState() {
-    return this.constructor._TRACKPAD_STATUS_MAP[this.constructor._TRACKPAD_STATES][this.getTrackpadState()];
+  setTrackpadCallbacks(trkp, callbacks) {
+    if (trkp) this.getTrackpadData(trkp).callbacks = callbacks;
   }
 
-  getTrackpadCurrentActions() {
-    return this.getTrackpadCurrentState()?.[this.constructor._TRACKPAD_ACTIONS];
+  getTrackpadCallbacks(trkp) {
+    return this.getTrackpadData(trkp)?.callbacks;
   }
 
-  getTrackpadNextState(trigger) {
-    return this.getTrackpadCurrentState()?.[this.constructor._TRACKPAD_NEXTS].find(next => next[this.constructor._TRACKPAD_TRIGGER] === trigger);
+  initTrackpadState(trkp, callbacks) {
+    this.getTrackpadData(trkp, {});
+    this.setTrackpadState(trkp, this.constructor._TRACKPAD_STATUS_MAP[this.constructor._TRACKPAD_INIT][this.constructor._TRACKPAD_STATE]);
+    this.setTrackpadCallbacks(trkp, callbacks);
+    this._trackpads.add(trkp);
   }
 
-  activateTrackpadNextState(trigger, evt) {
-    const nextState = this.getTrackpadNextState(trigger);
-    if (nextState) {
+  getTrackpadCurrentState(trkp) {
+    return this.constructor._TRACKPAD_STATUS_MAP[this.constructor._TRACKPAD_STATES][this.getTrackpadState(trkp)];
+  }
 
-      // Change trackpad to next state
-      this.setTrackpadState(nextState[this.constructor._TRACKPAD_STATE]);
+  getTrackpadCurrentActions(trkp) {
+    return this.getTrackpadCurrentState(trkp)?.[this.constructor._TRACKPAD_ACTIONS];
+  }
 
-      // Update button classes
-      for (const action of (this.getTrackpadCurrentActions() ?? [])) {
-        const actionName = action[this.constructor._TRACKPAD_ACTION];
+  getTrackpadNextState(trkp, trigger) {
+    return this.getTrackpadCurrentState(trkp)?.[this.constructor._TRACKPAD_NEXTS].find(next => next[this.constructor._TRACKPAD_TRIGGER] === trigger);
+  }
 
-        const actionClassList = action[this.constructor._ACTION_CLASSLIST];
-        if (actionClassList) {
-          if (actionName === this.constructor._TRACKPAD_ACTION_ADD) this.classList.add(...actionClassList);
-          if (actionName === this.constructor._TRACKPAD_ACTION_REMOVE) this.classList.remove(...actionClassList);
+  activateTrackpadNextStateFromEvent(trigger, evt) {
+    return this.activateTrackpadNextState(evt.currentTarget, trigger, evt);
+  }
+
+  activateTrackpadNextState(trkp, trigger, evt) {
+    if (trkp) {
+      const nextState = this.getTrackpadNextState(trkp, trigger);
+      if (nextState) {
+
+        // Change trackpad to next state
+        this.setTrackpadState(trkp, nextState[this.constructor._TRACKPAD_STATE]);
+
+        // Update trackpad
+        for (const action of (this.getTrackpadCurrentActions(trkp) ?? [])) {
+          const actionName = action[this.constructor._TRACKPAD_ACTION];
+
+          // Update trackpad classes
+          const actionClassList = action[this.constructor._ACTION_CLASSLIST];
+          if (actionClassList) {
+            if (actionName === this.constructor._TRACKPAD_ACTION_ADD) this.classList.add(...actionClassList);
+            if (actionName === this.constructor._TRACKPAD_ACTION_REMOVE) this.classList.remove(...actionClassList);
+          }
+
+          // Update trackpad timeouts
+          const actionSetTimeout = action[this.constructor._ACTION_SETTIMEOUT];
+          if (actionSetTimeout) {
+            if (actionName === this.constructor._TRACKPAD_ACTION_ADD) this.addTrackpadTimeouts(evt, trkp, ...actionSetTimeout);
+            if (actionName === this.constructor._TRACKPAD_ACTION_REMOVE) this.removeTrackpadTimeouts(evt, trkp, ...actionSetTimeout);
+          }
         }
 
-        const actionSetTimeout = action[this.constructor._ACTION_SETTIMEOUT];
-        if (actionSetTimeout) {
-          if (actionName === this.constructor._TRACKPAD_ACTION_ADD) this.addTrackpadTimeout(evt, ...actionSetTimeout);
-          if (actionName === this.constructor._TRACKPAD_ACTION_REMOVE) this.removeTrackpadTimeout(evt, ...actionSetTimeout);
-        }
+        // Execute associated callback (when present)
+        const callback = this.getTrackpadCallbacks(trkp)?.[nextState[this.constructor._TRACKPAD_CALLBACK]];
+        if (callback) callback(trkp, evt);
       }
-
-      // Execute associated callback (when present)
-      const callback = this.getTrackpadCallbacks()?.[nextState[this.constructor._TRACKPAD_CALLBACK]];
-      if (callback) callback(evt);
+      return !!nextState;
     }
-    return !!nextState;
+    return false;
   }
 
   addTrackpadListeners(containerName, callbacks, options = null) {
@@ -291,16 +302,20 @@ export class TestCard extends HTMLElement {
     this.activateTrackpadNextState(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, evt);
   }
 
-  addTrackpadTimeout(evt, trackpadTimeout) {
+  addTrackpadTimeouts(evt, trkp, trackpadTimeouts) {
     const timeoutId = evt.pointerId;
-    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.addTimeout(this._trackpadShortTimeouts, timeoutId, this._trackpadShortDelay, this.onTrackpadShortTimeout.bind(this), evt);
-    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.addTimeout(this._trackpadLongTimeouts, timeoutId, this._trackpadLongDelay, this.onTrackpadLongTimeout.bind(this), evt);
+    for (const trackpadTimeout of (trackpadTimeouts ?? [])) {
+      if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.addTimeout(this._trackpadShortTimeouts, timeoutId, this._trackpadShortDelay, this.onTrackpadShortTimeout.bind(this), evt);
+      if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.addTimeout(this._trackpadLongTimeouts, timeoutId, this._trackpadLongDelay, this.onTrackpadLongTimeout.bind(this), evt);
+    }
   }
 
-  removeTrackpadTimeout(evt, trackpadTimeout) {
+  removeTrackpadTimeouts(evt, trkp, trackpadTimeouts) {
     const timeoutId = evt.pointerId;
-    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.removeTimeout(this._trackpadShortTimeouts, timeoutId);
-    if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.removeTimeout(this._trackpadLongTimeouts, timeoutId);
+    for (const trackpadTimeout of (trackpadTimeouts ?? [])) {
+      if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_SHORT) this.removeTimeout(this._trackpadShortTimeouts, timeoutId);
+      if (trackpadTimeout === this.constructor._TRACKPAD_TIMEOUT_LONG) this.removeTimeout(this._trackpadLongTimeouts, timeoutId);
+    }
   }
 
   addTimeout(timeouts, timeoutId, delay, callback, evt) {
