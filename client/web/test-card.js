@@ -98,8 +98,10 @@ export class TestCard extends HTMLElement {
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedCellData = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
   
-  _trackpadShortDelay = 150;
-  _trackpadLongDelay = 250;
+  _trackpadShortDelay = 150;             // milliseconds
+  _trackpadLongDelay = 250;              // milliseconds
+  _trackpadDeadzoneHorizontalOffset = 2; // pixels (TODO: pixel agnostic unit and computation, to make user experience identical whatever the screen density is)
+  _trackpadDeadzoneVerticalOffset = 2;   // pixels (TODO: same as above)
 
   // private properties
   _config;
@@ -190,7 +192,14 @@ export class TestCard extends HTMLElement {
   }
   onTrackpadPointerMove(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
-    this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_MOVE, evt);
+    
+    // Move already started: keep moving
+    if (this._stateMachine.getElementCurrentStateFromEvent(evt) === this.constructor._TRACKPAD_STATE_MOVE) {
+      this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_MOVE, evt);
+    } else {
+      // Not currently moving: ensure real movement is greater than dead-zone to start moving
+      
+    }
   }
   onTrackpadPointerLeave(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerLeave(evt)", evt));

@@ -87,6 +87,14 @@ export class StateMachine {
     this._elements.delete(elt);
   }
 
+  getElementFromEvent(evt) {
+    return evt.currentTarget || evt.originalTarget;
+  }
+
+  getElementCurrentStateFromEvent(evt) {
+    return this.getElementCurrentState(this.getElementFromEvent(evt));
+  }
+
   getElementCurrentState(elt) {
     return this._machine[this.constructor.STATES][this.getElementState(elt)];
   }
@@ -100,7 +108,7 @@ export class StateMachine {
   }
 
   activateElementNextStateFromEvent(trigger, evt) {
-    return this.activateElementNextState(evt.currentTarget || evt.originalTarget, trigger, evt);
+    return this.activateElementNextState(this.getElementFromEvent(evt), trigger, evt);
   }
 
   activateElementNextState(elt, trigger, evt) {
@@ -204,6 +212,60 @@ export class StateMachine {
     const timeout = timeoutEntry?.["timeout"];
     if (timeout) clearTimeout(timeout);
     elementTimeout.entries?.delete(timeoutId);
+  }
+
+  getPointerEventX(evt) {
+    return evt.clientX;
+  }
+
+  getPointerEventY(evt) {
+    return evt.clientY;
+  }
+
+  getVectorFromPointerEvent(evt) {
+    return {
+     "x": this.getPointerEventX(evt),
+     "y": this.getPointerEventY(evt),
+    };
+  }
+
+  getDeltaFromPoints(pointOneX, pointOneY, pointTwoX, pointTwoY, absolute = false) {
+    const dx = Math.round(pointTwoX - pointOneX);
+    const dy = Math.round(pointTwoY - pointOneY);
+    return {
+      "dx": absolute ? Math.abs(dx) : dx, 
+      "dy": absolute ? Math.abs(dy) : dy
+    };
+  }
+
+  getDeltaFromVectors(vectorOne, vectorTwo, absolute = false) {
+    return this.getDeltaFromPoints(vectorOne.x, vectorOne.y, vectorTwo.x, vectorTwo.y, absolute);
+  }
+
+  getDeltaFromPointerEvents(evtOne, evtTwo, absolute = false) {
+    return this.getDeltaFromPoints(
+      this.getPointerEventX(evtOne), this.getPointerEventY(evtOne),
+      this.getPointerEventX(evtTwo), this.getPointerEventY(evtTwo),
+      absolute);
+  }
+
+  isDeltaFromPointsGreaterThanMax(pointOneX, pointOneY, pointTwoX, pointTwoY, maxHorizontal, maxVertical) {
+    const absDelta = this.getDeltaFromPoints(pointOneX, pointOneY, pointTwoX, pointTwoY, true);
+    return absDelta.dx > maxHorizontal || absDelta.dy > maxVertical;
+  }
+
+  isDeltaFromVectorsGreaterThanMax(vectorOne, vectorTwo, maxHorizontal, maxVertical) {
+    return this.isDeltaFromPointsGreaterThanMax(
+      vectorOne.x, vectorOne.y, 
+      vectorTwo.x, vectorTwo.y, 
+      maxHorizontal, maxVertical);
+  }
+
+  isDeltaFromPointerEventsGreaterThanMax(evtOne, evtTwo, maxHorizontal, maxVertical) {
+    return this.isDeltaFromPointsGreaterThanMax(
+      this.getPointerEventX(evtOne), this.getPointerEventY(evtOne),
+      this.getPointerEventX(evtTwo), this.getPointerEventY(evtTwo),
+      maxHorizontal, maxVertical);
   }
 
 }
