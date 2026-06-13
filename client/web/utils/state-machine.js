@@ -148,7 +148,7 @@ export class StateMachine {
       if (!elementTimeout) return; // Fail fast when no timeout config defined by user (might be intentionnal)
 
       // Add element timeout
-      this.addElementTimeout(evt, actionTimeout);
+      this.addElementTimeout(evt, elementTimeout);
     }
   }
 
