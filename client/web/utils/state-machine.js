@@ -7,8 +7,8 @@ export class StateMachine {
   static ACTIONS = '1';           // "actions"
   static NEXTS = '2';             // "nexts"
 
-  static ACTION_MODE_ADD = '1';
-  static ACTION_MODE_REMOVE = '2';
+  static ACTION_ADD = '1';
+  static ACTION_REMOVE = '2';
 
   static STATE = '1';             // "state"
   static TRIGGER = '2';           // "trigger"
@@ -119,15 +119,15 @@ export class StateMachine {
           // Update element classes
           const actionClassList = action[this.constructor.ACTION_TYPE_CLASSLIST];
           if (actionClassList) {
-            if (actionName === this.constructor.ACTION_MODE_ADD) elt.classList.add(...actionClassList);
-            if (actionName === this.constructor.ACTION_MODE_REMOVE) elt.classList.remove(...actionClassList);
+            if (actionName === this.constructor.ACTION_ADD) elt.classList.add(...actionClassList);
+            if (actionName === this.constructor.ACTION_REMOVE) elt.classList.remove(...actionClassList);
           }
 
           // Update element timeouts
           const actionSetTimeout = action[this.constructor.ACTION_TYPE_SETTIMEOUT];
           if (actionSetTimeout) {
-            if (actionName === this.constructor.ACTION_MODE_ADD) this.addElementTimeouts(evt, elt, ...actionSetTimeout);
-            if (actionName === this.constructor.ACTION_MODE_REMOVE) this.removeElementTimeouts(evt, elt, ...actionSetTimeout);
+            if (actionName === this.constructor.ACTION_ADD) this.addElementTimeouts(evt, elt, ...actionSetTimeout);
+            if (actionName === this.constructor.ACTION_REMOVE) this.removeElementTimeouts(evt, elt, ...actionSetTimeout);
           }
         }
 

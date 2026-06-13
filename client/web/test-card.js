@@ -45,7 +45,7 @@ export class TestCard extends HTMLElement {
       [StateMachine.STATES]: {
         [this._TRACKPAD_STATE_INACTIVE]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
           ],
           [StateMachine.NEXTS]: [
             { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_DOWN, [StateMachine.STATE]: this._TRACKPAD_STATE_TIMEOUT_SHORT,  [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_SHORT }
@@ -53,7 +53,7 @@ export class TestCard extends HTMLElement {
         },
         [this._TRACKPAD_STATE_TIMEOUT_SHORT]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_ADD,    [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] }
+            { [StateMachine.ACTION]: StateMachine.ACTION_ADD,    [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] }
           ],
           [StateMachine.NEXTS]: [
             { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED, [StateMachine.STATE]: this._TRACKPAD_STATE_TIMEOUT_LONG, [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_LONG }, 
@@ -63,8 +63,8 @@ export class TestCard extends HTMLElement {
         },
         [this._TRACKPAD_STATE_TIMEOUT_LONG]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] },
-            { [StateMachine.ACTION]: StateMachine.ACTION_ADD,    [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG]  }
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] },
+            { [StateMachine.ACTION]: StateMachine.ACTION_ADD,    [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG]  }
           ],
           [StateMachine.NEXTS]: [
             { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, [StateMachine.STATE]: this._TRACKPAD_STATE_PRESS_LONG, [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_PRESS_LONG  }, 
@@ -74,7 +74,7 @@ export class TestCard extends HTMLElement {
         },
         [this._TRACKPAD_STATE_MOVE]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
           ],
           [StateMachine.NEXTS]: [ 
             { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE, [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE,  [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE }, 
@@ -83,7 +83,7 @@ export class TestCard extends HTMLElement {
         },
         [this._TRACKPAD_STATE_PRESS_LONG]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG] }
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG] }
           ],
           [StateMachine.NEXTS]: [ 
             { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP, [StateMachine.STATE]: this._TRACKPAD_STATE_INACTIVE,  [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_RELEASE_LONG }
