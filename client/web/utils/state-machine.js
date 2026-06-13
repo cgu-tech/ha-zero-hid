@@ -25,12 +25,12 @@ export class StateMachine {
   static checkMachine(machine) {
     if (!machine)
       throw new Error('Invalid machine: expected non-null/empty/undefined machine, got:', machine);
-    if (!machine[this.constructor.INIT])
-      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.INIT] (machine[${this.constructor.INIT}]), got:`, machine);
-    if (!machine[this.constructor.INIT])
-      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.INIT][this.constructor.STATE] (machine[${this.constructor.INIT}][${this.constructor.STATE}]), got:`, machine);
-    if (!machine[this.constructor.STATES])
-      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.STATES] (machine[${this.constructor.STATES}]), got:`, machine);
+    if (!machine[this.INIT])
+      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.INIT] (machine[${this.INIT}]), got:`, machine);
+    if (!machine[this.INIT])
+      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.INIT][this.constructor.STATE] (machine[${this.INIT}][${this.STATE}]), got:`, machine);
+    if (!machine[this.STATES])
+      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.STATES] (machine[${this.STATES}]), got:`, machine);
   }
 
   constructor(machine, dataKey) {
