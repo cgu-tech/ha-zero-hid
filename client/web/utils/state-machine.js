@@ -71,6 +71,34 @@ export class StateMachine {
     return this.getElementData(elt)?.timeouts;
   }
 
+  getEventId(evt) {
+    return evt?.pointerId;
+  }
+
+  resetElementEventFromEvent(evt) {
+    this.setElementEventFromEvent(evt, null);
+  }
+
+  setElementEventFromEvent(evt, value = evt) {
+    this.setElementEvent(this.getElementFromEvent(evt), value);
+  }
+
+  setElementEvent(elt, evt) {
+    if (elt) {
+      const elementData = this.getElementData(elt);
+      if (!elementData.events) elementData.events = new Map();
+      elementData.events.set(this.getEventId(evt), evt);
+    }
+  }
+
+  getElementEventFromEvent(evt) {
+    return this.getElementEvent(this.getElementFromEvent(evt), this.getEventId(evt));
+  }
+
+  getElementEvent(elt, eventId) {
+    return this.getElementData(elt)?.events?.[eventId];
+  }
+
   getElements() {
     return this._elements;
   }

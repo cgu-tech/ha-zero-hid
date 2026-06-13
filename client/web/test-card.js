@@ -188,42 +188,46 @@ export class TestCard extends HTMLElement {
 
   onTrackpadPointerDown(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt)", evt));
+    this._stateMachine.setElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_DOWN, evt);
   }
   onTrackpadPointerMove(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
-    
-    // Move already started: keep moving
-    if (this._stateMachine.getElementCurrentStateFromEvent(evt) === this.constructor._TRACKPAD_STATE_MOVE) {
+
+    const prevEvt = this._stateMachine.getElementEventFromEvent(evt);
+    if (// Move already started: keep moving
+        this._stateMachine.getElementCurrentStateFromEvent(evt) === this.constructor._TRACKPAD_STATE_MOVE
+        || // OR
+        // Move not started yet: ensure real movement is greater than dead-zone to trigger moving state
+        (prevEvt && this._stateMachine.isDeltaFromPointerEventsGreaterThanMax(prevEvt, evt, this._trackpadDeadzoneHorizontalOffset, this._trackpadDeadzoneVerticalOffset))) {
+      this._stateMachine.setElementEventFromEvent(evt);
       this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_MOVE, evt);
-    } else {
-      // Not currently moving: ensure real movement is greater than dead-zone to start moving
-      
     }
   }
   onTrackpadPointerLeave(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerLeave(evt)", evt));
+    this._stateMachine.resetElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
   }
   onTrackpadPointerCancel(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerCancel(evt)", evt));
+    this._stateMachine.resetElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
   }
   onTrackpadPointerUp(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerUp(evt)", evt));
+    this._stateMachine.resetElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
   }
   onTrackpadShortTimeout(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadShortTimeout(evt)", evt));
+    this._stateMachine.resetElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED, evt);
   }
   onTrackpadLongTimeout(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadLongTimeout(evt)", evt));
+    this._stateMachine.resetElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, evt);
-  }
-
-  initTrackpadMachine() {
-    this._stateMachine.initMachine(this.constructor._TRACKPAD_MACHINE, "_mngDtTrck");
   }
 
   addTrackpadListeners(containerName, target, callbacks, options = null) {
