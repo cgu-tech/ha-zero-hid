@@ -40,11 +40,11 @@ export class StateMachine {
   }
 
   setElementData(elt, data) {
-    if (elt) elt[dataKey] = data;
+    if (elt) elt[this._dataKey] = data;
   }
 
   getElementData(elt) {
-    return elt?.[dataKey];
+    return elt?.[this._dataKey];
   }
 
   getElementState(elt) {
