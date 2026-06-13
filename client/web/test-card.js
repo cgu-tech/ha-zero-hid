@@ -5,6 +5,7 @@ import { ResourceManager } from './utils/resource-manager.js';
 import { LayoutManager } from './utils/layout-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
+import { StateMachine } from './utils/state-machine.js';
 
 console.info("Loading test-card");
 
