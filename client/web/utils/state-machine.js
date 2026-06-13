@@ -33,8 +33,10 @@ export class StateMachine {
       throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor._MACHINE_STATES] (machine[${this.constructor._MACHINE_STATES}]), got:`, machine);
   }
 
-  constructor() {
-   // Nothing to do here
+  constructor(machine, dataKey) {
+    this.constructor.checkMachine(machine);
+    this._machine = machine;
+    this._dataKey = dataKey;
   }
 
   setElementData(elt, data) {
@@ -67,12 +69,6 @@ export class StateMachine {
 
   getElements() {
     return this._elements;
-  }
-
-  initMachine(machine, dataKey) {
-    this.constructor.checkMachine(machine);
-    this._machine = machine;
-    this._dataKey = dataKey;
   }
 
   initElementState(elt, callbacks, timeouts) {
