@@ -320,11 +320,11 @@ export class TestCard extends HTMLElement {
         transition: background 0.3s ease, transform 0.1s ease;
       }
 
-      .test-button.${this._eventManager.constructor._TRACKPAD_CLASS_HOVER} {
+      .test-button.${this._eventManager.constructor._BUTTON_CLASS_HOVER} {
         background: #888;
       }
 
-      .test-button.${this._eventManager.constructor._TRACKPAD_CLASS_PRESSED} {
+      .test-button.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         background: #BBB;
         transform: scale(0.95);
       }
@@ -369,16 +369,30 @@ export class TestCard extends HTMLElement {
     this._elements.testButton = card.querySelector(".test-button");
     this._elements.popin = card.querySelector(".popin");
     this._elements.cursor = card.querySelector('#cursor');
+    this._elements.trackpad = card.querySelector('.trackpad');
   }
 
   doListen() {
     this._eventManager.addButtonListeners("buttons", this._elements.testButton, 
       {
-        [this._eventManager.constructor._TRACKPAD_CALLBACK_TIMEOUT_SHORT]: this.onTestButtonHover.bind(this),
-        [this._eventManager.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG]: this.onTestButtonAbortHover.bind(this),
-        [this._eventManager.constructor._TRACKPAD_CALLBACK_PRESS]: this.onTestButtonPress.bind(this),
-        [this._eventManager.constructor._TRACKPAD_CALLBACK_ABORT_PRESS]: this.onTestButtonAbortPress.bind(this),
-        [this._eventManager.constructor._TRACKPAD_CALLBACK_RELEASE]: this.onTestButtonRelease.bind(this)
+        [this._eventManager.constructor._BUTTON_CALLBACK_TIMEOUT_SHORT]: this.onTestButtonHover.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_TIMEOUT_LONG]: this.onTestButtonAbortHover.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_PRESS]: this.onTestButtonPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_ABORT_PRESS]: this.onTestButtonAbortPress.bind(this),
+        [this._eventManager.constructor._BUTTON_CALLBACK_RELEASE]: this.onTestButtonRelease.bind(this)
+      }
+    );
+
+    this.addTrackpadListeners("trackpad", this._elements.trackpad, 
+      {
+        [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_SHORT]: this.onTrackpadTimeoutShort.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG]: this.onTrackpadTimeoutLong.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_CLICK_SHORT]: this.onTrackpadClickShort.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_PRESS_LONG]: this.onTrackpadPressLong.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_RELEASE_LONG]: this.onTrackpadReleaseLong.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE_START]: this.onTrackpadMoveStart.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE]: this.onTrackpadMove.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE_STOP]: this.onTrackpadMoveStop.bind(this)
       }
     );
 
@@ -391,6 +405,31 @@ export class TestCard extends HTMLElement {
     //document.addEventListener('visibilitychange', this.onDocumentVisibilityChange.bind(this));
     //window.addEventListener('focus', this.onWindowFocus.bind(this));
     //window.addEventListener('blur', this.onWindowBlur.bind(this));
+  }
+
+  onTrackpadTimeoutShort(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutShort(evt)", evt));
+  }
+  onTrackpadTimeoutLong(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutLong(evt)", evt));
+  }
+  onTrackpadClickShort(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadClickShort(evt)", evt));
+  }
+  onTrackpadPressLong(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPressLong(evt)", evt));
+  }
+  onTrackpadReleaseLong(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadReleaseLong(evt)", evt));
+  }
+  onTrackpadMoveStart(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStart(evt)", evt));
+  }
+  onTrackpadMove(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMove(evt)", evt));
+  }
+  onTrackpadMoveStop(evt) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStop(evt)", evt));
   }
 
   _sensitivity = 2;
