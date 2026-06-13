@@ -21,6 +21,7 @@ export class StateMachine {
   _machine;
   _dataKey;
   _elements = new Set();               // Managed elements
+  _timeouts = new Map();               // Managed timeouts
 
   static checkMachine(machine) {
     if (!machine)
@@ -34,6 +35,7 @@ export class StateMachine {
   }
 
   constructor(machine, dataKey) {
+    this.constructor.checkMachine(machine);
     this._machine = machine;
     this._dataKey = dataKey;
   }
@@ -58,14 +60,30 @@ export class StateMachine {
     return this.getElementData(elt)?.callbacks;
   }
 
+  setElementTimeouts(elt, timeouts) {
+    if (elt) this.getElementData(elt).timeouts = timeouts;
+    for (const category of Object.keys(timeouts ?? {})) {
+      this._timeouts[category] = this._timeouts[category] || new Map();
+    }
+  }
+
+  getElementTimeouts(elt) {
+    return this.getElementData(elt)?.timeouts;
+  }
+
   getElements() {
     return this._elements;
   }
 
-  initElementState(elt, callbacks) {
-    this.getElementData(elt, {});
+  getTimeouts(category) {
+    return this._timeouts[category];
+  }
+
+  initElementState(elt, callbacks, timeouts) {
+    this.setElementData(elt, {});
     this.setElementState(elt, this._machine[this.constructor._MACHINE_INIT][this.constructor._MACHINE_STATE]);
     this.setElementCallbacks(elt, callbacks);
+    this.setElementTimeouts(elt, timeouts);
     this._elements.add(elt);
   }
 
@@ -94,21 +112,21 @@ export class StateMachine {
       const nextState = this.getElementNextState(elt, trigger);
       if (nextState) {
 
-        // Change trackpad to next state
+        // Change element to next state
         this.setElementState(elt, nextState[this.constructor._MACHINE_STATE]);
 
-        // Update trackpad
+        // Update element
         for (const action of (this.getElementCurrentActions(elt) ?? [])) {
           const actionName = action[this.constructor._MACHINE_ACTION];
 
-          // Update trackpad classes
+          // Update element classes
           const actionClassList = action[this.constructor._ACTION_CLASSLIST];
           if (actionClassList) {
-            if (actionName === this.constructor._MACHINE_ACTION_ADD) this.classList.add(...actionClassList);
-            if (actionName === this.constructor._MACHINE_ACTION_REMOVE) this.classList.remove(...actionClassList);
+            if (actionName === this.constructor._MACHINE_ACTION_ADD) elt.classList.add(...actionClassList);
+            if (actionName === this.constructor._MACHINE_ACTION_REMOVE) elt.classList.remove(...actionClassList);
           }
 
-          // Update trackpad timeouts
+          // Update element timeouts
           const actionSetTimeout = action[this.constructor._ACTION_SETTIMEOUT];
           if (actionSetTimeout) {
             if (actionName === this.constructor._MACHINE_ACTION_ADD) this.addElementTimeouts(evt, elt, ...actionSetTimeout);
@@ -125,5 +143,51 @@ export class StateMachine {
     return false;
   }
 
+  addElementTimeouts(evt, elt, actionTimeouts) {
+    const elementTimeouts = this.getElementTimeouts(elt);
+    for (const actionTimeout of (actionTimeouts ?? [])) {
+      const elementTimeout = elementTimeouts?.[actionTimeout];
+      const timeouts = this.getTimeouts(actionTimeout);
+      if (elementTimeout) this.addElementTimeout(evt, elementTimeout, timeouts);
+    }
+  }
+
+  removeElementTimeouts(evt, elt, actionTimeouts) {
+    const elementTimeouts = this.getElementTimeouts(elt);
+    for (const actionTimeout of (actionTimeouts ?? [])) {
+      const elementTimeout = elementTimeouts?.[actionTimeout];
+      const timeouts = this.getTimeouts(actionTimeout);
+      if (elementTimeout) this.removeTimeout(evt, elementTimeout, timeouts);
+    }
+  }
+
+  addElementTimeout(evt, elementTimeout, timeouts) {
+    const timeoutId = evt.pointerId;
+    timeouts.set(timeoutId, {
+      "was-ran": false,                                  // true when action was executed
+      "timeout": this.createTimeout(evt, elementTimeout, timeouts, timeoutId)   // when it expires, triggers the associated inner callback to run the action
+    });
+  }
+
+  createTimeout(evt, elementTimeout, timeouts, timeoutId) {
+    const callback = elementTimeout.callback;
+    const delay = elementTimeout.delay;
+    return setTimeout(() => {
+      const timeoutEntry = timeouts.get(timeoutId);
+
+      // When no entry: element state changed before timeout (released, moved, ...)
+      if (timeoutEntry && !timeoutEntry["was-ran"]) {
+        timeoutEntry["was-ran"] = true;
+        if (callback) callback(evt);
+      }
+    }, delay); // timeout duration
+  }
+
+  removeTimeout(evt, elementTimeout, timeouts) {
+    const timeoutId = evt.pointerId;
+    const timeout = timeouts.get(timeoutId)?.["timeout"];
+    if (timeout) clearTimeout(timeout);
+    timeouts.delete(timeoutId);
+  }
 
 }
