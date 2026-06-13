@@ -215,7 +215,11 @@ export class TestCard extends HTMLElement {
   addTrackpadListeners(containerName, target, callbacks, options = null) {
     if (!target) throw new Error('Invalid target', target);
 
-    this._machine.initElementState(target, callbacks);
+    const timeouts = {
+      [this.constructor._TRACKPAD_TIMEOUT_SHORT]: {"delay": this._trackpadShortDelay, "callback": this.onTrackpadShortTimeout.bind(this)},
+      [this.constructor._TRACKPAD_TIMEOUT_LONG]:  {"delay": this._trackpadLongDelay,  "callback": this.onTrackpadLongTimeout.bind(this)}
+    };
+    this._machine.initElementState(target, callbacks, timeouts);
 
     const listeners = [];
     listeners.push(this._eventManager.addPointerDownListenerToContainer(containerName, target, this.onTrackpadPointerDown.bind(this), options));
@@ -240,6 +244,12 @@ export class TestCard extends HTMLElement {
           <div class="test-button-label">Test</div>
         </div>
       </div>
+      <div class="trackpad-container">
+        <div class="trackpad-area">
+          <div class="trackpad">
+          </div>
+        </div>
+      </div>
       <div class="popin" hidden>Hello from popin!</div> 
     `;
   }
@@ -260,6 +270,43 @@ export class TestCard extends HTMLElement {
         width: 200px;
         height: 200px;
         background: #3a3a3a;
+      }
+
+      .trackpad-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
+        background-color: #00000000; /* transparent black */
+      }
+
+      .trackpad-area {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        border-top-left-radius: var(--card-corner-radius);
+        border-top-right-radius: var(--card-corner-radius);
+        border-bottom: 1px solid #0a0a0a;
+        padding: 0;
+        background-color: #00000000; /* transparent black */
+      }
+      .trackpad-area.no-buttons {
+        height: 260px;
+        border-bottom-left-radius: var(--card-corner-radius);
+        border-bottom-right-radius: var(--card-corner-radius);
+        border-bottom: none;
+      }
+
+      .trackpad {
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        border-top-left-radius: var(--card-corner-radius);
+        border-top-right-radius: var(--card-corner-radius);
+        cursor: crosshair;
+        background: #3b3a3a;
+        touch-action: none;
+        transition: background 0.2s ease;
       }
 
       .test-button {
