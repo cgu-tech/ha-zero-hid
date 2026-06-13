@@ -109,7 +109,7 @@ export class TestCard extends HTMLElement {
   _eventManager;
   _layoutManager;
   _resourceManager;
-  _stateMachine;
+  _trackpadMachine;
 
   _trackpads = new Set(); // Managed trackpads
   _trackpadShortTimeouts = new Map();
@@ -122,7 +122,7 @@ export class TestCard extends HTMLElement {
     this._eventManager = new EventManager(this);
     this._layoutManager = new LayoutManager(this, null);
     this._resourceManager = new ResourceManager(this, import.meta.url);
-    this._stateMachine = new StateMachine(this.constructor._TRACKPAD_MACHINE, "_mngDtTrck");
+    this._trackpadMachine = new StateMachine();
 
     this.doCard();
     this.doStyle();
@@ -186,31 +186,35 @@ export class TestCard extends HTMLElement {
 
   onTrackpadPointerDown(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerDown(evt)", evt));
-    this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_DOWN, evt);
+    this._trackpadMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_DOWN, evt);
   }
   onTrackpadPointerMove(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerMove(evt):", evt));
-    this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_MOVE, evt);
+    this._trackpadMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_MOVE, evt);
   }
   onTrackpadPointerLeave(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerLeave(evt)", evt));
-    this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
+    this._trackpadMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
   }
   onTrackpadPointerCancel(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerCancel(evt)", evt));
-    this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
+    this._trackpadMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
   }
   onTrackpadPointerUp(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerUp(evt)", evt));
-    this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
+    this._trackpadMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_UP, evt);
   }
   onTrackpadShortTimeout(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadShortTimeout(evt)", evt));
-    this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED, evt);
+    this._trackpadMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED, evt);
   }
   onTrackpadLongTimeout(evt) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadLongTimeout(evt)", evt));
-    this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, evt);
+    this._trackpadMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, evt);
+  }
+
+  initTrackpadMachine() {
+    this._trackpadMachine.initMachine(this.constructor._TRACKPAD_MACHINE, "_mngDtTrck");
   }
 
   addTrackpadListeners(containerName, target, callbacks, options = null) {
@@ -220,7 +224,7 @@ export class TestCard extends HTMLElement {
       [this.constructor._TRACKPAD_TIMEOUT_SHORT]: {"delay": this._trackpadShortDelay, "callback": this.onTrackpadShortTimeout.bind(this)},
       [this.constructor._TRACKPAD_TIMEOUT_LONG]:  {"delay": this._trackpadLongDelay,  "callback": this.onTrackpadLongTimeout.bind(this)}
     };
-    this._stateMachine.initElementState(target, callbacks, timeouts);
+    this._trackpadMachine.initElementState(target, callbacks, timeouts);
 
     const listeners = [];
     listeners.push(this._eventManager.addPointerDownListenerToContainer(containerName, target, this.onTrackpadPointerDown.bind(this), options));
@@ -383,6 +387,7 @@ export class TestCard extends HTMLElement {
       }
     );
 
+    this.initTrackpadMachine();
     this.addTrackpadListeners("trackpad", this._elements.trackpad, 
       {
         [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_SHORT]: this.onTrackpadTimeoutShort.bind(this),
