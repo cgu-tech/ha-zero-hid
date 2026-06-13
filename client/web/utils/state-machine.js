@@ -100,7 +100,7 @@ export class StateMachine {
   }
 
   activateElementNextStateFromEvent(trigger, evt) {
-    return this.activateElementNextState(evt.currentTarget, trigger, evt);
+    return this.activateElementNextState(evt.currentTarget || evt.originalTarget, trigger, evt);
   }
 
   activateElementNextState(elt, trigger, evt) {
