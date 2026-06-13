@@ -47,6 +47,10 @@ export class StateMachine {
     return elt?.[this._dataKey];
   }
 
+  setElementState(elt, state) {
+    return this.getElementData(elt).state = state;
+  }
+
   getElementState(elt) {
     return this.getElementData(elt)?.state;
   }
