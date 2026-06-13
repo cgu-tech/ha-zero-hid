@@ -201,7 +201,7 @@ export class StateMachine {
   removeElementTimeout(evt, elementTimeout) {
     const timeoutId = evt.pointerId;
     const timeoutEntry = elementTimeout.entries?.get(timeoutId);
-    const timeout = timeoutEntry?.get(timeoutId)?.["timeout"];
+    const timeout = timeoutEntry?.["timeout"];
     if (timeout) clearTimeout(timeout);
     elementTimeout.entries?.delete(timeoutId);
   }
