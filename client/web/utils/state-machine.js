@@ -112,7 +112,8 @@ export class StateMachine {
         this.setElementState(elt, nextState[this.constructor.STATE]);
 
         // Update element
-        for (const action of (this.getElementCurrentActions(elt) ?? [])) {
+        const actions = this.getElementCurrentActions(elt);
+        for (const action of (actions ?? [])) {
           const actionName = action[this.constructor.ACTION];
 
           // Update element classes
