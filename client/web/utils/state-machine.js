@@ -1,22 +1,22 @@
 // Define StateMachine helper class
 export class StateMachine {
 
-  static _MACHINE_INIT = '1';          // "init"
-  static _MACHINE_STATES = '2';        // "states"
+  static INIT = '1';              // "init"
+  static STATES = '2';            // "states"
 
-  static _MACHINE_ACTIONS = '1';       // "actions"
-  static _MACHINE_NEXTS = '2';         // "nexts"
+  static ACTIONS = '1';           // "actions"
+  static NEXTS = '2';             // "nexts"
 
-  static _MACHINE_ACTION_ADD = '1';
-  static _MACHINE_ACTION_REMOVE = '2';
+  static ACTION_MODE_ADD = '1';
+  static ACTION_MODE_REMOVE = '2';
 
-  static _MACHINE_STATE = '1';         // "state"
-  static _MACHINE_TRIGGER = '2';       // "trigger"
-  static _MACHINE_CALLBACK = '3';      // "callback"
+  static STATE = '1';             // "state"
+  static TRIGGER = '2';           // "trigger"
+  static CALLBACK = '3';          // "callback"
 
-  static _MACHINE_ACTION = '1';        // "action"
-  static _ACTION_CLASSLIST = '2';      // "class_list"
-  static _ACTION_SETTIMEOUT = '3';     // "setTimeout"
+  static ACTION = '1';            // "action"
+  static ACTION_TYPE_CLASSLIST = '2';  // "class_list"
+  static ACTION_TYPE_SETTIMEOUT = '3'; // "setTimeout"
 
   _machine;
   _dataKey;
@@ -25,12 +25,12 @@ export class StateMachine {
   static checkMachine(machine) {
     if (!machine)
       throw new Error('Invalid machine: expected non-null/empty/undefined machine, got:', machine);
-    if (!machine[this.constructor._MACHINE_INIT])
-      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor._MACHINE_INIT] (machine[${this.constructor._MACHINE_INIT}]), got:`, machine);
-    if (!machine[this.constructor._MACHINE_INIT])
-      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor._MACHINE_INIT][this.constructor._MACHINE_STATE] (machine[${this.constructor._MACHINE_INIT}][${this.constructor._MACHINE_STATE}]), got:`, machine);
-    if (!machine[this.constructor._MACHINE_STATES])
-      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor._MACHINE_STATES] (machine[${this.constructor._MACHINE_STATES}]), got:`, machine);
+    if (!machine[this.constructor.INIT])
+      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.INIT] (machine[${this.constructor.INIT}]), got:`, machine);
+    if (!machine[this.constructor.INIT])
+      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.INIT][this.constructor.STATE] (machine[${this.constructor.INIT}][${this.constructor.STATE}]), got:`, machine);
+    if (!machine[this.constructor.STATES])
+      throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.STATES] (machine[${this.constructor.STATES}]), got:`, machine);
   }
 
   constructor(machine, dataKey) {
@@ -73,7 +73,7 @@ export class StateMachine {
 
   initElementState(elt, callbacks, timeouts) {
     this.setElementData(elt, {});
-    this.setElementState(elt, this._machine[this.constructor._MACHINE_INIT][this.constructor._MACHINE_STATE]);
+    this.setElementState(elt, this._machine[this.constructor.INIT][this.constructor.STATE]);
     this.setElementCallbacks(elt, callbacks);
     this.setElementTimeouts(elt, timeouts);
     this._elements.add(elt);
@@ -84,15 +84,15 @@ export class StateMachine {
   }
 
   getElementCurrentState(elt) {
-    return this._machine[this.constructor._MACHINE_STATES][this.getElementState(elt)];
+    return this._machine[this.constructor.STATES][this.getElementState(elt)];
   }
 
   getElementCurrentActions(elt) {
-    return this.getElementCurrentState(elt)?.[this.constructor._MACHINE_ACTIONS];
+    return this.getElementCurrentState(elt)?.[this.constructor.ACTIONS];
   }
 
   getElementNextState(elt, trigger) {
-    return this.getElementCurrentState(elt)?.[this.constructor._MACHINE_NEXTS].find(next => next[this.constructor._MACHINE_TRIGGER] === trigger);
+    return this.getElementCurrentState(elt)?.[this.constructor.NEXTS].find(next => next[this.constructor.TRIGGER] === trigger);
   }
 
   activateElementNextStateFromEvent(trigger, evt) {
@@ -105,29 +105,29 @@ export class StateMachine {
       if (nextState) {
 
         // Change element to next state
-        this.setElementState(elt, nextState[this.constructor._MACHINE_STATE]);
+        this.setElementState(elt, nextState[this.constructor.STATE]);
 
         // Update element
         for (const action of (this.getElementCurrentActions(elt) ?? [])) {
-          const actionName = action[this.constructor._MACHINE_ACTION];
+          const actionName = action[this.constructor.ACTION];
 
           // Update element classes
-          const actionClassList = action[this.constructor._ACTION_CLASSLIST];
+          const actionClassList = action[this.constructor.ACTION_TYPE_CLASSLIST];
           if (actionClassList) {
-            if (actionName === this.constructor._MACHINE_ACTION_ADD) elt.classList.add(...actionClassList);
-            if (actionName === this.constructor._MACHINE_ACTION_REMOVE) elt.classList.remove(...actionClassList);
+            if (actionName === this.constructor.ACTION_MODE_ADD) elt.classList.add(...actionClassList);
+            if (actionName === this.constructor.ACTION_MODE_REMOVE) elt.classList.remove(...actionClassList);
           }
 
           // Update element timeouts
-          const actionSetTimeout = action[this.constructor._ACTION_SETTIMEOUT];
+          const actionSetTimeout = action[this.constructor.ACTION_TYPE_SETTIMEOUT];
           if (actionSetTimeout) {
-            if (actionName === this.constructor._MACHINE_ACTION_ADD) this.addElementTimeouts(evt, elt, ...actionSetTimeout);
-            if (actionName === this.constructor._MACHINE_ACTION_REMOVE) this.removeElementTimeouts(evt, elt, ...actionSetTimeout);
+            if (actionName === this.constructor.ACTION_MODE_ADD) this.addElementTimeouts(evt, elt, ...actionSetTimeout);
+            if (actionName === this.constructor.ACTION_MODE_REMOVE) this.removeElementTimeouts(evt, elt, ...actionSetTimeout);
           }
         }
 
         // Execute associated callback (when present)
-        const callback = this.getElementCallbacks(elt)?.[nextState[this.constructor._MACHINE_CALLBACK]];
+        const callback = this.getElementCallbacks(elt)?.[nextState[this.constructor.CALLBACK]];
         if (callback) callback(elt, evt);
       }
       return !!nextState;

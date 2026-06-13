@@ -41,52 +41,52 @@ export class TestCard extends HTMLElement {
   // Should be initialized in a static block to avoid JS engine to bug on static fields not-already-referenced otherwise
   static {
     this._TRACKPAD_MACHINE = {
-      [StateMachine.constructor._MACHINE_INIT]: { [this._MACHINE_STATE]: this._TRACKPAD_STATE_INACTIVE },
-      [this._MACHINE_STATES]: {
+      [StateMachine.INIT]: { [StateMachine.STATE]: this._TRACKPAD_STATE_INACTIVE },
+      [StateMachine.STATES]: {
         [this._TRACKPAD_STATE_INACTIVE]: {
-          [this._MACHINE_ACTIONS]: [
-            { [this._MACHINE_ACTION]: this._MACHINE_ACTION_REMOVE, [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
+          [StateMachine.ACTIONS]: [
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
           ],
-          [this._MACHINE_NEXTS]: [ 
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_DOWN, [this._MACHINE_STATE]: this._TRACKPAD_STATE_TIMEOUT_SHORT,  [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_SHORT }
+          [StateMachine.NEXTS]: [
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_DOWN, [StateMachine.STATE]: this._TRACKPAD_STATE_TIMEOUT_SHORT,  [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_SHORT }
           ]
         },
         [this._TRACKPAD_STATE_TIMEOUT_SHORT]: {
-          [this._MACHINE_ACTIONS]: [
-            { [this._MACHINE_ACTION]: this._MACHINE_ACTION_ADD,    [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] }
+          [StateMachine.ACTIONS]: [
+            { [StateMachine.ACTION]: StateMachine.ACTION_ADD,    [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] }
           ],
-          [this._MACHINE_NEXTS]: [ 
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED, [this._MACHINE_STATE]: this._TRACKPAD_STATE_TIMEOUT_LONG,  [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_LONG }, 
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE,  [this._MACHINE_STATE]: this._TRACKPAD_STATE_MOVE, [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START },
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP,  [this._MACHINE_STATE]: this._TRACKPAD_STATE_INACTIVE, [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT }
+          [StateMachine.NEXTS]: [
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_SHORT_EXPIRED, [StateMachine.STATE]: this._TRACKPAD_STATE_TIMEOUT_LONG, [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_LONG }, 
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE         , [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE        , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START   },
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP           , [StateMachine.STATE]: this._TRACKPAD_STATE_INACTIVE    , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT  }
           ]
         },
         [this._TRACKPAD_STATE_TIMEOUT_LONG]: {
-          [this._MACHINE_ACTIONS]: [
-            { [this._MACHINE_ACTION]: this._MACHINE_ACTION_REMOVE, [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] },
-            { [this._MACHINE_ACTION]: this._MACHINE_ACTION_ADD,    [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG] }
+          [StateMachine.ACTIONS]: [
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT] },
+            { [StateMachine.ACTION]: StateMachine.ACTION_ADD,    [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG]  }
           ],
-          [this._MACHINE_NEXTS]: [ 
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, [this._MACHINE_STATE]: this._TRACKPAD_STATE_PRESS_LONG,  [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_PRESS_LONG }, 
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE,  [this._MACHINE_STATE]: this._TRACKPAD_STATE_MOVE, [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START },
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP, [this._MACHINE_STATE]: this._TRACKPAD_STATE_INACTIVE,  [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT }
+          [StateMachine.NEXTS]: [
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_LONG_EXPIRED, [StateMachine.STATE]: this._TRACKPAD_STATE_PRESS_LONG, [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_PRESS_LONG  }, 
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE        , [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE      , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START  },
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP          , [StateMachine.STATE]: this._TRACKPAD_STATE_INACTIVE  , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT }
           ]
         },
         [this._TRACKPAD_STATE_MOVE]: {
-          [this._MACHINE_ACTIONS]: [
-            { [this._MACHINE_ACTION]: this._MACHINE_ACTION_REMOVE, [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
+          [StateMachine.ACTIONS]: [
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT, this._TRACKPAD_TIMEOUT_LONG] }
           ],
-          [this._MACHINE_NEXTS]: [ 
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE, [this._MACHINE_STATE]: this._TRACKPAD_STATE_MOVE,  [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_MOVE }, 
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP,  [this._MACHINE_STATE]: this._TRACKPAD_STATE_INACTIVE, [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_STOP }
+          [StateMachine.NEXTS]: [ 
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_MOVE, [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE,  [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE }, 
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP,  [StateMachine.STATE]: this._TRACKPAD_STATE_INACTIVE, [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_STOP }
           ]
         },
         [this._TRACKPAD_STATE_PRESS_LONG]: {
-          [this._MACHINE_ACTIONS]: [
-            { [this._MACHINE_ACTION]: this._MACHINE_ACTION_REMOVE, [this._ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG] }
+          [StateMachine.ACTIONS]: [
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG] }
           ],
-          [this._MACHINE_NEXTS]: [ 
-            { [this._MACHINE_TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP, [this._MACHINE_STATE]: this._TRACKPAD_STATE_INACTIVE,  [this._MACHINE_CALLBACK]: this._TRACKPAD_CALLBACK_RELEASE_LONG }
+          [StateMachine.NEXTS]: [ 
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_POINTER_UP, [StateMachine.STATE]: this._TRACKPAD_STATE_INACTIVE,  [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_RELEASE_LONG }
           ]
         }
       }
