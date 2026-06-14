@@ -195,12 +195,12 @@ export class TestCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
 
     const prevEvt = this._stateMachine.getElementEventFromEvent(evt);
+    const isMovingOutOfDeadZone = prevEvt ? 
+      this._stateMachine.isDeltaFromPointerEventsGreaterThanMax(prevEvt, evt, this._trackpadDeadzoneHorizontalOffset, this._trackpadDeadzoneVerticalOffset) : 
+      false;
+
     const currentState = this._stateMachine.getElementStateFromEvent(evt);
-    if (// Move already started: keep moving
-        currentState === this.constructor._TRACKPAD_STATE_MOVE
-        || // OR
-        // Move not started yet: ensure real movement is greater than dead-zone to trigger moving state
-        (prevEvt && this._stateMachine.isDeltaFromPointerEventsGreaterThanMax(prevEvt, evt, this._trackpadDeadzoneHorizontalOffset, this._trackpadDeadzoneVerticalOffset))) {
+    if (currentState === this.constructor._TRACKPAD_STATE_MOVE || isMovingOutOfDeadZone) {
       this._stateMachine.setElementEventFromEvent(evt);
       this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_MOVE, evt);
     }
