@@ -99,10 +99,10 @@ export class StateMachine {
       elementData.events.delete(eventId);
 
       // Debug only
-      const event = elementData.events.get(eventId);
-      const eventCount = (!!event) ? '1' : '0';
-      const eventsCount = elementData.events.size;
-      console.log(`clearElementEvent(elt, eventId): ${eventCount} event for id ${eventId}, ${eventsCount} event(s) in element`, elt, eventId);
+      // const event = elementData.events.get(eventId);
+      // const eventCount = (!!event) ? '1' : '0';
+      // const eventsCount = elementData.events.size;
+      // console.log(`clearElementEvent(elt, eventId): ${eventCount} event for id ${eventId}, ${eventsCount} event(s) in element`, elt, eventId);
     }
   }
 
@@ -118,10 +118,10 @@ export class StateMachine {
       elementData.events.set(eventId, evt);
 
       // Debug only
-      const event = elementData.events.get(eventId);
-      const eventCount = (!!event) ? '1' : '0';
-      const eventsCount = elementData.events.size;
-      console.log(`setElementEvent(elt, eventId, evt): ${eventCount} event for id ${eventId}, ${eventsCount} event(s) in element`, elt, eventId, evt);
+      // const event = elementData.events.get(eventId);
+      // const eventCount = (!!event) ? '1' : '0';
+      // const eventsCount = elementData.events.size;
+      // console.log(`setElementEvent(elt, eventId, evt): ${eventCount} event for id ${eventId}, ${eventsCount} event(s) in element`, elt, eventId, evt);
     }
   }
 

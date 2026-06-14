@@ -193,17 +193,7 @@ export class TestCard extends HTMLElement {
   }
   onTrackpadPointerMove(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
-
-    const prevEvt = this._stateMachine.getElementEventFromEvent(evt);
-    const isMovingOutOfDeadZone = prevEvt ? 
-      this._stateMachine.isDeltaFromPointerEventsGreaterThanMax(prevEvt, evt, this._trackpadDeadzoneHorizontalOffset, this._trackpadDeadzoneVerticalOffset) : 
-      false;
-
-    // Debug only
-    // if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerMove(evt): prevEvt", evt, prevEvt));
-
-    const currentState = this._stateMachine.getElementStateFromEvent(evt);
-    if (currentState === this.constructor._TRACKPAD_STATE_MOVE || isMovingOutOfDeadZone) {
+    if (this.isPointerMoving(evt)) {
       this._stateMachine.setElementEventFromEvent(evt);
       this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_POINTER_MOVE, evt);
     }
@@ -250,6 +240,20 @@ export class TestCard extends HTMLElement {
     listeners.push(this._eventManager.addPointerCancelListenerToContainer(containerName, target, this.onTrackpadPointerCancel.bind(this), options));
     listeners.push(this._eventManager.addPointerUpListenerToContainer(containerName, target, this.onTrackpadPointerUp.bind(this), options));
     return listeners;
+  }
+
+  isPointerMoving(evt) {
+    const currentState = this._stateMachine.getElementStateFromEvent(evt);
+    const hasMoveStarted = currentState === this.constructor._TRACKPAD_STATE_MOVE;
+    if (hasMoveStarted) return true;
+
+    const prevEvt = this._stateMachine.getElementEventFromEvent(evt);
+    const isMovingOutOfDeadZone = prevEvt 
+      ? this._stateMachine.isDeltaFromPointerEventsGreaterThanMax(prevEvt, evt, this._trackpadDeadzoneHorizontalOffset, this._trackpadDeadzoneVerticalOffset) 
+      : false;
+    if (isMovingOutOfDeadZone) return true;
+
+    return false;
   }
 
   // jobs
