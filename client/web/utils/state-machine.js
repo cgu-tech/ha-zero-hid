@@ -264,70 +264,132 @@ export class StateMachine {
   }
 
   addElementTimeouts(evt, elt, actionTimeouts) {
-    const elementTimeouts = this.getElementTimeouts(elt);
     for (const actionTimeout of (actionTimeouts ?? [])) {
-      // Retrieve element timeout
-      const elementTimeout = elementTimeouts?.[actionTimeout];
-      if (!elementTimeout) return; // Fail fast when no timeout config defined by user (might be intentionnal)
-
-      // Add element timeout
-      this.addElementTimeout(evt, elementTimeout);
+      this.addElementTimeout(evt, elt, actionTimeout);
     }
   }
 
   removeElementTimeouts(evt, elt, actionTimeouts) {
-    const elementTimeouts = this.getElementTimeouts(elt);
     for (const actionTimeout of (actionTimeouts ?? [])) {
-      // Retrieve element timeout
-      const elementTimeout = elementTimeouts?.[actionTimeout];
-      if (!elementTimeout) return; // Fail fast when no timeout config defined by user (might be intentionnal)
-
-      // Remove element timeout
-      this.removeElementTimeout(evt, elementTimeout);
+      this.removeElementTimeout(evt, elt, actionTimeout);
     }
   }
 
-  addElementTimeout(evt, elementTimeout) {      
-    // Init concrete timeout entries
-    if (!elementTimeout.entries) elementTimeout.entries = new Map();
+  addElementTimeout(evt, elt, actionTimeout) {
+    const elementTimeouts = this.getElementTimeouts(elt);
+    if (!elementTimeouts)
+      throw new Error(`Cannot add timeout with id ${actionTimeout}: no timeouts configs defined on target element`, evt, elt, elementTimeouts);
 
-    // Retrieve previous timeout entry that matches same timeoutId
-    const timeoutId = evt.pointerId;
-    const timeoutEntry = elementTimeout.entries.get(timeoutId);
+    const elementTimeout = elementTimeouts[actionTimeout];
+    if (!elementTimeout)
+      throw new Error(`Cannot add timeout with id ${actionTimeout}: no timeout config avaible for id ${actionTimeout} on target element`, evt, elt, elementTimeouts, elementTimeout);
 
     // Prevent timeout duplicates when old exist and did not expired
-    if (timeoutEntry && !timeoutEntry["was-ran"]) throw new Error(
-      `Cannot add timeout of type ${elementTimeout} with id ${timeoutId}:` + 
-      `timeout entry ${timeoutEntry} already defined and not expired`, evt, elementTimeout, timeoutEntry);
+    const timeoutEntry = elementTimeout["entry"];
+    if (timeoutEntry && !timeoutEntry["was-ran"])
+      throw new Error(`Cannot add timeout with id ${actionTimeout}: non-expired timeout entry with same id ${actionTimeout} detected on target element`, evt, elt, elementTimeouts, elementTimeout, timeoutEntry);
 
     // Create new concrete timeout entry
-    elementTimeout.entries.set(timeoutId, {
+    elementTimeout["entry"] = {
       "was-ran": false,                                  // true when action was executed
-      "timeout": this.createTimeout(evt, elementTimeout, timeoutId)   // when it expires, triggers the associated inner callback to run the action
-    });
+      "timeout": this.createTimeout(evt, elementTimeout)   // when it expires, triggers the associated inner callback to run the action
+    };
   }
 
-  createTimeout(evt, elementTimeout, timeoutId) {
-    const callback = elementTimeout.callback;
-    const delay = elementTimeout.delay;
+  createTimeout(evt, elementTimeout) {
     return setTimeout(() => {
-      const timeoutEntry = elementTimeout.entries.get(timeoutId);
+      const timeoutEntry = elementTimeout["entry"];
 
       // When no entry: element state changed before timeout (released, moved, ...)
       if (timeoutEntry && !timeoutEntry["was-ran"]) {
         timeoutEntry["was-ran"] = true;
+        const callback = elementTimeout.callback;
         if (callback) callback(evt);
       }
-    }, delay); // timeout duration
+    }, elementTimeout.delay); // timeout duration
   }
 
-  removeElementTimeout(evt, elementTimeout) {
-    const timeoutId = evt.pointerId;
-    const timeoutEntry = elementTimeout.entries?.get(timeoutId);
-    const timeout = timeoutEntry?.["timeout"];
+  removeElementTimeout(evt, elt, actionTimeout) {
+    const elementTimeouts = this.getElementTimeouts(elt);
+    if (!elementTimeouts) return;
+
+    const elementTimeout = elementTimeouts[actionTimeout];
+    if (!elementTimeout) return;
+
+    const timeoutEntry = elementTimeout["entry"];
+    if (!timeoutEntry) return;
+
+    const timeout = timeoutEntry["timeout"];
     if (timeout) clearTimeout(timeout);
-    elementTimeout.entries?.delete(timeoutId);
+
+    elementTimeout["entry"] = null;
   }
+
+  //addElementTimeouts(evt, elt, actionTimeouts) {
+  //  const elementTimeouts = this.getElementTimeouts(elt);
+  //  for (const actionTimeout of (actionTimeouts ?? [])) {
+  //    // Retrieve element timeout
+  //    const elementTimeout = elementTimeouts?.[actionTimeout];
+  //    if (!elementTimeout) return; // Fail fast when no timeout config defined by user (might be intentionnal)
+  //
+  //    // Add element timeout
+  //    this.addElementTimeout(evt, elementTimeout);
+  //  }
+  //}
+  //
+  //removeElementTimeouts(evt, elt, actionTimeouts) {
+  //  const elementTimeouts = this.getElementTimeouts(elt);
+  //  for (const actionTimeout of (actionTimeouts ?? [])) {
+  //    // Retrieve element timeout
+  //    const elementTimeout = elementTimeouts?.[actionTimeout];
+  //    if (!elementTimeout) return; // Fail fast when no timeout config defined by user (might be intentionnal)
+  //
+  //    // Remove element timeout
+  //    this.removeElementTimeout(evt, elementTimeout);
+  //  }
+  //}
+  //
+  //addElementTimeout(evt, elementTimeout) {      
+  //  // Init concrete timeout entries
+  //  if (!elementTimeout.entries) elementTimeout.entries = new Map();
+  //
+  //  // Retrieve previous timeout entry that matches same timeoutId
+  //  const timeoutId = evt.pointerId;
+  //  const timeoutEntry = elementTimeout.entries.get(timeoutId);
+  //
+  //  // Prevent timeout duplicates when old exist and did not expired
+  //  if (timeoutEntry && !timeoutEntry["was-ran"]) throw new Error(
+  //    `Cannot add timeout of type ${elementTimeout} with id ${timeoutId}:` + 
+  //    `timeout entry ${timeoutEntry} already defined and not expired`, evt, elementTimeout, timeoutEntry);
+  //
+  //  // Create new concrete timeout entry
+  //  elementTimeout.entries.set(timeoutId, {
+  //    "was-ran": false,                                  // true when action was executed
+  //    "timeout": this.createTimeout(evt, elementTimeout, timeoutId)   // when it expires, triggers the associated inner callback to run the action
+  //  });
+  //}
+  //
+  //createTimeout(evt, elementTimeout, timeoutId) {
+  //  const callback = elementTimeout.callback;
+  //  const delay = elementTimeout.delay;
+  //  return setTimeout(() => {
+  //    const timeoutEntry = elementTimeout.entries.get(timeoutId);
+  //
+  //    // When no entry: element state changed before timeout (released, moved, ...)
+  //    if (timeoutEntry && !timeoutEntry["was-ran"]) {
+  //      timeoutEntry["was-ran"] = true;
+  //      if (callback) callback(evt);
+  //    }
+  //  }, delay); // timeout duration
+  //}
+  //
+  //removeElementTimeout(evt, elementTimeout) {
+  //  const timeoutId = evt.pointerId;
+  //  const timeoutEntry = elementTimeout.entries?.get(timeoutId);
+  //  const timeout = timeoutEntry?.["timeout"];
+  //  if (timeout) clearTimeout(timeout);
+  //  elementTimeout.entries?.delete(timeoutId);
+  //}
 
   getPointerEventX(evt) {
     return evt.clientX;
