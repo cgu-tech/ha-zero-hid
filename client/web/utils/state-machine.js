@@ -95,14 +95,33 @@ export class StateMachine {
     if (this.isNullOrUndefined(eventId)) throw new Error('clearElementEvent(elt, eventId): eventId should not be null or undefined', elt, eventId);
     if (elt) {
       const elementData = this.getElementData(elt);
-      if (!elementData.events) elementData.events = new Map();
-      elementData.events.delete(eventId);
+      if (elementData.events) {
+        elementData.events.delete(eventId);
+        
+        const eventsIndex = elementData.eventsIndex;
+        const eventIndex = eventsIndex.get(eventId);
+        eventsIndex.delete(eventId);
+
+        this.decreaseIndexesStartingAt(eventsIndex, eventIndex);
+      }
 
       // Debug only
       // const event = elementData.events.get(eventId);
       // const eventCount = (!!event) ? '1' : '0';
       // const eventsCount = elementData.events.size;
       // console.log(`clearElementEvent(elt, eventId): ${eventCount} event for id ${eventId}, ${eventsCount} event(s) in element`, elt, eventId);
+    }
+  }
+
+  decreaseIndexesStartingAt(eventsIndex, eventIndex) {
+    if (eventsIndex.size > eventIndex) { // Ensure map contains at least start index
+      let mapIndex = 0;
+      for (const [eventId, eventIndexToDecrease] of eventsIndex) {
+        if (mapIndex >= eventIndex) {
+          eventsIndex.set(eventId, eventIndexToDecrease - 1);
+        }
+        mapIndex++;
+      }
     }
   }
 
@@ -114,8 +133,13 @@ export class StateMachine {
     if (this.isNullOrUndefined(eventId)) throw new Error('setElementEvent(elt, eventId, evt): eventId should not be null or undefined', elt, eventId, evt);
     if (elt) {
       const elementData = this.getElementData(elt);
-      if (!elementData.events) elementData.events = new Map();
+      if (!elementData.events) {
+        elementData.events = new Map();
+        elementData.eventsIndex = new Map();
+      }
+      const eventExists = elementData.events.has(eventId);
       elementData.events.set(eventId, evt);
+      if (!eventExists) elementData.eventsIndex.set(eventId, elementData.events.size - 1);
 
       // Debug only
       // const event = elementData.events.get(eventId);
@@ -131,6 +155,14 @@ export class StateMachine {
 
   getElementEvent(elt, eventId) {
     return this.getElementData(elt)?.events?.get(eventId);
+  }
+
+  getElementEventIndexFromEvent(evt) {
+    return this.getElementEventIndex(this.getElementFromEvent(evt), this.getEventId(evt));
+  }
+
+  getElementEventIndex(elt, eventId) {
+    return this.getElementData(elt)?.eventsIndex?.get(eventId);
   }
 
   getElements() {
