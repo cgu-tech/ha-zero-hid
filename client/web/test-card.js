@@ -243,12 +243,15 @@ export class TestCard extends HTMLElement {
     return pointerIndex === 1;
   }
 
-  activateNextStateFromPointerEvent(evt, nextStateP1, nextStateP2) {
+  getNextStateFromPointerEvent(evt, nextStateP1, nextStateP2) {
     const pointerIndex = this._stateMachine.getElementEventIndexFromEvent(evt);
     const nextState = 
       this.isP1(pointerIndex) ? nextStateP1 : (
       this.isP2(pointerIndex) ? nextStateP2 : (
       null));
+  }
+
+  activateNextStateFromPointerEvent(evt, nextState) {
     if (nextState) this._stateMachine.activateElementNextStateFromEvent(nextState, evt);
   }
 
@@ -271,29 +274,34 @@ export class TestCard extends HTMLElement {
   onTrackpadPointerDown(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt)", evt));
     this._stateMachine.setElementEventFromEvent(evt);
-    this.activateNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_DOWN, this.constructor._TRACKPAD_TRIGGER_P2_DOWN);
+    const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_DOWN, this.constructor._TRACKPAD_TRIGGER_P2_DOWN);
+    this.activateNextStateFromPointerEvent(evt, nextState);
   }
   onTrackpadPointerMove(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
     if (this.isPointerMoving(evt)) {
       this._stateMachine.setElementEventFromEvent(evt);
-      this.activateNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_MOVE, this.constructor._TRACKPAD_TRIGGER_P2_MOVE);
+      const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_MOVE, this.constructor._TRACKPAD_TRIGGER_P2_MOVE);
+      this.activateNextStateFromPointerEvent(evt, nextState);
     }
   }
   onTrackpadPointerLeave(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerLeave(evt)", evt));
+    const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_UP, this.constructor._TRACKPAD_TRIGGER_P2_UP);
     this._stateMachine.clearElementEventFromEvent(evt);
-    this.activateNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_UP, this.constructor._TRACKPAD_TRIGGER_P2_UP);
+    this.activateNextStateFromPointerEvent(evt, nextState);
   }
   onTrackpadPointerCancel(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerCancel(evt)", evt));
+    const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_UP, this.constructor._TRACKPAD_TRIGGER_P2_UP);
     this._stateMachine.clearElementEventFromEvent(evt);
-    this.activateNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_UP, this.constructor._TRACKPAD_TRIGGER_P2_UP);
+    this.activateNextStateFromPointerEvent(evt, nextState);
   }
   onTrackpadPointerUp(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerUp(evt)", evt));
+    const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_UP, this.constructor._TRACKPAD_TRIGGER_P2_UP);
     this._stateMachine.clearElementEventFromEvent(evt);
-    this.activateNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_UP, this.constructor._TRACKPAD_TRIGGER_P2_UP);
+    this.activateNextStateFromPointerEvent(evt, nextState);
   }
   onTrackpadLongTimeoutSingle(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadLongTimeoutSingle(evt)", evt));
