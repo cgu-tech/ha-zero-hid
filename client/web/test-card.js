@@ -283,7 +283,7 @@ export class TestCard extends HTMLElement {
     if (this.isPointerMoving(evt)) {
       this._stateMachine.setElementEventFromEvent(evt);
       const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_MOVE, this.constructor._TRACKPAD_TRIGGER_P2_MOVE);
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onTrackpadPointerMove(evt):MOVING, nextState=${nextState}` +, evt));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onTrackpadPointerMove(evt):MOVING, nextState=${nextState}`, evt));
       this.activateNextStateFromPointerEvent(evt, nextState);
     }
   }
