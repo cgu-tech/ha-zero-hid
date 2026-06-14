@@ -146,8 +146,8 @@ export class TestCard extends HTMLElement {
   _allowedCellData = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
   
   _trackpadLongDelay = 500;              // milliseconds
-  _trackpadDeadzoneHorizontalOffset = 2; // pixels (TODO: pixel agnostic unit and computation, to make user experience identical whatever the screen density is)
-  _trackpadDeadzoneVerticalOffset = 2;   // pixels (TODO: same as above)
+  _trackpadDeadzoneHorizontalOffset = 10; // pixels (TODO: pixel agnostic unit and computation, to make user experience identical whatever the screen density is)
+  _trackpadDeadzoneVerticalOffset = 10;   // pixels (TODO: same as above)
 
   // private properties
   _config;
