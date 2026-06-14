@@ -506,20 +506,20 @@ export class TestCard extends HTMLElement {
     //window.addEventListener('blur', this.onWindowBlur.bind(this));
   }
 
-  onTimeoutLongSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTimeoutLongSingle(evt)", evt)); }
-  onClickShortSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onClickShortSingle(evt)", evt)); }
-  onPressLongSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onPressLongSingle(evt)", evt)); }
-  onMoveStartSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStartSingle(evt)", evt)); }
-  onMoveSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveSingle(evt)", evt)); }
-  onMoveStopSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStopSingle(evt)", evt)); }
-  onReleaseLongSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onReleaseLongSingle(evt)", evt)); }
-  onTimeoutLongDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTimeoutLongDouble(evt)", evt)); }
-  onClickShortDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onClickShortDouble(evt)", evt)); }
-  onPressLongDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onPressLongDouble(evt)", evt)); }
-  onMoveStartDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStartDouble(evt)", evt)); }
-  onMoveDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveDouble(evt)", evt)); }
-  onMoveStopDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStopDouble(evt)", evt)); }
-  onReleaseLongDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onReleaseLongDouble(evt)", evt)); }
+  onTimeoutLongSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTimeoutLongSingle(evt)", evt)); }
+  onClickShortSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onClickShortSingle(evt)", evt)); }
+  onPressLongSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onPressLongSingle(evt)", evt)); }
+  onMoveStartSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStartSingle(evt)", evt)); }
+  onMoveSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveSingle(evt)", evt)); }
+  onMoveStopSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStopSingle(evt)", evt)); }
+  onReleaseLongSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onReleaseLongSingle(evt)", evt)); }
+  onTimeoutLongDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTimeoutLongDouble(evt)", evt)); }
+  onClickShortDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onClickShortDouble(evt)", evt)); }
+  onPressLongDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onPressLongDouble(evt)", evt)); }
+  onMoveStartDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStartDouble(evt)", evt)); }
+  onMoveDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveDouble(evt)", evt)); }
+  onMoveStopDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStopDouble(evt)", evt)); }
+  onReleaseLongDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onReleaseLongDouble(evt)", evt)); }
 
   _sensitivity = 2;
   _deadZone = 1.5; // degrees
