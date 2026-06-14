@@ -83,19 +83,23 @@ export class StateMachine {
     return evt?.pointerId;
   }
 
-  resetElementEventFromEvent(evt) {
-    this.setElementEventFromEvent(evt, null);
+  clearElementEventFromEvent(evt) {
+    this.setElementEventFromEvent(evt, true);
   }
 
-  setElementEventFromEvent(evt, value = evt) {
-    this.setElementEvent(this.getElementFromEvent(evt), value);
+  setElementEventFromEvent(evt, clear = false) {
+    this.setElementEvent(this.getElementFromEvent(evt), evt, clear);
   }
 
-  setElementEvent(elt, evt) {
+  setElementEvent(elt, evt, clear) {
     if (elt) {
       const elementData = this.getElementData(elt);
       if (!elementData.events) elementData.events = new Map();
-      elementData.events.set(this.getEventId(evt), evt);
+      if (clear) {
+        elementData.events.delete(this.getEventId(evt));
+      } else {
+        elementData.events.set(this.getEventId(evt), evt);
+      }
     }
   }
 
