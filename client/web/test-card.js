@@ -306,12 +306,12 @@ export class TestCard extends HTMLElement {
   }
   onTrackpadLongTimeoutSingle(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadLongTimeoutSingle(evt)", evt));
-    this._stateMachine.clearElementEventFromEvent(evt);
+    this._stateMachine.setElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_SINGLE_EXPIRED, evt);
   }
   onTrackpadLongTimeoutDouble(evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadLongTimeoutDouble(evt)", evt));
-    this._stateMachine.clearElementEventFromEvent(evt);
+    this._stateMachine.setElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_DOUBLE_EXPIRED, evt);
   }
 
