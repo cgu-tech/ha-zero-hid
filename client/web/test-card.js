@@ -275,11 +275,13 @@ export class TestCard extends HTMLElement {
   onLogBefore(evtName, evt) { this.onLog(evtName, "BEFORE", evt, null, false); }
   onLogAfter(evtName, evt, nextStep) { this.onLog(evtName, "AFTER", evt, nextStep, true); }
   onLog(evtName, step, evt, nextStep, logNextStep) {
-    const elt = this._stateMachine.getElementFromEvent(evt);
-    const state = this._stateMachine.getElementStateFromEvent(evt);
-    const stateEvt = this._stateMachine.createStateEvent(evt);
-    const pointerIndex = this._stateMachine.getElementEventIndexFromEvent(evt);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`${evtName}(evt)->${step}, pointerIndex=${pointerIndex}, ${logNextStep ? 'nextStep=' : ''}${logNextStep ? nextStep : ''}`, stateEvt, state, !!evt, !!elt));
+    if (this.getLogger().isTraceEnabled()) {
+      const elt = this._stateMachine.getElementFromEvent(evt);
+      const state = this._stateMachine.getElementStateFromEvent(evt);
+      const stateEvt = this._stateMachine.createStateEvent(evt);
+      const pointerIndex = this._stateMachine.getElementEventIndexFromEvent(evt);
+      console.debug(...this.getLogger().trace(`${evtName}(evt)->${step}, pointerIndex=${pointerIndex}, ${logNextStep ? 'nextStep=' : ''}${logNextStep ? nextStep : ''}`, stateEvt, state, !!evt, !!elt));
+    }
   }
 
   onTrackpadPointerDown(evt) {
@@ -535,14 +537,14 @@ export class TestCard extends HTMLElement {
     //window.addEventListener('blur', this.onWindowBlur.bind(this));
   }
 
-  onTrackpadTimeoutLongSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutLongSingle(evt)", evt)); }
+  onTrackpadTimeoutLongSingle(evt) { /*if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutLongSingle(evt)", evt));*/ }
   onTrackpadClickShortSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadClickShortSingle(evt)", evt)); }
   onTrackpadPressLongSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPressLongSingle(evt)", evt)); }
   onTrackpadMoveStartSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStartSingle(evt)", evt)); }
   onTrackpadMoveSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveSingle(evt)", evt)); }
   onTrackpadMoveStopSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStopSingle(evt)", evt)); }
   onTrackpadReleaseLongSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadReleaseLongSingle(evt)", evt)); }
-  onTrackpadTimeoutLongDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutLongDouble(evt)", evt)); }
+  onTrackpadTimeoutLongDouble(evt) { /*if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutLongDouble(evt)", evt));*/ }
   onTrackpadClickShortDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadClickShortDouble(evt)", evt)); }
   onTrackpadPressLongDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPressLongDouble(evt)", evt)); }
   onTrackpadMoveStartDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStartDouble(evt)", evt)); }
