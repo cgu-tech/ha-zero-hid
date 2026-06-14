@@ -98,7 +98,7 @@ export class TestCard extends HTMLElement {
   _consumercodes = new ConsumerCodes().getMapping();
   _allowedCellData = new Set(['code', 'special', 'popinConfig', 'label', 'fallback']);
   
-  _trackpadShortDelay = 150;             // milliseconds
+  _trackpadShortDelay = 300;             // milliseconds
   _trackpadLongDelay = 250;              // milliseconds
   _trackpadDeadzoneHorizontalOffset = 2; // pixels (TODO: pixel agnostic unit and computation, to make user experience identical whatever the screen density is)
   _trackpadDeadzoneVerticalOffset = 2;   // pixels (TODO: same as above)
