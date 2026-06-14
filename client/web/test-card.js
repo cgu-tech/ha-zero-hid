@@ -245,7 +245,7 @@ export class TestCard extends HTMLElement {
 
   getNextStateFromPointerEvent(evt, nextStateP1, nextStateP2) {
     const pointerIndex = this._stateMachine.getElementEventIndexFromEvent(evt);
-    const nextState = 
+    return 
       this.isP1(pointerIndex) ? nextStateP1 : (
       this.isP2(pointerIndex) ? nextStateP2 : (
       null));
