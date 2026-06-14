@@ -273,11 +273,12 @@ export class TestCard extends HTMLElement {
   }
 
   onTrackpadPointerDown(evt) {
+    const elt = this._stateMachine.getElementFromEvent(evt);
     const currentState = this._stateMachine.getElementStateFromEvent(evt);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt)", evt, currentState));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt)", evt, currentState, !!evt, !!elt));
     this._stateMachine.setElementEventFromEvent(evt);
     const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_DOWN, this.constructor._TRACKPAD_TRIGGER_P2_DOWN);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onTrackpadPointerDown(evt):DOWNING, nextState=${nextState}`, evt));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onTrackpadPointerDown(evt):DOWNING, nextState=${nextState}`, evt, !!evt, !!elt));
     this.activateNextStateFromPointerEvent(evt, nextState);
   }
   onTrackpadPointerMove(evt) {
