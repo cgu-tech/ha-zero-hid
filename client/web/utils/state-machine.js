@@ -84,22 +84,28 @@ export class StateMachine {
   }
 
   clearElementEventFromEvent(evt) {
-    this.setElementEventFromEvent(evt, true);
+    this.clearElementEvent(this.getElementFromEvent(evt), this.getEventId(evt));
   }
 
-  setElementEventFromEvent(evt, clear = false) {
-    this.setElementEvent(this.getElementFromEvent(evt), evt, clear);
-  }
-
-  setElementEvent(elt, evt, clear) {
+  clearElementEvent(elt, eventId) {
+    if (!eventId) throw new Error('clearElementEvent(elt, eventId): eventId should be defined', elt, eventId);
     if (elt) {
       const elementData = this.getElementData(elt);
       if (!elementData.events) elementData.events = new Map();
-      if (clear) {
-        elementData.events.delete(this.getEventId(evt));
-      } else {
-        elementData.events.set(this.getEventId(evt), evt);
-      }
+      elementData.events.delete(eventId);
+    }
+  }
+
+  setElementEventFromEvent(evt) {
+    this.setElementEvent(this.getElementFromEvent(evt), this.getEventId(evt), evt);
+  }
+
+  setElementEvent(elt, eventId, evt) {
+    if (!eventId) throw new Error('setElementEvent(elt, eventId, evt): eventId should be defined', elt, eventId, evt);
+    if (elt) {
+      const elementData = this.getElementData(elt);
+      if (!elementData.events) elementData.events = new Map();
+      elementData.events.set(eventId, evt);
     }
   }
 
