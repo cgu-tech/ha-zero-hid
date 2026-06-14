@@ -59,7 +59,7 @@ export class TestCard extends HTMLElement {
       [StateMachine.STATES]: {
         [this._TRACKPAD_STATE_ALL_INACTIVE]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG_SINGLE] }
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG_SINGLE, this._TRACKPAD_TIMEOUT_LONG_DOUBLE] }
           ],
           [StateMachine.NEXTS]: [
             { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P1_DOWN, [StateMachine.STATE]: this._TRACKPAD_STATE_TIMEOUT_LONG_SINGLE, [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_TIMEOUT_LONG_SINGLE }
@@ -101,7 +101,7 @@ export class TestCard extends HTMLElement {
         },
         [this._TRACKPAD_STATE_MOVE_SINGLE]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT_SINGLE, this._TRACKPAD_TIMEOUT_LONG_SINGLE] }
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG_SINGLE] }
           ],
           [StateMachine.NEXTS]: [ 
             { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P1_MOVE, [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE_SINGLE , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_SINGLE      }, 
@@ -110,7 +110,7 @@ export class TestCard extends HTMLElement {
         },
         [this._TRACKPAD_STATE_MOVE_DOUBLE]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_SHORT_DOUBLE, this._TRACKPAD_TIMEOUT_LONG_DOUBLE] }
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG_DOUBLE] }
           ],
           [StateMachine.NEXTS]: [ 
             { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P1_MOVE, [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE_DOUBLE , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_DOUBLE      }, 
