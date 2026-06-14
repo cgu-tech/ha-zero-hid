@@ -275,10 +275,13 @@ export class TestCard extends HTMLElement {
   onTrackpadPointerDown(evt) {
     const elt = this._stateMachine.getElementFromEvent(evt);
     const currentState = this._stateMachine.getElementStateFromEvent(evt);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt)", evt, currentState, !!evt, !!elt));
+    const logEvent = this._stateMachine.createStateEvent(evt);
+    const pointerIndexBefore = this._stateMachine.getElementEventIndexFromEvent(evt);
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onTrackpadPointerDown(evt), pointerIndexBefore=${pointerIndexBefore}`, logEvent, currentState, !!evt, !!elt));
     this._stateMachine.setElementEventFromEvent(evt);
     const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_DOWN, this.constructor._TRACKPAD_TRIGGER_P2_DOWN);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onTrackpadPointerDown(evt):DOWNING, nextState=${nextState}`, evt, !!evt, !!elt));
+    const pointerIndexAfter = this._stateMachine.getElementEventIndexFromEvent(evt);
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onTrackpadPointerDown(evt):DOWNING, nextState=${nextState}, pointerIndexAfter=${pointerIndexAfter}`, logEvent, !!evt, !!elt));
     this.activateNextStateFromPointerEvent(evt, nextState);
   }
   onTrackpadPointerMove(evt) {
