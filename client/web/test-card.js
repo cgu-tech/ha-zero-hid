@@ -199,6 +199,9 @@ export class TestCard extends HTMLElement {
       this._stateMachine.isDeltaFromPointerEventsGreaterThanMax(prevEvt, evt, this._trackpadDeadzoneHorizontalOffset, this._trackpadDeadzoneVerticalOffset) : 
       false;
 
+    // Debug only
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerMove(evt): prevEvt", evt, prevEvt));
+
     const currentState = this._stateMachine.getElementStateFromEvent(evt);
     if (currentState === this.constructor._TRACKPAD_STATE_MOVE || isMovingOutOfDeadZone) {
       this._stateMachine.setElementEventFromEvent(evt);
