@@ -195,7 +195,7 @@ export class TestCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerMove(evt):", evt));
 
     const prevEvt = this._stateMachine.getElementEventFromEvent(evt);
-    const currentState = this._stateMachine.getElementCurrentStateFromEvent(evt);
+    const currentState = this._stateMachine.getElementStateFromEvent(evt);
     if (// Move already started: keep moving
         currentState === this.constructor._TRACKPAD_STATE_MOVE
         || // OR

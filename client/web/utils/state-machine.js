@@ -39,6 +39,10 @@ export class StateMachine {
     this._dataKey = dataKey;
   }
 
+  getElementFromEvent(evt) {
+    return evt.currentTarget || evt.originalTarget;
+  }
+
   setElementData(elt, data) {
     if (elt) elt[this._dataKey] = data;
   }
@@ -53,6 +57,10 @@ export class StateMachine {
 
   getElementState(elt) {
     return this.getElementData(elt)?.state;
+  }
+
+  getElementStateFromEvent(evt) {
+    return this.getElementState(this.getElementFromEvent(evt));
   }
 
   setElementCallbacks(elt, callbacks) {
@@ -113,14 +121,6 @@ export class StateMachine {
 
   removeElement(elt) {
     this._elements.delete(elt);
-  }
-
-  getElementFromEvent(evt) {
-    return evt.currentTarget || evt.originalTarget;
-  }
-
-  getElementCurrentStateFromEvent(evt) {
-    return this.getElementCurrentState(this.getElementFromEvent(evt));
   }
 
   getElementCurrentState(elt) {
