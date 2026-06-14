@@ -83,12 +83,16 @@ export class StateMachine {
     return evt?.pointerId;
   }
 
+  isNullOrUndefined(value) {
+    return value === undefined || value === null;
+  }
+
   clearElementEventFromEvent(evt) {
     this.clearElementEvent(this.getElementFromEvent(evt), this.getEventId(evt));
   }
 
   clearElementEvent(elt, eventId) {
-    if (!eventId) throw new Error('clearElementEvent(elt, eventId): eventId should be defined', elt, eventId);
+    if (this.isNullOrUndefined(eventId)) throw new Error('clearElementEvent(elt, eventId): eventId should not be null or undefined', elt, eventId);
     if (elt) {
       const elementData = this.getElementData(elt);
       if (!elementData.events) elementData.events = new Map();
@@ -101,7 +105,7 @@ export class StateMachine {
   }
 
   setElementEvent(elt, eventId, evt) {
-    if (!eventId) throw new Error('setElementEvent(elt, eventId, evt): eventId should be defined', elt, eventId, evt);
+    if (this.isNullOrUndefined(eventId)) throw new Error('setElementEvent(elt, eventId, evt): eventId should not be null or undefined', elt, eventId, evt);
     if (elt) {
       const elementData = this.getElementData(elt);
       if (!elementData.events) elementData.events = new Map();
