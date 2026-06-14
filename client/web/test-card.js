@@ -277,6 +277,7 @@ export class TestCard extends HTMLElement {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadPointerDown(evt)", evt, currentState));
     this._stateMachine.setElementEventFromEvent(evt);
     const nextState = this.getNextStateFromPointerEvent(evt, this.constructor._TRACKPAD_TRIGGER_P1_DOWN, this.constructor._TRACKPAD_TRIGGER_P2_DOWN);
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`onTrackpadPointerDown(evt):DOWNING, nextState=${nextState}`, evt));
     this.activateNextStateFromPointerEvent(evt, nextState);
   }
   onTrackpadPointerMove(evt) {
@@ -318,8 +319,9 @@ export class TestCard extends HTMLElement {
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_SINGLE_EXPIRED, evt);
   }
   onTrackpadLongTimeoutDouble(evt) {
+    const elt = this._stateMachine.getElementFromEvent(evt);
     const currentState = this._stateMachine.getElementStateFromEvent(evt);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadLongTimeoutDouble(evt)", evt, currentState));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadLongTimeoutDouble(evt)", evt, currentState, !!evt, !!elt));
     this._stateMachine.setElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_DOUBLE_EXPIRED, evt);
   }
