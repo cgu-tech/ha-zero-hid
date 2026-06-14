@@ -97,6 +97,12 @@ export class StateMachine {
       const elementData = this.getElementData(elt);
       if (!elementData.events) elementData.events = new Map();
       elementData.events.delete(eventId);
+
+      // Debug only
+      const event = elementData.events.get(eventId);
+      const eventCount = (!!event) ? '1' : '0';
+      const eventsCount = elementData.events.size;
+      console.log(`clearElementEvent(elt, eventId): ${eventCount} event for id ${eventId}, ${eventsCount} event(s) in element`, elt, eventId);
     }
   }
 
@@ -110,6 +116,12 @@ export class StateMachine {
       const elementData = this.getElementData(elt);
       if (!elementData.events) elementData.events = new Map();
       elementData.events.set(eventId, evt);
+
+      // Debug only
+      const event = elementData.events.get(eventId);
+      const eventCount = (!!event) ? '1' : '0';
+      const eventsCount = elementData.events.size;
+      console.log(`setElementEvent(elt, eventId, evt): ${eventCount} event for id ${eventId}, ${eventsCount} event(s) in element`, elt, eventId, evt);
     }
   }
 
