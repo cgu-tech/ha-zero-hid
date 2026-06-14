@@ -200,7 +200,7 @@ export class TestCard extends HTMLElement {
       false;
 
     // Debug only
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerMove(evt): prevEvt", evt, prevEvt));
+    // if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPointerMove(evt): prevEvt", evt, prevEvt));
 
     const currentState = this._stateMachine.getElementStateFromEvent(evt);
     if (currentState === this.constructor._TRACKPAD_STATE_MOVE || isMovingOutOfDeadZone) {
