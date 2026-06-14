@@ -130,7 +130,7 @@ export class StateMachine {
   }
 
   getElementEvent(elt, eventId) {
-    return this.getElementData(elt)?.events?.[eventId];
+    return this.getElementData(elt)?.events?.get(eventId);
   }
 
   getElements() {
