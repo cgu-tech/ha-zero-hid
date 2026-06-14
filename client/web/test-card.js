@@ -88,7 +88,7 @@ export class TestCard extends HTMLElement {
         },
         [this._TRACKPAD_STATE_TIMEOUT_LONG_DOUBLE]: {
           [StateMachine.ACTIONS]: [
-            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG_SINGLE] }
+            { [StateMachine.ACTION]: StateMachine.ACTION_REMOVE, [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG_SINGLE] },
             { [StateMachine.ACTION]: StateMachine.ACTION_ADD,    [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG_DOUBLE] }
           ],
           [StateMachine.NEXTS]: [
