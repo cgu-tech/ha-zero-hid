@@ -92,11 +92,11 @@ export class TestCard extends HTMLElement {
             { [StateMachine.ACTION]: StateMachine.ACTION_ADD,    [StateMachine.ACTION_TYPE_SETTIMEOUT]: [this._TRACKPAD_TIMEOUT_LONG_DOUBLE] }
           ],
           [StateMachine.NEXTS]: [
-            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_SHORT_DOUBLE_EXPIRED, [StateMachine.STATE]: this._TRACKPAD_STATE_PRESS_LONG_DOUBLE, [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_PRESS_LONG_DOUBLE  }, 
-            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P1_MOVE                     , [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE_DOUBLE      , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START_DOUBLE  },
-            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P1_UP                       , [StateMachine.STATE]: this._TRACKPAD_STATE_ONE_INACTIVE     , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT_DOUBLE },
-            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P2_MOVE                     , [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE_DOUBLE      , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START_DOUBLE  },
-            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P2_UP                       , [StateMachine.STATE]: this._TRACKPAD_STATE_ONE_INACTIVE     , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT_DOUBLE }
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_TIMEOUT_LONG_DOUBLE_EXPIRED, [StateMachine.STATE]: this._TRACKPAD_STATE_PRESS_LONG_DOUBLE, [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_PRESS_LONG_DOUBLE  }, 
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P1_MOVE                    , [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE_DOUBLE      , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START_DOUBLE  },
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P1_UP                      , [StateMachine.STATE]: this._TRACKPAD_STATE_ONE_INACTIVE     , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT_DOUBLE },
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P2_MOVE                    , [StateMachine.STATE]: this._TRACKPAD_STATE_MOVE_DOUBLE      , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_MOVE_START_DOUBLE  },
+            { [StateMachine.TRIGGER]: this._TRACKPAD_TRIGGER_P2_UP                      , [StateMachine.STATE]: this._TRACKPAD_STATE_ONE_INACTIVE     , [StateMachine.CALLBACK]: this._TRACKPAD_CALLBACK_CLICK_SHORT_DOUBLE }
           ]
         },
         [this._TRACKPAD_STATE_MOVE_SINGLE]: {
