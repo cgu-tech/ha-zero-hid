@@ -20,6 +20,7 @@ export class StateMachine {
 
   _machine;
   _dataKey;
+  _eventKeys;
   _elements = new Set();               // Managed elements
 
   static checkMachine(machine) {
@@ -33,14 +34,41 @@ export class StateMachine {
       throw new Error(`Invalid machine: expected non-null/empty/undefined machine[this.constructor.STATES] (machine[${this.STATES}]), got:`, machine);
   }
 
-  constructor(machine, dataKey) {
+  static normalizeToSet(value) {
+    if (value == null) return new Set();
+    if (value instanceof Set) return new Set(value);
+    if (Array.isArray(value)) return new Set(value);
+    return new Set([value]);
+  }
+
+  static ensureDefaultEventKeys(eventKeys) {
+    const eventKeysSet = this.normalizeToSet(eventKeys);
+    eventKeysSet.add("pointerId");
+    eventKeysSet.add("currentTarget");
+    eventKeysSet.add("target");
+    eventKeysSet.add("clientX");
+    eventKeysSet.add("clientY");
+    return eventKeysSet;
+  }
+
+  constructor(machine, dataKey, eventKeys) {
     this.constructor.checkMachine(machine);
     this._machine = machine;
     this._dataKey = dataKey;
+    this._eventKeys = this.constructor.ensureDefaultEventKeys(eventKeys);
+  }
+
+  createStateEvent(evt) {
+    if (!evt) return null;
+    const stateEvt = {};
+    for (const eventKey of this._eventKeys) {
+      stateEvt[eventKey] = evt?.[eventKey];
+    }
+    return stateEvt;
   }
 
   getElementFromEvent(evt) {
-    return evt.currentTarget || evt.originalTarget;
+    return evt.currentTarget ?? evt.target ?? null;
   }
 
   setElementData(elt, data) {
@@ -220,8 +248,9 @@ export class StateMachine {
           // Update element timeouts
           const actionSetTimeout = action[this.constructor.ACTION_TYPE_SETTIMEOUT];
           if (actionSetTimeout) {
-            if (actionName === this.constructor.ACTION_ADD) this.addElementTimeouts(evt, elt, ...actionSetTimeout);
-            if (actionName === this.constructor.ACTION_REMOVE) this.removeElementTimeouts(evt, elt, ...actionSetTimeout);
+            const stateEvt = createStateEvent(evt);
+            if (actionName === this.constructor.ACTION_ADD) this.addElementTimeouts(stateEvt, elt, ...actionSetTimeout);
+            if (actionName === this.constructor.ACTION_REMOVE) this.removeElementTimeouts(stateEvt, elt, ...actionSetTimeout);
           }
         }
 
