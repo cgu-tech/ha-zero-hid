@@ -478,13 +478,20 @@ export class TestCard extends HTMLElement {
 
     this.addTrackpadListeners("trackpad", this._elements.trackpad, 
       {
-        [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG_SINGLE]: this.onTrackpadTimeoutLong.bind(this),
-        [this.constructor._TRACKPAD_CALLBACK_CLICK_SHORT_SINGLE]: this.onTrackpadClickShort.bind(this),
-        [this.constructor._TRACKPAD_CALLBACK_PRESS_LONG_SINGLE]: this.onTrackpadPressLong.bind(this),
-        [this.constructor._TRACKPAD_CALLBACK_RELEASE_LONG_SINGLE]: this.onTrackpadReleaseLong.bind(this),
-        [this.constructor._TRACKPAD_CALLBACK_MOVE_START_SINGLE]: this.onTrackpadMoveStart.bind(this),
-        [this.constructor._TRACKPAD_CALLBACK_MOVE_SINGLE]: this.onTrackpadMove.bind(this),
-        [this.constructor._TRACKPAD_CALLBACK_MOVE_STOP_SINGLE]: this.onTrackpadMoveStop.bind(this)
+        [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG_SINGLE]: this.onTimeoutLongSingle.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_CLICK_SHORT_SINGLE ]: this.onClickShortSingle.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_PRESS_LONG_SINGLE  ]: this.onPressLongSingle.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE_START_SINGLE  ]: this.onMoveStartSingle.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE_SINGLE        ]: this.onMoveSingle.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE_STOP_SINGLE   ]: this.onMoveStopSingle.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_RELEASE_LONG_SINGLE]: this.onReleaseLongSingle.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG_DOUBLE]: this.onTimeoutLongDouble.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_CLICK_SHORT_DOUBLE ]: this.onClickShortDouble.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_PRESS_LONG_DOUBLE  ]: this.onPressLongDouble.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE_START_DOUBLE  ]: this.onMoveStartDouble.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE_DOUBLE        ]: this.onMoveDouble.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_MOVE_STOP_DOUBLE   ]: this.onMoveStopDouble.bind(this),
+        [this.constructor._TRACKPAD_CALLBACK_RELEASE_LONG_DOUBLE]: this.onReleaseLongDouble.bind(this)
       }
     );
 
@@ -499,27 +506,20 @@ export class TestCard extends HTMLElement {
     //window.addEventListener('blur', this.onWindowBlur.bind(this));
   }
 
-  onTrackpadTimeoutLong(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutLong(evt)", evt));
-  }
-  onTrackpadClickShort(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadClickShort(evt)", evt));
-  }
-  onTrackpadPressLong(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPressLong(evt)", evt));
-  }
-  onTrackpadReleaseLong(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadReleaseLong(evt)", evt));
-  }
-  onTrackpadMoveStart(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStart(evt)", evt));
-  }
-  onTrackpadMove(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMove(evt)", evt));
-  }
-  onTrackpadMoveStop(evt) {
-    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStop(evt)", evt));
-  }
+  onTimeoutLongSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTimeoutLongSingle(evt)", evt)); }
+  onClickShortSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onClickShortSingle(evt)", evt)); }
+  onPressLongSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onPressLongSingle(evt)", evt)); }
+  onMoveStartSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStartSingle(evt)", evt)); }
+  onMoveSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveSingle(evt)", evt)); }
+  onMoveStopSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStopSingle(evt)", evt)); }
+  onReleaseLongSingle(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onReleaseLongSingle(evt)", evt)); }
+  onTimeoutLongDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTimeoutLongDouble(evt)", evt)); }
+  onClickShortDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onClickShortDouble(evt)", evt)); }
+  onPressLongDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onPressLongDouble(evt)", evt)); }
+  onMoveStartDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStartDouble(evt)", evt)); }
+  onMoveDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveDouble(evt)", evt)); }
+  onMoveStopDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onMoveStopDouble(evt)", evt)); }
+  onReleaseLongDouble(evt) { if this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onReleaseLongDouble(evt)", evt)); }
 
   _sensitivity = 2;
   _deadZone = 1.5; // degrees
