@@ -311,8 +311,9 @@ export class TestCard extends HTMLElement {
     this.activateNextStateFromPointerEvent(evt, nextState);
   }
   onTrackpadLongTimeoutSingle(evt) {
+    const elt = this._stateMachine.getElementFromEvent(evt);
     const currentState = this._stateMachine.getElementStateFromEvent(evt);
-    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadLongTimeoutSingle(evt)", evt, currentState));
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace("onTrackpadLongTimeoutSingle(evt)", evt, currentState, !!evt, !!elt));
     this._stateMachine.setElementEventFromEvent(evt);
     this._stateMachine.activateElementNextStateFromEvent(this.constructor._TRACKPAD_TRIGGER_TIMEOUT_LONG_SINGLE_EXPIRED, evt);
   }
