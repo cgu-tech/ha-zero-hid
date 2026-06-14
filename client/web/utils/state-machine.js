@@ -248,7 +248,7 @@ export class StateMachine {
           // Update element timeouts
           const actionSetTimeout = action[this.constructor.ACTION_TYPE_SETTIMEOUT];
           if (actionSetTimeout) {
-            const stateEvt = createStateEvent(evt);
+            const stateEvt = this.createStateEvent(evt);
             if (actionName === this.constructor.ACTION_ADD) this.addElementTimeouts(stateEvt, elt, ...actionSetTimeout);
             if (actionName === this.constructor.ACTION_REMOVE) this.removeElementTimeouts(stateEvt, elt, ...actionSetTimeout);
           }
