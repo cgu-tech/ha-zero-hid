@@ -3,14 +3,16 @@ export class InertiaManager {
   // private constants
   _DEFAULT_VELOCITY_WINDOW = 100;
   _DEFAULT_MAX_IDLE_BEFORE_RELEASE = 150;
+  _DEFAULT_MIN_DELAY_BEFORE_MOVE = 150;
   _DEFAULT_VEOLCITY_THRESHOLD = 0.03;
-  _DEFAULT_DECAY_PER_MILLISECOND = 0.998;
+  _DEFAULT_DECAY_PER_MILLISECOND = 0.996;
   _DEFAULT_STOP_VELOCITY_THRESHOLD = 0.005;
   _DEFAULT_ACCUMULATION_THRESHOLD = 6;
 
   // private configs
   _velocityWindow = this._DEFAULT_VELOCITY_WINDOW;                 // Amount of movement history used to estimate release velocity (in ms)
   _maxIdleBeforeRelease = this._DEFAULT_MAX_IDLE_BEFORE_RELEASE;   // Idle-before-release detection (in ms)
+  _minDelayBeforeMove = this._DEFAULT_MIN_DELAY_BEFORE_MOVE;       // Minimum delay between next move
   _velocityThreshold = this._DEFAULT_VEOLCITY_THRESHOLD;           // Minimum release speed required to trigger inertia
   _decayPerMillisecond = this._DEFAULT_DECAY_PER_MILLISECOND;      // Friction factor (closer to 1 = longer glide)
   _stopVelocityThreshold = this._DEFAULT_STOP_VELOCITY_THRESHOLD;  // Velocity below which inertia stops
@@ -23,6 +25,7 @@ export class InertiaManager {
   _velocityY = 0;
   _samples = [];
   _lastMovementTime = 0;
+  _lastEmitedTime = 0;
   _animationFrameId = null;
   _accumulatedMovements = 0;
   _onMove = null; // onMove callback 
@@ -46,6 +49,7 @@ export class InertiaManager {
     return Math.hypot(vx, vy);
   }
 
+  /*
   shouldEmit() {
     this._accumulatedMovements += 1;
     if (this._accumulatedMovements === this._accumulationThreshold) {
@@ -54,8 +58,25 @@ export class InertiaManager {
     }
     return false;
   }
+  */
+  shouldEmit() {
+    this._accumulatedMovements += 1;
+    if (this._accumulatedMovements === this._accumulationThreshold) {
+      this._accumulatedMovements = 0;
+      return true;
+    }
+    
+    const lastEmitDelay = this.now() - this._lastEmitedTime;
+    if (lastEmitDelay >= this._minDelayBeforeMove) {
+      this._accumulatedMovements = 0;
+      return true;
+    }
+    
+    return false;
+  }
 
   emitPosition() {
+    this._lastEmitedTime = this.now();
     if (!this._onMove) return;
 
     this._onMove({
@@ -66,10 +87,9 @@ export class InertiaManager {
     });
   }
 
-  emitAccumulatedPosition() {
+  emitLimitedPosition() {
     if (this.shouldEmit()) this.emitPosition();
   }
-
   // Inertia control
 
   cancelInertia() {
@@ -103,7 +123,7 @@ export class InertiaManager {
       this._velocityX *= decay;
       this._velocityY *= decay;
 
-      this.emitAccumulatedPosition();
+      this.emitLimitedPosition();
 
       if (this.speed(this._velocityX, this._velocityY) < this._stopVelocityThreshold) {
         this._animationFrameId = null;
@@ -182,7 +202,7 @@ export class InertiaManager {
     this._velocityX = velocity.vx;
     this._velocityY = velocity.vy;
 
-    this.emitAccumulatedPosition();
+    this.emitLimitedPosition();
   }
 
   moveStop() {
