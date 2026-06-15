@@ -1,10 +1,14 @@
+// velocityWindowMs: Amount of movement history used to estimate release velocity
+// velocityThreshold: Minimum release speed required to trigger inertia
+// decayPerMs: Friction factor (closer to 1 = longer glide)
+// stopVelocityThreshold: Velocity below which inertia stops
 export class InertiaManager {
 
   constructor({
     velocityWindowMs = 75,
     velocityThreshold = 0.05,
     decayPerMs = 0.995,
-    stopVelocityThreshold = 0.01,
+    stopVelocityThreshold = 0.005,
   } = {}) {
     this._velocityWindowMs = velocityWindowMs;
     this._velocityThreshold = velocityThreshold;
@@ -22,6 +26,7 @@ export class InertiaManager {
     this.animationFrameId = null;
   }
   
+  // onMove: Callback invoked for both user movement and inertial movement
   setMoveCallback(onMove) {
     this._onMove = onMove;
   }

@@ -289,8 +289,14 @@ export class TestCard extends HTMLElement {
 
   onTrackpadMoveWithInertia(evt) { this.onLogDebug("onTrackpadMoveWithInertia(evt)", evt, true); }
   onTrackpadTimeoutLongSingle(trackpad, evt) { /*this.onLogDebug("onTrackpadTimeoutLongSingle(evt)", evt);*/ }
-  onTrackpadClickShortSingle(trackpad, evt) { this.onLogDebug("onTrackpadClickShortSingle(evt)", evt); }
-  onTrackpadPressLongSingle(trackpad, evt) { this.onLogDebug("onTrackpadPressLongSingle(evt)", evt); }
+  onTrackpadClickShortSingle(trackpad, evt) {
+    this.onLogDebug("onTrackpadClickShortSingle(evt)", evt);
+    this._inertiaManager.cancelInertia();
+  }
+  onTrackpadPressLongSingle(trackpad, evt) {
+    this.onLogDebug("onTrackpadPressLongSingle(evt)", evt);
+    this._inertiaManager.cancelInertia();
+  }
   onTrackpadMoveStartSingle(trackpad, evt) {
     this.onLogDebug("onTrackpadMoveStartSingle(evt)", evt);
     this._inertiaManager.moveStart(evt.clientX, evt.clientY);
