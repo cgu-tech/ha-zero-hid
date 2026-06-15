@@ -247,7 +247,7 @@ export class TestCard extends HTMLElement {
       }
     );
 
-    this.addTrackpadListeners("trackpad", this._elements.trackpad, 
+    this._trackpadManager.addTrackpadListeners("trackpad", this._elements.trackpad, 
       {
         [this._trackpadManager.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG_SINGLE]: this.onTrackpadTimeoutLongSingle.bind(this),
         [this._trackpadManager.constructor._TRACKPAD_CALLBACK_CLICK_SHORT_SINGLE ]: this.onTrackpadClickShortSingle.bind(this),
