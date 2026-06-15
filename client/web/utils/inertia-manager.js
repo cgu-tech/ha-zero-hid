@@ -1,16 +1,19 @@
 // velocityWindowMs: Amount of movement history used to estimate release velocity
+// maxIdleBeforeReleaseMs: Idle-before-release detection
 // velocityThreshold: Minimum release speed required to trigger inertia
 // decayPerMs: Friction factor (closer to 1 = longer glide)
 // stopVelocityThreshold: Velocity below which inertia stops
 export class InertiaManager {
 
   constructor({
-    velocityWindowMs = 75,
-    velocityThreshold = 0.05,
-    decayPerMs = 0.995,
+    velocityWindowMs = 100,
+    maxIdleBeforeReleaseMs = 150;
+    velocityThreshold = 0.03,
+    decayPerMs = 0.998,
     stopVelocityThreshold = 0.005,
   } = {}) {
     this._velocityWindowMs = velocityWindowMs;
+    this._maxIdleBeforeReleaseMs = maxIdleBeforeReleaseMs;
     this._velocityThreshold = velocityThreshold;
     this._decayPerMs = decayPerMs;
     this._stopVelocityThreshold = stopVelocityThreshold;
@@ -22,6 +25,8 @@ export class InertiaManager {
     this.velocityY = 0;
 
     this.samples = [];
+
+    this.lastMovementTime = 0;
 
     this.animationFrameId = null;
   }
@@ -44,14 +49,14 @@ export class InertiaManager {
   }
 
   emitPosition() {
-    if (this._onMove) {
-      this._onMove({
-        x: this.positionX,
-        y: this.positionY,
-        vx: this.velocityX,
-        vy: this.velocityY
-      });
-    }
+    if (!this._onMove) return;
+
+    this._onMove({
+      x: this.positionX,
+      y: this.positionY,
+      vx: this.velocityX,
+      vy: this.velocityY
+    });
   }
 
   // ----------------------------------------------------------
@@ -63,6 +68,9 @@ export class InertiaManager {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+
+    this.velocityX = 0;
+    this.velocityY = 0;
   }
 
   startInertia(vx, vy) {
@@ -87,10 +95,7 @@ export class InertiaManager {
 
       this.emitPosition();
 
-      if (
-        this.speed(this.velocityX, this.velocityY) <
-        this._stopVelocityThreshold
-      ) {
+      if (this.speed(this.velocityX, this.velocityY) < this._stopVelocityThreshold) {
         this.animationFrameId = null;
         return;
       }
@@ -112,19 +117,15 @@ export class InertiaManager {
   addSample(x, y) {
     const timestamp = this.now();
 
-    this.samples.push({
-      x,
-      y,
-      timestamp
-    });
+    const previous = this.samples[this.samples.length - 1];
+    if (!previous || previous.x !== x || previous.y !== y) {
+      this.lastMovementTime = timestamp;
+    }
 
-    const cutoff =
-      timestamp - this._velocityWindowMs;
+    this.samples.push({ x, y, timestamp });
 
-    while (
-      this.samples.length > 1 &&
-      this.samples[0].timestamp < cutoff
-    ) {
+    const cutoff = timestamp - this._velocityWindowMs;
+    while (this.samples.length > 1 && this.samples[0].timestamp < cutoff) {
       this.samples.shift();
     }
   }
@@ -135,12 +136,9 @@ export class InertiaManager {
     }
 
     const first = this.samples[0];
-    const last =
-      this.samples[this.samples.length - 1];
+    const last = this.samples[this.samples.length - 1];
 
-    const dt =
-      last.timestamp - first.timestamp;
-
+    const dt = last.timestamp - first.timestamp;
     if (dt <= 0) {
       return { vx: 0, vy: 0 };
     }
@@ -157,25 +155,23 @@ export class InertiaManager {
 
   moveStart(x, y) {
     this.cancelInertia();
-
     this.clearSamples();
-
     this.addSample(x, y);
   }
 
   move(x, y) {
-    const previous =
-      this.samples[this.samples.length - 1];
-
+    const previous = this.samples[this.samples.length - 1];
     if (previous) {
-      this.positionX += x - previous.x;
-      this.positionY += y - previous.y;
+      const dx = x - previous.x;
+      const dy = y - previous.y;
+
+      this.positionX += dx;
+      this.positionY += dy;
     }
 
     this.addSample(x, y);
 
-    const velocity =
-      this.computeVelocity();
+    const velocity = this.computeVelocity();
 
     this.velocityX = velocity.vx;
     this.velocityY = velocity.vy;
@@ -184,18 +180,13 @@ export class InertiaManager {
   }
 
   moveStop() {
-    const {
-      vx,
-      vy
-    } = this.computeVelocity();
+    const idleTime = this.now() - this.lastMovementTime;
+    if (idleTime > this._maxIdleBeforeReleaseMs) return;
 
-    if (
-      this.speed(vx, vy) <
-      this._velocityThreshold
-    ) {
-      return;
-    }
+    const { vx, vy } = this.computeVelocity();
+    if (this.speed(vx, vy) < this._velocityThreshold) return;
 
     this.startInertia(vx, vy);
   }
+
 }
