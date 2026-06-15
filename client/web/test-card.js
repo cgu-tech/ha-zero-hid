@@ -288,29 +288,29 @@ export class TestCard extends HTMLElement {
   }
 
   onTrackpadMoveWithInertia(evt) { this.onLogDebug("onTrackpadMoveWithInertia(evt)", evt, true); }
-  onTrackpadTimeoutLongSingle(evt) { /*this.onLogDebug("onTrackpadTimeoutLongSingle(evt)", evt);*/ }
-  onTrackpadClickShortSingle(evt) { this.onLogDebug("onTrackpadClickShortSingle(evt)", evt); }
-  onTrackpadPressLongSingle(evt) { this.onLogDebug("onTrackpadPressLongSingle(evt)", evt); }
-  onTrackpadMoveStartSingle(evt) {
+  onTrackpadTimeoutLongSingle(trackpad, evt) { /*this.onLogDebug("onTrackpadTimeoutLongSingle(evt)", evt);*/ }
+  onTrackpadClickShortSingle(trackpad, evt) { this.onLogDebug("onTrackpadClickShortSingle(evt)", evt); }
+  onTrackpadPressLongSingle(trackpad, evt) { this.onLogDebug("onTrackpadPressLongSingle(evt)", evt); }
+  onTrackpadMoveStartSingle(trackpad, evt) {
     this.onLogDebug("onTrackpadMoveStartSingle(evt)", evt);
     this._inertiaManager.moveStart(evt.clientX, evt.clientY);
   }
-  onTrackpadMoveSingle(evt) {
+  onTrackpadMoveSingle(trackpad, evt) {
     this.onLogDebug("onTrackpadMoveSingle(evt)", evt);
     this._inertiaManager.move(evt.clientX, evt.clientY);
   }
-  onTrackpadMoveStopSingle(evt) {
+  onTrackpadMoveStopSingle(trackpad, evt) {
     this.onLogDebug("onTrackpadMoveStopSingle(evt)", evt);
     this._inertiaManager.moveStop();
   }
-  onTrackpadReleaseLongSingle(evt) { this.onLogDebug("onTrackpadReleaseLongSingle(evt)", evt); }
-  onTrackpadTimeoutLongDouble(evt) { /*this.onLogDebug("onTrackpadTimeoutLongDouble(evt)", evt);*/ }
-  onTrackpadClickShortDouble(evt) { this.onLogDebug("onTrackpadClickShortDouble(evt)", evt); }
-  onTrackpadPressLongDouble(evt) { this.onLogDebug("onTrackpadPressLongDouble(evt)", evt); }
-  onTrackpadMoveStartDouble(evt) { this.onLogDebug("onTrackpadMoveStartDouble(evt)", evt); }
-  onTrackpadMoveDouble(evt) { this.onLogDebug("onTrackpadMoveDouble(evt)", evt); }
-  onTrackpadMoveStopDouble(evt) { this.onLogDebug("onTrackpadMoveStopDouble(evt)", evt); }
-  onTrackpadReleaseLongDouble(evt) { this.onLogDebug("onTrackpadReleaseLongDouble(evt)", evt); }  
+  onTrackpadReleaseLongSingle(trackpad, evt) { this.onLogDebug("onTrackpadReleaseLongSingle(evt)", evt); }
+  onTrackpadTimeoutLongDouble(trackpad, evt) { /*this.onLogDebug("onTrackpadTimeoutLongDouble(evt)", evt);*/ }
+  onTrackpadClickShortDouble(trackpad, evt) { this.onLogDebug("onTrackpadClickShortDouble(evt)", evt); }
+  onTrackpadPressLongDouble(trackpad, evt) { this.onLogDebug("onTrackpadPressLongDouble(evt)", evt); }
+  onTrackpadMoveStartDouble(trackpad, evt) { this.onLogDebug("onTrackpadMoveStartDouble(evt)", evt); }
+  onTrackpadMoveDouble(trackpad, evt) { this.onLogDebug("onTrackpadMoveDouble(evt)", evt); }
+  onTrackpadMoveStopDouble(trackpad, evt) { this.onLogDebug("onTrackpadMoveStopDouble(evt)", evt); }
+  onTrackpadReleaseLongDouble(trackpad, evt) { this.onLogDebug("onTrackpadReleaseLongDouble(evt)", evt); }  
 
   _sensitivity = 2;
   _deadZone = 1.5; // degrees
