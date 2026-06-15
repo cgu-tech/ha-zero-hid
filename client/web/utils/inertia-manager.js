@@ -7,7 +7,7 @@ export class InertiaManager {
   _DEFAULT_VEOLCITY_THRESHOLD = 0.03;
   _DEFAULT_DECAY_PER_MILLISECOND = 0.995;
   _DEFAULT_STOP_VELOCITY_THRESHOLD = 0.01;
-  _DEFAULT_ACCUMULATION_THRESHOLD = 12;
+  _DEFAULT_ACCUMULATION_THRESHOLD = 1;
 
   // private configs
   _velocityWindow = this._DEFAULT_VELOCITY_WINDOW;                 // Amount of movement history used to estimate release velocity (in ms)
