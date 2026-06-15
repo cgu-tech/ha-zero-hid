@@ -1,4 +1,4 @@
-import { StateMachine } from './utils/state-machine.js';
+import { StateMachine } from './state-machine.js';
 
 export class TrackpadManager {
 
