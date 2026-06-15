@@ -132,8 +132,8 @@ export class TrackpadManager {
   }
 
   _trackpadLongDelay = 500;               // milliseconds
-  _trackpadDeadzoneHorizontalOffset = 50; // pixels (TODO: pixel agnostic unit and computation, to make user experience identical whatever the screen density is)
-  _trackpadDeadzoneVerticalOffset = 50;   // pixels (TODO: same as above)
+  _trackpadDeadzoneHorizontalOffset = 5; // pixels (TODO: pixel agnostic unit and computation, to make user experience identical whatever the screen density is)
+  _trackpadDeadzoneVerticalOffset = 5;   // pixels (TODO: same as above)
 
   // private properties
   _origin;
