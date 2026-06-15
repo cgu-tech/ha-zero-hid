@@ -7,7 +7,7 @@ export class InertiaManager {
 
   constructor({
     velocityWindowMs = 100,
-    maxIdleBeforeReleaseMs = 150;
+    maxIdleBeforeReleaseMs = 150,
     velocityThreshold = 0.03,
     decayPerMs = 0.998,
     stopVelocityThreshold = 0.005,
