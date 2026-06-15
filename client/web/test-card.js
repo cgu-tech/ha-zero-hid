@@ -6,6 +6,7 @@ import { LayoutManager } from './utils/layout-manager.js';
 import { KeyCodes } from './utils/keycodes.js';
 import { ConsumerCodes } from './utils/consumercodes.js';
 import { TrackpadManager } from './utils/trackpad-manager.js';
+import { InertiaManager } from './utils/inertia-manager.js';
 
 console.info("Loading test-card");
 
@@ -25,6 +26,7 @@ export class TestCard extends HTMLElement {
   _layoutManager;
   _resourceManager;
   _trackpadManager;
+  _inertiaManager;
 
   constructor() {
     super();
@@ -34,6 +36,7 @@ export class TestCard extends HTMLElement {
     this._layoutManager = new LayoutManager(this, null);
     this._resourceManager = new ResourceManager(this, import.meta.url);
     this._trackpadManager = new TrackpadManager(this);
+    this._inertiaManager = new InertiaManager();
 
     this.doCard();
     this.doStyle();
@@ -247,6 +250,7 @@ export class TestCard extends HTMLElement {
       }
     );
 
+    this._inertiaManager.setMoveCallback(this.onTrackpadMoveWithInertia.bind(this));
     this._trackpadManager.addTrackpadListeners("trackpad", this._elements.trackpad, 
       {
         [this._trackpadManager.constructor._TRACKPAD_CALLBACK_TIMEOUT_LONG_SINGLE]: this.onTrackpadTimeoutLongSingle.bind(this),
@@ -277,20 +281,36 @@ export class TestCard extends HTMLElement {
     //window.addEventListener('blur', this.onWindowBlur.bind(this));
   }
 
-  onTrackpadTimeoutLongSingle(evt) { /*if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutLongSingle(evt)", evt));*/ }
-  onTrackpadClickShortSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadClickShortSingle(evt)", evt)); }
-  onTrackpadPressLongSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPressLongSingle(evt)", evt)); }
-  onTrackpadMoveStartSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStartSingle(evt)", evt)); }
-  onTrackpadMoveSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveSingle(evt)", evt)); }
-  onTrackpadMoveStopSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStopSingle(evt)", evt)); }
-  onTrackpadReleaseLongSingle(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadReleaseLongSingle(evt)", evt)); }
-  onTrackpadTimeoutLongDouble(evt) { /*if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadTimeoutLongDouble(evt)", evt));*/ }
-  onTrackpadClickShortDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadClickShortDouble(evt)", evt)); }
-  onTrackpadPressLongDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadPressLongDouble(evt)", evt)); }
-  onTrackpadMoveStartDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStartDouble(evt)", evt)); }
-  onTrackpadMoveDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveDouble(evt)", evt)); }
-  onTrackpadMoveStopDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadMoveStopDouble(evt)", evt)); }
-  onTrackpadReleaseLongDouble(evt) { if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("onTrackpadReleaseLongDouble(evt)", evt)); }
+  onLogDebug(funcName, evt, enable = false) {
+    if (enable) {
+      if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug(funcName, evt));
+    }
+  }
+
+  onTrackpadMoveWithInertia(evt) { this.onLogDebug("onTrackpadMoveWithInertia(evt)", evt, true); }
+  onTrackpadTimeoutLongSingle(evt) { /*this.onLogDebug("onTrackpadTimeoutLongSingle(evt)", evt);*/ }
+  onTrackpadClickShortSingle(evt) { this.onLogDebug("onTrackpadClickShortSingle(evt)", evt); }
+  onTrackpadPressLongSingle(evt) { this.onLogDebug("onTrackpadPressLongSingle(evt)", evt); }
+  onTrackpadMoveStartSingle(evt) {
+    this.onLogDebug("onTrackpadMoveStartSingle(evt)", evt);
+    this._inertiaManager.moveStart(evt.clientX, evt.clientY);
+  }
+  onTrackpadMoveSingle(evt) {
+    this.onLogDebug("onTrackpadMoveSingle(evt)", evt);
+    this._inertiaManager.move(evt.clientX, evt.clientY);
+  }
+  onTrackpadMoveStopSingle(evt) {
+    this.onLogDebug("onTrackpadMoveStopSingle(evt)", evt);
+    this._inertiaManager.moveStop();
+  }
+  onTrackpadReleaseLongSingle(evt) { this.onLogDebug("onTrackpadReleaseLongSingle(evt)", evt); }
+  onTrackpadTimeoutLongDouble(evt) { /*this.onLogDebug("onTrackpadTimeoutLongDouble(evt)", evt);*/ }
+  onTrackpadClickShortDouble(evt) { this.onLogDebug("onTrackpadClickShortDouble(evt)", evt); }
+  onTrackpadPressLongDouble(evt) { this.onLogDebug("onTrackpadPressLongDouble(evt)", evt); }
+  onTrackpadMoveStartDouble(evt) { this.onLogDebug("onTrackpadMoveStartDouble(evt)", evt); }
+  onTrackpadMoveDouble(evt) { this.onLogDebug("onTrackpadMoveDouble(evt)", evt); }
+  onTrackpadMoveStopDouble(evt) { this.onLogDebug("onTrackpadMoveStopDouble(evt)", evt); }
+  onTrackpadReleaseLongDouble(evt) { this.onLogDebug("onTrackpadReleaseLongDouble(evt)", evt); }  
 
   _sensitivity = 2;
   _deadZone = 1.5; // degrees
