@@ -54,25 +54,41 @@ export class InertiaManager {
     return Math.hypot(vx, vy);
   }
 
-  /*
+  //shouldEmit() {
+  //  this._accumulatedMovements += 1;
+  //  const lastEmitDelay = this.now() - this._lastEmitedTime;
+  //  const lastEmitHorizontalDelta = this._positionX - this._lastEmitedX;
+  //  const lastEmitVerticalDelta = this._positionY - this._lastEmitedY;
+  //
+  //  if (this._accumulatedMovements >= this._accumulationThreshold
+  //     || lastEmitDelay >= this._minDelayBeforeMove
+  //     || lastEmitHorizontalDelta >= _horizontalThreshold
+  //     || lastEmitVerticalDelta >= _verticalThreshold) {
+  //    return true;
+  //  }
+  //  return false;
+  //}
+  //
+  //emitPosition() {
+  //  this._accumulatedMovements = 0;
+  //  this._lastEmitedX = this._positionX;
+  //  this._lastEmitedY = this._positionY;
+  //  this._lastEmitedTime = this.now();
+  //  if (!this._onMove) return;
+  //
+  //  this._onMove({
+  //    x: this._positionX,
+  //    y: this._positionY,
+  //    vx: this._velocityX,
+  //    vy: this._velocityY
+  //  });
+  //}
+
   shouldEmit() {
-    this._accumulatedMovements += 1;
-    if (this._accumulatedMovements === this._accumulationThreshold) {
-      this._accumulatedMovements = 0;
-      return true;
-    }
-    return false;
-  }
-  */
-  shouldEmit() {
-    this._accumulatedMovements += 1;
-    const lastEmitDelay = this.now() - this._lastEmitedTime;
     const lastEmitHorizontalDelta = this._positionX - this._lastEmitedX;
     const lastEmitVerticalDelta = this._positionY - this._lastEmitedY;
 
-    if (this._accumulatedMovements >= this._accumulationThreshold
-       || lastEmitDelay >= this._minDelayBeforeMove
-       || lastEmitHorizontalDelta >= _horizontalThreshold
+    if (lastEmitHorizontalDelta >= _horizontalThreshold
        || lastEmitVerticalDelta >= _verticalThreshold) {
       return true;
     }
@@ -80,10 +96,8 @@ export class InertiaManager {
   }
 
   emitPosition() {
-    this._accumulatedMovements = 0;
     this._lastEmitedX = this._positionX;
     this._lastEmitedY = this._positionY;
-    this._lastEmitedTime = this.now();
     if (!this._onMove) return;
 
     this._onMove({
@@ -107,6 +121,8 @@ export class InertiaManager {
 
     this._velocityX = 0;
     this._velocityY = 0;
+    this._lastEmitedX = 0;
+    this._lastEmitedY = 0;
     this._accumulatedMovements = 0;
   }
 
