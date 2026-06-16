@@ -8,6 +8,7 @@ export class InertiaManager {
   _DEFAULT_DECAY_PER_MILLISECOND = 0.995;
   _DEFAULT_STOP_VELOCITY_THRESHOLD = 0.01;
   _DEFAULT_ACCUMULATION_THRESHOLD = 1;
+  _DEFAULT_PIXEL_THRESHOLD = 2.0;
 
   // private configs
   _velocityWindow = this._DEFAULT_VELOCITY_WINDOW;                 // Amount of movement history used to estimate release velocity (in ms)
@@ -17,6 +18,8 @@ export class InertiaManager {
   _decayPerMillisecond = this._DEFAULT_DECAY_PER_MILLISECOND;      // Friction factor (closer to 1 = longer glide)
   _stopVelocityThreshold = this._DEFAULT_STOP_VELOCITY_THRESHOLD;  // Velocity below which inertia stops
   _accumulationThreshold = this._DEFAULT_ACCUMULATION_THRESHOLD;   // Number of accumulated movements needed to trigger one move callback
+  _horizontalThreshold = this._DEFAULT_PIXEL_THRESHOLD;            // Number of minimum horizontal pixels required to trigger one move callback
+  _verticalThreshold = this._DEFAULT_PIXEL_THRESHOLD;              // Number of minimum vertical pixels required to trigger one move callback
 
   // private properties
   _positionX = 0;
@@ -26,6 +29,8 @@ export class InertiaManager {
   _samples = [];
   _lastMovementTime = 0;
   _lastEmitedTime = 0;
+  _lastEmitedX = 0;
+  _lastEmitedY = 0;
   _animationFrameId = null;
   _accumulatedMovements = 0;
   _onMove = null; // onMove callback 
@@ -61,21 +66,23 @@ export class InertiaManager {
   */
   shouldEmit() {
     this._accumulatedMovements += 1;
-    if (this._accumulatedMovements === this._accumulationThreshold) {
-      this._accumulatedMovements = 0;
-      return true;
-    }
-    
     const lastEmitDelay = this.now() - this._lastEmitedTime;
-    if (lastEmitDelay >= this._minDelayBeforeMove) {
-      this._accumulatedMovements = 0;
+    const lastEmitHorizontalDelta = this._positionX - this._lastEmitedX;
+    const lastEmitVerticalDelta = this._positionY - this._lastEmitedY;
+
+    if (this._accumulatedMovements >= this._accumulationThreshold
+       || lastEmitDelay >= this._minDelayBeforeMove
+       || lastEmitHorizontalDelta >= _horizontalThreshold
+       || lastEmitVerticalDelta >= _verticalThreshold) {
       return true;
     }
-    
     return false;
   }
 
   emitPosition() {
+    this._accumulatedMovements = 0;
+    this._lastEmitedX = this._positionX;
+    this._lastEmitedY = this._positionY;
     this._lastEmitedTime = this.now();
     if (!this._onMove) return;
 
