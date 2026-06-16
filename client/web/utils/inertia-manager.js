@@ -88,8 +88,8 @@ export class InertiaManager {
     const lastEmitHorizontalDelta = this._positionX - this._lastEmitedX;
     const lastEmitVerticalDelta = this._positionY - this._lastEmitedY;
 
-    if (lastEmitHorizontalDelta >= _horizontalThreshold
-       || lastEmitVerticalDelta >= _verticalThreshold) {
+    if (lastEmitHorizontalDelta >= this._horizontalThreshold
+       || lastEmitVerticalDelta >= this._verticalThreshold) {
       return true;
     }
     return false;
