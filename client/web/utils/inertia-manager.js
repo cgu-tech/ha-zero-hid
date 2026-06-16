@@ -17,6 +17,7 @@ export class InertiaManager {
   _velocityThreshold = this._DEFAULT_VEOLCITY_THRESHOLD;           // Minimum release speed required to trigger inertia
   _decayPerMillisecond = this._DEFAULT_DECAY_PER_MILLISECOND;      // Friction factor (closer to 1 = longer glide)
   _stopVelocityThreshold = this._DEFAULT_STOP_VELOCITY_THRESHOLD;  // Velocity below which inertia stops
+  
   _accumulationThreshold = this._DEFAULT_ACCUMULATION_THRESHOLD;   // Number of accumulated movements needed to trigger one move callback
   _horizontalThreshold = this._DEFAULT_PIXEL_THRESHOLD;            // Number of minimum horizontal pixels required to trigger one move callback
   _verticalThreshold = this._DEFAULT_PIXEL_THRESHOLD;              // Number of minimum vertical pixels required to trigger one move callback
@@ -28,12 +29,13 @@ export class InertiaManager {
   _velocityY = 0;
   _samples = [];
   _lastMovementTime = 0;
+  _animationFrameId = null;
+  _onMove = null; // onMove callback 
+
   _lastEmitedTime = 0;
   _lastEmitedX = 0;
   _lastEmitedY = 0;
-  _animationFrameId = null;
   _accumulatedMovements = 0;
-  _onMove = null; // onMove callback 
 
   constructor() {
     // Nothing specific to do
@@ -84,20 +86,24 @@ export class InertiaManager {
   //  });
   //}
 
-  shouldEmit() {
-    const lastEmitHorizontalDelta = this._positionX - this._lastEmitedX;
-    const lastEmitVerticalDelta = this._positionY - this._lastEmitedY;
+  //shouldEmit() {
+  //  const lastEmitHorizontalDelta = this._positionX - this._lastEmitedX;
+  //  const lastEmitVerticalDelta = this._positionY - this._lastEmitedY;
+  //
+  //  if (lastEmitHorizontalDelta >= this._horizontalThreshold
+  //     || lastEmitVerticalDelta >= this._verticalThreshold) {
+  //     this._lastEmitedX = this._positionX;
+  //     this._lastEmitedY = this._positionY;
+  //    return true;
+  //  }
+  //  return false;
+  //}
 
-    if (lastEmitHorizontalDelta >= this._horizontalThreshold
-       || lastEmitVerticalDelta >= this._verticalThreshold) {
-      return true;
-    }
-    return false;
+  shouldEmit() {
+    return true;
   }
 
   emitPosition() {
-    this._lastEmitedX = this._positionX;
-    this._lastEmitedY = this._positionY;
     if (!this._onMove) return;
 
     this._onMove({
