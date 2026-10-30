@@ -2712,7 +2712,7 @@ class AndroidRemoteCard extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay)`, evt, triggerDelay));
 
       if (overrideRepeatedTriggerEntry && overrideRepeatedTriggerEntry["can-run"]) {
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay) + overrideRepeatedTriggerEntry: repeated override action waiting to be executed...`, evt, triggerDelay, overrideLongPressEntry));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay) + overrideRepeatedTriggerEntry: repeated override action waiting to be executed...`, evt, triggerDelay, overrideRepeatedTriggerEntry));
         const btn = overrideRepeatedTriggerEntry["source"];
 
         // Check whether or not long click action can be run in current mode
@@ -2721,7 +2721,7 @@ class AndroidRemoteCard extends HTMLElement {
 
         // Execute action
         const overrideType = overrideRepeatedTriggerEntry["source-type"];
-        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay) + overrideRepeatedTriggerEntry: executing ${this.getRemoteMode()} ${overrideType} action...`, evt, triggerDelay, overrideLongPressEntry));
+        if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`addOverrideRepeatedTimeout(evt, triggerDelay) + overrideRepeatedTriggerEntry: executing ${this.getRemoteMode()} ${overrideType} action...`, evt, triggerDelay, overrideRepeatedTriggerEntry));
         this.executeButtonOverride(btn, overrideType);
 
         // Compute next trigger delay
