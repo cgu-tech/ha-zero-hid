@@ -2671,7 +2671,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   getTrackedElementEvents(elt) {
       const eltId = elt?.id;
-      if (eltId) {
+      if (eltId !== null) {
           let eltEvts = this._elementEvents.get(eltId);
           if (!eltEvts) {
               eltEvts = new Set();
@@ -2686,7 +2686,7 @@ class AndroidRemoteCard extends HTMLElement {
       const eltEvts = this.getTrackedElementEvents(elt);
       if (eltEvts) {
           const evtId = evt?.pointerId;
-          if (evtId && !this.eltEvts.has(evtId)) {
+          if (evtId !== null) {
               eltEvts.add(evtId);
           }
       }
@@ -2696,9 +2696,7 @@ class AndroidRemoteCard extends HTMLElement {
       const eltEvts = this.getTrackedElementEvents(elt);
       if (eltEvts) {
           const evtId = evt?.pointerId;
-          if (evtId && !this.eltEvts.has(evtId)) {
-              eltEvts.delete(evtId);
-          }
+          eltEvts.delete(evtId);
       }
   }
 
