@@ -71,6 +71,7 @@ class AndroidRemoteCard extends HTMLElement {
   _overrideRepeatedTimeouts = new Map();
   _overrideLongPressTimeouts = new Map();
   _moreInfoLongPressTimeouts = new Map();
+  _elementEvents = new Map();
   _sidePanelVisible = false;
   _bottomPanelVisible = false;
   _currentServerConfig;
@@ -2466,17 +2467,20 @@ class AndroidRemoteCard extends HTMLElement {
 
   onButtonPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    trackElementEvent(btn, evt);
     this.doKeyPress(btn, evt);
   }
 
   onButtonAbortPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doKeyAbortPress(btn, evt);
+    untrackElementEvents(btn);
   }
 
   onButtonRelease(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doKeyRelease(btn, evt);
+    untrackElementEvent(btn, evt);
   }
 
   doKeyPress(btn, evt) {
@@ -2528,14 +2532,20 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   doKeyAbortPress(btn, evt) {
+    // Do not assume "evt.pointerId" is same than the "key press event", 
+    // as this "key abort press event" may be triggered by a global event
+    const eltEvts = this.getTrackedElementEvents(btn);
+    const evtId = evt.pointerId;
+    const eltEvtIds = eltEvts.has(evtId) ? [evtId] : [...eltEvts];
+    for (const eltEvtId of eltEvtIds) {
+        // Remove override long press timeout (when set before)
+        this.clearOverrideLongPressTimeoutById(eltEvtId);
+        this._overrideLongPressTimeouts.delete(eltEvtId);
 
-    // Remove override long press timeout (when set before)
-    this.clearOverrideLongPressTimeout(evt);
-    this._overrideLongPressTimeouts.delete(evt.pointerId);
-
-    // Remove repeated override timeout (when set before)
-    this.clearOverrideRepeatedTimeout(evt)
-    this._overrideRepeatedTimeouts.delete(evt.pointerId);
+        // Remove repeated override timeout (when set before)
+        this.clearOverrideRepeatedTimeoutById(eltEvtId)
+        this._overrideRepeatedTimeouts.delete(eltEvtId);
+    }
 
     // Retrieve clickable button data
     const btnData = this._layoutManager.getElementData(btn);
@@ -2659,6 +2669,46 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.setUserPreferenceRemoteMode(mode);
   }
 
+  getTrackedElementEvents(elt) {
+      const eltId = elt?.id;
+      if (eltId) {
+          let eltEvts = this._elementEvents.get(eltId);
+          if (!eltEvts) {
+              eltEvts = new Set();
+              this._elementEvents.set(eltId, eltEvts);
+          }
+          return eltEvts;
+      }
+      return null;
+  }
+
+  trackElementEvent(elt, evt) {
+      const eltEvts = this.getTrackedElementEvents(elt);
+      if (eltEvts) {
+          const evtId = evt?.pointerId;
+          if (evtId && !this.eltEvts.has(evtId)) {
+              eltEvts.add(evtId);
+          }
+      }
+  }
+
+  untrackElementEvent(elt, evt) {
+      const eltEvts = this.getTrackedElementEvents(elt);
+      if (eltEvts) {
+          const evtId = evt?.pointerId;
+          if (evtId && !this.eltEvts.has(evtId)) {
+              eltEvts.delete(evtId);
+          }
+      }
+  }
+
+  untrackElementEvents(elt) {
+      const eltEvts = this.getTrackedElementEvents(elt);
+      if (eltEvts) {
+          eltEvts.clear();
+      }
+  }
+
   addOverrideLongPressTimeout(evt) {
     return setTimeout(() => {
       const overrideLongPressEntry = this._overrideLongPressTimeouts.get(evt.pointerId);
@@ -2692,7 +2742,11 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   clearOverrideLongPressTimeout(evt) {
-    const timeout = this._overrideLongPressTimeouts.get(evt.pointerId)?.["timeout"];
+    this.clearOverrideLongPressTimeoutById(evt.pointerId);
+  }
+
+  clearOverrideLongPressTimeoutById(evtId) {
+    const timeout = this._overrideLongPressTimeouts.get(evtId)?.["timeout"];
     if (timeout) clearTimeout(timeout);
   }
 
@@ -2741,7 +2795,11 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   clearOverrideRepeatedTimeout(evt) {
-    const timeout = this._overrideRepeatedTimeouts.get(evt.pointerId)?.["timeout"];
+    this.clearOverrideRepeatedTimeoutById(evt.pointerId);
+  }
+
+  clearOverrideRepeatedTimeoutById(evtId) {
+    const timeout = this._overrideRepeatedTimeouts.get(evtId)?.["timeout"];
     if (timeout) clearTimeout(timeout);
   }
 
