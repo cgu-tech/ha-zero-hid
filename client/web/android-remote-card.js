@@ -2216,17 +2216,20 @@ class AndroidRemoteCard extends HTMLElement {
 
   onAddonCellPress(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
+    this.trackElementEvent(addonCell, evt);
     this.doAddonCellPress(addonCell, evt);
   }
 
   onAddonCellAbortPress(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doAddonCellAbortPress(addonCell, evt);
+    this.untrackElementEvents(addonCell);
   }
 
   onAddonCellRelease(addonCell, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doAddonCellRelease(addonCell, evt);
+    this.untrackElementEvent(addonCell, evt);
   }
 
   doAddonCellPress(addonCell, evt) {
@@ -2247,9 +2250,16 @@ class AndroidRemoteCard extends HTMLElement {
   doAddonCellAbortPress(addonCell, evt) {
     if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Addon cell ${addonCell.id} abort press: action wont be triggered at all, nothing to do`));
 
-    // Remove more info long press timeout (when set before)
-    this.clearMoreInfoLongPressTimeout(evt);
-    this._moreInfoLongPressTimeouts.delete(evt.pointerId);
+    // Do not assume "evt.pointerId" is same than the "addon press event", 
+    // as this "addon abort press event" may be triggered by a global event
+    const eltEvts = this.getTrackedElementEvents(addonCell);
+    const evtId = evt.pointerId;
+    const eltEvtIds = eltEvts.has(evtId) ? [evtId] : [...eltEvts];
+    for (const eltEvtId of eltEvtIds) {
+        // Remove more info long press timeout (when set before)
+        this.clearMoreInfoLongPressTimeoutById(eltEvtId);
+        this._moreInfoLongPressTimeouts.delete(eltEvtId);
+    }
 
     // Send haptic feedback to make user acknownledgable of succeeded event
     this._layoutManager.hapticFeedback();
@@ -2315,7 +2325,11 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   clearMoreInfoLongPressTimeout(evt) {
-    const timeout = this._moreInfoLongPressTimeouts.get(evt.pointerId)?.["timeout"];
+    this.clearMoreInfoLongPressTimeout(evt.pointerId);
+  }
+
+  clearMoreInfoLongPressTimeoutById(evtId) {
+    const timeout = this._moreInfoLongPressTimeouts.get(evtId)?.["timeout"];
     if (timeout) clearTimeout(timeout);
   }
   
@@ -2669,6 +2683,8 @@ class AndroidRemoteCard extends HTMLElement {
     this._eventManager.setUserPreferenceRemoteMode(mode);
   }
 
+  // Usefull to get track of events related to a specific element so when unrelated events pops
+  // we can clear remaining events without infinite looping
   getTrackedElementEvents(elt) {
       const eltId = elt?.id;
       if (eltId !== null) {
@@ -2681,7 +2697,6 @@ class AndroidRemoteCard extends HTMLElement {
       }
       return null;
   }
-
   trackElementEvent(elt, evt) {
       const eltEvts = this.getTrackedElementEvents(elt);
       if (eltEvts) {
@@ -2691,7 +2706,6 @@ class AndroidRemoteCard extends HTMLElement {
           }
       }
   }
-
   untrackElementEvent(elt, evt) {
       const eltEvts = this.getTrackedElementEvents(elt);
       if (eltEvts) {
@@ -2699,7 +2713,6 @@ class AndroidRemoteCard extends HTMLElement {
           eltEvts.delete(evtId);
       }
   }
-
   untrackElementEvents(elt) {
       const eltEvts = this.getTrackedElementEvents(elt);
       if (eltEvts) {
