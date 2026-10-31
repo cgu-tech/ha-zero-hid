@@ -2467,20 +2467,20 @@ class AndroidRemoteCard extends HTMLElement {
 
   onButtonPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
-    trackElementEvent(btn, evt);
+    this.trackElementEvent(btn, evt);
     this.doKeyPress(btn, evt);
   }
 
   onButtonAbortPress(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doKeyAbortPress(btn, evt);
-    untrackElementEvents(btn);
+    this.untrackElementEvents(btn);
   }
 
   onButtonRelease(btn, evt) {
     this._eventManager.preventDefault(evt); // prevent unwanted focus or scrolling
     this.doKeyRelease(btn, evt);
-    untrackElementEvent(btn, evt);
+    this.untrackElementEvent(btn, evt);
   }
 
   doKeyPress(btn, evt) {
