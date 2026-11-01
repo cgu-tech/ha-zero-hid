@@ -2325,7 +2325,7 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   clearMoreInfoLongPressTimeout(evt) {
-    this.clearMoreInfoLongPressTimeout(evt.pointerId);
+    this.clearMoreInfoLongPressTimeoutById(evt.pointerId);
   }
 
   clearMoreInfoLongPressTimeoutById(evtId) {
