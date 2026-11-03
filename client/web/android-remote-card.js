@@ -1962,6 +1962,7 @@ class AndroidRemoteCard extends HTMLElement {
       // Retrieve HA entity when available
       const overrideServerConfig = this.getButtonOverrideServerConfig(serverId, buttonId);
       const sensorEntityId = overrideServerConfig?.['entity'];
+      const sensorLabelConfig = overrideServerConfig?.['label'];
       const sensorEntity = sensorEntityId ? this._eventManager.getHassEntity(sensorEntityId) : null;
 
       // Set updated sensorsBtn value
@@ -1973,7 +1974,7 @@ class AndroidRemoteCard extends HTMLElement {
 
       // Set updated sensorsBtn label
       if (sensorLabel) {
-        sensorLabel.textContent = sensorEntity?.attributes?.friendly_name ?? (sensorEntityId ?? "-");
+        sensorLabel.textContent = sensorLabelConfig ?? (sensorEntity?.attributes?.friendly_name ?? (sensorEntityId ?? "-"));
       }
     }
   }
