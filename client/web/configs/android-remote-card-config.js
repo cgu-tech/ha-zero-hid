@@ -222,7 +222,7 @@ export const androidRemoteCardConfig = {
   },
   "remote-button-sensors": {
     "tag": "div",
-    "style": "sensor-button",
+    "style": "circle-button sensor-button",
     "html": `
       <div class="sensor-button-content">
         <span class="sensor-value"></span>
