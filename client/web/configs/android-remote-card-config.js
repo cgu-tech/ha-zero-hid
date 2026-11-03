@@ -220,6 +220,16 @@ export const androidRemoteCardConfig = {
     "image": "icon-counter",
     "image-styles": ["textual"]
   },
+  "remote-button-sensors": {
+    "tag": "div",
+    "style": "sensor-button",
+    "html": `
+      <div class="sensor-button-content">
+        <span class="sensor-value"></span>
+        <span class="sensor-label"></span>
+      </div>
+    `
+  },
 };
 
 export const androidRemoteCardStyles = {

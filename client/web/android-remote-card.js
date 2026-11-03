@@ -238,14 +238,17 @@ class AndroidRemoteCard extends HTMLElement {
   getButtonOverrideModeConfig(serverId, buttonId, mode) {
     return this.getButtonsOverridesConfigForServer(serverId)?.[buttonId]?.[mode];
   }
+  getButtonOverrideServerConfig(serverId, buttonId) {
+    return this.getButtonsOverridesConfigForServer(serverId)?.[buttonId];
+  }
   getButtonOverrideImageRemoteButtonConfig(serverId, buttonId, mode) {
-    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_remote_button']
+    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_remote_button'];
   }
   getButtonOverrideImageUrlConfig(serverId, buttonId, mode) {
-    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_url']
+    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_url'];
   }
   getButtonOverrideImageStylesConfig(serverId, buttonId, mode) {
-    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_styles']
+    return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.['image_styles'];
   }
   getButtonOverrideRawConfig(serverId, buttonId, mode, type) {
     return this.getButtonOverrideModeConfig(serverId, buttonId, mode)?.[type];
@@ -905,6 +908,42 @@ class AndroidRemoteCard extends HTMLElement {
       .quarter.${this._eventManager.constructor._BUTTON_CLASS_PRESSED} {
         fill: var(--cell-button-press-bg);
       }
+      .sensor-button {
+        min-width: 0;
+        flex: 1 1 0;
+        background-color: var(--cell-button-bg);
+        color: var(--cell-button-fg);
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2px;
+        overflow: hidden;
+      }
+      .sensor-button-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        min-width: 0;
+        line-height: 1.2;
+      }
+      .sensor-value {
+        font-size: 1em;
+        font-weight: bold;
+        white-space: nowrap;
+      }
+      .sensor-label {
+        font-size: 0.65em;
+        opacity: 0.75;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
       text {
         font-family: sans-serif;
         fill: var(--cell-button-fg);
@@ -1089,6 +1128,13 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Reset Power OFF addons button element (if any)
     this._elements.powerOffAddonsBtn = null;
+
+    // Reset Sensors button value and label element (if any)
+    this._elements.sensorsBtnValue = null;
+    this._elements.sensorsBtnLabel = null;
+
+    // Reset Sensors button element (if any)
+    this._elements.sensorsBtn = null;
 
     // Reset clickable elements (if any)
     this._elements.clickables = [];
@@ -1304,6 +1350,13 @@ class AndroidRemoteCard extends HTMLElement {
       const powerOffAddonsBtn = cellContent;
       this._elements.powerOffAddonsBtn = powerOffAddonsBtn;
       this._elements.powerOffAddonsBtnLabel = (powerOffAddonsBtn.children ? Array.from(powerOffAddonsBtn.children) : []).at(0);
+    }
+    // Query sensors button
+    if (cellContent?.id === "remote-button-sensors") {
+      const sensorsBtn = cellContent;
+      this._elements.sensorsBtn = sensorsBtn;
+      this._elements.sensorsBtnValue = sensorsBtn.querySelector(".sensor-value");
+      this._elements.sensorsBtnLabel = sensorsBtn.querySelector(".sensor-label");
     }
   }
 
@@ -1808,6 +1861,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Update addons button counter
     this.doUpdatePowerOffAddonsCounter();
+    
+    // Update addons button counter
+    this.doUpdateSensorsVisual(serverId);
 
     // Update side panel state
     this.doUpdateSidePanel();
@@ -1892,6 +1948,35 @@ class AndroidRemoteCard extends HTMLElement {
           if (hasAddonsPoweredOn) child.classList.add("sensor-on");
           if (!hasAddonsPoweredOn) child.classList.remove("sensor-on");
         }
+      }
+    }
+  }
+
+  doUpdateSensorsVisual(serverId) {
+    // Update sensorsBtn button (when existing)
+    const btn = this._elements.sensorsBtn;
+    if (btn) {
+      const buttonId = btn.id;
+      
+      // Retrieve sensorsBtn value and label HTML element
+      const sensorValue = this._elements.sensorsBtnValue;
+      const sensorLabel = this._elements.sensorsBtnLabel;
+
+      // Retrieve HA entity when available
+      const overrideServerConfig = this.getButtonOverrideServerConfig(serverId, buttonId);
+      const sensorEntityId = overrideServerConfig?.['entity'];
+      const sensorEntity = sensorEntityId ? this._eventManager.getHassEntity(sensorEntityId) : null;
+
+      // Set updated sensorsBtn value
+      if (sensorValue) {
+        const sensorState = sensorEntity?.state ?? "--";
+        const sensorUnits = sensorEntity?.attributes?.unit_of_measurement ?? "";
+        sensorValue.textContent = `${sensorState}${sensorUnits ? " " : ""}${sensorUnits}`;
+      }
+
+      // Set updated sensorsBtn label
+      if (sensorLabel) {
+        sensorLabel.textContent = sensorEntity?.attributes?.friendly_name ?? (sensorEntityId ?? "-");
       }
     }
   }
@@ -2674,6 +2759,9 @@ class AndroidRemoteCard extends HTMLElement {
   }
   isPowerOffAddonsButton(btn) {
     return (btn && this._elements.powerOffAddonsBtn === btn);
+  }
+  isSensorsButton(btn) {
+    return (btn && this._elements.sensorsBtn === btn);
   }
   getRemoteMode() {
     const mode = this._eventManager.getUserPreferenceRemoteMode();
