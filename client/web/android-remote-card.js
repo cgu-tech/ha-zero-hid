@@ -2120,10 +2120,10 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Draw smooth curve.
     const path = this.createSmoothSensorPath(points);
-    line.setAttribute("d", path);
+    chartLine.setAttribute("d", path);
 
     // Draw filled area below curve.
-    area.setAttribute("d", `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`);
+    chartArea.setAttribute("d", `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`);
   }
 
   createSmoothSensorPath(points) {
