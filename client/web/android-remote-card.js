@@ -956,7 +956,7 @@ class AndroidRemoteCard extends HTMLElement {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 3px;
+        gap: 4px;
         width: 100%;
         height: var(--cell-sensor-text-height);
         min-width: 0;
