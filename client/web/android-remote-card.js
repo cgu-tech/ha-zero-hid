@@ -2093,23 +2093,26 @@ class AndroidRemoteCard extends HTMLElement {
       // Sort history entries by time
       .sort((historyEntryA, historyEntryB) => historyEntryA.time - historyEntryB.time);
 
-    if (historyEntries.length === 0) {
+    // Reduce history points while preserving local peaks and valleys.
+    const chartEntries = this.downsampleSensorHistory(historyEntries, 120);
+
+    if (chartEntries.length === 0) {
       chartLine.setAttribute("d", "");
       chartArea.setAttribute("d", "");
       return;
     }
 
     // Extend the last known value to the present.
-    const last = historyEntries[historyEntries.length - 1];
+    const last = chartEntries[chartEntries.length - 1];
     if (last.time < historyEnd) {
-      historyEntries.push({
+      chartEntries.push({
         time: historyEnd, 
         value: last.value
       });
     }
 
     // Calculate vertical scale.
-    const values = historyEntries.map(historyEntry => historyEntry.value);
+    const values = chartEntries.map(historyEntry => historyEntry.value);
     let minValue = Math.min(...values);
     let maxValue = Math.max(...values);
 
@@ -2124,7 +2127,7 @@ class AndroidRemoteCard extends HTMLElement {
     const valueRange = maxValue - minValue;
 
     // Convert timestamps and values to SVG coordinates.
-    const points = historyEntries.map(historyEntry => ({
+    const points = chartEntries.map(historyEntry => ({
       x: 2 + ((historyEntry.time - historyStart) / timeRange) * 96,
       y: 88 - ((historyEntry.value - minValue) / valueRange) * 76
     }));
@@ -2135,6 +2138,48 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Draw filled area below curve.
     chartArea.setAttribute("d", `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`);
+  }
+
+  // Downsampling for performance sanity
+  downsampleSensorHistory(entries, maxPoints = 120) {
+    const length = entries.length;
+  
+    if (length <= maxPoints || maxPoints < 4) {
+      return entries;
+    }
+  
+    const bucketCount = Math.floor((maxPoints - 2) / 2);
+    const bucketSize = (length - 2) / bucketCount;
+    const sampled = [entries[0]];
+  
+    for (let i = 0; i < bucketCount; i++) {
+      const start = 1 + Math.floor(i * bucketSize);
+      const end = Math.min(
+        length - 1,
+        1 + Math.floor((i + 1) * bucketSize)
+      );
+  
+      let minEntry = entries[start];
+      let maxEntry = entries[start];
+  
+      for (let j = start + 1; j < end; j++) {
+        const entry = entries[j];
+  
+        if (entry.value < minEntry.value) minEntry = entry;
+        if (entry.value > maxEntry.value) maxEntry = entry;
+      }
+  
+      // Preserve chronological order.
+      if (minEntry.time < maxEntry.time) {
+        sampled.push(minEntry, maxEntry);
+      } else if (maxEntry.time < minEntry.time) {
+        sampled.push(maxEntry, minEntry);
+      } else {
+        sampled.push(minEntry);
+      }
+    }
+    sampled.push(entries[length - 1]);
+    return sampled;
   }
 
   createSmoothSensorPath(points, algorithm=null) {
