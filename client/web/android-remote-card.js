@@ -2048,7 +2048,7 @@ class AndroidRemoteCard extends HTMLElement {
     this._sensorHistoryFetchedAt = now;
 
     const requestId = ++this._sensorHistoryRequestId;
-    const historyHours = 1;
+    const historyHours = 24;
     const historyEnd = targetEnd;
     const historyStart = this.getHistoryStartFrom(historyEnd, historyHours);
     this.getSensorHistory(sensorEntityId, historyStart, historyEnd)?.then((response) => {
