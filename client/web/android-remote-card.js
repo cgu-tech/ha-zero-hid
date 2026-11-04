@@ -982,6 +982,7 @@ class AndroidRemoteCard extends HTMLElement {
         line-height: 1.25;
         white-space: nowrap;
         color: var(--cell-button-fg);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
       }
       text {
         font-family: sans-serif;
