@@ -969,7 +969,7 @@ class AndroidRemoteCard extends HTMLElement {
         color: var(--cell-button-fg);
       }
       .sensor-label {
-        font-size: clamp(0.30em, 2vw, 0.43em);
+        font-size: clamp(0.34em, 2vw, 0.44em);
         font-weight: normal;
         opacity: 0.75;
         white-space: nowrap;
