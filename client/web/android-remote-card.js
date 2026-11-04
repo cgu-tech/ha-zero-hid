@@ -1997,7 +1997,7 @@ class AndroidRemoteCard extends HTMLElement {
       const sensorEntity = sensorEntityId ? this._eventManager.getHassEntity(sensorEntityId) : null;
 
       // Start updating sensor chart asynchronously
-      this.updateSensorChart(entityId);
+      this.updateSensorChart(sensorEntityId);
 
       // Set updated sensorsBtn value
       if (sensorValue) {
