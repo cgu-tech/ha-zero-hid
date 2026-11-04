@@ -2322,7 +2322,7 @@ class AndroidRemoteCard extends HTMLElement {
   drawSensorChartHomeAssistant(chartArea, chartLine, history, historyStart, historyEnd) {
     
     // Create clean history entries sorted by ascending time [{ time: timestamp coordinate, value: state numeric value }, ...]
-    const historyEntries = history
+    const allHistoryEntries = history
       // Keep only raw valid history entries (ie. those with valid numeric sensor states)
       .filter(rawHistoryEntry => Number.isFinite(Number(rawHistoryEntry.state)))
       // Map each valid history entry to an object { time: timestamp coordinate, value: state numeric value }
@@ -2333,10 +2333,30 @@ class AndroidRemoteCard extends HTMLElement {
       // Keep only valid history object with valid timestamp coordinate and valid state numeric value, within range
       .filter(historyEntry => 
         Number.isFinite(historyEntry.time) && Number.isFinite(historyEntry.value) &&
-        historyEntry.time >= historyStart &&  historyEntry.time <= historyEnd
+        historyEntry.time <= historyEnd.getTime()
       )
       // Sort history entries by time
       .sort((historyEntryA, historyEntryB) => historyEntryA.time - historyEntryB.time);
+
+    const startTime = historyStart.getTime();
+    
+    // Preserve the initial state returned by HA.
+    // Its original timestamp may precede the requested range.
+    const firstEntry = allHistoryEntries[0];
+    
+    const historyEntries = [];
+    
+    if (firstEntry && firstEntry.time < startTime) {
+      historyEntries.push({
+        time: startTime,
+        value: firstEntry.value
+      });
+    }
+    
+    // Keep actual state changes inside the requested period.
+    historyEntries.push(
+      ...allHistoryEntries.filter(entry => entry.time >= startTime)
+    );
 
     // Reduce history points while preserving local peaks and valleys.
     
