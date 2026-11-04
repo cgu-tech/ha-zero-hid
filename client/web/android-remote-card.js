@@ -960,7 +960,7 @@ class AndroidRemoteCard extends HTMLElement {
         width: 100%;
         height: var(--cell-sensor-text-height);
         min-width: 0;
-        padding: 4px 3px;
+        padding: 5px 3px;
         box-sizing: border-box;
         overflow: hidden;
         line-height: 1.3;
@@ -969,7 +969,7 @@ class AndroidRemoteCard extends HTMLElement {
         font-size: clamp(10px, 2.8vw, 13px);
         font-weight: normal;
         line-height: 1.2;
-        opacity: 0.85;
+        opacity: 0.75;
         white-space: nowrap;
         max-width: 100%;
         color: var(--cell-button-fg);
