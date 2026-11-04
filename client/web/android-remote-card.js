@@ -551,6 +551,7 @@ class AndroidRemoteCard extends HTMLElement {
         --cell-sensor-chart-fg: #ff9800FF;
         --cell-sensor-chart-bg: #ff980021;
         --cell-sensor-chart-height: 55%;
+        --cell-sensor-text-height: 50%;
         --side-cell-button-bg: ${this._sideCellButtonBg};
         --side-cell-button-fg: ${this._sideCellButtonFg};
         --card-border-radius: 10px;
@@ -947,14 +948,16 @@ class AndroidRemoteCard extends HTMLElement {
         opacity: 0.85;
       }
       .sensor-button-content {
-        position: relative;
+        position: absolute;
+        top: 0;
+        left: 0;
         z-index: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         width: 100%;
-        height: 100%;
+        height: var(--cell-sensor-text-height);
         min-width: 0;
         overflow: hidden;
         line-height: 1.2;
@@ -968,14 +971,12 @@ class AndroidRemoteCard extends HTMLElement {
       .sensor-label {
         font-size: clamp(0.35em, 2vw, 0.55em);
         font-weight: normal;
+        opacity: 0.75;
         white-space: nowrap;
         max-width: 100%;
         color: var(--cell-button-fg);
         text-overflow: clip;
         overflow: hidden;
-        text-shadow:
-            0 1px 2px rgba(0, 0, 0, 0.8),
-            0 0 4px rgba(0, 0, 0, 0.5);
       }
       text {
         font-family: sans-serif;
