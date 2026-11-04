@@ -2113,7 +2113,7 @@ class AndroidRemoteCard extends HTMLElement {
     const valueRange = maxValue - minValue;
 
     // Convert timestamps and values to SVG coordinates.
-    const points = samples.map(historyEntry => ({
+    const points = historyEntries.map(historyEntry => ({
       x: 2 + ((historyEntry.time - historyStart) / timeRange) * 96,
       y: 88 - ((historyEntry.value - minValue) / valueRange) * 76
     }));
