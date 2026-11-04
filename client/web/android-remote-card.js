@@ -2364,7 +2364,15 @@ class AndroidRemoteCard extends HTMLElement {
     chartArea.setAttribute("d", `${path} L 100 ${yAxisOrigin} L 0 ${yAxisOrigin} Z`);
   }
 
-  getHASensorCoordinates(entries, historyStart, historyEnd) {
+  getHASensorCoordinates(entries, historyStart, historyEnd, algorithm=null) {
+    if (algorithm === "without-left") {
+      return getHASensorCoordinatesWithoutLeftEdge(entries, historyStart, historyEnd);
+    } else {
+      return getHASensorCoordinatesWithLeftEdge(entries, historyStart, historyEnd);
+    }
+  }
+
+  getHASensorCoordinatesWithoutLeftEdge(entries, historyStart, historyEnd) {
     const width = 100;
     const height = 100;
 
@@ -2419,6 +2427,73 @@ class AndroidRemoteCard extends HTMLElement {
       yAxisOrigin
     };
   }
+
+  getHASensorCoordinatesWithLeftEdge(entries, historyStart, historyEnd) {
+    const width = 100;
+    const height = 100;
+
+    if (!entries.length) {
+      return {
+        points: [],
+        yAxisOrigin: height
+      };
+    }
+
+    let minValue = entries[0].value;
+    let maxValue = entries[0].value;
+
+    for (const entry of entries) {
+      if (entry.value < minValue) minValue = entry.value;
+      else if (entry.value > maxValue) maxValue = entry.value;
+    }
+  
+    // HA adds 10% vertical margins.
+    const rangeY = maxValue - minValue || minValue * 0.1;
+
+    maxValue += rangeY * 0.1;
+    minValue -= rangeY * 0.1;
+
+    let yAxisOrigin = height;
+
+    if (maxValue < 0) {
+      maxValue = Math.min(0, maxValue);
+      yAxisOrigin = 0;
+    } else if (minValue < 0) {
+      yAxisOrigin = (maxValue / (maxValue - minValue || 1)) * height;
+    } else {
+      minValue = Math.max(0, minValue);
+    }
+
+    const yRange = maxValue - minValue || 1;
+    const timeRange = historyEnd.getTime() - historyStart.getTime() || 1;
+
+    const points = entries.map(entry => ({
+      x: ((entry.time - historyStart.getTime()) / timeRange) * width,
+      y: height - ((entry.value - minValue) / yRange) * height
+    }));
+
+    // Extend the first known value to the left edge.
+    if (points[0].x > 0) {
+      points.unshift({
+        x: 0,
+        y: points[0].y
+      });
+    }
+
+    // Extend the last known value to the right edge.
+    if (points[points.length - 1].x < width) {
+      points.push({
+        x: width,
+        y: points[points.length - 1].y
+      });
+    }
+
+    return {
+      points,
+      yAxisOrigin
+    };
+  }
+
 
   downsampleSensorHistoryHomeAssistant(entries, maxDetails = 24) {
     if (!entries || entries.length <= maxDetails) {
