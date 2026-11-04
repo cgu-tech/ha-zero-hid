@@ -2057,7 +2057,7 @@ class AndroidRemoteCard extends HTMLElement {
 
       // Treat up-to-date asynchronous request response
       const history = response?.[0] || [];
-      this.drawSensorChart(chartArea, chartLine, history, historyStart, historyEnd);
+      this.drawSensorChart(chartArea, chartLine, history, historyStart, historyEnd, "standard");
     });
   }
 
@@ -2141,7 +2141,7 @@ class AndroidRemoteCard extends HTMLElement {
     }));
 
     // Draw smooth curve.
-    const path = this.createSmoothSensorPathStandard(points);
+    const path = this.createSmoothSensorPathStandard(points, "bezier");
     chartLine.setAttribute("d", path);
 
     // Draw filled area below curve.
