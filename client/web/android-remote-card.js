@@ -2598,7 +2598,7 @@ class AndroidRemoteCard extends HTMLElement {
       // Setup repeated override action short while overriden button is pressed
       this.setupOverrideRepeatedTimeout(evt, btn, this._OVERRIDE_TYPE_SHORT_PRESS);
 
-    } else if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn)) {
+    } else if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn) || this.isSensorsButton(btn)) {
 
       // Nothing to do: overriden action will be executed on key release
       if (this.hasButtonOverrideConfigShort(btn)) {
@@ -2606,7 +2606,7 @@ class AndroidRemoteCard extends HTMLElement {
       }
 
       // Triggering override long click timeout
-      if (this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn)) {
+      if (this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn) || this.isSensorsButton(btn)) {
         if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} press: server switch or overridden key for ${this.getRemoteMode()} on ${this._OVERRIDE_TYPE_LONG_PRESS} detected, triggering long-press timeout...`));
         this._overrideLongPressTimeouts.set(evt.pointerId, { 
           "can-run": true,                                   // until proven wrong, long press action can be run
@@ -2650,7 +2650,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Key code to abort press
     const code = btnData.code;
-    if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn)) {
+    if (this.hasButtonOverrideConfigShort(btn) || this.hasButtonOverrideConfigLong(btn) || this.isServerButton(btn) || this.isAirmouseButton(btn) || this.isPowerOffAddonsButton(btn) || this.isSensorsButton(btn)) {
 
       // Nothing to do: overriden action has not (and wont be) executed because key release wont happen
       if (this.hasButtonOverrideConfigShort(btn)) {
@@ -2931,6 +2931,15 @@ class AndroidRemoteCard extends HTMLElement {
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): batch powering off addons entities ${entitiesIds}...`, btn));
       this.batchPowerOff(entitiesIds);
       this.doUpdatePowerOffAddonsCounter();
+    } else if (this.isSensorsButton(btn) && (!overrideConfig || overrideConfig === this._OVERRIDE_NONE)) {
+      // Sensors button retrieved
+
+      // Open sensor details
+      const overrideServerConfig = this.getButtonOverrideServerConfig(serverId, buttonId);
+      const sensorEntityId = overrideServerConfig?.['entity'];
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): opening sensor details ${sensorEntityId}...`, btn));
+      // Trigger the more-info Dialog popup
+      this._eventManager.triggerHaosMoreInfoDialog(btn, sensorEntityId);
     } else if (overrideConfig === this._OVERRIDE_NONE) {
       // Typed config "none"
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${remoteMode} mode ${pressType} press, nothing to do`, btn));
