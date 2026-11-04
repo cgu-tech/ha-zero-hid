@@ -2133,7 +2133,7 @@ class AndroidRemoteCard extends HTMLElement {
     }));
 
     // Draw smooth curve.
-    const path = this.createSmoothSensorPath(points);
+    const path = this.createSmoothSensorPath(points, "catmull-rom");
     chartLine.setAttribute("d", path);
 
     // Draw filled area below curve.
