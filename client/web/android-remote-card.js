@@ -928,7 +928,7 @@ class AndroidRemoteCard extends HTMLElement {
         height: 100%;
         z-index: 0;
         pointer-events: none;
-        overflow: visible;
+        overflow: hidden;
       }
       .sensor-chart-area {
         fill: rgba(255, 193, 7, 0.13);
@@ -1385,6 +1385,8 @@ class AndroidRemoteCard extends HTMLElement {
       this._elements.sensorsBtn = sensorsBtn;
       this._elements.sensorsBtnValue = sensorsBtn.querySelector(".sensor-value");
       this._elements.sensorsBtnLabel = sensorsBtn.querySelector(".sensor-label");
+      this._elements.sensorsBtnChartArea = sensorsBtn.querySelector(".sensor-chart-area");
+      this._elements.sensorsBtnChartLine = sensorsBtn.querySelector(".sensor-chart-line");
     }
   }
 
@@ -2054,13 +2056,11 @@ class AndroidRemoteCard extends HTMLElement {
   }
 
   drawSensorChart(history) {
-    const button = this._elements.sensorsBtn;
-    if (!button) return;
+    const btn = this._elements.sensorsBtn;
+    if (!btn) return;
   
-    const line = button.querySelector(".sensor-chart-line");
-    const area = button.querySelector(".sensor-chart-area");
-  
-    if (!line || !area) return;
+    const chartArea = this._elements.sensorsBtnChartArea;
+    const chartLine = this._elements.sensorsBtnChartLine;
   
     // Keep only valid numeric sensor states
     const samples = history
@@ -2071,49 +2071,41 @@ class AndroidRemoteCard extends HTMLElement {
       }))
       .filter(item => Number.isFinite(item.time))
       .sort((a, b) => a.time - b.time);
-  
+
     if (samples.length < 2) {
-      line.setAttribute("d", "");
-      area.setAttribute("d", "");
+      chartLine.setAttribute("d", "");
+      chartArea.setAttribute("d", "");
       return;
     }
-  
+
     const minValue = Math.min(...samples.map(p => p.value));
     const maxValue = Math.max(...samples.map(p => p.value));
-  
     const range = maxValue - minValue || 1;
-  
+
     const firstTime = samples[0].time;
     const lastTime = samples[samples.length - 1].time;
     const timeRange = lastTime - firstTime || 1;
-  
-    const padding = 12;
-  
+
     const points = samples.map(sample => ({
       x: 2 + ((sample.time - firstTime) / timeRange) * 96,
       y: 88 - ((sample.value - minValue) / range) * 76
     }));
-  
+
     const path = this.createSmoothSensorPath(points);
-  
-    line.setAttribute("d", path);
-  
-    area.setAttribute(
-      "d",
-      `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`
-    );
+    chartLine.setAttribute("d", path);
+    chartArea.setAttribute("d", `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`);
   }
 
   async updateSensorChart(entityId) {
-    const button = this._elements.sensorsBtn;
-    if (!button) return;
-  
-    const line = button.querySelector(".sensor-chart-line");
-    const area = button.querySelector(".sensor-chart-area");
-  
+    const btn = this._elements.sensorsBtn;
+    if (!btn) return;
+
+    const chartArea = this._elements.sensorsBtnChartArea;
+    const chartLine = this._elements.sensorsBtnChartLine;
+
     if (!entityId) {
-      line?.setAttribute("d", "");
-      area?.setAttribute("d", "");
+      chartLine?.setAttribute("d", "");
+      chartArea?.setAttribute("d", "");
       return;
     }
   
@@ -2123,20 +2115,17 @@ class AndroidRemoteCard extends HTMLElement {
     if (entityId === this._sensorHistoryEntity && now - this._sensorHistoryFetchedAt < 60000) {
       return;
     }
-  
+
     this._sensorHistoryEntity = entityId;
     this._sensorHistoryFetchedAt = now;
-  
+
     const requestId = ++this._sensorHistoryRequestId;
-  
     try {
       const history = await this.getSensorHistory(entityId, 1);
-  
+
       // Ignore outdated asynchronous requests
       if (requestId !== this._sensorHistoryRequestId) return;
-  
       this.drawSensorChart(history);
-  
     } catch (error) {
       console.warn("Unable to retrieve sensor history:", error);
     }
