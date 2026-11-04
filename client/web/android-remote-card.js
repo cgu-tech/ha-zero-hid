@@ -2139,11 +2139,11 @@ class AndroidRemoteCard extends HTMLElement {
 
   createSmoothSensorPath(points, algorithm=null) {
     if (algorithm === "bezier") {
-      return createBezierPath(points);
+      return this.createBezierPath(points);
     } else if (algorithm === "catmull-rom") {
-      return createCatmullRomPath(points);
+      return this.createCatmullRomPath(points);
     } else { // Default interpolation
-      return createMonotoneCubicHermitePath(points);
+      return this.createMonotoneCubicHermitePath(points);
     }
   }
   
