@@ -2137,7 +2137,17 @@ class AndroidRemoteCard extends HTMLElement {
     chartArea.setAttribute("d", `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`);
   }
 
-  createSmoothSensorPath(points) {
+  createSmoothSensorPath(points, algorithm=null) {
+    if (algorithm === "bezier") {
+      return createBezierPath(points);
+    } else if (algorithm === "catmull-rom") {
+      return createCatmullRomPath(points);
+    } else { // Default interpolation
+      return createMonotoneCubicHermitePath(points);
+    }
+  }
+  
+  createBezierPath(points) {
     if (points.length < 2) return "";
 
     let path = `M ${points[0].x} ${points[0].y}`;
@@ -2156,6 +2166,103 @@ class AndroidRemoteCard extends HTMLElement {
 
       path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
+    return path;
+  }
+
+  createCatmullRomPath(points) {
+    if (points.length < 2) return "";
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(points.length - 1, i + 2)];
+
+      const dx = p2.x - p1.x;
+
+      const cp1x = p1.x + dx / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+
+      const cp2x = p2.x - dx / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+
+    return path;
+  }
+
+  createMonotoneCubicHermitePath(points) {
+    if (points.length < 2) return "";
+
+    const n = points.length;
+    const h = [];
+    const delta = [];
+    const slopes = new Array(n).fill(0);
+
+    // Calculate interval widths and secant slopes.
+    for (let i = 0; i < n - 1; i++) {
+      h[i] = points[i + 1].x - points[i].x;
+      delta[i] = (points[i + 1].y - points[i].y) / h[i];
+    }
+
+    // Two points: straight line is the safest interpolation.
+    if (n === 2) {
+      return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+    }
+
+    // Calculate endpoint tangents.
+    const endpointSlope = (h0, h1, d0, d1) => {
+      let slope = ((2 * h0 + h1) * d0 - h0 * d1) / (h0 + h1);
+      if (Math.sign(slope) !== Math.sign(d0)) {
+        slope = 0;
+      } else if (
+        Math.sign(d0) !== Math.sign(d1) &&
+        Math.abs(slope) > Math.abs(3 * d0)
+      ) {
+        slope = 3 * d0;
+      }
+      return slope;
+    };
+
+    slopes[0] = endpointSlope(h[0], h[1], delta[0], delta[1]);
+    slopes[n - 1] = endpointSlope(h[n - 2], h[n - 3], delta[n - 2], delta[n - 3]);
+
+    // Calculate interior tangents using weighted harmonic means.
+    for (let i = 1; i < n - 1; i++) {
+      const d0 = delta[i - 1];
+      const d1 = delta[i];
+
+      // Flat or changing direction: force zero tangent.
+      if (d0 === 0 || d1 === 0 || Math.sign(d0) !== Math.sign(d1)) {
+        slopes[i] = 0;
+        continue;
+      }
+
+      const w1 = 2 * h[i] + h[i - 1];
+      const w2 = h[i] + 2 * h[i - 1];
+      slopes[i] = (w1 + w2) / (w1 / d0 + w2 / d1);
+    }
+
+    // Generate monotone cubic Hermite Bézier segments.
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < n - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
+
+      const dx = h[i];
+
+      const cp1x = p1.x + dx / 3;
+      const cp1y = p1.y + slopes[i] * dx / 3;
+
+      const cp2x = p2.x - dx / 3;
+      const cp2y = p2.y - slopes[i + 1] * dx / 3;
+
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+
     return path;
   }
 
