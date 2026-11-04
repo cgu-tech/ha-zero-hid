@@ -2090,9 +2090,9 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Extend the last known value to the present.
     const last = historyEntries[historyEntries.length - 1];
-    if (last.time < now) {
+    if (last.time < historyEnd) {
       historyEntries.push({
-        time: now, 
+        time: historyEnd, 
         value: last.value
       });
     }
