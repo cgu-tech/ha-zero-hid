@@ -2013,7 +2013,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
   
-  await getSensorHistory(entityId, hours = 1) {
+  async getSensorHistory(entityId, hours = 1) {
     if (!this._hass || !entityId) return [];
 
     const end = new Date();
