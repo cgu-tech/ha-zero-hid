@@ -2366,9 +2366,9 @@ class AndroidRemoteCard extends HTMLElement {
 
   getHASensorCoordinates(entries, historyStart, historyEnd, algorithm=null) {
     if (algorithm === "without-left") {
-      return getHASensorCoordinatesWithoutLeftEdge(entries, historyStart, historyEnd);
+      return this.getHASensorCoordinatesWithoutLeftEdge(entries, historyStart, historyEnd);
     } else {
-      return getHASensorCoordinatesWithLeftEdge(entries, historyStart, historyEnd);
+      return this.getHASensorCoordinatesWithLeftEdge(entries, historyStart, historyEnd);
     }
   }
 
