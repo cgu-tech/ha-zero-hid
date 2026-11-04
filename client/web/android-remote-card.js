@@ -2057,7 +2057,7 @@ class AndroidRemoteCard extends HTMLElement {
 
       // Treat up-to-date asynchronous request response
       const history = response?.[0] || [];
-      this.drawSensorChart(chartArea, chartLine, history, historyStart, historyEnd, "standard");
+      this.drawSensorChart(chartArea, chartLine, history, historyStart, historyEnd);
     });
   }
 
