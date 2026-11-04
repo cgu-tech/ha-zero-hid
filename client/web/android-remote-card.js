@@ -550,6 +550,7 @@ class AndroidRemoteCard extends HTMLElement {
         --cell-sensor-on-fg: #ffc107;
         --cell-sensor-chart-fg: #ff9800FF;
         --cell-sensor-chart-bg: #ff980021;
+        --cell-sensor-chart-height: 50%;
         --side-cell-button-bg: ${this._sideCellButtonBg};
         --side-cell-button-fg: ${this._sideCellButtonFg};
         --card-border-radius: 10px;
@@ -927,7 +928,7 @@ class AndroidRemoteCard extends HTMLElement {
         position: absolute;
         inset: 0;
         width: 100%;
-        height: 100%;
+        height: var(--cell-sensor-chart-height);
         z-index: 0;
         pointer-events: none;
         overflow: hidden;
