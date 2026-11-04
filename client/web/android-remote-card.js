@@ -977,7 +977,7 @@ class AndroidRemoteCard extends HTMLElement {
         overflow: hidden;
       }
       .sensor-value {
-        font-size: clamp(14px, 4vw, 20px);
+        font-size: clamp(18px, 4vw, 24px);
         font-weight: bold;
         line-height: 1.25;
         white-space: nowrap;
