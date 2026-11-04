@@ -2025,7 +2025,8 @@ class AndroidRemoteCard extends HTMLElement {
       return;
     }
   
-    const now = Date.now();
+    const targetEnd = new Date();
+    const now = targetEnd.getTime();
   
     // Refresh when entity changes or after 60 seconds
     if (sensorEntityId === this._sensorHistoryEntity && now - this._sensorHistoryFetchedAt < 60000) {
@@ -2037,7 +2038,7 @@ class AndroidRemoteCard extends HTMLElement {
 
     const requestId = ++this._sensorHistoryRequestId;
     const historyHours = 1;
-    const historyEnd = now;
+    const historyEnd = targetEnd;
     const historyStart = this.getHistoryStartFrom(historyEnd, historyHours);
     this.getSensorHistory(sensorEntityId, historyStart, historyEnd)?.then((response) => {
       // Ignore outdated asynchronous request
