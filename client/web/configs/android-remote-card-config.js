@@ -223,6 +223,13 @@ export const androidRemoteCardConfig = {
   "remote-button-sensors": {
     "style": "circle-button sensor-button",
     "html": `
+      <svg class="sensor-chart"
+           viewBox="0 0 100 100"
+           preserveAspectRatio="none">
+        <path class="sensor-chart-area"></path>
+        <path class="sensor-chart-line"></path>
+      </svg>
+  
       <div class="sensor-button-content">
         <span class="sensor-value"></span>
         <span class="sensor-label"></span>

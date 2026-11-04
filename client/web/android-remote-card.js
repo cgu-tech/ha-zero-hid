@@ -76,6 +76,11 @@ class AndroidRemoteCard extends HTMLElement {
   _bottomPanelVisible = false;
   _currentServerConfig;
 
+  // Experimental: sensor chart drawing
+  _sensorHistoryEntity = null;
+  _sensorHistoryFetchedAt = 0;
+  _sensorHistoryRequestId = 0;
+
   constructor() {
     super();
 
@@ -909,12 +914,38 @@ class AndroidRemoteCard extends HTMLElement {
         fill: var(--cell-button-press-bg);
       }
       .sensor-button {
+        position: relative;
+        isolation: isolate;
         flex-direction: column;
         padding: 2px;
         box-sizing: border-box;
         overflow: hidden;
       }
+      .sensor-chart {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+        overflow: visible;
+      }
+      .sensor-chart-area {
+        fill: rgba(255, 193, 7, 0.13);
+        stroke: none;
+      }
+      .sensor-chart-line {
+        fill: none;
+        stroke: #ffc107;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+        opacity: 0.85;
+      }
       .sensor-button-content {
+        position: relative;
+        z-index: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1965,6 +1996,9 @@ class AndroidRemoteCard extends HTMLElement {
       const sensorLabelConfig = overrideServerConfig?.['label'];
       const sensorEntity = sensorEntityId ? this._eventManager.getHassEntity(sensorEntityId) : null;
 
+      // Start updating sensor chart asynchronously
+      this.updateSensorChart(entityId);
+
       // Set updated sensorsBtn value
       if (sensorValue) {
         const sensorState = sensorEntity?.state ?? "--";
@@ -1976,6 +2010,135 @@ class AndroidRemoteCard extends HTMLElement {
       if (sensorLabel) {
         sensorLabel.textContent = sensorLabelConfig ?? (sensorEntity?.attributes?.friendly_name ?? (sensorEntityId ?? "-"));
       }
+    }
+  }
+  
+  await getSensorHistory(entityId, hours = 1) {
+    if (!this._hass || !entityId) return [];
+
+    const end = new Date();
+    const start = new Date(end.getTime() - hours * 60 * 60 * 1000);
+
+    const params = new URLSearchParams({
+      filter_entity_id: entityId,
+      end_time: end.toISOString()
+    });
+
+    const path =
+      `history/period/${encodeURIComponent(start.toISOString())}?${params}`;
+
+    const history = await this._hass.callApi("GET", path);
+    return history?.[0] || [];
+  }
+
+  createSmoothSensorPath(points) {
+    if (points.length < 2) return "";
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(points.length - 1, i + 2)];
+  
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+  
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+    return path;
+  }
+
+  drawSensorChart(history) {
+    const button = this._elements.sensorsBtn;
+    if (!button) return;
+  
+    const line = button.querySelector(".sensor-chart-line");
+    const area = button.querySelector(".sensor-chart-area");
+  
+    if (!line || !area) return;
+  
+    // Keep only valid numeric sensor states
+    const samples = history
+      .filter(item => Number.isFinite(Number(item.state)))
+      .map(item => ({
+        time: new Date(item.last_changed || item.last_updated).getTime(),
+        value: Number(item.state)
+      }))
+      .filter(item => Number.isFinite(item.time))
+      .sort((a, b) => a.time - b.time);
+  
+    if (samples.length < 2) {
+      line.setAttribute("d", "");
+      area.setAttribute("d", "");
+      return;
+    }
+  
+    const minValue = Math.min(...samples.map(p => p.value));
+    const maxValue = Math.max(...samples.map(p => p.value));
+  
+    const range = maxValue - minValue || 1;
+  
+    const firstTime = samples[0].time;
+    const lastTime = samples[samples.length - 1].time;
+    const timeRange = lastTime - firstTime || 1;
+  
+    const padding = 12;
+  
+    const points = samples.map(sample => ({
+      x: 2 + ((sample.time - firstTime) / timeRange) * 96,
+      y: 88 - ((sample.value - minValue) / range) * 76
+    }));
+  
+    const path = this.createSmoothSensorPath(points);
+  
+    line.setAttribute("d", path);
+  
+    area.setAttribute(
+      "d",
+      `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`
+    );
+  }
+
+  async updateSensorChart(entityId) {
+    const button = this._elements.sensorsBtn;
+    if (!button) return;
+  
+    const line = button.querySelector(".sensor-chart-line");
+    const area = button.querySelector(".sensor-chart-area");
+  
+    if (!entityId) {
+      line?.setAttribute("d", "");
+      area?.setAttribute("d", "");
+      return;
+    }
+  
+    const now = Date.now();
+  
+    // Refresh when entity changes or after 60 seconds
+    if (entityId === this._sensorHistoryEntity && now - this._sensorHistoryFetchedAt < 60000) {
+      return;
+    }
+  
+    this._sensorHistoryEntity = entityId;
+    this._sensorHistoryFetchedAt = now;
+  
+    const requestId = ++this._sensorHistoryRequestId;
+  
+    try {
+      const history = await this.getSensorHistory(entityId, 1);
+  
+      // Ignore outdated asynchronous requests
+      if (requestId !== this._sensorHistoryRequestId) return;
+  
+      this.drawSensorChart(history);
+  
+    } catch (error) {
+      console.warn("Unable to retrieve sensor history:", error);
     }
   }
 
