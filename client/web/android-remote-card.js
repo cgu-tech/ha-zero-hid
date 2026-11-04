@@ -2014,23 +2014,115 @@ class AndroidRemoteCard extends HTMLElement {
       }
     }
   }
+
+  updateSensorChart(sensorEntityId) {
+    const chartArea = this._elements.sensorsBtnChartArea;
+    const chartLine = this._elements.sensorsBtnChartLine;
+
+    if (!sensorEntityId) {
+      chartLine?.setAttribute("d", "");
+      chartArea?.setAttribute("d", "");
+      return;
+    }
   
-  async getSensorHistory(entityId, hours = 1) {
-    if (!this._hass || !entityId) return [];
+    const now = Date.now();
+  
+    // Refresh when entity changes or after 60 seconds
+    if (sensorEntityId === this._sensorHistoryEntity && now - this._sensorHistoryFetchedAt < 60000) {
+      return;
+    }
 
-    const end = new Date();
-    const start = new Date(end.getTime() - hours * 60 * 60 * 1000);
+    this._sensorHistoryEntity = sensorEntityId;
+    this._sensorHistoryFetchedAt = now;
 
-    const params = new URLSearchParams({
-      filter_entity_id: entityId,
-      end_time: end.toISOString()
+    const requestId = ++this._sensorHistoryRequestId;
+    const historyHours = 1;
+    const historyEnd = now;
+    const historyStart = this.getHistoryStartFrom(historyEnd, historyHours);
+    this.getSensorHistory(sensorEntityId, historyStart, historyEnd)?.then((response) => {
+      // Ignore outdated asynchronous request
+      if (requestId !== this._sensorHistoryRequestId) return;
+
+      // Treat up-to-date asynchronous request response
+      const history = response?.[0] || [];
+      this.drawSensorChart(chartArea, chartLine, history, historyStart, historyEnd);
     });
+  }
 
-    const path =
-      `history/period/${encodeURIComponent(start.toISOString())}?${params}`;
+  getHistoryStartFrom(historyEnd, historyHours) {
+    return new Date(historyEnd.getTime() - historyHours * 60 * 60 * 1000);
+  }
 
-    const history = await this._hass.callApi("GET", path);
-    return history?.[0] || [];
+  getSensorHistory(sensorEntityId, historyStart, historyEnd) {
+    const path = `history/period/${encodeURIComponent(historyStart.toISOString())}`;
+    const args = {
+      filter_entity_id: sensorEntityId,
+      end_time: historyEnd.toISOString()
+    };
+    return this._eventManager.callApiGet(path, args);
+  }
+
+  drawSensorChart(chartArea, chartLine, history, historyStart, historyEnd) {
+    
+    // Create clean history entries sorted by ascending time [{ time: timestamp coordinate, value: state numeric value }, ...]
+    const historyEntries = history
+      // Keep only raw valid history entries (ie. those with valid numeric sensor states)
+      .filter(rawHistoryEntry => Number.isFinite(Number(rawHistoryEntry.state)))
+      // Map each valid history entry to an object { time: timestamp coordinate, value: state numeric value }
+      .map(rawHistoryEntry => ({
+        time: new Date(rawHistoryEntry.last_changed || rawHistoryEntry.last_updated).getTime(),
+        value: Number(rawHistoryEntry.state)
+      }))
+      // Keep only valid history object with valid timestamp coordinate and valid state numeric value, within range
+      .filter(historyEntry => 
+        Number.isFinite(historyEntry.time) && Number.isFinite(historyEntry.value) &&
+        historyEntry.time >= historyStart &&  historyEntry.time <= historyEnd
+      )
+      // Sort history entries by time
+      .sort((historyEntryA, historyEntryB) => historyEntryA.time - historyEntryB.time);
+
+    if (historyEntries.length === 0) {
+      chartLine.setAttribute("d", "");
+      chartArea.setAttribute("d", "");
+      return;
+    }
+
+    // Extend the last known value to the present.
+    const last = historyEntries[historyEntries.length - 1];
+    if (last.time < now) {
+      historyEntries.push({
+        time: now, 
+        value: last.value
+      });
+    }
+
+    // Calculate vertical scale.
+    const values = historyEntries.map(historyEntry => historyEntry.value);
+    let minValue = Math.min(...values);
+    let maxValue = Math.max(...values);
+
+    // Prevent a flat sensor from producing a degenerate scale.
+    if (minValue === maxValue) {
+      minValue -= 0.5;
+      maxValue += 0.5;
+    }
+
+    // Compute time and value ranges
+    const timeRange = historyEnd - historyStart;
+    const valueRange = maxValue - minValue;
+
+    // Convert timestamps and values to SVG coordinates.
+    const points = samples.map(historyEntry => ({
+      x: 2 + ((historyEntry.time - historyStart) / timeRange) * 96,
+      y: 88 - ((historyEntry.value - minValue) / valueRange) * 76
+    }));
+
+    // Draw smooth curve.
+    const path = this.createSmoothSensorPath(points);
+    line.setAttribute("d", path);
+
+    // Draw filled area below curve.
+    area.setAttribute("d", `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`);
   }
 
   createSmoothSensorPath(points) {
@@ -2053,82 +2145,6 @@ class AndroidRemoteCard extends HTMLElement {
       path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
     return path;
-  }
-
-  drawSensorChart(history) {
-    const btn = this._elements.sensorsBtn;
-    if (!btn) return;
-  
-    const chartArea = this._elements.sensorsBtnChartArea;
-    const chartLine = this._elements.sensorsBtnChartLine;
-  
-    // Keep only valid numeric sensor states
-    const samples = history
-      .filter(item => Number.isFinite(Number(item.state)))
-      .map(item => ({
-        time: new Date(item.last_changed || item.last_updated).getTime(),
-        value: Number(item.state)
-      }))
-      .filter(item => Number.isFinite(item.time))
-      .sort((a, b) => a.time - b.time);
-
-    if (samples.length < 2) {
-      chartLine.setAttribute("d", "");
-      chartArea.setAttribute("d", "");
-      return;
-    }
-
-    const minValue = Math.min(...samples.map(p => p.value));
-    const maxValue = Math.max(...samples.map(p => p.value));
-    const range = maxValue - minValue || 1;
-
-    const firstTime = samples[0].time;
-    const lastTime = samples[samples.length - 1].time;
-    const timeRange = lastTime - firstTime || 1;
-
-    const points = samples.map(sample => ({
-      x: 2 + ((sample.time - firstTime) / timeRange) * 96,
-      y: 88 - ((sample.value - minValue) / range) * 76
-    }));
-
-    const path = this.createSmoothSensorPath(points);
-    chartLine.setAttribute("d", path);
-    chartArea.setAttribute("d", `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`);
-  }
-
-  async updateSensorChart(entityId) {
-    const btn = this._elements.sensorsBtn;
-    if (!btn) return;
-
-    const chartArea = this._elements.sensorsBtnChartArea;
-    const chartLine = this._elements.sensorsBtnChartLine;
-
-    if (!entityId) {
-      chartLine?.setAttribute("d", "");
-      chartArea?.setAttribute("d", "");
-      return;
-    }
-  
-    const now = Date.now();
-  
-    // Refresh when entity changes or after 60 seconds
-    if (entityId === this._sensorHistoryEntity && now - this._sensorHistoryFetchedAt < 60000) {
-      return;
-    }
-
-    this._sensorHistoryEntity = entityId;
-    this._sensorHistoryFetchedAt = now;
-
-    const requestId = ++this._sensorHistoryRequestId;
-    try {
-      const history = await this.getSensorHistory(entityId, 1);
-
-      // Ignore outdated asynchronous requests
-      if (requestId !== this._sensorHistoryRequestId) return;
-      this.drawSensorChart(history);
-    } catch (error) {
-      console.warn("Unable to retrieve sensor history:", error);
-    }
   }
 
   doUpdateSidePanel() {

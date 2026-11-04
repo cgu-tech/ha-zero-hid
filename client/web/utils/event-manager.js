@@ -914,6 +914,7 @@ export class EventManager {
       if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callService(domain, name, args, notifyOnError): undefined hass. Unable to execute the service (called too early before HA hass init or HA unresponsive)`, domain, name, args, notifyOnError));
       return;
     }
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`callService(domain, name, args, notifyOnError):`, domain, name, args, notifyOnError));
     return hass.callService(domain, name, args, undefined, notifyOnError).catch((err) => {
 
       // Log raw error
@@ -967,7 +968,9 @@ export class EventManager {
   // Call a command from HAOS custom component 'Globals.COMPONENT_NAME' using WebSockets.
   // 
   // Parameters:
-  //  - name: the command name to fire (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  //  - domain: the command domain
+  //  - name: the command name to fire, associated with domain (registered into custom component 'Globals.COMPONENT_NAME' Python code)
+  //  - name: the command arguments to send
   // 
   // Returns:
   //  A promyze :
@@ -975,13 +978,73 @@ export class EventManager {
   //   - on command error: ".catch((err) => {...})"
   callCommand(domain, name, args) {
     if (!this.getHass()) {
-      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callCommand(name): undefined hass. Unable to execute the command (called too early before HA hass init or HA unresponsive)`, name));
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callCommand(domain, name, args): undefined hass. Unable to execute the command (called too early before HA hass init or HA unresponsive)`, domain, name, args));
       return null;
     }
     const msg = {};
     msg["type"] = `${domain}/${name}`;
     if (args) Object.assign(msg, args);
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`callCommand(domain, name, args) -> msg:`, domain, name, args, msg));
     return this.getHass().connection.sendMessagePromise(msg);
+  }
+
+  // Call an API of HAOS.
+  // 
+  // Parameters:
+  //  - method: the HTTP method used to call the API
+  //  - path: the URL encoded API path
+  // 
+  // Returns:
+  //  A promyze :
+  //   - on API success: ".then((response) => {...})"
+  //   - on API error: ".catch((err) => {...})"
+  callApi(method, path, notifyOnError = false) {
+    const hass = this.getHass(); // Needed for closure
+    if (!hass) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callApi(method, path, notifyOnError): undefined hass. Unable to execute the command (called too early before HA hass init or HA unresponsive)`, method, path, notifyOnError));
+      return null;
+    }
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`callApi(method, path, notifyOnError):`, method, path, notifyOnError));
+    return hass.callApi(method, path).catch((err) => {
+
+      // Log raw error
+      if (this.getLogger().isErrorEnabled()) console.error(...this.getLogger().error(`callApi(method, path, notifyOnError): raw error:`, method, path, notifyOnError, err));
+
+      // Check for error and associate a notification message when needed
+      if (notifyOnError) {
+        let message = null;
+
+        // Check HA disconnected error
+        if (!hass.connection.connected) {
+          message = this._localization.localize("error.ha.connection_lost.message");
+        }
+
+        // Dispatch UI message
+        if (message) {
+          this.triggerHaosToast(this.getHaElement(), message);
+        }
+      }
+    });
+  }
+
+  // Call an API of HAOS using HTTP GET method.
+  // 
+  // Parameters:
+  //  - path: the encoded API path
+  //  - args: the arguments that will be encoded and appended at the end of encoded API path
+  // 
+  // Returns:
+  //  A promyze :
+  //   - on API success: ".then((response) => {...})"
+  //   - on API error: ".catch((err) => {...})"
+  callApiGet(path, args, notifyOnError = false) {
+    if (!this.getHass()) {
+      if (this.getLogger().isWarnEnabled()) console.warn(...this.getLogger().warn(`callApiGet(path, args, notifyOnError): undefined hass. Unable to execute the command (called too early before HA hass init or HA unresponsive)`, path, args, notifyOnError));
+      return null;
+    }
+    const encodedArgs = (args !== null) ? `?${new URLSearchParams(args)}` : '';
+    const encodedFullPath = `${path}${encodedArgs}`;
+    return this.callApi("GET", encodedFullPath, notifyOnError);
   }
 
   // Trigger an event into HAOS.
@@ -999,6 +1062,7 @@ export class EventManager {
       composed: options?.composed ?? true,
       detail,
     });
+    if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`triggerHaosEvent(source, type, detail, options) -> event:`, source, type, detail, options, event));
     source.dispatchEvent(event);
   }
 
