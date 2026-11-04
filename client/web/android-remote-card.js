@@ -926,7 +926,7 @@ class AndroidRemoteCard extends HTMLElement {
       }
       .sensor-chart {
         position: absolute;
-        inset: 0;
+        inset: auto 0 0 0;  /* Stick to the cell bottom */
         width: 100%;
         height: var(--cell-sensor-chart-height);
         z-index: 0;
