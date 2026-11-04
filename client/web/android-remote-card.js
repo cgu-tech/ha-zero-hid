@@ -2074,252 +2074,7 @@ class AndroidRemoteCard extends HTMLElement {
     return this._eventManager.callApiGet(path, args);
   }
 
-  drawSensorChart(chartArea, chartLine, history, historyStart, historyEnd, algorithm=null) {
-    if (algorithm === "standard") {
-      this.drawSensorChartStandard(chartArea, chartLine, history, historyStart, historyEnd);
-    } else {
-      this.drawSensorChartHomeAssistant(chartArea, chartLine, history, historyStart, historyEnd);
-    }
-  }
-
-  drawSensorChartStandard(chartArea, chartLine, history, historyStart, historyEnd) {
-    
-    // Create clean history entries sorted by ascending time [{ time: timestamp coordinate, value: state numeric value }, ...]
-    const historyEntries = history
-      // Keep only raw valid history entries (ie. those with valid numeric sensor states)
-      .filter(rawHistoryEntry => Number.isFinite(Number(rawHistoryEntry.state)))
-      // Map each valid history entry to an object { time: timestamp coordinate, value: state numeric value }
-      .map(rawHistoryEntry => ({
-        time: new Date(rawHistoryEntry.last_changed || rawHistoryEntry.last_updated).getTime(),
-        value: Number(rawHistoryEntry.state)
-      }))
-      // Keep only valid history object with valid timestamp coordinate and valid state numeric value, within range
-      .filter(historyEntry => 
-        Number.isFinite(historyEntry.time) && Number.isFinite(historyEntry.value) &&
-        historyEntry.time >= historyStart &&  historyEntry.time <= historyEnd
-      )
-      // Sort history entries by time
-      .sort((historyEntryA, historyEntryB) => historyEntryA.time - historyEntryB.time);
-
-    // Reduce history points while preserving local peaks and valleys.
-    const chartEntries = this.downsampleSensorHistoryStandard(historyEntries);
-
-    if (chartEntries.length === 0) {
-      chartLine.setAttribute("d", "");
-      chartArea.setAttribute("d", "");
-      return;
-    }
-
-    // Extend the last known value to the present.
-    const last = chartEntries[chartEntries.length - 1];
-    if (last.time < historyEnd) {
-      chartEntries.push({
-        time: historyEnd, 
-        value: last.value
-      });
-    }
-
-    // Calculate vertical scale.
-    const values = chartEntries.map(historyEntry => historyEntry.value);
-    let minValue = Math.min(...values);
-    let maxValue = Math.max(...values);
-
-    // Prevent a flat sensor from producing a degenerate scale.
-    if (minValue === maxValue) {
-      minValue -= 0.5;
-      maxValue += 0.5;
-    }
-
-    // Compute time and value ranges
-    const timeRange = historyEnd - historyStart;
-    const valueRange = maxValue - minValue;
-
-    // Convert timestamps and values to SVG coordinates.
-    const points = chartEntries.map(historyEntry => ({
-      x: 2 + ((historyEntry.time - historyStart) / timeRange) * 96,
-      y: 88 - ((historyEntry.value - minValue) / valueRange) * 76
-    }));
-
-    // Draw smooth curve.
-    const path = this.createSmoothSensorPathStandard(points, "bezier");
-    chartLine.setAttribute("d", path);
-
-    // Draw filled area below curve.
-    chartArea.setAttribute("d", `${path} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`);
-  }
-
-  // Downsampling for performance sanity
-  downsampleSensorHistoryStandard(entries, maxPoints = 120) {
-    const length = entries.length;
-  
-    if (length <= maxPoints || maxPoints < 4) {
-      return entries;
-    }
-  
-    const bucketCount = Math.floor((maxPoints - 2) / 2);
-    const bucketSize = (length - 2) / bucketCount;
-    const sampled = [entries[0]];
-  
-    for (let i = 0; i < bucketCount; i++) {
-      const start = 1 + Math.floor(i * bucketSize);
-      const end = Math.min(
-        length - 1,
-        1 + Math.floor((i + 1) * bucketSize)
-      );
-  
-      let minEntry = entries[start];
-      let maxEntry = entries[start];
-  
-      for (let j = start + 1; j < end; j++) {
-        const entry = entries[j];
-  
-        if (entry.value < minEntry.value) minEntry = entry;
-        if (entry.value > maxEntry.value) maxEntry = entry;
-      }
-  
-      // Preserve chronological order.
-      if (minEntry.time < maxEntry.time) {
-        sampled.push(minEntry, maxEntry);
-      } else if (maxEntry.time < minEntry.time) {
-        sampled.push(maxEntry, minEntry);
-      } else {
-        sampled.push(minEntry);
-      }
-    }
-    sampled.push(entries[length - 1]);
-    return sampled;
-  }
-
-  createSmoothSensorPathStandard(points, algorithm=null) {
-    if (algorithm === "bezier") {
-      return this.createBezierPath(points);
-    } else if (algorithm === "catmull-rom") {
-      return this.createCatmullRomPath(points);
-    } else { // Default standard interpolation
-      return this.createMonotoneCubicHermitePath(points);
-    }
-  }
-  
-  createBezierPath(points) {
-    if (points.length < 2) return "";
-
-    let path = `M ${points[0].x} ${points[0].y}`;
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[Math.max(0, i - 1)];
-      const p1 = points[i];
-      const p2 = points[i + 1];
-      const p3 = points[Math.min(points.length - 1, i + 2)];
-  
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-  
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-    }
-    return path;
-  }
-
-  createCatmullRomPath(points) {
-    if (points.length < 2) return "";
-
-    let path = `M ${points[0].x} ${points[0].y}`;
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[Math.max(0, i - 1)];
-      const p1 = points[i];
-      const p2 = points[i + 1];
-      const p3 = points[Math.min(points.length - 1, i + 2)];
-
-      const dx = p2.x - p1.x;
-
-      const cp1x = p1.x + dx / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-
-      const cp2x = p2.x - dx / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-    }
-
-    return path;
-  }
-
-  createMonotoneCubicHermitePath(points) {
-    if (points.length < 2) return "";
-
-    const n = points.length;
-    const h = [];
-    const delta = [];
-    const slopes = new Array(n).fill(0);
-
-    // Calculate interval widths and secant slopes.
-    for (let i = 0; i < n - 1; i++) {
-      h[i] = points[i + 1].x - points[i].x;
-      delta[i] = (points[i + 1].y - points[i].y) / h[i];
-    }
-
-    // Two points: straight line is the safest interpolation.
-    if (n === 2) {
-      return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
-    }
-
-    // Calculate endpoint tangents.
-    const endpointSlope = (h0, h1, d0, d1) => {
-      let slope = ((2 * h0 + h1) * d0 - h0 * d1) / (h0 + h1);
-      if (Math.sign(slope) !== Math.sign(d0)) {
-        slope = 0;
-      } else if (
-        Math.sign(d0) !== Math.sign(d1) &&
-        Math.abs(slope) > Math.abs(3 * d0)
-      ) {
-        slope = 3 * d0;
-      }
-      return slope;
-    };
-
-    slopes[0] = endpointSlope(h[0], h[1], delta[0], delta[1]);
-    slopes[n - 1] = endpointSlope(h[n - 2], h[n - 3], delta[n - 2], delta[n - 3]);
-
-    // Calculate interior tangents using weighted harmonic means.
-    for (let i = 1; i < n - 1; i++) {
-      const d0 = delta[i - 1];
-      const d1 = delta[i];
-
-      // Flat or changing direction: force zero tangent.
-      if (d0 === 0 || d1 === 0 || Math.sign(d0) !== Math.sign(d1)) {
-        slopes[i] = 0;
-        continue;
-      }
-
-      const w1 = 2 * h[i] + h[i - 1];
-      const w2 = h[i] + 2 * h[i - 1];
-      slopes[i] = (w1 + w2) / (w1 / d0 + w2 / d1);
-    }
-
-    // Generate monotone cubic Hermite Bézier segments.
-    let path = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 0; i < n - 1; i++) {
-      const p1 = points[i];
-      const p2 = points[i + 1];
-
-      const dx = h[i];
-
-      const cp1x = p1.x + dx / 3;
-      const cp1y = p1.y + slopes[i] * dx / 3;
-
-      const cp2x = p2.x - dx / 3;
-      const cp2y = p2.y - slopes[i + 1] * dx / 3;
-
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-    }
-
-    return path;
-  }
-
-  drawSensorChartHomeAssistant(chartArea, chartLine, history, historyStart, historyEnd) {
+  drawSensorChart(chartArea, chartLine, history, historyStart, historyEnd) {
     
     // Create clean history entries sorted by ascending time [{ time: timestamp coordinate, value: state numeric value }, ...]
     const allHistoryEntries = history
@@ -2354,9 +2109,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
     
     // Keep actual state changes inside the requested period.
-    historyEntries.push(
-      ...allHistoryEntries.filter(entry => entry.time >= startTime)
-    );
+    historyEntries.push(...allHistoryEntries.filter(entry => entry.time >= startTime));
 
     // Reduce history points while preserving local peaks and valleys.
     
@@ -2365,7 +2118,7 @@ class AndroidRemoteCard extends HTMLElement {
     const maxDetails = Math.max(10, historyHours);
 
     // Apply HA-compatible time aggregation.
-    const chartEntries = this.downsampleSensorHistoryHomeAssistant(historyEntries, maxDetails);
+    const chartEntries = this.downsampleHASensorHistory(historyEntries, maxDetails);
 
     if (chartEntries.length === 0) {
       chartLine.setAttribute("d", "");
@@ -2377,145 +2130,14 @@ class AndroidRemoteCard extends HTMLElement {
     const { points, yAxisOrigin } = this.getHASensorCoordinates(chartEntries, historyStart, historyEnd);
 
     // Draw smooth curve using HA-style quadratic Bézier path.
-    const path = this.createSmoothSensorPathHomeAssistant(points);
+    const path = this.createSmoothHASensorPath(points);
     chartLine.setAttribute("d", path);
 
     // Draw filled area below curve.
     chartArea.setAttribute("d", `${path} L 100 ${yAxisOrigin} L 0 ${yAxisOrigin} Z`);
   }
 
-  getHASensorCoordinates(entries, historyStart, historyEnd, algorithm=null) {
-    if (algorithm === "without-left") {
-      return this.getHASensorCoordinatesWithoutLeftEdge(entries, historyStart, historyEnd);
-    } else {
-      return this.getHASensorCoordinatesWithLeftEdge(entries, historyStart, historyEnd);
-    }
-  }
-
-  getHASensorCoordinatesWithoutLeftEdge(entries, historyStart, historyEnd) {
-    const width = 100;
-    const height = 100;
-
-    if (!entries.length) {
-      return {
-        points: [],
-        yAxisOrigin: height
-      };
-    }
-
-    let minValue = entries[0].value;
-    let maxValue = entries[0].value;
-
-    for (const entry of entries) {
-      if (entry.value < minValue) minValue = entry.value;
-      else if (entry.value > maxValue) maxValue = entry.value;
-    }
-  
-    // HA adds 10% vertical margins.
-    const rangeY = maxValue - minValue || minValue * 0.1;
-
-    maxValue += rangeY * 0.1;
-    minValue -= rangeY * 0.1;
-
-    let yAxisOrigin = height;
-
-    if (maxValue < 0) {
-      maxValue = Math.min(0, maxValue);
-      yAxisOrigin = 0;
-    } else if (minValue < 0) {
-      yAxisOrigin = (maxValue / (maxValue - minValue || 1)) * height;
-    } else {
-      minValue = Math.max(0, minValue);
-    }
-
-    const yRange = maxValue - minValue || 1;
-    const timeRange = historyEnd.getTime() - historyStart.getTime() || 1;
-
-    const points = entries.map(entry => ({
-      x: ((entry.time - historyStart.getTime()) / timeRange) * width,
-      y: height - ((entry.value - minValue) / yRange) * height
-    }));
-
-    // Extend the last point to the right edge.
-    points.push({
-      x: width,
-      y: points[points.length - 1].y
-    });
-
-    return {
-      points,
-      yAxisOrigin
-    };
-  }
-
-  getHASensorCoordinatesWithLeftEdge(entries, historyStart, historyEnd) {
-    const width = 100;
-    const height = 100;
-
-    if (!entries.length) {
-      return {
-        points: [],
-        yAxisOrigin: height
-      };
-    }
-
-    let minValue = entries[0].value;
-    let maxValue = entries[0].value;
-
-    for (const entry of entries) {
-      if (entry.value < minValue) minValue = entry.value;
-      else if (entry.value > maxValue) maxValue = entry.value;
-    }
-  
-    // HA adds 10% vertical margins.
-    const rangeY = maxValue - minValue || minValue * 0.1;
-
-    maxValue += rangeY * 0.1;
-    minValue -= rangeY * 0.1;
-
-    let yAxisOrigin = height;
-
-    if (maxValue < 0) {
-      maxValue = Math.min(0, maxValue);
-      yAxisOrigin = 0;
-    } else if (minValue < 0) {
-      yAxisOrigin = (maxValue / (maxValue - minValue || 1)) * height;
-    } else {
-      minValue = Math.max(0, minValue);
-    }
-
-    const yRange = maxValue - minValue || 1;
-    const timeRange = historyEnd.getTime() - historyStart.getTime() || 1;
-
-    const points = entries.map(entry => ({
-      x: ((entry.time - historyStart.getTime()) / timeRange) * width,
-      y: height - ((entry.value - minValue) / yRange) * height
-    }));
-
-    // Extend the first known value to the left edge.
-    if (points[0].x > 0) {
-      points.unshift({
-        x: 0,
-        y: points[0].y
-      });
-    }
-
-    // Extend the last known value to the right edge.
-    if (points[points.length - 1].x < width) {
-      points.push({
-        x: width,
-        y: points[points.length - 1].y
-      });
-    }
-
-    return {
-      points,
-      yAxisOrigin
-    };
-  }
-
-
-  downsampleSensorHistoryHomeAssistant(entries, maxDetails = 24) {
+  downsampleHASensorHistory(entries, maxDetails = 24) {
     if (!entries || entries.length <= maxDetails) {
       return entries || [];
     }
@@ -2584,17 +2206,77 @@ class AndroidRemoteCard extends HTMLElement {
     return snapped;
   }
 
-  createSmoothSensorPathHomeAssistant(points, algorithm=null) {
-    return this.createHomeAssistantPath(points);
+  getHASensorCoordinates(entries, historyStart, historyEnd) {
+    const width = 100;
+    const height = 100;
+
+    if (!entries.length) {
+      return {
+        points: [],
+        yAxisOrigin: height
+      };
+    }
+
+    let minValue = entries[0].value;
+    let maxValue = entries[0].value;
+
+    for (const entry of entries) {
+      if (entry.value < minValue) minValue = entry.value;
+      else if (entry.value > maxValue) maxValue = entry.value;
+    }
+  
+    // HA adds 10% vertical margins.
+    const rangeY = maxValue - minValue || minValue * 0.1;
+
+    maxValue += rangeY * 0.1;
+    minValue -= rangeY * 0.1;
+
+    let yAxisOrigin = height;
+
+    if (maxValue < 0) {
+      maxValue = Math.min(0, maxValue);
+      yAxisOrigin = 0;
+    } else if (minValue < 0) {
+      yAxisOrigin = (maxValue / (maxValue - minValue || 1)) * height;
+    } else {
+      minValue = Math.max(0, minValue);
+    }
+
+    const yRange = maxValue - minValue || 1;
+    const timeRange = historyEnd.getTime() - historyStart.getTime() || 1;
+
+    const points = entries.map(entry => ({
+      x: ((entry.time - historyStart.getTime()) / timeRange) * width,
+      y: height - ((entry.value - minValue) / yRange) * height
+    }));
+
+    // Extend the first known value to the left edge.
+    if (points[0].x > 0) {
+      points.unshift({
+        x: 0,
+        y: points[0].y
+      });
+    }
+
+    // Extend the last known value to the right edge.
+    if (points[points.length - 1].x < width) {
+      points.push({
+        x: width,
+        y: points[points.length - 1].y
+      });
+    }
+
+    return {
+      points,
+      yAxisOrigin
+    };
   }
 
-  createHomeAssistantPath(points) {
+  createSmoothHASensorPath(points) {
     if (!points.length) return "";
 
     let path = `M ${points[0].x},${points[0].y}`;
-
     let last = points[0];
-
     for (const next of points) {
       const midX = (last.x + next.x) / 2;
       const midY = (last.y + next.y) / 2;
