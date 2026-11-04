@@ -2357,7 +2357,7 @@ class AndroidRemoteCard extends HTMLElement {
     const { points, yAxisOrigin } = this.getHASensorCoordinates(chartEntries, historyStart, historyEnd);
 
     // Draw smooth curve using HA-style quadratic Bézier path.
-    const path = this.createSmoothSensorPath(points);
+    const path = this.createSmoothSensorPathHomeAssistant(points);
     chartLine.setAttribute("d", path);
 
     // Draw filled area below curve.
