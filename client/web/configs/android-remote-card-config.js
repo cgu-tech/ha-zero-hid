@@ -229,7 +229,6 @@ export const androidRemoteCardConfig = {
         <path class="sensor-chart-area"></path>
         <path class="sensor-chart-line"></path>
       </svg>
-  
       <div class="sensor-button-content">
         <span class="sensor-value"></span>
         <span class="sensor-label"></span>
