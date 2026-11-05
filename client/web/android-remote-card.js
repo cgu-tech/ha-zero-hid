@@ -3137,7 +3137,7 @@ class AndroidRemoteCard extends HTMLElement {
       // Sensor button can be short pressed but not overriden
       const currentSensor = this.getCurrentSensor();
       const nextSensor = this.getNextSensor();
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: switching sensor from ${currentSensor} to ${nextSensor}...`, btn));
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: switching sensor from ${this.getSensorId(currentSensor)} to ${this.getSensorId(nextSensor)}...`, btn));
       this.setCurrentSensor(nextSensor);
     } else if (this.hasButtonOverrideConfigShort(btn)) {
       // Overriden action
