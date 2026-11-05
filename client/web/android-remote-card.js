@@ -117,6 +117,7 @@ class AndroidRemoteCard extends HTMLElement {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setUserPreferences(preferences):", preferences));
     this._eventManager.setUserPreferences(preferences);
     this.doUpdateServers();
+    this.doUpdateSensors();
     this.doUpdateManagedPreferences();
     this.doUpdateCurrentServer();
     this.doUpdateCellsVisualAndState();
