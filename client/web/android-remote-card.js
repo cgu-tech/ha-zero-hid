@@ -1195,7 +1195,6 @@ class AndroidRemoteCard extends HTMLElement {
 
     // Reset Sensors button value and label element (if any)
     this._elements.sensorsBtnLabel = null;
-    this._elements.sensorsBtnValue = null;
     this._elements.sensorsBtnNumber = null;
     this._elements.sensorsBtnUnit = null;
     this._elements.sensorsBtnChartArea = null;
@@ -1424,7 +1423,7 @@ class AndroidRemoteCard extends HTMLElement {
       const sensorsBtn = cellContent;
       this._elements.sensorsBtn = sensorsBtn;
       this._elements.sensorsBtnLabel = sensorsBtn.querySelector(".sensor-label");
-      this._elements.sensorsBtnValue = sensorsBtn.querySelector(".sensor-value");
+      const sensorsBtnValue = sensorsBtn.querySelector(".sensor-value");
       this._elements.sensorsBtnNumber = sensorsBtnValue.querySelector(".sensor-number");
       this._elements.sensorsBtnUnit = sensorsBtnValue.querySelector(".sensor-unit");
       this._elements.sensorsBtnChartArea = sensorsBtn.querySelector(".sensor-chart-area");
