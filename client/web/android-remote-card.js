@@ -2095,8 +2095,8 @@ class AndroidRemoteCard extends HTMLElement {
       const currentSensor = this.getCurrentSensor();
       const sensorEntityId = this.getSensorEntityId(currentSensor);
       const sensorLabelConfig = this.getSensorLabel(currentSensor);
-      const sensorLineColor = this.getSensorLineColor(currentSensor) ?? _sensorChartFg;
-      const sensorAreaColor = this.getSensorAreaColor(currentSensor) ?? _sensorChartBg;
+      const sensorLineColor = this.getSensorLineColor(currentSensor) ?? this._sensorChartFg;
+      const sensorAreaColor = this.getSensorAreaColor(currentSensor) ?? this._sensorChartBg;
       const sensorEntity = sensorEntityId ? this._eventManager.getHassEntity(sensorEntityId) : null;
 
       // Start updating sensor chart asynchronously
