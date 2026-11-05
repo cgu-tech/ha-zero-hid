@@ -2085,10 +2085,9 @@ class AndroidRemoteCard extends HTMLElement {
       const sensorValueUnit = this._elements.sensorsBtnUnit;
 
       // Retrieve HA entity when available
-      const currentSensorConfig = this._eventManager.getUserPreferenceSensorId
-      const overrideServerConfig = this.getButtonOverrideServerConfig(serverId, buttonId);
-      const sensorEntityId = overrideServerConfig?.['entity'];
-      const sensorLabelConfig = overrideServerConfig?.['label'];
+      const currentSensor = this.getCurrentSensor();
+      const sensorEntityId = this.getSensorEntityId(currentSensor);
+      const sensorLabelConfig = this.getSensorLabel(currentSensor);
       const sensorEntity = sensorEntityId ? this._eventManager.getHassEntity(sensorEntityId) : null;
 
       // Start updating sensor chart asynchronously
