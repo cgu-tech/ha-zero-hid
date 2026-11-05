@@ -1172,6 +1172,8 @@ class AndroidRemoteCard extends HTMLElement {
     // Reset Sensors button value and label element (if any)
     this._elements.sensorsBtnValue = null;
     this._elements.sensorsBtnLabel = null;
+    this._elements.sensorsBtnChartArea = null;
+    this._elements.sensorsBtnChartLine = null;
 
     // Reset Sensors button element (if any)
     this._elements.sensorsBtn = null;

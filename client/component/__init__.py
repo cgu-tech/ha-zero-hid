@@ -36,6 +36,7 @@ class UserPrefs(TypedDict):
     server_id: str
     remote_mode: str
     airmouse_mode: str
+    sensor_id: str
 
 WS_SUBSCRIPTIONS: dict[ActiveConnection, int] = {}
 WS_SUBSCRIPTIONS_LOCK = asyncio.Lock()
@@ -110,6 +111,7 @@ SET_PREFS_SCHEMA = vol.Schema({
     vol.Required("server_id"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("remote_mode"): vol.All(lambda v: v or "", ensure_string_or_empty),
     vol.Required("airmouse_mode"): vol.All(lambda v: v or "", ensure_string_or_empty),
+    vol.Required("sensor_id"): vol.All(lambda v: v or "", ensure_string_or_empty),
 })
 
 def get_user_prefs(hass: HomeAssistant, user_id: str) -> UserPrefs:
@@ -119,6 +121,7 @@ def get_user_prefs(hass: HomeAssistant, user_id: str) -> UserPrefs:
         "server_id": "",
         "remote_mode": "",
         "airmouse_mode": "",
+        "sensor_id": "",
     })
 
 def get_ws_server_infos(hass: HomeAssistant) -> dict[str, WSServerInfo]:
@@ -401,11 +404,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             user_prefs["server_id"] = call.data.get("server_id")
             user_prefs["remote_mode"] = call.data.get("remote_mode")
             user_prefs["airmouse_mode"] = call.data.get("airmouse_mode")
+            user_prefs["sensor_id"] = call.data.get("sensor_id")
             
             if _LOGGER.getEffectiveLevel() == logging.DEBUG:
                 user_prefs_check = hass.data[DOMAIN]["users_prefs"][user_id]
-                _LOGGER.debug(f"Received preferences for user {user_id}: server_id={call.data.get('server_id')},remote_mode={call.data.get('remote_mode')},airmouse_mode={call.data.get('airmouse_mode')}")
-                _LOGGER.debug(f"Set preferences for user {user_id}: server_id={user_prefs_check['server_id']},remote_mode={user_prefs_check['remote_mode']},airmouse_mode={user_prefs_check['airmouse_mode']}")
+                _LOGGER.debug(f"Received preferences for user {user_id}: server_id={call.data.get('server_id')},remote_mode={call.data.get('remote_mode')},airmouse_mode={call.data.get('airmouse_mode')},sensor_id={call.data.get('sensor_id')}")
+                _LOGGER.debug(f"Set preferences for user {user_id}: server_id={user_prefs_check['server_id']},remote_mode={user_prefs_check['remote_mode']},airmouse_mode={user_prefs_check['airmouse_mode']},sensor_id={user_prefs_check['sensor_id']}")
         else:
             _LOGGER.exception(f"Unauthenticated user tried to set preferences into session")
 

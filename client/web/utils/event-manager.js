@@ -265,6 +265,10 @@ export class EventManager {
     return this.getUserPreferences()?.["airmouse_mode"];
   }
 
+  getUserPreferenceSensorId() {
+    return this.getUserPreferences()?.["sensor_id"];
+  }
+
   setUserPreferences(preferences) {
     this._userPreferences = preferences;
   }
@@ -291,6 +295,10 @@ export class EventManager {
 
   setUserPreferenceAirmouseMode(value) {
     this.setUserPreference("airmouse_mode", value);
+  }
+
+  setUserPreferenceSensorId(value) {
+    this.setUserPreference("sensor_id", value);
   }
 
   // Get elapsed time between a start event and an end event (in milliseconds)
@@ -795,6 +803,7 @@ export class EventManager {
       //   server_id     (string) --> last saved server id (eg. "1", default "")
       //   remote_mode   (string) --> last saved remote mode (eg. "normal_mode" or "alt_mode", default "")
       //   airmouse_mode (string) --> last saved airmouse mode (eg. "on" or "off", default "")
+      //   sensor_id     (string) --> last saved sensor id into configuration (eg. "thermometer-livingroom", default "") NOT to be mistaken with sensor entity id
       const { prefs } = response;
 
       try {
