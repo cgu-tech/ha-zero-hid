@@ -3369,11 +3369,11 @@ class AndroidRemoteCard extends HTMLElement {
       // Sensors button retrieved
 
       // Open sensor details
-      const overrideServerConfig = this.getButtonOverrideServerConfig(serverId, buttonId);
-      const sensorEntityId = overrideServerConfig?.['entity'];
-      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): opening sensor details ${sensorEntityId}...`, btn));
+      const currentSensor = this.getCurrentSensor();
+      const currentSensorEntityId = this.getSensorEntityId(currentSensor);
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): opening sensor details ${currentSensorEntityId}...`, btn));
       // Trigger the more-info Dialog popup
-      this._eventManager.triggerHaosMoreInfoDialog(btn, sensorEntityId);
+      this._eventManager.triggerHaosMoreInfoDialog(btn, currentSensorEntityId);
     } else if (overrideConfig === this._OVERRIDE_NONE) {
       // Typed config "none"
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`executeButtonOverride(btn): none action for ${remoteMode} mode ${pressType} press, nothing to do`, btn));
