@@ -2045,13 +2045,20 @@ class AndroidRemoteCard extends HTMLElement {
       this.updateSensorChart(sensorEntityId);
 
       // Set updated sensorsBtn label
-      sensorLabel.textContent = sensorLabelConfig ?? (sensorEntity?.attributes?.friendly_name ?? (sensorEntityId ?? "-"));
+      if (sensorLabel) {
+        sensorLabel.textContent = sensorLabelConfig ?? (sensorEntity?.attributes?.friendly_name ?? (sensorEntityId ?? "-"));
+      }
 
       // Set updated sensorsBtn value (number + unit)
-      const sensorNumber = sensorEntity?.state ?? "--";
-      const sensorUnit = sensorEntity?.attributes?.unit_of_measurement ?? "";
-      sensorValueNumber.textContent = `${sensorNumber}`;
-      sensorValueUnit.textContent = `${sensorUnit}`;
+      if (sensorValueNumber) {
+        const sensorNumber = sensorEntity?.state ?? "--";
+        sensorValueNumber.textContent = `${sensorNumber}`;
+      }
+
+      if (sensorValueUnit) {
+        const sensorUnit = sensorEntity?.attributes?.unit_of_measurement ?? "";
+        sensorValueUnit.textContent = `${sensorUnit}`;
+      }
     }
   }
 
