@@ -231,7 +231,10 @@ export const androidRemoteCardConfig = {
       </svg>
       <div class="sensor-button-content">
         <span class="sensor-label"></span>
-        <span class="sensor-value"></span>
+        <span class="sensor-value">
+          <span class="sensor-number"></span>
+          <span class="sensor-unit"></span>
+        </span>
       </div>
     `
   },

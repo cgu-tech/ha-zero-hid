@@ -978,13 +978,16 @@ class AndroidRemoteCard extends HTMLElement {
         overflow: hidden;
       }
       .sensor-value {
+        display: inline-flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0.2em;
         font-size: clamp(1px, 26cqw, 24px);
         font-weight: normal;
         line-height: 1.25;
         white-space: nowrap;
         max-width: 100%;
         overflow: hidden;
-        text-overflow: clip;
         color: var(--cell-button-fg);
         text-shadow:
           1px 1px 0 var(--cell-button-bg),
@@ -995,6 +998,15 @@ class AndroidRemoteCard extends HTMLElement {
           0 -1px 0 var(--cell-button-bg),
           1px 0 0 var(--cell-button-bg),
           -1px 0 0 var(--cell-button-bg);
+      }
+      .sensor-number {
+        white-space: nowrap;
+      }
+      .sensor-unit {
+        font-size: 0.55em;
+        font-weight: normal;
+        white-space: nowrap;
+        opacity: 0.9;
       }
       text {
         font-family: sans-serif;
@@ -1182,8 +1194,10 @@ class AndroidRemoteCard extends HTMLElement {
     this._elements.powerOffAddonsBtn = null;
 
     // Reset Sensors button value and label element (if any)
-    this._elements.sensorsBtnValue = null;
     this._elements.sensorsBtnLabel = null;
+    this._elements.sensorsBtnValue = null;
+    this._elements.sensorsBtnNumber = null;
+    this._elements.sensorsBtnUnit = null;
     this._elements.sensorsBtnChartArea = null;
     this._elements.sensorsBtnChartLine = null;
 
@@ -1409,8 +1423,10 @@ class AndroidRemoteCard extends HTMLElement {
     if (cellContent?.id === "remote-button-sensors") {
       const sensorsBtn = cellContent;
       this._elements.sensorsBtn = sensorsBtn;
-      this._elements.sensorsBtnValue = sensorsBtn.querySelector(".sensor-value");
       this._elements.sensorsBtnLabel = sensorsBtn.querySelector(".sensor-label");
+      this._elements.sensorsBtnValue = sensorsBtn.querySelector(".sensor-value");
+      this._elements.sensorsBtnNumber = sensorsBtnValue.querySelector(".sensor-number");
+      this._elements.sensorsBtnUnit = sensorsBtnValue.querySelector(".sensor-unit");
       this._elements.sensorsBtnChartArea = sensorsBtn.querySelector(".sensor-chart-area");
       this._elements.sensorsBtnChartLine = sensorsBtn.querySelector(".sensor-chart-line");
     }
@@ -2015,8 +2031,9 @@ class AndroidRemoteCard extends HTMLElement {
       const buttonId = btn.id;
       
       // Retrieve sensorsBtn value and label HTML element
-      const sensorValue = this._elements.sensorsBtnValue;
       const sensorLabel = this._elements.sensorsBtnLabel;
+      const sensorValueNumber = this._elements.sensorsBtnNumber;
+      const sensorValueUnit = this._elements.sensorsBtnUnit;
 
       // Retrieve HA entity when available
       const overrideServerConfig = this.getButtonOverrideServerConfig(serverId, buttonId);
@@ -2027,17 +2044,14 @@ class AndroidRemoteCard extends HTMLElement {
       // Start updating sensor chart asynchronously
       this.updateSensorChart(sensorEntityId);
 
-      // Set updated sensorsBtn value
-      if (sensorValue) {
-        const sensorState = sensorEntity?.state ?? "--";
-        const sensorUnits = sensorEntity?.attributes?.unit_of_measurement ?? "";
-        sensorValue.textContent = `${sensorState}${sensorUnits ? " " : ""}${sensorUnits}`;
-      }
-
       // Set updated sensorsBtn label
-      if (sensorLabel) {
-        sensorLabel.textContent = sensorLabelConfig ?? (sensorEntity?.attributes?.friendly_name ?? (sensorEntityId ?? "-"));
-      }
+      sensorLabel.textContent = sensorLabelConfig ?? (sensorEntity?.attributes?.friendly_name ?? (sensorEntityId ?? "-"));
+
+      // Set updated sensorsBtn value (number + unit)
+      const sensorNumber = sensorEntity?.state ?? "--";
+      const sensorUnit = sensorEntity?.attributes?.unit_of_measurement ?? "";
+      sensorValueNumber.textContent = `${sensorNumber}`;
+      sensorValueUnit.textContent = `${sensorUnit}`;
     }
   }
 
