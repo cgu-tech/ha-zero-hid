@@ -176,6 +176,7 @@ class AndroidRemoteCard extends HTMLElement {
   setCurrentSensor(sensor) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentSensor(sensor):", sensor));
     this._eventManager.setUserPreferenceSensorId(sensor.entity_id);
+    this.doUpdateSensorsButton();
   }
 
   batchPowerOff(entitiesIds) {
@@ -3132,6 +3133,12 @@ class AndroidRemoteCard extends HTMLElement {
       const nextAirmouseMode = !currentAirmouseMode;
       if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: switching airmouse mode from ${currentAirmouseMode} to ${nextAirmouseMode}...`, btn));
       this.setAirmouseEnabled(nextAirmouseMode);
+    } else if (this.isSensorsButton(btn)) {
+      // Sensor button can be short pressed but not overriden
+      const currentSensor = this.getCurrentSensor();
+      const nextSensor = this.getNextSensor();
+      if (this.getLogger().isTraceEnabled()) console.debug(...this.getLogger().trace(`Key ${btn.id} release: switching sensor from ${currentSensor} to ${nextSensor}...`, btn));
+      this.setCurrentSensor(nextSensor);
     } else if (this.hasButtonOverrideConfigShort(btn)) {
       // Overriden action
       
