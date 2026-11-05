@@ -967,7 +967,7 @@ class AndroidRemoteCard extends HTMLElement {
         line-height: 1.35;
       }
       .sensor-label {
-        font-size: clamp(1px, 16cqw, 13px);
+        font-size: 0.8rem;
         font-weight: normal;
         line-height: 1.2;
         opacity: 0.75;
@@ -986,6 +986,15 @@ class AndroidRemoteCard extends HTMLElement {
         overflow: hidden;
         text-overflow: clip;
         color: var(--cell-button-fg);
+        text-shadow:
+          1px 1px 0 var(--cell-button-bg),
+          -1px -1px 0 var(--cell-button-bg),
+          1px -1px 0 var(--cell-button-bg),
+          -1px 1px 0 var(--cell-button-bg),
+          0 1px 0 var(--cell-button-bg),
+          0 -1px 0 var(--cell-button-bg),
+          1px 0 0 var(--cell-button-bg),
+          -1px 0 0 var(--cell-button-bg);
       }
       text {
         font-family: sans-serif;
