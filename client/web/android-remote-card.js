@@ -175,7 +175,7 @@ class AndroidRemoteCard extends HTMLElement {
 
   setCurrentSensor(sensor) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentSensor(sensor):", sensor));
-    this._eventManager.setUserPreferenceSensorId(sensor.entity_id);
+    this._eventManager.setUserPreferenceSensorId(this.getSensorId(sensor));
     this.doUpdateSensorsButton();
   }
 
