@@ -136,6 +136,47 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateAirmouseMode();
   }
 
+  getSensorId(sensor) {
+    return sensor?.["id"];
+  }
+
+  getSensorPosition(sensor) {
+    return sensor?.["position"];
+  }
+
+  getSensorEntityId(sensor) {
+    return sensor?.["entity_id"];
+  }
+
+  getSensorLabel(sensor) {
+    return sensor?.["label"];
+  }
+
+  areSensorsAvailable() {
+    return this.getSensors() && this.getSensors().length > 0;
+  }
+
+  getCurrentSensor() {
+    if (!this.areSensorsAvailable()) return null;
+    const currentSensorId = this._eventManager.getUserPreferenceSensorId();
+    const currentSensor = this.getSensors().find(sensor => this.getSensorId(sensor) === currentSensorId) ?? this.getSensors()[0];
+    return currentSensor;
+  }
+
+  getNextSensor() {
+    if (!this.areSensorsAvailable()) return null;
+    const currentSensor = this.getCurrentSensor();
+    const currentSensorPosition = this.getSensorPosition(currentSensor) ?? 0;
+    const nextSensorIndex = currentSensorPosition < this.getSensors().length ? currentSensorPosition : 0;
+    const nextSensor = this.getSensors()[nextSensorIndex];
+    return nextSensor;
+  }
+
+  setCurrentSensor(sensor) {
+    if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("setCurrentSensor(sensor):", sensor));
+    this._eventManager.setUserPreferenceSensorId(sensor.entity_id);
+  }
+
   batchPowerOff(entitiesIds) {
     if (this.getLogger().isDebugEnabled()) console.debug(...this.getLogger().debug("batchPowerOff(entitiesIds):", entitiesIds));
     if (entitiesIds && entitiesIds.length > 0) {
@@ -196,6 +237,10 @@ class AndroidRemoteCard extends HTMLElement {
 
   getAnimatedBackgroundConfig() {
     return this._layoutManager.getFromConfigOrDefaultConfig("animated_background");
+  }
+
+  getSensorsConfig() {
+    return this._layoutManager.getFromConfigOrDefaultConfig("sensors");
   }
 
   getServersConfig() {
@@ -350,6 +395,10 @@ class AndroidRemoteCard extends HTMLElement {
   
   getServersCells() {
     return this._elements.servers.cells;
+  }
+
+  getSensors() {
+    return this._elements.sensors;
   }
 
   // Per server cell config
@@ -1048,6 +1097,7 @@ class AndroidRemoteCard extends HTMLElement {
     this.doUpdateOverridables();
     this.doUpdateAddons();
     this.doUpdateServers();
+    this.doUpdateSensors();
   }
 
   doUpdateManagedConfigs() {
@@ -1933,8 +1983,8 @@ class AndroidRemoteCard extends HTMLElement {
     // Update addons button counter
     this.doUpdatePowerOffAddonsCounter();
     
-    // Update addons button counter
-    this.doUpdateSensorsVisual(serverId);
+    // Update sensors button
+    this.doUpdateSensorsButton();
 
     // Update side panel state
     this.doUpdateSidePanel();
@@ -2023,7 +2073,7 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  doUpdateSensorsVisual(serverId) {
+  doUpdateSensorsButton() {
     // Update sensorsBtn button (when existing)
     const btn = this._elements.sensorsBtn;
     if (btn) {
@@ -2035,6 +2085,7 @@ class AndroidRemoteCard extends HTMLElement {
       const sensorValueUnit = this._elements.sensorsBtnUnit;
 
       // Retrieve HA entity when available
+      const currentSensorConfig = this._eventManager.getUserPreferenceSensorId
       const overrideServerConfig = this.getButtonOverrideServerConfig(serverId, buttonId);
       const sensorEntityId = overrideServerConfig?.['entity'];
       const sensorLabelConfig = overrideServerConfig?.['label'];
@@ -2570,6 +2621,35 @@ class AndroidRemoteCard extends HTMLElement {
     // Nothing to do here: no events needed on cell content
   }
 
+  //#################
+  //# SENSORS CELLS #
+  //#################
+
+  doUpdateSensors() {
+    this.doResetSensors();
+    this.doCreateSensors();
+  }
+
+  doResetSensors() {
+    // Reset sensors elements (if any)
+    this._elements.sensors = [];
+  }
+
+  doCreateSensors() {
+    // Create all sensors from user-defined configuration (servers independant)
+    // sensor as no visual: it is only some fancy config object
+    let position = 1;
+    for (const [sensorId, sensorConfig] of Object.entries(this.getSensorsConfig())) {
+      const sensor = {
+        "position": position++,
+        "id": sensorId,
+        "entity_id": sensorConfig['entity'],
+        "label": sensorConfig['label'],
+      };
+      this.getSensors().push(sensor);
+    }
+  }
+
   //################
   //# ADDONS CELLS #
   //################
@@ -2850,6 +2930,7 @@ class AndroidRemoteCard extends HTMLElement {
       log_level: "warn",
       log_pushback: false,
       state_color: "rgb",
+      sensors: {},
       servers: {
         cell_size: "80px",
         cell_label_font_scale: '0.8em',
