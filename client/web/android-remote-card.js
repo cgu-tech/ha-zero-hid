@@ -38,6 +38,8 @@ class AndroidRemoteCard extends HTMLElement {
   _sideCellButtonBg = '#3a3a3a';
   _cellButtonActiveBg = '#4a4a4a';
   _cellButtonPressBg = '#6a6a6a';
+  _sensorChartFg = '#ff9800';
+  _sensorChartBg = '#ff980021';
   _OVERRIDE_NORMAL_MODE = 'normal_mode';
   _OVERRIDE_ALTERNATIVE_MODE = 'alt_mode';
   _OVERRIDE_SWITCH_SIDE_PANEL = 'switch_side';
@@ -140,17 +142,20 @@ class AndroidRemoteCard extends HTMLElement {
   getSensorId(sensor) {
     return sensor?.["id"];
   }
-
   getSensorPosition(sensor) {
     return sensor?.["position"];
   }
-
   getSensorEntityId(sensor) {
     return sensor?.["entity_id"];
   }
-
   getSensorLabel(sensor) {
     return sensor?.["label"];
+  }
+  getSensorLineColor(sensor) {
+    return sensor?.["line_color"];
+  }
+  getSensorAreaColor(sensor) {
+    return sensor?.["area_color"];
   }
 
   areSensorsAvailable() {
@@ -599,8 +604,8 @@ class AndroidRemoteCard extends HTMLElement {
         --cell-button-locked-active-bg: #3399ff; /* blue */
         --cell-button-locked-press-bg: #80bfff; /* lighter blue */
         --cell-sensor-on-fg: #ffc107;
-        --cell-sensor-chart-fg: #ff9800FF;
-        --cell-sensor-chart-bg: #ff980021;
+        --cell-sensor-chart-fg: ${this._sensorChartFg};
+        --cell-sensor-chart-bg: ${this._sensorChartBg};
         --cell-sensor-chart-height: 55%;
         --cell-sensor-text-height: 70%;
         --side-cell-button-bg: ${this._sideCellButtonBg};
@@ -2090,10 +2095,12 @@ class AndroidRemoteCard extends HTMLElement {
       const currentSensor = this.getCurrentSensor();
       const sensorEntityId = this.getSensorEntityId(currentSensor);
       const sensorLabelConfig = this.getSensorLabel(currentSensor);
+      const sensorLineColor = this.getSensorLineColor(currentSensor) ?? _sensorChartFg;
+      const sensorAreaColor = this.getSensorAreaColor(currentSensor) ?? _sensorChartBg;
       const sensorEntity = sensorEntityId ? this._eventManager.getHassEntity(sensorEntityId) : null;
 
       // Start updating sensor chart asynchronously
-      this.updateSensorChart(sensorEntityId);
+      this.updateSensorChart(sensorEntityId, sensorLineColor, sensorAreaColor);
 
       // Set updated sensorsBtn label
       if (sensorLabel) {
@@ -2113,9 +2120,13 @@ class AndroidRemoteCard extends HTMLElement {
     }
   }
 
-  updateSensorChart(sensorEntityId) {
+  updateSensorChart(sensorEntityId, sensorLineColor, sensorAreaColor) {
     const chartArea = this._elements.sensorsBtnChartArea;
     const chartLine = this._elements.sensorsBtnChartLine;
+
+    // Set new chart colors
+    chartArea.style.fill = sensorAreaColor;
+    chartLine.style.stroke = sensorLineColor;
 
     if (!sensorEntityId) {
       chartLine?.setAttribute("d", "");
@@ -2646,6 +2657,8 @@ class AndroidRemoteCard extends HTMLElement {
         "id": sensorId,
         "entity_id": sensorConfig['entity'],
         "label": sensorConfig['label'],
+        "line_color": sensorConfig['line_color'],
+        "area_color": sensorConfig['area_color'],
       };
       this.getSensors().push(sensor);
     }
