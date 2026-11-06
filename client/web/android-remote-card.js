@@ -106,7 +106,7 @@ class AndroidRemoteCard extends HTMLElement {
     return this._logger;
   }
 
-  getHass(hass) {
+  getHass() {
     return this._hass;
   }
 
